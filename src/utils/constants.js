@@ -9,6 +9,10 @@ export const DEFAULT_SETTINGS = {
   // Dinlenme süresi harekete göre önerilsin mi. Kapalıysa genel restSeconds
   // kullanılır — ağır squat ile lateral raise aynı süreyi paylaşır.
   smartRest: true,
+  // Barfiks/dip/şınav gibi hareketlerde taşınan vücut ağırlığı yüke sayılsın mı.
+  // Kapatınca ağırlık alanı mutlak yük olarak okunur (toplam ağırlığı elle
+  // girenler için).
+  bodyweightLoad: true,
   // Salonun plaka envanteri (kg, tek plaka). Boş bırakılamaz; normalizePlates
   // boş listeyi varsayılana çeviriyor.
   availablePlates: [25, 20, 15, 10, 5, 2.5, 1.25],
@@ -586,13 +590,21 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.2';
+export const APP_VERSION = '3.3';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.2',
+  title: 'ProOverload 3.3',
   date: '2026-08-10',
   items: [
+    {
+      title: 'Vücut Ağırlıklı Hareketler Artık Sayılıyor',
+      desc: 'Barfiks 4×10 yapıp ağırlık alanına 0 yazınca tonaj 0, tahmini 1RM 0 görünüyordu — yani kalistenik çalışan biri için hacim istatistiği, rekorlar, seans raporu ve progresyon önerisi sessizce çalışmıyordu. Bu hareketlerde ağırlık alanı artık EK yük sayılıyor; taşınan vücut ağırlığı üstüne ekleniyor. Barfiks ve dipte oran 1, şınavda %64, ters kürekte %60. Kilo o tarihteki ölçümden okunuyor, bugünkü kilo geçmişe uygulanmıyor. Yardımlı ve makine varyantları hariç: orada ağırlık alanı ek yük değil destek miktarı. Ayarlardan kapatılabiliyor.'
+    },
+    {
+      title: 'Süperset Dinlenmesi',
+      desc: 'Süperset eşi beklerken sayaç tam dinlenme başlatıyordu; oysa dinlenme çiftin sonuna ait, arada yalnızca geçiş var. Eşi olan harekette süre 20 saniyeye düşüyor ve bunun bir teknik arası olduğu yazıyor.'
+    },
     {
       title: 'Harekete Göre Dinlenme',
       desc: 'Tek bir 120 saniye yerine her set kendi süresini alıyor. Süre; yüklenen kas kütlesi, hareketin bileşikliği, RIR ve tekrar sayısından hesaplanıyor. Ağır squat 210 sn, lateral raise 60 sn; drop ve rest-pause ise dinlenme değil teknik arası sayılıyor. Sayacın altında gerekçesi yazıyor.'

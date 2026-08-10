@@ -37,6 +37,10 @@ const ActiveWorkoutView = memo(({
   onMoveExercise,
   onSubstitute,
   deload,
+  // (hareket, ağırlık) → gerçek yük; vücut ağırlıklı hareketlerde ek yükün
+  // üstüne taşınan vücut ağırlığını ekler.
+  resolveLoad,
+  bodyweightInfoFor,
 }) => {
   if (!activeWorkout) return null;
 
@@ -165,12 +169,17 @@ const ActiveWorkoutView = memo(({
           }) : null;
           const record = personalRecords.get(ex.name);
           const setupNote = exerciseSetupNote(ex.name, customExercises);
+          const bodyweightInfo = bodyweightInfoFor?.(ex.name) || null;
           // Dinlenme düğmesinin göstereceği süre: son çalışma setine göre.
           // Set yoksa hareketin kendi karakterinden (orta şiddet varsayımı).
+          // Süperset eşi varsa araya tam dinlenme girmemeli: dinlenme çiftin
+          // sonuna ait, arada yalnızca geçiş var.
+          const supersetPending = Boolean(ex.supersetId)
+            && (activeWorkout.exercises || []).some(e => e.supersetId === ex.supersetId && e.id !== ex.id);
           const restHint = settings.smartRest === false ? null : suggestRestSeconds(
             ex.name,
             [...(ex.sets || [])].reverse().find(isWorkingSet) || { rir: 2 },
-            { customExercises });
+            { customExercises, supersetPending });
           // Katkılar büyükten küçüğe: birincil kas en solda.
           const muscleParts = Object.entries(contributions || {}).sort((a, b) => b[1] - a[1]);
 
@@ -241,6 +250,18 @@ const ActiveWorkoutView = memo(({
               )}
 
               {/* Bu hareketin bir setinin hangi kasa ne kadar yazıldığı */}
+              {/* Vücut ağırlığı payı: ağırlık alanına 0 yazan kullanıcı, yükün
+                  sıfır sayılmadığını görsün. */}
+              {bodyweightInfo && (
+                <div className="px-3 py-1.5 border-b border-zinc-800 bg-emerald-950/15 flex items-center gap-2">
+                  <Activity size={10} className="text-emerald-500 shrink-0" />
+                  <span className="text-[9px] font-mono text-emerald-300/90">
+                    Yüke <strong>{bodyweightInfo.kg} kg</strong> {bodyweightInfo.label} ekleniyor —
+                    ağırlık alanına yalnızca EK yükü yaz.
+                  </span>
+                </div>
+              )}
+
               {/* Kurulum notu: sehpa yüksekliği, pim deliği gibi ayarlar her
                   seans yeniden bulunuyordu. Setlerin hemen üstünde duruyor
                   çünkü lazım olduğu an makineye otururken. */}
@@ -322,7 +343,11 @@ const ActiveWorkoutView = memo(({
                   const warmup = isWarmupSet(set);
                   const st = SET_TYPES[set.setType] || SET_TYPES.normal;
                   const isEffective = !warmup && parseNumber(set.rir) <= 3 && parseNumber(set.reps) > 0;
-                  const e1rm = warmup ? 0 : estimate1RM(set.weight, set.reps, set.rir);
+                  // 1RM ek ağırlıktan değil GERÇEK yükten hesaplanıyor: barfikste
+                  // ağırlık alanı 0 olduğu için bu hareketler hiç 1RM üretmiyordu.
+                  const e1rm = warmup ? 0 : estimate1RM(
+                    resolveLoad ? resolveLoad(ex.name, set.weight) : set.weight,
+                    set.reps, set.rir);
                   const isNewRecord = e1rm > 0 && (!record || e1rm > record.e1rm);
                   const workingIndex = (ex.sets || []).slice(0, setIndex + 1).filter(isWorkingSet).length;
 
@@ -364,7 +389,7 @@ const ActiveWorkoutView = memo(({
                               // Süreyi az önce BİTEN setin özellikleri belirliyor:
                               // yorgunluğu bırakan o set, sıradaki değil.
                               const oneri = settings.smartRest === false ? null
-                                : suggestRestSeconds(ex.name, { ...set, reps: e.target.value }, { customExercises });
+                                : suggestRestSeconds(ex.name, { ...set, reps: e.target.value }, { customExercises, supersetPending });
                               startRest(oneri ? oneri.seconds : settings.restSeconds, oneri?.reason);
                             }
                           }}

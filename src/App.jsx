@@ -15,6 +15,7 @@ import { computeWeekPlan, findPlan } from './utils/weekPlan';
 import { removeTemplateFromPlans } from './utils/planMigration';
 import { buildPersonalVolumeGuidance } from './utils/personalization';
 import { buildCoachActions } from './utils/coach';
+import { effectiveLoad, bodyweightPortion } from './utils/bodyweight';
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
 import { buildSessionReport } from './utils/sessionReport';
 import { buildPlateauInsights } from './utils/insights';
@@ -336,9 +337,32 @@ export default function App() {
     [profileGender, cycleHistory, settings.cycleConfig],
   );
 
+  /**
+   * Bir setin gerçek yükü: ek ağırlık + taşınan vücut ağırlığı.
+   *
+   * Vücut ağırlığı O TARİHTEKİ ölçümden okunuyor. Bugünkü kiloyu iki yıl
+   * önceki barfikse uygulamak, kilo veren birinde geçmişi olduğundan ağır,
+   * kilo alanda hafif gösterirdi.
+   */
+  const resolveSetLoad = useCallback((exerciseName, setWeight, workout) => {
+    const olcum = findMetricsForDate(sortedMetrics, workout?.date, currentMetricsForm);
+    return effectiveLoad(exerciseName, setWeight, {
+      bodyWeightKg: parseNumber(olcum?.weight),
+      customExercises,
+      bodyweightEnabled: settings.bodyweightLoad !== false,
+    });
+  }, [sortedMetrics, currentMetricsForm, customExercises, settings.bodyweightLoad]);
+
+  /** Tonaj hesapları için o tarihin vücut ağırlığı bağlamı. */
+  const loadOptsFor = useCallback((dateStr) => ({
+    bodyWeightKg: parseNumber(findMetricsForDate(sortedMetrics, dateStr, currentMetricsForm)?.weight),
+    customExercises,
+    bodyweightEnabled: settings.bodyweightLoad !== false,
+  }), [sortedMetrics, currentMetricsForm, customExercises, settings.bodyweightLoad]);
+
   const personalRecords = useMemo(() => {
-    return buildPersonalRecords(workouts, activeWorkout?.id);
-  }, [workouts, activeWorkout?.id]);
+    return buildPersonalRecords(workouts, activeWorkout?.id, resolveSetLoad);
+  }, [workouts, activeWorkout?.id, resolveSetLoad]);
 
   // Rekor kontrolü set güncellenirken yapılıyor; o an güncel tabloyu okumak
   // için ref kullanılır, yoksa bağımlılık zinciri her tuşta yeniden kurulurdu.
@@ -846,7 +870,8 @@ export default function App() {
     // karşılaştırılır ve her fark sıfır çıkardı.
     setSessionReport(buildSessionReport(saved, sortedWorkouts.filter(w => w.id !== saved.id), {
       customExercises,
-      previousRecords: buildPersonalRecords(workouts, saved.id),
+      previousRecords: buildPersonalRecords(workouts, saved.id, resolveSetLoad),
+      resolveLoad: resolveSetLoad,
     }));
 
     stopLockScreenActivity();
@@ -2129,6 +2154,7 @@ export default function App() {
             <HistoryView
               historyTab={historyTab}
               setHistoryTab={setHistoryTab}
+              loadOptsFor={loadOptsFor}
               workouts={sortedWorkouts}
               metricsHistory={sortedMetrics}
               nutritionHistory={sortedNutrition}
@@ -2176,6 +2202,12 @@ export default function App() {
               onEditExercise={setEditorExercise}
               onMoveExercise={moveExercise}
               onSubstitute={(name, exerciseId) => setSubstituteFor({ name, exerciseId })}
+              resolveLoad={(name, weight) => resolveSetLoad(name, weight, activeWorkout)}
+              bodyweightInfoFor={(name) => bodyweightPortion(name, {
+                bodyWeightKg: parseNumber(findMetricsForDate(sortedMetrics, activeWorkout?.date, currentMetricsForm)?.weight),
+                customExercises,
+                bodyweightEnabled: settings.bodyweightLoad !== false,
+              })}
               deload={deload}
               onOpenCardio={() => setIsCardioOpen(true)}
               cardioKcal={totalCardioCalories(activeWorkout.cardio || [], latestWeight)}

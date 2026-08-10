@@ -1,5 +1,5 @@
 import { parseNumber } from './number.js';
-import { calcTonnage, calcEffectiveSets, estimate1RM, isWorkingSet, detectMuscleGroup } from './helpers.js';
+import { calcEffectiveSets, estimate1RM, isWorkingSet, detectMuscleGroup } from './helpers.js';
 
 /**
  * Seans sonu raporu.
@@ -15,13 +15,14 @@ import { calcTonnage, calcEffectiveSets, estimate1RM, isWorkingSet, detectMuscle
  */
 
 /** Bir hareketin o seanstaki en iyi tahmini 1RM'i ve tonajı. */
-const exerciseStats = (exercise) => {
+const exerciseStats = (exercise, resolveLoad = null, workout = null) => {
   const working = (exercise?.sets || []).filter(isWorkingSet);
   let best = 0;
   let bestSet = null;
   let tonnage = 0;
   working.forEach(set => {
-    const kg = parseNumber(set.weight);
+    // Gerçek yük: barfiks/dip gibi hareketlerde ağırlık alanı yalnızca EK yük.
+    const kg = resolveLoad ? resolveLoad(exercise.name, set.weight, workout) : parseNumber(set.weight);
     const reps = parseNumber(set.reps);
     tonnage += kg * reps;
     const e1rm = estimate1RM(kg, reps, set.rir);
@@ -39,6 +40,7 @@ const exerciseStats = (exercise) => {
 export const buildSessionReport = (workout, history = [], {
   customExercises = [],
   previousRecords = new Map(),
+  resolveLoad = null,
 } = {}) => {
   const exercises = (workout?.exercises || []).filter(ex => (ex.sets || []).some(isWorkingSet));
   if (exercises.length === 0) return null;
@@ -51,14 +53,16 @@ export const buildSessionReport = (workout, history = [], {
       if (w.id === workout.id) continue;
       const ex = (w.exercises || []).find(e => e.name === name);
       if (ex && (ex.sets || []).some(s => isWorkingSet(s) && parseNumber(s.reps) > 0)) {
-        return { date: w.date, stats: exerciseStats(ex) };
+        // Geçen seans da kendi tarihindeki vücut ağırlığıyla çözülüyor;
+        // yoksa kilo değişimi sahte bir ilerleme/gerileme üretirdi.
+        return { date: w.date, stats: exerciseStats(ex, resolveLoad, w) };
       }
     }
     return null;
   };
 
   const satirlar = exercises.map(ex => {
-    const simdi = exerciseStats(ex);
+    const simdi = exerciseStats(ex, resolveLoad, workout);
     const onceki = sonSeans(ex.name);
     const rekor = previousRecords.get?.(ex.name) || null;
 
@@ -126,7 +130,7 @@ export const buildSessionReport = (workout, history = [], {
     date: workout.date,
     name: workout.name,
     duration: parseNumber(workout.duration),
-    tonnage: calcTonnage(workout.exercises),
+    tonnage: satirlar.reduce((s, r) => s + r.tonnage, 0),
     effectiveSets: calcEffectiveSets(workout.exercises),
     exercises: satirlar,
     records,

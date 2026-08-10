@@ -7,6 +7,7 @@ import { analyzeDayConflicts } from '../src/utils/interference.js';
 import { computeWeekPlan } from '../src/utils/weekPlan.js';
 import { findActivity } from '../src/utils/cardio.js';
 import { suggestRestSeconds } from '../src/utils/rest.js';
+import { effectiveLoad, bodyweightFactorOf } from '../src/utils/bodyweight.js';
 import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
 import { buildSessionReport } from '../src/utils/sessionReport.js';
 import { buildWeeklyReview, lastCompletedWeekStart } from '../src/utils/weeklyReview.js';
@@ -15,7 +16,7 @@ import { dayEnergyBreakdown, theoreticalWeek, estimateMacrosForTef, groupByWeek,
 import { calorieDashboard, deriveGoalSet } from '../src/utils/goals.js';
 import { mergeWellnessDay, computeSleepScore } from '../src/utils/wellness.js';
 import { migrateWeekPlans, removeTemplateFromPlans } from '../src/utils/planMigration.js';
-import { suggestNextTarget, mergeWorkout, findMetricsForDate, resetDayNeatOverride } from '../src/utils/helpers.js';
+import { suggestNextTarget, mergeWorkout, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords } from '../src/utils/helpers.js';
 import { dailyTotals, nutritionDayScore } from '../src/utils/nutritionStats.js';
 import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/utils/insights.js';
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
@@ -633,6 +634,54 @@ test('öneri makul sınırlar içinde kalır', () => {
   const enKisa = restOf('Standing Calf Raise', { rir: 3, reps: 20 });
   assert.ok(enUzun <= 300, `üst sınır aşıldı: ${enUzun}`);
   assert.ok(enKisa >= 45, `alt sınır aşıldı: ${enKisa}`);
+});
+
+test('süperset eşi beklerken araya tam dinlenme girmez', () => {
+  const tek = suggestRestSeconds('Barbell Bench Press', { rir: 2, reps: 8 });
+  const cift = suggestRestSeconds('Barbell Bench Press', { rir: 2, reps: 8 }, { supersetPending: true });
+  assert.ok(cift.seconds < tek.seconds);
+  assert.equal(cift.isTechnique, true);
+});
+
+/* ------------------------------------------------------------------ *
+ *  VÜCUT AĞIRLIKLI HAREKETLER
+ * ------------------------------------------------------------------ */
+
+test('vücut ağırlıklı harekette ağırlık alanı EK yük sayılır', () => {
+  // Barfiks 0 kg ile giriliyor; eskiden yük 0 kabul edilip tonaj ve 1RM
+  // sıfırlanıyordu, yani kalistenik çalışan biri istatistiklerde görünmüyordu.
+  assert.equal(effectiveLoad('Pull-up', 0, { bodyWeightKg: 80 }), 80);
+  assert.equal(effectiveLoad('Pull-up', 20, { bodyWeightKg: 80 }), 100);
+  // Şınavda vücudun tamamı taşınmıyor.
+  assert.equal(effectiveLoad('Push-ups', 0, { bodyWeightKg: 80 }), 51.2);
+});
+
+test('destekli ve makine varyantlarına vücut ağırlığı eklenmez', () => {
+  // Bu hareketlerde ağırlık alanı ek yük değil DESTEK miktarı; eklemek tam ters
+  // yönde hata olurdu.
+  assert.equal(bodyweightFactorOf('Assisted Pull-up'), null);
+  assert.equal(bodyweightFactorOf('Machine Chest Dip'), null);
+  assert.equal(effectiveLoad('Assisted Pull-up', 30, { bodyWeightKg: 80 }), 30);
+});
+
+test('kilo bilinmiyorsa veya model kapalıysa eski davranışa dönülür', () => {
+  assert.equal(effectiveLoad('Pull-up', 0, { bodyWeightKg: 0 }), 0);
+  assert.equal(effectiveLoad('Pull-up', 0, { bodyWeightKg: 80, bodyweightEnabled: false }), 0);
+});
+
+test('vücut ağırlığı tonaja ve rekora yansır', () => {
+  const workout = {
+    id: 'w1', date: '2026-08-04',
+    exercises: [{ name: 'Pull-up', sets: setsOf(0, 10, 3) }],
+  };
+  const opts = { bodyWeightKg: 80, customExercises: [] };
+  assert.equal(calcTonnage(workout.exercises), 0);
+  assert.equal(calcTonnage(workout.exercises, opts), 2400);
+
+  const kayitsiz = buildPersonalRecords([workout]);
+  const kayitli = buildPersonalRecords([workout], null, (name, w) => effectiveLoad(name, w, opts));
+  assert.equal(kayitsiz.has('Pull-up'), false);
+  assert.ok(kayitli.get('Pull-up').e1rm > 80);
 });
 
 /* ------------------------------------------------------------------ *

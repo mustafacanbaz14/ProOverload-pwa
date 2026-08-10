@@ -5,6 +5,7 @@ import {
 import { migrateCustomExercises, normalizeMuscleName } from './migrations.js';
 import { migrateWeekPlans } from './planMigration.js';
 import { parseNumber } from './number.js';
+import { effectiveLoad } from './bodyweight.js';
 import { mergeWellnessDay } from './wellness.js';
 import { DEFAULT_CYCLE_CONFIG, mergeCycleDay } from './cycle.js';
 
@@ -298,11 +299,24 @@ export const calcFatigueDropoff = (sets = []) => {
   return { retention, dropoff, firstSet: `${first.weight}kg×${first.reps}`, lastSet: `${last.weight}kg×${last.reps}` };
 };
 
-export const calcTonnage = (exercises) => {
+/**
+ * Toplam kaldırılan yük.
+ *
+ * `loadOpts` verilirse vücut ağırlıklı hareketlerde taşınan vücut ağırlığı da
+ * sayılır. Verilmezse eski davranış (yalnızca ağırlık alanı) korunuyor —
+ * çağıranların hepsi kiloyu bilmiyor ve uydurma bir kiloyla hesap yapmaktansa
+ * eksik hesap dürüst.
+ */
+export const calcTonnage = (exercises, loadOpts = null) => {
   if (!Array.isArray(exercises)) return 0;
   return exercises.reduce((acc, ex) => acc + (ex.sets || [])
     .filter(isWorkingSet)
-    .reduce((sAcc, s) => sAcc + (parseNumber(s.weight) * parseNumber(s.reps)), 0), 0);
+    .reduce((sAcc, s) => {
+      const yuk = loadOpts
+        ? effectiveLoad(ex.name, s.weight, loadOpts)
+        : parseNumber(s.weight);
+      return sAcc + yuk * parseNumber(s.reps);
+    }, 0), 0);
 };
 
 export const calcEffectiveSets = (workoutOrExercises) => {
@@ -320,20 +334,31 @@ export const estimate1RM = (weight, reps, rir) => {
   return Math.round(w * (1 + totalReps / 30));
 };
 
-export const buildPersonalRecords = (workouts, excludeWorkoutId = null) => {
+/**
+ * Hareket başına en iyi tahmini 1RM.
+ *
+ * `resolveLoad(exerciseName, setWeight, workout)` verilirse yük oradan gelir;
+ * barfiks/dip gibi hareketlerde ağırlık alanı 0 olduğu için bu hareketler
+ * eskiden hiç rekor üretmiyordu.
+ */
+export const buildPersonalRecords = (workouts, excludeWorkoutId = null, resolveLoad = null) => {
   const records = new Map();
   for (const w of (workouts || [])) {
     if (w.id === excludeWorkoutId) continue;
     for (const ex of (w.exercises || [])) {
       for (const s of (ex.sets || [])) {
         if (isWarmupSet(s)) continue;
-        const e1rm = estimate1RM(s.weight, s.reps, s.rir);
+        const yuk = resolveLoad ? resolveLoad(ex.name, s.weight, w) : parseNumber(s.weight);
+        const e1rm = estimate1RM(yuk, s.reps, s.rir);
         if (e1rm <= 0) continue;
         const current = records.get(ex.name);
         if (!current || e1rm > current.e1rm) {
           records.set(ex.name, {
             e1rm,
             weight: parseNumber(s.weight),
+            // Vücut ağırlığı dahil gerçek yük; arayüzde "80 kg (vücut)" gibi
+            // gösterilebilsin diye ayrı tutuluyor.
+            load: Math.round(yuk * 10) / 10,
             reps: parseNumber(s.reps),
             date: w.date
           });

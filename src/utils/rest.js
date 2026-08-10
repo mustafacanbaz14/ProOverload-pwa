@@ -88,8 +88,18 @@ export const systemicLoad = (contributions = {}) => {
  * @param opts.customExercises kullanıcı kas eşlemeleri
  * @returns { seconds, tier, reason, isTechnique }
  */
-export const suggestRestSeconds = (exerciseName, set = {}, { customExercises = [] } = {}) => {
+export const suggestRestSeconds = (exerciseName, set = {}, { customExercises = [], supersetPending = false } = {}) => {
   const tip = set.setType || 'normal';
+
+  // Süperset: eşleşen harekete geçilecekse dinlenme yok, geçiş var. Dinlenme
+  // çiftin SONUNA ait; araya tam dinlenme koymak süperseti iki ayrı hareket
+  // haline getirir ve yöntemin amacını ortadan kaldırır.
+  if (supersetPending) {
+    return {
+      seconds: 20, tier: restTierOf(20), isTechnique: true,
+      reason: 'Süperset: eşleşen harekete geç. Asıl dinlenme çiftin sonunda.',
+    };
+  }
 
   // Drop ve rest-pause'ta kısa ara tekniğin parçası: burada "dinlenme" demek
   // yanlış olur, o yüzden ayrı bir kademe ve ayrı bir gerekçe veriliyor.

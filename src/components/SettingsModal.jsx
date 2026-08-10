@@ -372,6 +372,13 @@ const SettingsModal = memo(({
             />
 
             <Toggle
+              label="Vücut Ağırlığını Yüke Say"
+              hint="Barfiks, dip ve şınavda ağırlık alanı yalnızca EK yük sayılır; taşınan vücut ağırlığı üstüne eklenir. Kapatırsan ağırlık alanı mutlak yük olarak okunur."
+              checked={settings.bodyweightLoad !== false}
+              onChange={(v) => set({ bodyweightLoad: v })}
+            />
+
+            <Toggle
               label="Harekete Göre Dinlenme"
               hint="Ağır squat ile lateral raise aynı süreye ihtiyaç duymuyor. Süre; kas kütlesi, bileşiklik, RIR ve tekrar sayısından hesaplanır."
               checked={settings.smartRest !== false}

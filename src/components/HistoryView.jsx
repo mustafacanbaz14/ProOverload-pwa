@@ -108,6 +108,7 @@ const HistoryView = memo(({
   onEditCardio,
   handleSaveAsTemplate,
   latestWeight = 0,
+  loadOptsFor,
   wellness = [],
   maintenanceCalories = 0,
   onUpdateNutrition,
@@ -223,7 +224,7 @@ const HistoryView = memo(({
             <div className="text-center py-12 text-zinc-600 text-xs font-mono">Henüz antrenman kaydı yok</div>
           ) : (
             <WeekGroups key="workouts" items={filteredWorkouts} expandAll={Boolean(q)}>{w => {
-              const tonnage = calcTonnage(w.exercises);
+              const tonnage = calcTonnage(w.exercises, loadOptsFor?.(w.date) || null);
               const effectiveSets = calcEffectiveSets(w.exercises);
               const cardio = w.cardio || [];
               const cardioKcal = totalCardioCalories(cardio, weightForDate(w.date));
