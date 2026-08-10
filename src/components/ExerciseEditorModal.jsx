@@ -33,6 +33,7 @@ const ExerciseEditorModal = memo(({
   exerciseName,
   currentContributions,
   currentMechanics,
+  currentNote = '',
   isOverridden,
   onSave,
   onReset,
@@ -42,6 +43,7 @@ const ExerciseEditorModal = memo(({
   // prop'u state'e kopyalayan bir efekte gerek yok.
   const [contribs, setContribs] = useState(() => ({ ...(currentContributions || {}) }));
   const [mechanics, setMechanics] = useState(currentMechanics || 'Push');
+  const [note, setNote] = useState(currentNote || '');
 
   if (!isOpen) return null;
 
@@ -140,12 +142,34 @@ const ExerciseEditorModal = memo(({
               İtme/çekme dengesi hesabında kullanılır.
             </p>
           </div>
+
+          {/* Kurulum notu: sehpa yüksekliği, pim deliği, tutuş genişliği gibi
+              ayarlar her seans yeniden bulunuyordu. Kas eşlemesinden ayrı bir
+              alan çünkü "varsayılana dön" eşlemeyi sıfırlarken bu notu silmemeli. */}
+          <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
+            <label htmlFor="setup-note" className="text-[11px] font-bold text-zinc-200 block mb-1">
+              Kurulum Notu
+            </label>
+            <span className="text-[9px] font-mono text-zinc-600 block mb-2 leading-snug">
+              Sehpa/koltuk yüksekliği, pim deliği, tutuş genişliği, ayak
+              pozisyonu… Antrenman ekranında hareketin altında görünür.
+            </span>
+            <textarea
+              id="setup-note"
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              maxLength={200}
+              placeholder="Örn. koltuk 4, pim 7. delik, orta tutuş"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-2 text-[11px] text-zinc-200 outline-none focus:border-cyan-600 resize-none"
+            />
+          </div>
         </div>
 
         <div className="p-3 border-t border-zinc-800 bg-zinc-950 shrink-0 pb-safe space-y-2">
           <button
             disabled={!hasPrimary}
-            onClick={() => onSave({ contributions: contribs, mechanics })}
+            onClick={() => onSave({ contributions: contribs, mechanics, setupNote: note.trim() })}
             className="w-full bg-cyan-600 active:bg-cyan-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold py-3 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"
           >
             <Save size={14} /> Kaydet

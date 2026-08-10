@@ -35,7 +35,7 @@ import { templateToExercises, workoutToTemplate, suggestTemplateName } from './u
 import {
   generateId, getLocalDateString, getMondayOfCurrentWeek, detectMuscleGroup,
   foldForSearch, parseNumber, mergeMetrics, mergeNutrition,
-  isWorkingSet, calcEffectiveSets, buildPersonalRecords, loadPersistedState,
+  isWorkingSet, calcEffectiveSets, buildPersonalRecords, loadPersistedState, exerciseSetupNote,
   computeComposition, sortByDateDesc, suggestNextTarget, mergeSettings,
   mergeWorkout, mergeTemplate, isWarmupSet, estimate1RM, findMetricsForDate,
   resetDayNeatOverride,
@@ -244,9 +244,11 @@ export default function App() {
 
 
   // Antrenman işlemleri
-  const startRest = useCallback((seconds) => {
+  // `reason` akıllı öneriden gelir: sayacın neden 210 sn değil de 75 sn
+  // olduğunu göstermek, öneriyi "keyfi sayı" olmaktan çıkarıyor.
+  const startRest = useCallback((seconds, reason = null) => {
     const total = Math.max(1, Math.round(seconds));
-    setRest({ endsAt: Date.now() + total * 1000, total });
+    setRest({ endsAt: Date.now() + total * 1000, total, reason });
     setRestSecondsLeft(total);
   }, []);
 
@@ -1062,18 +1064,33 @@ export default function App() {
 
   // Yerleşik hareketler de düzenlenebilir: kayıt customExercises içine aynı ADLA
   // yazılır, detectMuscleGroup önce oraya baktığı için yerleşik kuralı ezer.
-  const handleSaveExerciseMapping = useCallback((name, { contributions, mechanics }) => {
+  const handleSaveExerciseMapping = useCallback((name, { contributions, mechanics, setupNote }) => {
     const primary = Object.entries(contributions).sort((a, b) => b[1] - a[1])[0]?.[0];
     setCustomExercises(prev => {
       const rest = prev.filter(ex => (typeof ex === 'object' ? ex.name : ex) !== name);
-      return [...rest, { name, contributions, muscle: primary, mechanics, schema: 2 }];
+      return [...rest, {
+        name, contributions, muscle: primary, mechanics, schema: 2,
+        ...(setupNote ? { setupNote } : {}),
+      }];
     });
     setEditorExercise(null);
-    showToast('Kas eşlemesi kaydedildi.');
+    showToast('Kaydedildi.');
   }, [showToast]);
 
+  /**
+   * Kas eşlemesini yerleşik kurala döndürür.
+   *
+   * Kurulum notu KORUNUYOR: not eşlemenin parçası değil, kullanıcının kendi
+   * salon ayarı. Kaydı tümden silmek "varsayılana dön"e basan kullanıcının
+   * sehpa yüksekliği notunu da sessizce siliyordu.
+   */
   const handleResetExerciseMapping = useCallback((name) => {
-    setCustomExercises(prev => prev.filter(ex => (typeof ex === 'object' ? ex.name : ex) !== name));
+    setCustomExercises(prev => prev.flatMap(ex => {
+      const exName = typeof ex === 'object' ? ex.name : ex;
+      if (exName !== name) return [ex];
+      const not = typeof ex === 'object' ? ex.setupNote : '';
+      return not ? [{ name, setupNote: not, schema: 2 }] : [];
+    }));
     setEditorExercise(null);
     showToast('Varsayılan eşlemeye dönüldü.');
   }, [showToast]);
@@ -2309,6 +2326,7 @@ export default function App() {
           exerciseName={editorExercise || ''}
           currentContributions={editorExercise ? detectMuscleGroup(editorExercise, customExercises).contributions : {}}
           currentMechanics={editorExercise ? detectMuscleGroup(editorExercise, customExercises).mechanics : 'Push'}
+          currentNote={exerciseSetupNote(editorExercise, customExercises)}
           isOverridden={customExercises.some(ex => (typeof ex === 'object' ? ex.name : ex) === editorExercise)}
           onSave={(data) => handleSaveExerciseMapping(editorExercise, data)}
           onReset={() => handleResetExerciseMapping(editorExercise)}
@@ -2492,6 +2510,7 @@ export default function App() {
           isOpen={Boolean(plateCalc)}
           onClose={() => setPlateCalc(null)}
           initialWeight={plateCalc?.weight || 0}
+          availablePlates={settings.availablePlates}
         />}
 
         {/* MUSCLE DETAIL MODAL */}

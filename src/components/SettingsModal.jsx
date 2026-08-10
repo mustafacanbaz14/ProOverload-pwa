@@ -2,6 +2,7 @@ import React, { memo } from 'react';
 import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles } from 'lucide-react';
 import { exportAppleHealthXML, exportGoogleFitJSON } from '../utils/healthSync';
 import { EXPERIENCE_LEVELS, APP_VERSION } from '../utils/constants';
+import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plates';
 import { ratesForGoal } from '../utils/goals';
 import { ACTIVITY_LEVELS } from '../utils/energyModel';
 
@@ -370,8 +371,20 @@ const SettingsModal = memo(({
               onChange={(v) => set({ restAlert: v })}
             />
 
+            <Toggle
+              label="Harekete Göre Dinlenme"
+              hint="Ağır squat ile lateral raise aynı süreye ihtiyaç duymuyor. Süre; kas kütlesi, bileşiklik, RIR ve tekrar sayısından hesaplanır."
+              checked={settings.smartRest !== false}
+              onChange={(v) => set({ smartRest: v })}
+            />
+
             <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
-              <span className="text-zinc-200 text-[11px] font-bold block mb-2">Varsayılan Dinlenme</span>
+              <span className="text-zinc-200 text-[11px] font-bold block mb-1">Varsayılan Dinlenme</span>
+              <span className="text-zinc-500 text-[10px] font-mono block mb-2 leading-snug">
+                {settings.smartRest !== false
+                  ? 'Harekete göre dinlenme açıkken yalnızca öneri üretilemeyen durumlarda kullanılır.'
+                  : 'Bütün setlerde bu süre kullanılır.'}
+              </span>
               <div className="grid grid-cols-4 gap-2">
                 {[60, 90, 120, 180].map(sec => (
                   <button
@@ -383,6 +396,41 @@ const SettingsModal = memo(({
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Salon plaka envanteri: hesaplayıcı ve ısınma piramidi buna göre
+                yuvarlıyor. 1.25'i olmayan bir salonda 82.5 kg önermek,
+                yüklenemeyecek bir hedef vermek demekti. */}
+            <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
+              <span className="text-zinc-200 text-[11px] font-bold block mb-1">Salondaki Plakalar</span>
+              <span className="text-zinc-500 text-[10px] font-mono block mb-2 leading-snug">
+                Plaka hesaplayıcı ve ısınma piramidi yalnızca seçili plakaları kullanır.
+                En küçük plaka, yükleme adımını belirler (çift olarak takıldığı için iki katı).
+              </span>
+              <div className="grid grid-cols-5 gap-1.5">
+                {PLATE_OPTIONS.map(p => {
+                  const secili = (settings.availablePlates || AVAILABLE_PLATES).includes(p);
+                  return (
+                    <button
+                      key={p}
+                      onClick={() => {
+                        const mevcut = settings.availablePlates || AVAILABLE_PLATES;
+                        const sonraki = secili ? mevcut.filter(x => x !== p) : [...mevcut, p];
+                        // Hepsi kapatılırsa hesaplayıcı hiçbir ağırlık kuramaz;
+                        // son plaka çıkarılmaya çalışılırsa yok sayılıyor.
+                        if (sonraki.length === 0) return;
+                        set({ availablePlates: [...new Set(sonraki)].sort((a, b) => b - a) });
+                      }}
+                      className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${secili ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' : 'bg-zinc-900 border-zinc-800 text-zinc-600'}`}
+                    >
+                      {p}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-zinc-600 text-[9px] font-mono block mt-2">
+                En küçük plaka {smallestPlateOf(settings.availablePlates)} kg — yükleme adımı {smallestPlateOf(settings.availablePlates) * 2} kg.
+              </span>
             </div>
 
             <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">

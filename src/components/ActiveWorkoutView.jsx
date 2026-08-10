@@ -5,10 +5,11 @@ import { FORM_RATINGS, SET_TYPES } from '../utils/constants';
 import {
   getNextSetType, calcFatigueDropoff,
   isWarmupSet, isWorkingSet, parseNumber, estimate1RM,
-  suggestNextTarget, detectMuscleGroup, clampNumber, INPUT_LIMITS
+  suggestNextTarget, detectMuscleGroup, clampNumber, INPUT_LIMITS, exerciseSetupNote
 } from '../utils/helpers';
 import { formatDay } from '../utils/dates';
 import { READINESS_FIELDS, READINESS_ZONES } from '../utils/readiness';
+import { suggestRestSeconds } from '../utils/rest';
 
 const ActiveWorkoutView = memo(({
   activeWorkout,
@@ -163,6 +164,13 @@ const ActiveWorkoutView = memo(({
             deload,
           }) : null;
           const record = personalRecords.get(ex.name);
+          const setupNote = exerciseSetupNote(ex.name, customExercises);
+          // Dinlenme düğmesinin göstereceği süre: son çalışma setine göre.
+          // Set yoksa hareketin kendi karakterinden (orta şiddet varsayımı).
+          const restHint = settings.smartRest === false ? null : suggestRestSeconds(
+            ex.name,
+            [...(ex.sets || [])].reverse().find(isWorkingSet) || { rir: 2 },
+            { customExercises });
           // Katkılar büyükten küçüğe: birincil kas en solda.
           const muscleParts = Object.entries(contributions || {}).sort((a, b) => b[1] - a[1]);
 
@@ -233,6 +241,16 @@ const ActiveWorkoutView = memo(({
               )}
 
               {/* Bu hareketin bir setinin hangi kasa ne kadar yazıldığı */}
+              {/* Kurulum notu: sehpa yüksekliği, pim deliği gibi ayarlar her
+                  seans yeniden bulunuyordu. Setlerin hemen üstünde duruyor
+                  çünkü lazım olduğu an makineye otururken. */}
+              {setupNote && (
+                <div className="px-3 py-2 border-b border-zinc-800 bg-cyan-950/15 flex items-start gap-2">
+                  <Settings size={11} className="text-cyan-500 shrink-0 mt-0.5" />
+                  <span className="text-[10px] font-mono text-cyan-200/90 leading-relaxed">{setupNote}</span>
+                </div>
+              )}
+
               {muscleParts.length > 0 && (
                 <div className="px-3 py-2 border-b border-zinc-800 bg-zinc-950/40 flex flex-wrap gap-1">
                   {muscleParts.map(([m, w]) => (
@@ -343,7 +361,11 @@ const ActiveWorkoutView = memo(({
                             repsOnFocusRef.current = null;
                             updateSet(ex.id, set.id, 'reps', clampNumber(e.target.value, INPUT_LIMITS.reps.min, INPUT_LIMITS.reps.max));
                             if (changed && settings.autoRestTimer && !warmup && parseNumber(e.target.value) > 0) {
-                              startRest(settings.restSeconds);
+                              // Süreyi az önce BİTEN setin özellikleri belirliyor:
+                              // yorgunluğu bırakan o set, sıradaki değil.
+                              const oneri = settings.smartRest === false ? null
+                                : suggestRestSeconds(ex.name, { ...set, reps: e.target.value }, { customExercises });
+                              startRest(oneri ? oneri.seconds : settings.restSeconds, oneri?.reason);
                             }
                           }}
                           className={`w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 font-mono text-sm outline-none text-center focus:bg-zinc-800 h-10 transition-colors ${warmup ? 'text-zinc-500' : 'text-zinc-100'}`}
@@ -407,11 +429,11 @@ const ActiveWorkoutView = memo(({
                     <Layers size={14} />
                   </button>
                   <button
-                    onClick={() => startRest(settings.restSeconds || 120)}
-                    title="Dinlenme sayacını başlat"
-                    className="px-3 py-2 bg-zinc-950 active:bg-zinc-800 text-zinc-400 border border-zinc-800 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0"
+                    onClick={() => startRest(restHint ? restHint.seconds : (settings.restSeconds || 120), restHint?.reason)}
+                    title={restHint ? restHint.reason : 'Dinlenme sayacını başlat'}
+                    className={`px-3 py-2 bg-zinc-950 active:bg-zinc-800 border border-zinc-800 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0 ${restHint ? restHint.tier.text : 'text-zinc-400'}`}
                   >
-                    {settings.restSeconds || 120}s
+                    {restHint ? restHint.seconds : (settings.restSeconds || 120)}s
                   </button>
                 </div>
               </div>
@@ -483,6 +505,13 @@ const ActiveWorkoutView = memo(({
                 />
               </div>
             </div>
+            {/* Sürenin gerekçesi: sayı keyfi görünmesin, kullanıcı kabul ya da
+                reddetmeyi bilerek yapsın. */}
+            {rest.reason && (
+              <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-2 pt-2 border-t border-zinc-800">
+                {rest.reason}
+              </p>
+            )}
           </div>
         </div>
       )}

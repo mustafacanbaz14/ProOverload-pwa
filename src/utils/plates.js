@@ -1,5 +1,32 @@
-// Salonda yaygın bulunan plakalar (kg, tek plaka).
+// Salonda yaygın bulunan plakalar (kg, tek plaka). Varsayılan; kullanıcı
+// ayarlardan kendi salonunun envanterini seçebiliyor.
 export const AVAILABLE_PLATES = [25, 20, 15, 10, 5, 2.5, 1.25];
+
+// Seçilebilir plaka boyutları. 0.5 ve 1 kg mikro plakalar her salonda yok ama
+// varsa küçük artışları mümkün kılıyor; 1.25'i olmayan salonlar da var ve o
+// durumda hesaplayıcı takılamayacak ağırlık öneriyordu.
+export const PLATE_OPTIONS = [25, 20, 15, 10, 5, 2.5, 2, 1.25, 1, 0.5];
+
+/**
+ * Ayardan gelen plaka listesini güvenli hale getirir.
+ *
+ * Boş liste hesaplayıcıyı kilitler (hiçbir ağırlık takılamaz), bu yüzden boşsa
+ * varsayılana dönülüyor. Sıralama da garanti altına alınıyor çünkü açgözlü
+ * algoritma büyükten küçüğe gitmeye dayanıyor.
+ */
+export const normalizePlates = (plates) => {
+  const list = (Array.isArray(plates) ? plates : [])
+    .map(Number)
+    .filter(p => Number.isFinite(p) && p > 0);
+  const unique = [...new Set(list)].sort((a, b) => b - a);
+  return unique.length > 0 ? unique : [...AVAILABLE_PLATES];
+};
+
+/** Envanterdeki en küçük plaka — yükleme adımı bunun iki katı. */
+export const smallestPlateOf = (plates) => {
+  const list = normalizePlates(plates);
+  return list[list.length - 1];
+};
 
 // Bar seçenekleri
 export const BAR_OPTIONS = [
@@ -19,6 +46,7 @@ export const BAR_OPTIONS = [
 export const calculatePlates = (targetWeight, barWeight = 20, plates = AVAILABLE_PLATES) => {
   const target = Number(targetWeight) || 0;
   const bar = Number(barWeight) || 0;
+  const envanter = normalizePlates(plates);
 
   if (target <= bar) {
     return { perSide: [], achievable: bar, remainder: 0, exact: target === bar };
@@ -27,7 +55,7 @@ export const calculatePlates = (targetWeight, barWeight = 20, plates = AVAILABLE
   let perSideRemaining = (target - bar) / 2;
   const perSide = [];
 
-  for (const plate of [...plates].sort((a, b) => b - a)) {
+  for (const plate of envanter) {
     // Kayan nokta artığı yüzünden 0.001 toleransı gerekiyor.
     while (perSideRemaining >= plate - 0.001) {
       perSide.push(plate);
@@ -51,9 +79,14 @@ export const groupPlates = (perSide) => {
     .sort((a, b) => b.plate - a.plate);
 };
 
-/** Bara takılabilecek en yakın ağırlığa yuvarlar (en küçük plaka çifti kadar adım). */
+/**
+ * Bara takılabilecek en yakın ağırlığa yuvarlar (en küçük plaka çifti kadar adım).
+ *
+ * Adım envanterden geliyor: 1.25'i olmayan bir salonda 82.5 kg önermek, o
+ * ağırlığı yükleyemeyecek kullanıcıya yanlış hedef vermek demek.
+ */
 export const roundToLoadable = (weight, barWeight = 20, smallestPlate = 1.25) => {
-  const step = smallestPlate * 2;
+  const step = (Number(smallestPlate) || 1.25) * 2;
   const bar = Number(barWeight) || 0;
   const above = Number(weight) - bar;
   if (above <= 0) return bar;
@@ -67,10 +100,13 @@ export const roundToLoadable = (weight, barWeight = 20, smallestPlate = 1.25) =>
  * hazırlarken yorgunluk biriktirmemeyi hedefler. Hafif ağırlıklarda (bara yakın)
  * ara kademeler anlamsızlaştığı için elenir.
  */
-export const generateWarmup = (workingWeight, barWeight = 20) => {
+export const generateWarmup = (workingWeight, barWeight = 20, plates = AVAILABLE_PLATES) => {
   const target = Number(workingWeight) || 0;
   const bar = Number(barWeight) || 0;
   if (target <= 0) return [];
+  // Isınma kademeleri de envantere yuvarlanmalı; yoksa piramit takılamayacak
+  // ağırlıklar öneriyor.
+  const adim = smallestPlateOf(plates);
 
   const steps = [];
 
@@ -87,7 +123,7 @@ export const generateWarmup = (workingWeight, barWeight = 20) => {
   ].forEach(({ pct, reps }) => {
     const raw = target * pct;
     if (raw <= bar) return; // bara takılamayacak kadar hafif
-    const weight = roundToLoadable(raw, bar);
+    const weight = roundToLoadable(raw, bar, adim);
     // Aynı ağırlık iki kez çıkmasın
     if (steps.some(s => s.weight === weight)) return;
     if (weight >= target) return;

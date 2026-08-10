@@ -1,7 +1,7 @@
 import React, { useState, memo } from 'react';
 import { X, Layers, Flame } from 'lucide-react';
 import {
-  calculatePlates, groupPlates, generateWarmup, BAR_OPTIONS
+  calculatePlates, groupPlates, generateWarmup, BAR_OPTIONS, normalizePlates
 } from '../utils/plates';
 
 const PLATE_COLOR = {
@@ -11,19 +11,25 @@ const PLATE_COLOR = {
   10: 'bg-emerald-600 border-emerald-500',
   5: 'bg-zinc-300 border-zinc-200',
   2.5: 'bg-zinc-500 border-zinc-400',
+  2: 'bg-zinc-500 border-zinc-400',
   1.25: 'bg-zinc-600 border-zinc-500',
+  1: 'bg-zinc-700 border-zinc-600',
+  0.5: 'bg-zinc-700 border-zinc-600',
 };
 
-const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0 }) => {
+const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availablePlates }) => {
   const [weight, setWeight] = useState(initialWeight || 60);
   const [bar, setBar] = useState(20);
   const [tab, setTab] = useState('plates'); // 'plates' | 'warmup'
 
   if (!isOpen) return null;
 
-  const result = calculatePlates(weight, bar);
+  // Envanter ayarlardan gelir; salonda olmayan plakayla hesap yapmak
+  // yüklenemeyecek bir hedef üretiyordu.
+  const envanter = normalizePlates(availablePlates);
+  const result = calculatePlates(weight, bar, envanter);
   const grouped = groupPlates(result.perSide);
-  const warmup = generateWarmup(weight, bar);
+  const warmup = generateWarmup(weight, bar, envanter);
 
   return (
     <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[95] flex items-center justify-center p-4">

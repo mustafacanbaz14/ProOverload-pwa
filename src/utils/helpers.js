@@ -74,6 +74,17 @@ export const detectMuscleGroup = (name, customList = []) => {
   return { muscle: 'Diğer', mechanics: 'Diğer', contributions: {} };
 };
 
+/**
+ * Bir hareketin kullanıcı kurulum notu (sehpa yüksekliği, pim deliği…).
+ *
+ * Not, kas eşlemesiyle aynı kayıtta duruyor ama ondan bağımsız: eşleme
+ * varsayılana döndürülse bile not korunuyor.
+ */
+export const exerciseSetupNote = (name, customList = []) => {
+  const kayit = (customList || []).find(ex => (typeof ex === 'object' ? ex.name : ex) === name);
+  return (kayit && typeof kayit === 'object' && kayit.setupNote) || '';
+};
+
 export const foldForSearch = (text) => String(text || '')
   .replace(/[İIı]/g, 'i')
   .toLowerCase();

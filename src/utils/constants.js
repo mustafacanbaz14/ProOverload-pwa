@@ -6,6 +6,12 @@ export const DEFAULT_SETTINGS = {
   autoCopyLastSet: true, nutritionGoal: 'bulk', proteinPerFfmBulk: 2.2, proteinPerFfmCut: 2.6,
   lockScreenActivity: true, keepScreenAwake: true,
   autoRestTimer: true, restSeconds: 120, restAlert: true,
+  // Dinlenme süresi harekete göre önerilsin mi. Kapalıysa genel restSeconds
+  // kullanılır — ağır squat ile lateral raise aynı süreyi paylaşır.
+  smartRest: true,
+  // Salonun plaka envanteri (kg, tek plaka). Boş bırakılamaz; normalizePlates
+  // boş listeyi varsayılana çeviriyor.
+  availablePlates: [25, 20, 15, 10, 5, 2.5, 1.25],
   repRangeMin: 6, repRangeMax: 10,
   experienceLevel: 'intermediate',
   // Hareket seçiminde varsayılan olarak yalnızca daha önce yapılmış hareketler
@@ -580,28 +586,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.1';
+export const APP_VERSION = '3.2';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.1',
+  title: 'ProOverload 3.2',
   date: '2026-08-10',
   items: [
     {
-      title: 'Seans Sonu Raporu',
-      desc: 'Antrenmanı bitirince hareket hareket geçen seansla kıyas: tahmini 1RM farkı, yeni rekorlar ve bu seansın haftalık hacme katkısı. Yüksek tekrarlı hareketlerde 1RM yerine hacim yükü karşılaştırılır.'
+      title: 'Harekete Göre Dinlenme',
+      desc: 'Tek bir 120 saniye yerine her set kendi süresini alıyor. Süre; yüklenen kas kütlesi, hareketin bileşikliği, RIR ve tekrar sayısından hesaplanıyor. Ağır squat 210 sn, lateral raise 60 sn; drop ve rest-pause ise dinlenme değil teknik arası sayılıyor. Sayacın altında gerekçesi yazıyor.'
     },
     {
-      title: 'Haftalık Gözden Geçirme',
-      desc: 'Haftayı kapatıp gelecek haftaya somut ayar çıkarır: hangi bölgeye kaç set eklenecek, hangisi azaltılacak, kalori dengesi hedefe uyuyor mu. Toparlanma zayıfsa hacim artışı önerilmez.'
+      title: 'Salondaki Plakalar',
+      desc: 'Plaka envanteri ayarlardan seçiliyor. 1.25 kg plakası olmayan bir salonda hesaplayıcı artık 82.5 kg gibi yüklenemeyecek hedefler önermiyor; ısınma piramidi de aynı envantere yuvarlanıyor. Mikro plakalar (0.5 / 1 kg) da eklenebiliyor.'
     },
     {
-      title: 'Sürüm Numarası Sadeleşti',
-      desc: 'Sürümler artık iki parçalı: 3.1, 3.2 … 3.9 sonrası 4.0. Ekranda görünen sürüm ile paketteki sürümün ayrışmadığı testle güvence altına alındı.'
+      title: 'Hareket Kurulum Notu',
+      desc: 'Sehpa yüksekliği, pim deliği, tutuş genişliği gibi ayarlar harekete not olarak yazılıyor ve antrenman ekranında setlerin üstünde görünüyor. Kas eşlemesini varsayılana döndürmek bu notu silmiyor.'
     },
     {
-      title: 'Karar Mantığı Test Altında',
-      desc: 'Koç önerileri, hareket ikamesi, çakışma asistanı ve haftalık plan hacim dökümü için regresyon testleri eklendi; bu modüller artık build sırasında doğrulanıyor.'
+      title: 'Test Kapsamı Genişledi',
+      desc: 'Dinlenme önerisi, plaka envanteri, seans raporu ve haftalık gözden geçirme regresyon testlerine alındı. Toplam 52 → 66 test.'
     }
   ]
 };

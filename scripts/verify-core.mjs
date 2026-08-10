@@ -6,6 +6,10 @@ import { suggestSubstitutes } from '../src/utils/substitution.js';
 import { analyzeDayConflicts } from '../src/utils/interference.js';
 import { computeWeekPlan } from '../src/utils/weekPlan.js';
 import { findActivity } from '../src/utils/cardio.js';
+import { suggestRestSeconds } from '../src/utils/rest.js';
+import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
+import { buildSessionReport } from '../src/utils/sessionReport.js';
+import { buildWeeklyReview, lastCompletedWeekStart } from '../src/utils/weeklyReview.js';
 import { computeReadiness } from '../src/utils/readiness.js';
 import { dayEnergyBreakdown, theoreticalWeek, estimateMacrosForTef, groupByWeek, buildEnergySeries, neatOptsForDay } from '../src/utils/energyModel.js';
 import { calorieDashboard, deriveGoalSet } from '../src/utils/goals.js';
@@ -584,6 +588,148 @@ test('planda olmayan şablon kimliği güne hacim yazmaz', () => {
     { weightKg: 80 });
   assert.equal(result.totalSets, 0);
   assert.equal(result.days.find(d => d.key === 'mon').workouts.length, 0);
+});
+
+/* ------------------------------------------------------------------ *
+ *  DİNLENME ÖNERİSİ
+ * ------------------------------------------------------------------ */
+
+const restOf = (name, set) => suggestRestSeconds(name, set).seconds;
+
+test('dinlenme süresi kas sayısına değil yüklenen kas kütlesine göre artar', () => {
+  // Squat'ın 0.5+ katkısı iki, bench press'in üç. Kas SAYSAYDIK squat daha
+  // hafif çıkardı; oysa sistemik yükü belirgin daha yüksek.
+  const squat = restOf('Barbell Back Squat', { rir: 2, reps: 8 });
+  const bench = restOf('Barbell Bench Press', { rir: 2, reps: 8 });
+  const curl = restOf('Barbell Bicep Curl', { rir: 2, reps: 10 });
+  assert.ok(squat > bench, `squat ${squat} > bench ${bench} olmalı`);
+  assert.ok(bench > curl);
+});
+
+test('tek eklemli büyük kas hareketi bileşiğin altında kalır', () => {
+  // Leg extension quadriceps'i yüklüyor ama tek eklemli; kütle tek başına
+  // yetseydi squat'la aynı bandı paylaşırdı.
+  assert.ok(restOf('Leg Extension', { rir: 2, reps: 10 }) < restOf('Barbell Back Squat', { rir: 2, reps: 10 }));
+});
+
+test('tükeniş dinlenmeyi uzatır, yedek tekrar kısaltır', () => {
+  const tukenis = restOf('Barbell Back Squat', { setType: 'failure', reps: 8 });
+  const orta = restOf('Barbell Back Squat', { rir: 2, reps: 8 });
+  const rahat = restOf('Barbell Back Squat', { rir: 3, reps: 8 });
+  assert.ok(tukenis > orta);
+  assert.ok(rahat < orta);
+});
+
+test('drop ve rest-pause dinlenme değil teknik arası sayılır', () => {
+  const drop = suggestRestSeconds('Barbell Bench Press', { setType: 'drop' });
+  const rp = suggestRestSeconds('Barbell Bench Press', { setType: 'rest_pause' });
+  assert.equal(drop.isTechnique, true);
+  assert.equal(rp.isTechnique, true);
+  assert.ok(drop.seconds <= 30 && rp.seconds <= 30);
+});
+
+test('öneri makul sınırlar içinde kalır', () => {
+  const enUzun = restOf('Conventional Deadlift', { setType: 'failure', reps: 3 });
+  const enKisa = restOf('Standing Calf Raise', { rir: 3, reps: 20 });
+  assert.ok(enUzun <= 300, `üst sınır aşıldı: ${enUzun}`);
+  assert.ok(enKisa >= 45, `alt sınır aşıldı: ${enKisa}`);
+});
+
+/* ------------------------------------------------------------------ *
+ *  PLAKA ENVANTERİ
+ * ------------------------------------------------------------------ */
+
+test('envanterde olmayan plaka hesaba katılmaz', () => {
+  const az = [25, 20, 10, 5, 2.5]; // 1.25 yok
+  const tam = calculatePlates(82.5, 20);
+  const eksik = calculatePlates(82.5, 20, az);
+  assert.equal(tam.exact, true);
+  // 1.25 olmayan salonda 82.5 kurulamaz; uygulama bunu gizlememeli.
+  assert.equal(eksik.exact, false);
+  assert.equal(eksik.achievable, 80);
+  assert.ok(!eksik.perSide.includes(1.25));
+});
+
+test('boş plaka listesi hesaplayıcıyı kilitlemez', () => {
+  assert.deepEqual(normalizePlates([]), [...AVAILABLE_PLATES]);
+  assert.deepEqual(normalizePlates(null), [...AVAILABLE_PLATES]);
+  // Geçersiz değerler ayıklanır, sıralama garanti altında.
+  assert.deepEqual(normalizePlates([5, 'x', -2, 20, 5]), [20, 5]);
+});
+
+test('ısınma piramidi envantere yuvarlanır', () => {
+  const az = [25, 20, 10, 5]; // en küçük 5 → adım 10 kg
+  const adimlar = generateWarmup(100, 20, az).map(s => s.weight);
+  assert.ok(adimlar.every(w => (w - 20) % 10 === 0), `yüklenemeyen adım: ${adimlar}`);
+});
+
+/* ------------------------------------------------------------------ *
+ *  SEANS RAPORU
+ * ------------------------------------------------------------------ */
+
+const setsOf = (kg, reps, n) => Array.from({ length: n }, (_, i) => ({
+  id: `s${i}`, weight: String(kg), reps: String(reps), rir: 2, setType: 'normal',
+}));
+
+test('seans raporu aynı hareketi geçen seansla kıyaslar', () => {
+  const gecmis = [{ id: 'w0', date: '2026-07-28', exercises: [{ name: 'Barbell Bench Press', sets: setsOf(80, 8, 4) }] }];
+  const bugun = { id: 'w1', date: '2026-08-04', duration: 60, exercises: [{ name: 'Barbell Bench Press', sets: setsOf(85, 8, 4) }] };
+  const rapor = buildSessionReport(bugun, gecmis, { previousRecords: new Map([['Barbell Bench Press', { e1rm: 98 }]]) });
+  const satir = rapor.exercises[0];
+  assert.equal(satir.metric, 'e1rm');
+  assert.ok(satir.delta > 0);
+  assert.equal(satir.isPR, true);
+});
+
+test('rekor ilanı için hem kayıtlı rekoru hem geçen seansı geçmek gerekir', () => {
+  // Rekor listesi eksik olsa bile gerileyen bir harekete rekor verilmemeli.
+  const gecmis = [{ id: 'w0', date: '2026-07-28', exercises: [{ name: 'Overhead Press (OHP)', sets: setsOf(50, 10, 3) }] }];
+  const bugun = { id: 'w1', date: '2026-08-04', duration: 60, exercises: [{ name: 'Overhead Press (OHP)', sets: setsOf(47.5, 10, 3) }] };
+  const rapor = buildSessionReport(bugun, gecmis, { previousRecords: new Map() });
+  assert.equal(rapor.exercises[0].isPR, false);
+  assert.equal(rapor.records.length, 0);
+});
+
+test('yüksek tekrarlı harekette 1RM yerine hacim yükü kıyaslanır', () => {
+  // estimate1RM 15 tekrarın üstünde 0 döndüğü için bu hareketler her seans
+  // "1RM 0" görünüyordu.
+  const gecmis = [{ id: 'w0', date: '2026-07-28', exercises: [{ name: 'Lateral Raise (Dumbbell)', sets: setsOf(10, 15, 3) }] }];
+  const bugun = { id: 'w1', date: '2026-08-04', duration: 40, exercises: [{ name: 'Lateral Raise (Dumbbell)', sets: setsOf(12, 15, 3) }] };
+  const satir = buildSessionReport(bugun, gecmis).exercises[0];
+  assert.equal(satir.metric, 'tonnage');
+  assert.equal(satir.isPR, false);
+  assert.ok(satir.delta > 0);
+});
+
+/* ------------------------------------------------------------------ *
+ *  HAFTALIK GÖZDEN GEÇİRME
+ * ------------------------------------------------------------------ */
+
+test('toparlanma zayıfken hacim artışı önerilmez', () => {
+  const bugun = new Date('2026-08-05T12:00:00');
+  const workouts = [
+    { id: 'a', date: '2026-07-27', readiness: { score: 42 }, exercises: [{ name: 'Barbell Bench Press', sets: setsOf(80, 8, 3) }] },
+  ];
+  const wellness = ['2026-07-27', '2026-07-28', '2026-07-29', '2026-07-30'].map(date => ({
+    date, sleep: { bedTime: '01:00', wakeTime: '05:30', latency: 20, awakenings: 2, awakeMinutes: 15, refreshed: 4 },
+  }));
+  const review = buildWeeklyReview({ workouts, wellness, today: bugun });
+  const anahtarlar = review.adjustments.map(a => a.key);
+  assert.ok(anahtarlar.includes('recovery'));
+  // Aynı hafta hem "toparlan" hem "set ekle" demek çelişir.
+  assert.ok(!anahtarlar.includes('under'));
+});
+
+test('gözden geçirme varsayılan olarak geçen tam haftaya bakar', () => {
+  // İçinde bulunulan hafta bitmeden "hacim eksik" demek yanıltıcı olurdu.
+  assert.equal(lastCompletedWeekStart(new Date('2026-08-05T12:00:00')), '2026-07-27');
+  assert.equal(lastCompletedWeekStart(new Date('2026-08-03T12:00:00')), '2026-07-27');
+});
+
+test('kayıt yoksa gözden geçirme uydurma ayar üretmez', () => {
+  const review = buildWeeklyReview({ workouts: [], today: new Date('2026-08-05T12:00:00') });
+  assert.equal(review.hasData, false);
+  assert.deepEqual(review.adjustments.map(a => a.key), ['no-data']);
 });
 
 for (const { name, run } of tests) {
