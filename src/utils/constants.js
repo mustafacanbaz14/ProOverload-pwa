@@ -593,36 +593,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.4';
+export const APP_VERSION = '3.5';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.4',
+  title: 'ProOverload 3.5',
   date: '2026-08-10',
   items: [
     {
-      title: 'Vücut Ağırlıklı Hareketler Artık Sayılıyor',
-      desc: 'Barfiks 4×10 yapıp ağırlık alanına 0 yazınca tonaj 0, tahmini 1RM 0 görünüyordu — yani kalistenik çalışan biri için hacim istatistiği, rekorlar, seans raporu ve progresyon önerisi sessizce çalışmıyordu. Bu hareketlerde ağırlık alanı artık EK yük sayılıyor; taşınan vücut ağırlığı üstüne ekleniyor. Barfiks ve dipte oran 1, şınavda %64, ters kürekte %60. Kilo o tarihteki ölçümden okunuyor, bugünkü kilo geçmişe uygulanmıyor. Yardımlı ve makine varyantları hariç: orada ağırlık alanı ek yük değil destek miktarı. Ayarlardan kapatılabiliyor.'
+      title: 'Silinen Kayıtları Geri Al',
+      desc: 'Antrenman, kardiyo, ölçüm, beslenme, şablon, özel hareket ve döngü kayıtları silindikten sonra 7 saniye boyunca Geri Al düğmesi gösterilir. Kayıt mümkün olduğunca eski sırasına ve plan bağlantılarıyla birlikte döner.'
     },
     {
-      title: 'Süperset Dinlenmesi',
-      desc: 'Süperset eşi beklerken sayaç tam dinlenme başlatıyordu; oysa dinlenme çiftin sonuna ait, arada yalnızca geçiş var. Eşi olan harekette süre 20 saniyeye düşüyor ve bunun bir teknik arası olduğu yazıyor.'
+      title: 'Bildirimler Artık Birbirini Bozmuyor',
+      desc: 'Eski bir bildirimin zamanlayıcısı yeni bildirimi erken kapatabiliyordu. Her yeni bildirim önceki sayacı güvenli biçimde iptal ediyor; hata ve geri alma bildirimleri daha uzun kalıyor.'
     },
     {
-      title: 'Harekete Göre Dinlenme',
-      desc: 'Tek bir 120 saniye yerine her set kendi süresini alıyor. Süre; yüklenen kas kütlesi, hareketin bileşikliği, RIR ve tekrar sayısından hesaplanıyor. Ağır squat 210 sn, lateral raise 60 sn; drop ve rest-pause ise dinlenme değil teknik arası sayılıyor. Sayacın altında gerekçesi yazıyor.'
+      title: 'Çevrimdışı Durum Görünür',
+      desc: 'Bağlantı kesildiğinde üst çubukta çevrimdışı simgesi ve açıklayıcı bildirim görünür. Uygulamanın kayıtları cihazda tutmaya devam ettiği açıkça belirtilir; bağlantı dönünce ayrıca haber verilir.'
     },
     {
-      title: 'Salondaki Plakalar',
-      desc: 'Plaka envanteri ayarlardan seçiliyor. 1.25 kg plakası olmayan bir salonda hesaplayıcı artık 82.5 kg gibi yüklenemeyecek hedefler önermiyor; ısınma piramidi de aynı envantere yuvarlanıyor. Mikro plakalar (0.5 / 1 kg) da eklenebiliyor.'
-    },
-    {
-      title: 'Hareket Kurulum Notu',
-      desc: 'Sehpa yüksekliği, pim deliği, tutuş genişliği gibi ayarlar harekete not olarak yazılıyor ve antrenman ekranında setlerin üstünde görünüyor. Kas eşlemesini varsayılana döndürmek bu notu silmiyor.'
-    },
-    {
-      title: 'Test Kapsamı Genişledi',
-      desc: 'Dinlenme önerisi, plaka envanteri, seans raporu ve haftalık gözden geçirme regresyon testlerine alındı. Toplam 52 → 66 test.'
+      title: 'Sürüm Kaynakları Eşitlendi',
+      desc: 'Paket kilidinde kalan eski 3.0.0 damgası düzeltildi. Ekran sürümü, package.json, package-lock.json ve sürüm notları artık her derlemede birlikte doğrulanıyor.'
     }
   ]
 };

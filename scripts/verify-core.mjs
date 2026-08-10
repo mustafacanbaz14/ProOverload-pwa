@@ -26,10 +26,36 @@ import { deloadState } from '../src/utils/deload.js';
 import { buildCycleSummary, mergeCycleDay } from '../src/utils/cycle.js';
 import { analyzeTemplate } from '../src/utils/templateAssistant.js';
 import { sortExercisesForMuscle } from '../src/utils/exerciseSort.js';
+import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from '../src/utils/undo.js';
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
+
+test('silinen kayıt aynı sıraya geri alınır ve ikinci kez çoğalmaz', () => {
+  const source = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
+  const snapshot = removeById(source, 'b');
+  assert.deepEqual(snapshot.next.map(item => item.id), ['a', 'c']);
+  const restored = restoreAtIndex(snapshot.next, snapshot);
+  assert.deepEqual(restored.map(item => item.id), ['a', 'b', 'c']);
+  assert.equal(restoreAtIndex(restored, snapshot).length, 3);
+});
+
+test('tek kardiyolu boş seans silinip eksiksiz geri alınır', () => {
+  const source = [{ id: 'w1', date: '2026-08-10', exercises: [], cardio: [{ id: 'c1', minutes: 30 }] }];
+  const removed = removeCardioEntry(source, 'w1', 'c1');
+  assert.equal(removed.next.length, 0);
+  assert.deepEqual(restoreCardioEntry(removed.next, removed.snapshot), source);
+});
+
+test('çoklu kardiyo seansında geri alma diğer kaydı korur', () => {
+  const source = [{ id: 'w1', exercises: [], cardio: [{ id: 'c1' }, { id: 'c2' }] }];
+  const removed = removeCardioEntry(source, 'w1', 'c1');
+  const changed = [{ ...removed.next[0], notes: 'sonradan değişti' }];
+  const restored = restoreCardioEntry(changed, removed.snapshot);
+  assert.deepEqual(restored[0].cardio.map(item => item.id), ['c1', 'c2']);
+  assert.equal(restored[0].notes, 'sonradan değişti');
+});
 
 test('acil yedek en yeni kayıt yoksa eski depolama sürümüne düşer', () => {
   const values = new Map([
@@ -438,12 +464,15 @@ test('deload süresi gün gün ilerler ve süresi dolunca hesaplarda kapanır', 
 
 test('ekrandaki sürüm package.json ile aynı', () => {
   const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const lock = JSON.parse(readFileSync(new URL('../package-lock.json', import.meta.url), 'utf8'));
   // İkisi ayrışınca sürüm notları açılmıyor ve yedek dosyası eski sürümü
   // yazıyordu; sessiz kaldığı için de fark edilmiyordu.
   assert.equal(APP_VERSION, pkg.version);
   // Sürüm iki parçalı: MAJOR.MINOR. Yama parçası kullanılmıyor.
   assert.match(pkg.version, /^\d+\.\d+$/);
   assert.equal(LATEST_RELEASE_NOTES.version, pkg.version);
+  assert.equal(lock.version, pkg.version);
+  assert.equal(lock.packages?.['']?.version, pkg.version);
 });
 
 /* ------------------------------------------------------------------ *

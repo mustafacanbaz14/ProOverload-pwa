@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import {
-  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database
+  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff
 } from 'lucide-react';
 import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
@@ -26,6 +26,7 @@ import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
 import { caloriesFromMacros, dailyTotals } from './utils/nutritionStats';
 import { DEFAULT_READINESS, READINESS_FIELDS, computeReadiness, readinessTrend } from './utils/readiness';
 import { safeSetRawItem } from './utils/persist';
+import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from './utils/undo';
 import { useAppPersistence } from './hooks/useAppPersistence';
 import { useDisplayPreferences } from './hooks/useDisplayPreferences';
 import { useDeferredPwaUpdate } from './hooks/useDeferredPwaUpdate';
@@ -149,13 +150,15 @@ export default function App() {
     try {
       const lastSeen = localStorage.getItem('po_last_seen_version');
       if (lastSeen !== APP_VERSION) {
-        setIsReleaseNotesOpen(true);
+        // Boş profilde onboarding ve sürüm notları üst üste açılmamalı. Yeni
+        // kullanıcı zaten güncel sürümle başlıyor; değişiklik özeti ona gerekli değil.
+        if (!isOnboardingOpen) setIsReleaseNotesOpen(true);
         localStorage.setItem('po_last_seen_version', APP_VERSION);
       }
     } catch {
       // localStorage erişim engellerine karşı koruma
     }
-  }, []);
+  }, [isOnboardingOpen]);
   // Araçlar listesinde uyku ve meditasyon ayrı giriş; hangisinden gelindiyse
   // Toparlanma ekranı o sekmede açılır.
   const [wellnessTab, setWellnessTab] = useState('sleep');
@@ -189,6 +192,7 @@ export default function App() {
   const [isMeasurementGuideOpen, setIsMeasurementGuideOpen] = useState(false);
 
   const [toast, setToast] = useState(null);
+  const [isOnline, setIsOnline] = useState(() => typeof navigator === 'undefined' ? true : navigator.onLine);
   const [lockScreenOn, setLockScreenOn] = useState(false);
 
   const [todayTime] = useState(() => Date.now());
@@ -211,15 +215,57 @@ export default function App() {
   const activeWorkoutRef = useRef(activeWorkout);
   const restRef = useRef(rest);
   const repsOnFocusRef = useRef(null);
+  const toastTimerRef = useRef(null);
 
   useEffect(() => { activeWorkoutRef.current = activeWorkout; }, [activeWorkout]);
   useEffect(() => { restRef.current = rest; }, [rest]);
 
   // Hata tostu daha uzun durur: veri kaybı uyarısını kaçırmak kritik.
-  const showToast = useCallback((message, type = 'info') => {
-    setToast({ message, type });
-    setTimeout(() => setToast(null), type === 'error' ? 6000 : 3000);
+  const showToast = useCallback((message, type = 'info', options = {}) => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+    const id = `${Date.now()}-${Math.random()}`;
+    const action = options?.action || null;
+    setToast({ id, message, type, action });
+    const duration = options?.duration || (action ? 7000 : type === 'error' ? 6000 : 3000);
+    toastTimerRef.current = setTimeout(() => {
+      setToast(current => current?.id === id ? null : current);
+      toastTimerRef.current = null;
+    }, duration);
   }, []);
+
+  useEffect(() => () => {
+    if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+  }, []);
+
+  useEffect(() => {
+    const offline = () => {
+      setIsOnline(false);
+      showToast('Çevrimdışısın. Kayıtların cihazda tutulmaya devam ediyor.', 'warning', { duration: 5000 });
+    };
+    const online = () => {
+      setIsOnline(true);
+      showToast('Bağlantı geri geldi. Uygulama çevrimiçi.');
+    };
+    window.addEventListener('offline', offline);
+    window.addEventListener('online', online);
+    return () => {
+      window.removeEventListener('offline', offline);
+      window.removeEventListener('online', online);
+    };
+  }, [showToast]);
+
+  const showUndoToast = useCallback((message, onUndo) => {
+    showToast(message, 'info', {
+      duration: 7000,
+      action: {
+        label: 'Geri Al',
+        onClick: () => {
+          onUndo?.();
+          showToast('Silme işlemi geri alındı.');
+        },
+      },
+    });
+  }, [showToast]);
 
   useAppPersistence({
     workouts, templates, customExercises, customFoods, recentFoods,
@@ -1180,14 +1226,29 @@ export default function App() {
   }, [performedNames]);
 
   const handleDeleteExercise = useCallback((name) => {
+    const index = customExercises.findIndex(ex => (typeof ex === 'object' ? ex.name : ex) === name);
+    const record = customExercises[index];
+    if (index < 0 || record === undefined) return;
+    const visibility = {
+      hiddenExercises: settings.hiddenExercises || [],
+      pinnedExercises: settings.pinnedExercises || [],
+    };
     setCustomExercises(prev => prev.filter(ex => (typeof ex === 'object' ? ex.name : ex) !== name));
     setSettings(prev => ({
       ...prev,
       hiddenExercises: (prev.hiddenExercises || []).filter(n => n !== name),
       pinnedExercises: (prev.pinnedExercises || []).filter(n => n !== name),
     }));
-    showToast(`"${name}" silindi. Geçmiş antrenman kayıtları korundu.`);
-  }, [showToast]);
+    showUndoToast(`"${name}" silindi. Geçmiş antrenman kayıtları korundu.`, () => {
+      setCustomExercises(prev => {
+        if (prev.some(ex => (typeof ex === 'object' ? ex.name : ex) === name)) return prev;
+        const next = [...prev];
+        next.splice(Math.max(0, Math.min(index, next.length)), 0, record);
+        return next;
+      });
+      setSettings(prev => ({ ...prev, ...visibility }));
+    });
+  }, [customExercises, settings.hiddenExercises, settings.pinnedExercises, showUndoToast]);
 
   // Program oluşturucu her dolu günü ayrı bir şablon yapar: uygulamanın şablon
   // modeli tek seanslık, program adı gün adının önüne eklenir.
@@ -1275,9 +1336,14 @@ export default function App() {
   }, []);
 
   const handleDeleteCycleDay = useCallback((date) => {
-    setCycleHistory(prev => prev.filter(record => record.date !== date));
-    showToast('Döngü kaydı silindi.');
-  }, [showToast]);
+    const record = cycleHistory.find(item => item.date === date);
+    if (!record) return;
+    const snapshot = removeById(cycleHistory, record.id);
+    setCycleHistory(snapshot.next);
+    showUndoToast('Döngü kaydı silindi.', () => {
+      setCycleHistory(prev => restoreAtIndex(prev, snapshot));
+    });
+  }, [cycleHistory, showUndoToast]);
 
   const handleExportData = () => {
     const backup = {
@@ -1373,7 +1439,13 @@ export default function App() {
     if (!type || !id) return;
 
     if (type === 'template') {
-      setTemplates(prev => prev.filter(t => t.id !== id));
+      const snapshot = removeById(templates, id);
+      if (!snapshot.record) return;
+      const planSnapshot = {
+        weekPlan: settings.weekPlan || {},
+        weekPlans: settings.weekPlans || [],
+      };
+      setTemplates(snapshot.next);
       // Plana atanmış şablon silinirse o gün dinlenmeye döner, yoksa plan
       // var olmayan bir kimliği gösterip boş kalırdı.
       setSettings(prev => {
@@ -1387,7 +1459,10 @@ export default function App() {
         };
       });
       setDeleteConfirm({ isOpen: false, type: null, id: null });
-      showToast('Şablon silindi.');
+      showUndoToast('Şablon silindi.', () => {
+        setTemplates(prev => restoreAtIndex(prev, snapshot));
+        setSettings(prev => ({ ...prev, ...planSnapshot }));
+      });
       return;
     }
 
@@ -1399,22 +1474,36 @@ export default function App() {
 
     if (type === 'cardio') {
       const [workoutId, cardioId] = String(id).split('::');
-      setWorkouts(prev => prev
-        .map(workout => workout.id === workoutId
-          ? { ...workout, cardio: (workout.cardio || []).filter(item => item.id !== cardioId) }
-          : workout)
-        .filter(workout => (workout.exercises || []).length > 0 || (workout.cardio || []).length > 0));
+      const removed = removeCardioEntry(workouts, workoutId, cardioId);
+      if (!removed.snapshot) return;
+      setWorkouts(removed.next);
       setDeleteConfirm({ isOpen: false, type: null, id: null });
-      showToast('Kardiyo kaydı silindi.');
+      showUndoToast('Kardiyo kaydı silindi.', () => {
+        setWorkouts(prev => restoreCardioEntry(prev, removed.snapshot));
+      });
       return;
     }
 
-    if (type === 'workout') setWorkouts(prev => prev.filter(w => w.id !== id));
-    else if (type === 'metric') setMetricsHistory(prev => prev.filter(m => m.id !== id));
-    else if (type === 'nutrition') setNutritionHistory(prev => prev.filter(n => n.id !== id));
+    const source = type === 'workout'
+      ? workouts
+      : type === 'metric'
+        ? metricsHistory
+        : type === 'nutrition'
+          ? nutritionHistory
+          : [];
+    const snapshot = removeById(source, id);
+    if (!snapshot.record) return;
+
+    if (type === 'workout') setWorkouts(snapshot.next);
+    else if (type === 'metric') setMetricsHistory(snapshot.next);
+    else if (type === 'nutrition') setNutritionHistory(snapshot.next);
 
     setDeleteConfirm({ isOpen: false, type: null, id: null });
-    showToast('Kayıt silindi.');
+    showUndoToast('Kayıt silindi.', () => {
+      if (type === 'workout') setWorkouts(prev => restoreAtIndex(prev, snapshot));
+      else if (type === 'metric') setMetricsHistory(prev => restoreAtIndex(prev, snapshot));
+      else if (type === 'nutrition') setNutritionHistory(prev => restoreAtIndex(prev, snapshot));
+    });
   };
 
   // Geçmiş bir beslenme kaydının tek alanını günceller (yakılan kalori gibi).
@@ -1992,15 +2081,33 @@ export default function App() {
 
         {/* TOAST BİLDİRİMİ */}
         {toast && (
-          <div className={`absolute top-4 left-4 right-4 z-50 px-4 py-3 rounded-2xl shadow-xl flex items-start space-x-2 text-xs font-mono animate-in fade-in slide-in-from-top-4 ${
+          <div role="status" aria-live="polite" className={`absolute top-4 left-4 right-4 z-50 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-mono animate-in fade-in slide-in-from-top-4 ${
             toast.type === 'error'
               ? 'bg-red-950/95 border border-red-800 text-red-100'
+              : toast.type === 'warning'
+                ? 'bg-amber-950/95 border border-amber-800 text-amber-100'
               : 'bg-zinc-900 border border-zinc-700 text-zinc-100'
           }`}>
             {toast.type === 'error'
               ? <AlertCircle size={14} className="text-red-400 shrink-0 mt-0.5" />
-              : <Activity size={14} className="text-cyan-400 shrink-0 mt-0.5" />}
-            <span className="leading-relaxed">{toast.message}</span>
+              : toast.type === 'warning'
+                ? <WifiOff size={14} className="text-amber-400 shrink-0" />
+                : <Activity size={14} className="text-cyan-400 shrink-0" />}
+            <span className="leading-relaxed flex-1 min-w-0">{toast.message}</span>
+            {toast.action && (
+              <button
+                onClick={() => {
+                  if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
+                  toastTimerRef.current = null;
+                  const action = toast.action;
+                  setToast(null);
+                  action.onClick?.();
+                }}
+                className="shrink-0 rounded-lg bg-white/10 px-2.5 py-1.5 text-[10px] font-bold uppercase tracking-wide text-white active:bg-white/20"
+              >
+                {toast.action.label}
+              </button>
+            )}
           </div>
         )}
 
@@ -2021,6 +2128,11 @@ export default function App() {
             <span className="text-[9px] font-mono text-zinc-600 self-center">v{pkg.version}</span>
           </div>
           <div className="flex items-center">
+            {!isOnline && (
+              <span aria-label="Çevrimdışı; kayıtlar cihazda tutuluyor" title="Çevrimdışı · kayıtlar cihazda tutuluyor" className="w-7 h-7 rounded-full border border-amber-900/60 bg-amber-950/40 text-amber-400 flex items-center justify-center">
+                <WifiOff size={12} />
+              </span>
+            )}
             <button
               onClick={() => setIsQuickCaptureOpen(true)}
               aria-label="Hızlı kayıt aç"
