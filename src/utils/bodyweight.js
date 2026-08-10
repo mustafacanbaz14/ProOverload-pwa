@@ -77,27 +77,63 @@ export const isBodyweightMovement = (name, customList) =>
   bodyweightFactorOf(name, customList) !== null;
 
 /**
+ * Ağırlık alanının hangi anlamda yazıldığını tanıma eşiği.
+ *
+ * İki farklı alışkanlık var ve ikisi de makul:
+ *   EK   — "barfiks, ek yok" → 0 yazılır
+ *   TOPLAM — "barfiks, 80 kiloyum" → 80 yazılır
+ *
+ * Uygulama 3.3'e kadar toplam yazanları destekliyordu; 3.3 ek yük varsaydı ve
+ * toplam yazanların kayıtlarını iki katına çıkardı. Kullanıcının alışkanlığını
+ * geriye dönük değiştirmek veri bozmak demek, bu yüzden set bazında tanınıyor.
+ *
+ * Eşik TAŞINAN yüke göre: şınavda taşınan yük vücut ağırlığının %64'ü, dolayısıyla
+ * "toplam" yazan biri 80 değil 51 yazar. Ham vücut ağırlığına bakan bir eşik bunu
+ * kaçırırdı.
+ *
+ * Yanılma payı: ek yükü taşınan yükün %70'ini geçen çok güçlü bir sporcu
+ * (80 kg vücutla +56 kg barfiks) yanlış sınıflanır. Nadir ve denetim aracında
+ * görünür kılınıyor.
+ */
+const TOTAL_ENTRY_THRESHOLD = 0.7;
+
+/**
+ * Bu set "toplam ağırlık" olarak mı yazılmış?
+ *
+ * @returns true = alan zaten vücut ağırlığını içeriyor, üstüne ekleme
+ */
+export const looksLikeTotalEntry = (setWeight, carriedKg) =>
+  parseNumber(setWeight) >= carriedKg * TOTAL_ENTRY_THRESHOLD && carriedKg > 0;
+
+/**
  * Bir setin GERÇEK yükü: ek ağırlık + taşınan vücut ağırlığı.
  *
  * Vücut ağırlığı bilinmiyorsa (hiç ölçüm yok) eski davranışa dönülüyor —
  * uydurma bir kilo koymaktansa eksik hesap dürüst.
  *
- * @param opts.bodyweightEnabled false ise model tamamen devre dışı; toplam
- *        ağırlığı elle giren kullanıcılar için (o zaman alan zaten mutlak yük).
+ * @param opts.entryStyle 'auto'  — set bazında tanı (varsayılan, karışık geçmişi kurtarır)
+ *                        'added' — alan daima EK yük
+ *                        'total' — alan daima toplam yük, hiç ekleme yapma
+ * @param opts.bodyweightEnabled false ise model tamamen devre dışı.
  */
 export const effectiveLoad = (exerciseName, setWeight, {
   bodyWeightKg = 0,
   customExercises = [],
   bodyweightEnabled = true,
+  entryStyle = 'auto',
 } = {}) => {
   const ek = parseNumber(setWeight);
-  if (!bodyweightEnabled) return ek;
+  if (!bodyweightEnabled || entryStyle === 'total') return ek;
 
   const oran = bodyweightFactorOf(exerciseName, customExercises);
   const kilo = parseNumber(bodyWeightKg);
   if (oran === null || !(kilo > 0)) return ek;
 
-  return Math.round((kilo * oran + ek) * 100) / 100;
+  const tasinan = kilo * oran;
+  // 'auto': alan taşınan yüke yakınsa kullanıcı toplamı yazmış demektir.
+  if (entryStyle === 'auto' && looksLikeTotalEntry(ek, tasinan)) return ek;
+
+  return Math.round((tasinan + ek) * 100) / 100;
 };
 
 /** Arayüzde "ek yükün yanında ne kadar vücut ağırlığı sayıldı" bilgisi. */

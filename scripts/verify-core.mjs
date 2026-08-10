@@ -8,6 +8,7 @@ import { computeWeekPlan } from '../src/utils/weekPlan.js';
 import { findActivity } from '../src/utils/cardio.js';
 import { suggestRestSeconds } from '../src/utils/rest.js';
 import { effectiveLoad, bodyweightFactorOf } from '../src/utils/bodyweight.js';
+import { auditBodyweightEntries, normalizeBodyweightEntries } from '../src/utils/bodyweightAudit.js';
 import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
 import { buildSessionReport } from '../src/utils/sessionReport.js';
 import { buildWeeklyReview, lastCompletedWeekStart } from '../src/utils/weeklyReview.js';
@@ -662,6 +663,54 @@ test('destekli ve makine varyantlarına vücut ağırlığı eklenmez', () => {
   assert.equal(bodyweightFactorOf('Assisted Pull-up'), null);
   assert.equal(bodyweightFactorOf('Machine Chest Dip'), null);
   assert.equal(effectiveLoad('Assisted Pull-up', 30, { bodyWeightKg: 80 }), 30);
+});
+
+test('elle yazılmış vücut ağırlığı ikinci kez eklenmez', () => {
+  // 3.3 öncesi alışkanlık: barfikste kendi kilosunu yazmak. Yeni kural bunu
+  // ek yük sanıp 80+80=160 yapıyordu; set bazında tanıma bunu engelliyor.
+  assert.equal(effectiveLoad('Pull-up', 80, { bodyWeightKg: 80 }), 80);
+  assert.equal(effectiveLoad('Pull-up', 85, { bodyWeightKg: 80 }), 85);
+  // Şınavda taşınan yük %64; eşik ham kiloya değil taşınan yüke göre.
+  assert.equal(effectiveLoad('Push-ups', 51, { bodyWeightKg: 80 }), 51);
+  // Gerçek ek yük hâlâ ekleniyor.
+  assert.equal(effectiveLoad('Pull-up', 20, { bodyWeightKg: 80 }), 100);
+});
+
+test('yazım biçimi elle zorlanabilir', () => {
+  assert.equal(effectiveLoad('Pull-up', 80, { bodyWeightKg: 80, entryStyle: 'added' }), 160);
+  assert.equal(effectiveLoad('Pull-up', 0, { bodyWeightKg: 80, entryStyle: 'total' }), 0);
+});
+
+test('denetim karışık geçmişi ayırt eder', () => {
+  const sets = (kg, n) => Array.from({ length: n }, (_, i) => ({ id: `s${i}`, weight: String(kg), reps: '10', rir: 2, setType: 'normal' }));
+  const workouts = [
+    { id: 'a', date: '2026-06-01', exercises: [{ name: 'Pull-up', sets: sets(80, 3) }] },
+    { id: 'b', date: '2026-08-01', exercises: [{ name: 'Pull-up', sets: sets(0, 3) }] },
+  ];
+  const opts = { metricsHistory: [{ date: '2026-01-01', weight: '80' }], currentMetrics: { weight: '80' } };
+  const audit = auditBodyweightEntries(workouts, opts);
+  assert.equal(audit.total, 3);
+  assert.equal(audit.added, 3);
+  assert.equal(audit.hasMixed, true);
+});
+
+test('geçmişi tek biçime çevirmek hesaplanan yükü değiştirmez', () => {
+  // Dönüşümün tek amacı yazım birliği; sayılar aynı kalmalı yoksa kullanıcının
+  // grafikleri dönüşümden sonra kayar.
+  const sets = (kg, n) => Array.from({ length: n }, (_, i) => ({ id: `s${i}`, weight: String(kg), reps: '10', rir: 2, setType: 'normal' }));
+  const workouts = [{ id: 'a', date: '2026-06-01', exercises: [{ name: 'Pull-up', sets: sets(85, 2) }] }];
+  const opts = { metricsHistory: [{ date: '2026-01-01', weight: '80' }], currentMetrics: { weight: '80' } };
+
+  const oncekiYuk = effectiveLoad('Pull-up', workouts[0].exercises[0].sets[0].weight, { bodyWeightKg: 80 });
+  const { workouts: sonra, changed } = normalizeBodyweightEntries(workouts, opts);
+  const sonrakiYuk = effectiveLoad('Pull-up', sonra[0].exercises[0].sets[0].weight, { bodyWeightKg: 80 });
+
+  assert.equal(changed, 2);
+  assert.equal(sonra[0].exercises[0].sets[0].weight, '5');
+  assert.equal(sonrakiYuk, oncekiYuk);
+
+  // İkinci kez çalıştırmak hiçbir şeyi değiştirmemeli.
+  assert.equal(normalizeBodyweightEntries(sonra, opts).changed, 0);
 });
 
 test('kilo bilinmiyorsa veya model kapalıysa eski davranışa dönülür', () => {

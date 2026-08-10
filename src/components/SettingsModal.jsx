@@ -53,6 +53,9 @@ const SettingsModal = memo(({
   onOpenOnboarding,
   onOpenReleaseNotes,
   profileGender = 'male',
+  // Vücut ağırlıklı kayıtların yazım biçimi denetimi; null = hesaplanmadı.
+  bodyweightAudit = null,
+  onNormalizeBodyweight,
 }) => {
   if (!isOpen) return null;
 
@@ -373,10 +376,71 @@ const SettingsModal = memo(({
 
             <Toggle
               label="Vücut Ağırlığını Yüke Say"
-              hint="Barfiks, dip ve şınavda ağırlık alanı yalnızca EK yük sayılır; taşınan vücut ağırlığı üstüne eklenir. Kapatırsan ağırlık alanı mutlak yük olarak okunur."
+              hint="Barfiks, dip ve şınavda taşınan vücut ağırlığı yüke katılır. Kapatırsan ağırlık alanı mutlak yük olarak okunur."
               checked={settings.bodyweightLoad !== false}
               onChange={(v) => set({ bodyweightLoad: v })}
             />
+
+            {/* Ağırlık alanının anlamı kullanıcıdan kullanıcıya değişiyor:
+                kimi "0" (ek yok), kimi "80" (toplam) yazıyor. Geçmiş çoğu zaman
+                karışık olduğu için varsayılan set bazında tanıma. */}
+            {settings.bodyweightLoad !== false && (
+              <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
+                <span className="text-zinc-200 text-[11px] font-bold block mb-1">Ağırlık Alanının Anlamı</span>
+                <span className="text-zinc-500 text-[10px] font-mono block mb-2 leading-snug">
+                  Barfiks yaparken alana ne yazıyorsun?
+                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { key: 'auto', label: 'Otomatik', hint: 'Set bazında tanı' },
+                    { key: 'added', label: 'Ek yük', hint: '0 yazıyorum' },
+                    { key: 'total', label: 'Toplam', hint: 'Kilomu yazıyorum' },
+                  ].map(o => {
+                    const aktif = (settings.bodyweightEntry || 'auto') === o.key;
+                    return (
+                      <button
+                        key={o.key}
+                        onClick={() => set({ bodyweightEntry: o.key })}
+                        className={`py-2 px-1 rounded-lg border leading-tight transition-colors ${aktif ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}
+                      >
+                        <span className="text-[10px] font-bold block">{o.label}</span>
+                        <span className="text-[8px] font-mono opacity-70 block mt-0.5">{o.hint}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {bodyweightAudit && (bodyweightAudit.total > 0 || bodyweightAudit.added > 0) && (
+                  <div className="mt-2.5 pt-2.5 border-t border-zinc-800 space-y-2">
+                    <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">
+                      Kayıtlarında <strong className="text-cyan-400">{bodyweightAudit.added}</strong> set ek yük,
+                      {' '}<strong className="text-amber-400">{bodyweightAudit.total}</strong> set toplam yazımı görünüyor.
+                      {bodyweightAudit.hasMixed && ' İkisi karışık — otomatik tanıma her setin kendi biçimini kullanıyor.'}
+                    </p>
+                    {bodyweightAudit.byExercise.slice(0, 3).map(e => (
+                      <div key={e.name} className="flex justify-between text-[9px] font-mono">
+                        <span className="text-zinc-500 truncate">{e.name}</span>
+                        <span className="text-zinc-600 shrink-0">ek {e.added} · toplam {e.total}</span>
+                      </div>
+                    ))}
+                    {bodyweightAudit.canNormalize && onNormalizeBodyweight && (
+                      <>
+                        <button
+                          onClick={onNormalizeBodyweight}
+                          className="w-full bg-zinc-900 border border-cyan-900/50 text-cyan-400 active:bg-zinc-800 font-bold py-2.5 rounded-xl uppercase text-[10px] tracking-wider transition-colors"
+                        >
+                          Geçmişi tek biçime çevir ({bodyweightAudit.total} set)
+                        </button>
+                        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                          Toplam yazılmış setlerden o tarihteki vücut ağırlığı düşülür; alan
+                          yalnızca ek yükü gösterir. Hesaplanan yükler <strong>değişmez</strong> —
+                          yalnızca yazım biçimi tekleşir. Önce yedek almanı öneririm.
+                        </p>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
 
             <Toggle
               label="Harekete Göre Dinlenme"

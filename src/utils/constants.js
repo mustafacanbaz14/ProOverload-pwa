@@ -13,6 +13,9 @@ export const DEFAULT_SETTINGS = {
   // Kapatınca ağırlık alanı mutlak yük olarak okunur (toplam ağırlığı elle
   // girenler için).
   bodyweightLoad: true,
+  // Ağırlık alanının anlamı: 'auto' set bazında tanır (karışık geçmişi kurtarır),
+  // 'added' daima ek yük, 'total' daima toplam yük sayar.
+  bodyweightEntry: 'auto',
   // Salonun plaka envanteri (kg, tek plaka). Boş bırakılamaz; normalizePlates
   // boş listeyi varsayılana çeviriyor.
   availablePlates: [25, 20, 15, 10, 5, 2.5, 1.25],
@@ -590,11 +593,11 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.3';
+export const APP_VERSION = '3.4';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.3',
+  title: 'ProOverload 3.4',
   date: '2026-08-10',
   items: [
     {

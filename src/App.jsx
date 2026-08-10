@@ -16,6 +16,7 @@ import { removeTemplateFromPlans } from './utils/planMigration';
 import { buildPersonalVolumeGuidance } from './utils/personalization';
 import { buildCoachActions } from './utils/coach';
 import { effectiveLoad, bodyweightPortion } from './utils/bodyweight';
+import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/bodyweightAudit';
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
 import { buildSessionReport } from './utils/sessionReport';
 import { buildPlateauInsights } from './utils/insights';
@@ -350,15 +351,53 @@ export default function App() {
       bodyWeightKg: parseNumber(olcum?.weight),
       customExercises,
       bodyweightEnabled: settings.bodyweightLoad !== false,
+      entryStyle: settings.bodyweightEntry || 'auto',
     });
-  }, [sortedMetrics, currentMetricsForm, customExercises, settings.bodyweightLoad]);
+  }, [sortedMetrics, currentMetricsForm, customExercises,
+    settings.bodyweightLoad, settings.bodyweightEntry]);
+
+  /**
+   * Vücut ağırlıklı kayıtlarda hangi yazım biçiminin kullanıldığı.
+   *
+   * Ayarlar açılmadan hesaplamak gereksiz iş; ama ayarlar açıkken kullanıcının
+   * geçmişinde ne olduğunu görmesi gerekiyor, çünkü 3.3 öncesi "toplam" yazan
+   * kayıtlar yeni kuralla iki kez sayılıyordu.
+   */
+  const bodyweightAudit = useMemo(
+    () => (isSettingsModalOpen
+      ? auditBodyweightEntries(workouts, {
+        metricsHistory: sortedMetrics,
+        currentMetrics: currentMetricsForm,
+        customExercises,
+      })
+      : null),
+    [isSettingsModalOpen, workouts, sortedMetrics, currentMetricsForm, customExercises]);
+
+  const handleNormalizeBodyweight = useCallback(() => {
+    const { workouts: next, changed } = normalizeBodyweightEntries(workouts, {
+      metricsHistory: sortedMetrics,
+      currentMetrics: currentMetricsForm,
+      customExercises,
+    });
+    if (changed === 0) {
+      showToast('Dönüştürülecek kayıt bulunamadı.');
+      return;
+    }
+    setWorkouts(next);
+    // Biçim tekleştiği için otomatik tanımaya artık gerek yok; kesin kural
+    // seçilmesi ileride sınıra yakın bir setin yanlış okunmasını da engelliyor.
+    setSettings(prev => ({ ...prev, bodyweightEntry: 'added' }));
+    showToast(`${changed} set ek yük biçimine çevrildi.`);
+  }, [workouts, sortedMetrics, currentMetricsForm, customExercises, showToast]);
 
   /** Tonaj hesapları için o tarihin vücut ağırlığı bağlamı. */
   const loadOptsFor = useCallback((dateStr) => ({
     bodyWeightKg: parseNumber(findMetricsForDate(sortedMetrics, dateStr, currentMetricsForm)?.weight),
     customExercises,
     bodyweightEnabled: settings.bodyweightLoad !== false,
-  }), [sortedMetrics, currentMetricsForm, customExercises, settings.bodyweightLoad]);
+    entryStyle: settings.bodyweightEntry || 'auto',
+  }), [sortedMetrics, currentMetricsForm, customExercises,
+    settings.bodyweightLoad, settings.bodyweightEntry]);
 
   const personalRecords = useMemo(() => {
     return buildPersonalRecords(workouts, activeWorkout?.id, resolveSetLoad);
@@ -2275,6 +2314,8 @@ export default function App() {
           lastBackupDate={lastBackupDate}
           onOpenOnboarding={() => setIsOnboardingOpen(true)}
           onOpenReleaseNotes={() => setIsReleaseNotesOpen(true)}
+          bodyweightAudit={bodyweightAudit}
+          onNormalizeBodyweight={handleNormalizeBodyweight}
           profileGender={profileGender}
         />}
 
