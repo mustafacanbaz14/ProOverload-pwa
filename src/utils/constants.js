@@ -570,28 +570,38 @@ export const VOLUME_STATUS = {
   over: { label: 'Tavan üstü', chip: 'text-red-400 border-red-900/40 bg-red-950/40', bar: 'bg-red-500', text: 'text-red-400', hex: '#ef4444' },
 };
 
-export const APP_VERSION = '3.0.0';
+/**
+ * Ekranda ve yedeklerde görünen sürüm.
+ *
+ * Asıl kaynak `package.json`; burada elle tutulmasının tek sebebi bu modülün
+ * hem Vite hem de düz Node (verify betikleri) tarafından okunması ve JSON
+ * import'unun iki ortamda farklı davranması. İkisinin ayrışması sessiz hatalar
+ * üretiyordu (sürüm notları açılmıyor, yedek eski sürümü yazıyor), bu yüzden
+ * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
+ * build kırılır.
+ */
+export const APP_VERSION = '3.1';
 
 export const LATEST_RELEASE_NOTES = {
-  version: '3.0.0',
-  title: 'ProOverload 3.0',
-  date: '2026-08-06',
+  version: APP_VERSION,
+  title: 'ProOverload 3.1',
+  date: '2026-08-10',
   items: [
     {
-      title: 'Her Yerden Hızlı Kayıt',
-      desc: 'Üst çubuktaki + düğmesi; antrenman, besin, kardiyo, ölçüm, uyku ve esneme girişlerini tek merkezde toplar. Bugün kaydı olan alanlar işaretlenir.'
+      title: 'Seans Sonu Raporu',
+      desc: 'Antrenmanı bitirince hareket hareket geçen seansla kıyas: tahmini 1RM farkı, yeni rekorlar ve bu seansın haftalık hacme katkısı. Yüksek tekrarlı hareketlerde 1RM yerine hacim yükü karşılaştırılır.'
     },
     {
-      title: 'Daha Hızlı Açılış',
-      desc: 'Ayarlar, program oluşturucu, kardiyo ve diğer ağır araçlar artık yalnız açıldıklarında yüklenir. Ana ekran daha az kod çalıştırarak başlar.'
+      title: 'Haftalık Gözden Geçirme',
+      desc: 'Haftayı kapatıp gelecek haftaya somut ayar çıkarır: hangi bölgeye kaç set eklenecek, hangisi azaltılacak, kalori dengesi hedefe uyuyor mu. Toparlanma zayıfsa hacim artışı önerilmez.'
     },
     {
-      title: 'Beyaz Ekran Yerine Güvenli Kurtarma',
-      desc: 'Beklenmeyen bir arayüz hatasında kayıtları kaybetmeden acil yedek indirebileceğin ve uygulamayı yeniden yükleyebileceğin kurtarma ekranı açılır.'
+      title: 'Sürüm Numarası Sadeleşti',
+      desc: 'Sürümler artık iki parçalı: 3.1, 3.2 … 3.9 sonrası 4.0. Ekranda görünen sürüm ile paketteki sürümün ayrışmadığı testle güvence altına alındı.'
     },
     {
-      title: '3.0 Arayüz Temeli',
-      desc: 'Kayıt yolları sadeleştirildi, yüklenen araçlar için açık bir bekleme göstergesi ve mobil erişilebilirlik etiketleri eklendi.'
+      title: 'Karar Mantığı Test Altında',
+      desc: 'Koç önerileri, hareket ikamesi, çakışma asistanı ve haftalık plan hacim dökümü için regresyon testleri eklendi; bu modüller artık build sırasında doğrulanıyor.'
     }
   ]
 };

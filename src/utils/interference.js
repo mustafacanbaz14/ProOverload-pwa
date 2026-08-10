@@ -1,5 +1,5 @@
-import { findActivity, findEffort, DEFAULT_EFFORT } from './cardio';
-import { timeToMinutes } from './wellness';
+import { findActivity, findEffort, DEFAULT_EFFORT } from './cardio.js';
+import { timeToMinutes } from './wellness.js';
 
 /**
  * Aynı gün çakışma asistanı.

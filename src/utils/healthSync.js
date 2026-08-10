@@ -1,4 +1,4 @@
-import { parseNumber } from './helpers';
+import { parseNumber } from './helpers.js';
 
 export function exportAppleHealthXML(workouts = [], nutritionHistory = []) {
   const records = [];

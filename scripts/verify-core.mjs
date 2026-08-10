@@ -1,4 +1,11 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES } from '../src/utils/constants.js';
+import { buildCoachActions } from '../src/utils/coach.js';
+import { suggestSubstitutes } from '../src/utils/substitution.js';
+import { analyzeDayConflicts } from '../src/utils/interference.js';
+import { computeWeekPlan } from '../src/utils/weekPlan.js';
+import { findActivity } from '../src/utils/cardio.js';
 import { computeReadiness } from '../src/utils/readiness.js';
 import { dayEnergyBreakdown, theoreticalWeek, estimateMacrosForTef, groupByWeek, buildEnergySeries, neatOptsForDay } from '../src/utils/energyModel.js';
 import { calorieDashboard, deriveGoalSet } from '../src/utils/goals.js';
@@ -25,7 +32,7 @@ test('acil yedek en yeni kayıt yoksa eski depolama sürümüne düşer', () => 
     ['po_metrics_v15', JSON.stringify([{ id: 'safe-metric' }])],
   ]);
   const backup = buildEmergencyBackup({ getItem: key => values.get(key) ?? null }, '2026-08-06T12:00:00.000Z');
-  assert.equal(backup.version, '3.0.0');
+  assert.equal(backup.version, APP_VERSION);
   assert.equal(backup.workouts[0].id, 'legacy-workout');
   assert.equal(backup.metricsHistory[0].id, 'safe-metric');
   assert.equal(backup.emergencyRecovery, true);
@@ -417,6 +424,166 @@ test('deload süresi gün gün ilerler ve süresi dolunca hesaplarda kapanır', 
   const expired = deloadState({ active: true, startDate: '2026-07-20', days: 7, preset: 'balanced' }, '2026-07-27');
   assert.equal(expired.active, false);
   assert.equal(expired.expired, true);
+});
+
+/* ------------------------------------------------------------------ *
+ *  SÜRÜM
+ * ------------------------------------------------------------------ */
+
+test('ekrandaki sürüm package.json ile aynı', () => {
+  const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  // İkisi ayrışınca sürüm notları açılmıyor ve yedek dosyası eski sürümü
+  // yazıyordu; sessiz kaldığı için de fark edilmiyordu.
+  assert.equal(APP_VERSION, pkg.version);
+  // Sürüm iki parçalı: MAJOR.MINOR. Yama parçası kullanılmıyor.
+  assert.match(pkg.version, /^\d+\.\d+$/);
+  assert.equal(LATEST_RELEASE_NOTES.version, pkg.version);
+});
+
+/* ------------------------------------------------------------------ *
+ *  KOÇ
+ * ------------------------------------------------------------------ */
+
+test('koç maddeleri önceliğe göre sıralanır ve bugünü değiştiren en üste çıkar', () => {
+  const items = buildCoachActions({
+    lastReadiness: { jointPain: 8 },
+    daysSinceMetric: 20,
+    macros: { protein: 60 },
+    targetProtein: 180,
+  });
+  assert.equal(items[0].key, 'joint');
+  assert.ok(items.every((item, i) => i === 0 || item.priority >= items[i - 1].priority));
+});
+
+test('hafta hiç başlamadıysa koç bütün kasları tek tek saymaz', () => {
+  // Perşembe ve sonrası: hacim uyarısı bu günden itibaren anlamlı.
+  const items = buildCoachActions({ muscleVolume: {} }, new Date('2026-08-07T12:00:00'));
+  const hacim = items.filter(i => i.key === 'volume' || i.key === 'no-week');
+  assert.equal(hacim.length, 1);
+  assert.equal(hacim[0].key, 'no-week');
+});
+
+test('sinyal yoksa koç sessiz kalmaz, durumu onaylar', () => {
+  // Uyku kaydı da veriliyor: eksik uyku kendi başına bir madde üretiyor ve
+  // testin ölçmek istediği şey "hiç sinyal yokken ne oluyor".
+  const items = buildCoachActions(
+    { muscleVolume: { 'Göğüs': 12 }, sleep: { score: 82, asleep: 460 } },
+    new Date('2026-08-03T12:00:00'));
+  assert.deepEqual(items.map(i => i.key), ['clear']);
+});
+
+/* ------------------------------------------------------------------ *
+ *  HAREKET İKAMESİ
+ * ------------------------------------------------------------------ */
+
+test('ikame önerileri ekipman sınıfı başına sınırlanır', () => {
+  const list = suggestSubstitutes('Barbell Bench Press', DEFAULT_EXERCISES, { limit: 8 });
+  assert.ok(list.length > 0);
+  const perEquipment = new Map();
+  list.forEach(item => {
+    const key = item.equipment?.key || 'other';
+    perEquipment.set(key, (perEquipment.get(key) || 0) + 1);
+  });
+  // Filtresiz listede tek ekipman sınıfı listeyi doldurmamalı; yoksa öneri
+  // "dört farklı makine göğüs presi" olup seçim sunmuyor.
+  assert.ok([...perEquipment.values()].every(count => count <= 2));
+  assert.ok(perEquipment.size >= 2);
+});
+
+test('ikame listesi hareketin kendisini önermez ve alakasızı eler', () => {
+  const list = suggestSubstitutes('Barbell Bench Press', DEFAULT_EXERCISES, { limit: 20 });
+  assert.ok(!list.some(item => item.name === 'Barbell Bench Press'));
+  assert.ok(!list.some(item => item.name === 'Standing Calf Raise'));
+  assert.ok(list.every(item => item.similarity >= 0.5));
+});
+
+test('kas eşlemesi olmayan harekete öneri üretilmez', () => {
+  assert.deepEqual(suggestSubstitutes('Zzz Bilinmeyen Hareket', DEFAULT_EXERCISES), []);
+});
+
+/* ------------------------------------------------------------------ *
+ *  ÇAKIŞMA ASİSTANI
+ * ------------------------------------------------------------------ */
+
+const cardioSlot = (key, minutes, effort, time) => ({
+  id: key, type: 'cardio', activity: findActivity(key), minutes, effort, time,
+});
+const legDay = { Quadriceps: 8, Hamstring: 5, 'Kalça': 4 };
+
+test('bacak günündeki koşu yakınsa yüksek çakışma, uzaksa düşük', () => {
+  const yakin = analyzeDayConflicts({
+    byMuscle: legDay,
+    workouts: [{ id: 'w', time: '18:00' }],
+    cardios: [cardioSlot('run', 40, 'moderate', '19:00')],
+  });
+  assert.equal(yakin.level.key, 'high');
+
+  const uzak = analyzeDayConflicts({
+    byMuscle: legDay,
+    workouts: [{ id: 'w', time: '18:00' }],
+    cardios: [cardioSlot('run', 40, 'moderate', '07:00')],
+  });
+  assert.notEqual(uzak.level.key, 'high');
+  // Sabah kardiyo + akşam ağırlık önerilen düzen; sıralama uyarısı çıkmamalı.
+  assert.ok(!uzak.items.some(item => item.title === 'Sıralamayı değiştir'));
+});
+
+test('üst vücut günü kardiyoyla çakışmaz', () => {
+  const sonuc = analyzeDayConflicts({
+    byMuscle: { 'Göğüs': 8, Triseps: 4 },
+    workouts: [{ id: 'w', time: '18:00' }],
+    cardios: [cardioSlot('run', 40, 'moderate', '19:00')],
+  });
+  assert.equal(sonuc.level.key, 'none');
+});
+
+test('bacak günündeki düşük etkili kardiyo koşu kadar çakışmaz', () => {
+  const sonuc = analyzeDayConflicts({
+    byMuscle: legDay,
+    workouts: [{ id: 'w', time: '18:00' }],
+    cardios: [cardioSlot('bike', 45, 'easy', '19:00')],
+  });
+  assert.equal(sonuc.level.key, 'low');
+});
+
+/* ------------------------------------------------------------------ *
+ *  HAFTALIK PLAN
+ * ------------------------------------------------------------------ */
+
+test('haftalık plan kas hacmini hareket bazında dökümler', () => {
+  const template = {
+    id: 't1',
+    name: 'İtiş',
+    exercises: [
+      { name: 'Barbell Bench Press', sets: Array.from({ length: 4 }, () => ({ reps: '8', rir: 2, setType: 'normal' })) },
+      { name: 'Overhead Press (OHP)', sets: Array.from({ length: 3 }, () => ({ reps: '10', rir: 2, setType: 'normal' })) },
+    ],
+  };
+  const plan = { days: { mon: [{ id: 's1', type: 'workout', templateId: 't1' }] } };
+  const result = computeWeekPlan(plan, [template], { weightKg: 80 });
+
+  const gogus = result.statuses.find(s => s.muscle === 'Göğüs');
+  assert.equal(gogus.volume, 4);
+  assert.equal(gogus.sources.length, 1);
+  assert.equal(gogus.sources[0].name, 'Barbell Bench Press');
+  assert.equal(gogus.sources[0].sets, 4);
+
+  // Triseps iki hareketten yarımşar set alır: 4×0.5 + 3×0.5 = 3.5
+  const triseps = result.statuses.find(s => s.muscle === 'Triseps');
+  assert.equal(triseps.volume, 3.5);
+  assert.equal(triseps.sources.length, 2);
+  assert.ok(triseps.sources.every(src => src.weight === 0.5));
+  // Kaynaklar katkıya göre azalan sırada: hacim kısılacaksa ilk bakılacak yer.
+  assert.ok(triseps.sources[0].volume >= triseps.sources[1].volume);
+});
+
+test('planda olmayan şablon kimliği güne hacim yazmaz', () => {
+  const result = computeWeekPlan(
+    { days: { mon: [{ id: 's1', type: 'workout', templateId: 'yok' }] } },
+    [],
+    { weightKg: 80 });
+  assert.equal(result.totalSets, 0);
+  assert.equal(result.days.find(d => d.key === 'mon').workouts.length, 0);
 });
 
 for (const { name, run } of tests) {

@@ -16,9 +16,10 @@ import { removeTemplateFromPlans } from './utils/planMigration';
 import { buildPersonalVolumeGuidance } from './utils/personalization';
 import { buildCoachActions } from './utils/coach';
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
+import { buildSessionReport } from './utils/sessionReport';
 import { buildPlateauInsights } from './utils/insights';
 import { analyzeDayConflicts } from './utils/interference';
-import { averageDailyExercise, dayEnergyBreakdown, ACTIVITY_LEVELS, estimateMacrosForTef, thermicEffect, neatOptsForDay } from './utils/energyModel';
+import { averageDailyExercise, dayEnergyBreakdown, ACTIVITY_LEVELS, estimateMacrosForTef, thermicEffect, neatOptsForDay, buildEnergySeries, groupByWeek } from './utils/energyModel';
 import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
 import { caloriesFromMacros, dailyTotals } from './utils/nutritionStats';
 import { DEFAULT_READINESS, READINESS_FIELDS, computeReadiness, readinessTrend } from './utils/readiness';
@@ -56,6 +57,8 @@ import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
 // Kullanıcı ilgili aracı açtığında ayrı parça indirilir ve değerlendirilir.
 const DeloadModal = lazy(() => import('./components/DeloadModal'));
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
+const SessionReportModal = lazy(() => import('./components/SessionReportModal'));
+const WeeklyReviewModal = lazy(() => import('./components/WeeklyReviewModal'));
 const SettingsModal = lazy(() => import('./components/SettingsModal'));
 const QRCodeModal = lazy(() => import('./components/QRCodeModal'));
 const FoodSearchModal = lazy(() => import('./components/FoodSearchModal'));
@@ -126,6 +129,9 @@ export default function App() {
   const [isWeekPlanOpen, setIsWeekPlanOpen] = useState(false);
   const [isWellnessOpen, setIsWellnessOpen] = useState(false);
   const [isDeloadOpen, setIsDeloadOpen] = useState(false);
+  const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
+  // Seans bitince gösterilen rapor; kapatılana kadar duruyor.
+  const [sessionReport, setSessionReport] = useState(null);
   // Yerine hareket aranan giriş: { name, exerciseId }
   const [substituteFor, setSubstituteFor] = useState(null);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
@@ -832,6 +838,14 @@ export default function App() {
       }
       return [saved, ...prev];
     });
+
+    // Rapor kaydetmeden ÖNCEKİ geçmiş ve rekorlarla kuruluyor: bu seans
+    // listeye girdikten sonra kıyaslansaydı hareket kendi kendisiyle
+    // karşılaştırılır ve her fark sıfır çıkardı.
+    setSessionReport(buildSessionReport(saved, sortedWorkouts.filter(w => w.id !== saved.id), {
+      customExercises,
+      previousRecords: buildPersonalRecords(workouts, saved.id),
+    }));
 
     stopLockScreenActivity();
     setLockScreenOn(false);
@@ -1810,6 +1824,19 @@ export default function App() {
    */
   const plateauInsights = useMemo(() => buildPlateauInsights(workouts), [workouts]);
 
+  // Haftalık kalori dengesi: gözden geçirme ekranı da kalori detayıyla aynı
+  // motoru kullansın diye burada bir kez hesaplanıyor, iki ayrı sayı çıkmasın.
+  const weeklyEnergy = useMemo(() => groupByWeek(buildEnergySeries(nutritionHistory, {
+    maintenance: maintenanceCalories,
+    bmr: parseNumber(computedComp?.bmr),
+    dayCalories: dayCaloriesFor,
+    days: 90,
+    neatOpts,
+    estimatedMacros: estimatedTefMacros,
+    energyForRecord: energyForNutritionRecord,
+  })), [nutritionHistory, maintenanceCalories, computedComp, dayCaloriesFor,
+    neatOpts, estimatedTefMacros, energyForNutritionRecord]);
+
   // Deload durumu her render'da tarihten yeniden hesaplanıyor; süre dolduğunda
   // ayar yazılmıyor, yalnızca kapalı sayılıyor (render sırasında state yazmamak
   // için). Kullanıcı kaydı kendisi temizliyor.
@@ -2170,6 +2197,7 @@ export default function App() {
               energy: () => setIsEnergyDetailOpen(true),
               sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
               deload: () => setIsDeloadOpen(true),
+              weeklyReview: () => setIsWeeklyReviewOpen(true),
             }[key];
             action?.();
           }}
@@ -2340,6 +2368,25 @@ export default function App() {
         />}
 
         {/* DELOAD */}
+        {/* SEANS RAPORU */}
+        {sessionReport && <SessionReportModal
+          report={sessionReport}
+          onClose={() => setSessionReport(null)}
+        />}
+
+        {/* HAFTALIK GÖZDEN GEÇİRME */}
+        {isWeeklyReviewOpen && <WeeklyReviewModal
+          isOpen={isWeeklyReviewOpen}
+          onClose={() => setIsWeeklyReviewOpen(false)}
+          workouts={workouts}
+          customExercises={customExercises}
+          experienceLevel={settings.experienceLevel}
+          planDays={weekPlanDays}
+          wellness={wellness}
+          energyWeeks={weeklyEnergy}
+          nutritionGoal={settings.nutritionGoal}
+        />}
+
         {isDeloadOpen && <DeloadModal
           isOpen={isDeloadOpen}
           onClose={() => setIsDeloadOpen(false)}
@@ -2394,6 +2441,7 @@ export default function App() {
               report: () => setIsReportCardOpen(true),
               sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
               deload: () => setIsDeloadOpen(true),
+              weeklyReview: () => setIsWeeklyReviewOpen(true),
               mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
               cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
             }[key];

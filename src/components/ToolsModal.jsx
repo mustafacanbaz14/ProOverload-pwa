@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import {
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
-  Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, CalendarDays,
+  Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, ClipboardCheck, CalendarDays,
 } from 'lucide-react';
 
 /**
@@ -45,6 +45,7 @@ const GROUPS = [
     items: [
       { key: 'compare', label: 'Dönemsel Kıyaslama', hint: 'İki ölçümü yan yana karşılaştır', icon: ArrowRightLeft, color: 'text-cyan-400' },
       { key: 'guide', label: 'Ölçüm Rehberi', hint: 'Çevre ve kaliper ölçüm teknikleri', icon: Ruler, color: 'text-zinc-400' },
+      { key: 'weeklyReview', label: 'Haftalık Gözden Geçirme', hint: 'Haftayı kapat, gelecek hafta için ayar al', icon: ClipboardCheck, color: 'text-emerald-400' },
       { key: 'report', label: 'Gelişim Raporu', hint: 'Rekorlar ve dönem özeti', icon: Trophy, color: 'text-yellow-400' },
     ],
   },

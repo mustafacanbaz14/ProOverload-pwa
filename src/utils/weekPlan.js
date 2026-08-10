@@ -1,12 +1,12 @@
-import { MUSCLE_GROUPS, getVolumeLandmarks, volumeStatusOf, VOLUME_STATUS } from './constants';
-import { previewTemplateVolume, estimateDuration } from './templates';
+import { MUSCLE_GROUPS, getVolumeLandmarks, volumeStatusOf, VOLUME_STATUS } from './constants.js';
+import { previewTemplateVolume, estimateDuration } from './templates.js';
 import {
   estimateLiftingCalories, findActivity, findEffort,
   estimateCardioCalories, cardioFatigueLoad, resolvePlannedCardioMinutes,
   isActiveRecoveryCardioDay, DEFAULT_EFFORT,
-} from './cardio';
-import { parseNumber } from './number';
-import { normalizeDays } from './planMigration';
+} from './cardio.js';
+import { parseNumber } from './number.js';
+import { normalizeDays } from './planMigration.js';
 
 export { normalizeDays };
 
@@ -22,7 +22,7 @@ export const WEEKDAYS = [
 
 // Göç ve gün normalleştirme ayrı bir yaprak modülde (döngüsel import olmasın);
 // buradan yeniden dışa aktarılıyor ki çağıranlar tek yerden alsın.
-export { migrateWeekPlans, emptyPlan, findPlan } from './planMigration';
+export { migrateWeekPlans, emptyPlan, findPlan } from './planMigration.js';
 
 /* ------------------------------------------------------------------ *
  *  HESAP

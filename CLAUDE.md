@@ -5,19 +5,32 @@ tarayıcının `localStorage`'ında; sunucu yok.
 
 ## Sürüm numaralandırma
 
-Kullanıcı sürümü iki anlamlı parçalıdır: `MAJOR.MINOR`. `package.json` semver
-gerektirdiği için teknik biçim `MAJOR.MINOR.0` olur; yama daima sıfırdır.
+Sürüm **iki parçalıdır**: `MAJOR.MINOR`. Yama parçası kullanılmaz — `3.1.0` ya
+da `3.1.2` gibi bir sürüm üretilmez.
 
-- Her yayın MINOR'u bir artırır: `2.2.0` → `2.3.0` → `2.4.0` …
+- Her yayın MINOR'u bir artırır: `3.1` → `3.2` → `3.3` …
 - MINOR `9`'a ulaştıktan sonraki yayın MAJOR'u artırır ve MINOR'u sıfırlar:
-  `2.9.0` → `3.0.0`
-- Ara değer yok: `2.2.1` gibi bir sürüm üretilmez. Küçük bir düzeltme de
-  yayınlanıyorsa MINOR yine bir artar.
-- Tek kaynak `package.json`'daki `version` alanıdır; ekranda görünen sürüm
-  (`src/App.jsx`) ve yedek dosyaları oradan okur. Elle ikinci bir yere sürüm
-  yazılmaz.
+  `3.9` → `4.0`
+- Ara değer yok. Tek satırlık bir düzeltme yayınlanıyorsa da MINOR bir artar.
 - Commit başlığının sonuna sürüm parantez içinde eklenir:
-  `Özet cümlesi (2.3.0)`
+  `Özet cümlesi (3.2)`
+
+### İki yerde tutulmasının sebebi
+
+Asıl kaynak `package.json`'daki `version`. `src/utils/constants.js` içindeki
+`APP_VERSION` onun kopyasıdır; çünkü bu modülü hem Vite hem de düz Node
+(`scripts/verify-*.mjs`) okuyor ve JSON import'u iki ortamda farklı davranıyor.
+
+İkisinin ayrışması sessiz hatalar üretiyordu (sürüm notları açılmıyor, yedek
+dosyası eski sürümü yazıyor). Bu yüzden `scripts/verify-core.mjs` üç şeyi test
+ediyor ve ayrışırsa **build kırılır**:
+
+1. `APP_VERSION === package.json`'daki `version`
+2. Sürüm `^\d+\.\d+$` biçiminde (yama parçası yok)
+3. `LATEST_RELEASE_NOTES.version` aynı sürüm
+
+Yani sürüm yükseltirken üç yeri birlikte güncellemek gerekiyor: `package.json`,
+`APP_VERSION` ve sürüm notları.
 
 ## Veri ve göç
 

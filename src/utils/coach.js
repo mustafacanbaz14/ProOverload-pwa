@@ -46,7 +46,7 @@ const haftaninGunu = (d = new Date()) => (d.getDay() === 0 ? 7 : d.getDay());
  * @param ctx.daysSinceMetric  son ölçümden bu yana geçen gün
  * @param ctx.plateaus         buildPlateauInsights çıktısı
  */
-export const buildCoachActions = (ctx = {}) => {
+export const buildCoachActions = (ctx = {}, now = new Date()) => {
   const {
     readiness, sleep, lastReadiness, planDay, doneToday = 0, conflict,
     macros = {}, targetProtein = 0, calorieRemaining = null,
@@ -143,7 +143,7 @@ export const buildCoachActions = (ctx = {}) => {
 
   // Hafta ilerledikçe MEV altındaki kaslar için uyarı sertleşir: pazartesi
   // "eksik" demek anlamsız, perşembeden sonra gerçekten sorun.
-  const gun = haftaninGunu();
+  const gun = haftaninGunu(now);
   // Hafta hiç başlamadıysa "16 kas eksik" demek bilgi değil gürültü; o durum
   // ayrı ve tek bir maddeyle söyleniyor.
   const haftaBasladi = MUSCLE_GROUPS.some(m => parseNumber(muscleVolume[m]) > 0);
