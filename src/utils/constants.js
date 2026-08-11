@@ -70,6 +70,10 @@ export const DEFAULT_SETTINGS = {
   // Deload (boşaltma) durumu: { active, startDate, days, preset }.
   // Süre dolduğunda kayıt silinmiyor, deloadState onu kapalı sayıyor.
   deload: { active: false, startDate: '', days: 7, preset: 'volume' },
+  // Mezosiklik (blok): { active, startDate, weeks, baseline, feedback }.
+  // baseline blok başlarken dondurulan kas hacimleri; feedback hafta -> kas ->
+  // toparlanma anahtarı. Deload gibi süre dolunca silinmiyor, kapalı sayılıyor.
+  mesocycle: { active: false, startDate: '', weeks: 5, baseline: {}, feedback: {} },
   // Görünüm teması: 'dark' | 'light'
   theme: 'dark',
   // Marka vurgu rengi temadan bağımsızdır. Kadın profili pembe paleti
@@ -593,13 +597,21 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.8';
+export const APP_VERSION = '3.9';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.8',
-  date: '2026-08-11',
+  title: 'ProOverload 3.9',
+  date: '2026-08-12',
   items: [
+    {
+      title: 'Mezosiklik (Blok) Planı',
+      desc: 'Haftalık program kurulduğu haftadan sonsuza kadar aynı set sayısında kalıyordu; oysa hipertrofi programlaması bir blok işi. Araçlar → Mezosiklik ekranından 4, 5 veya 6 haftalık blok başlatılıyor: bugünkü hacim taban alınıyor, her hafta kas kas artıyor, son hafta boşaltmayla bitiyor. Artış sabit değil — her haftanın sonunda kas kas "kolay geldi / yerinde / zorladı" seçiliyor ve gelecek haftanın artışı (+2 / +1 / +0 set) buna göre hesaplanıyor. Hedef, toparlanma tavanını (MRV) hiçbir koşulda aşmıyor. Hedefler şablona kendiliğinden yazılmıyor: hangi güne hangi harekete kaç set ekleneceği söyleniyor, ekleme kullanıcıda kalıyor ki elle yapılan düzenlemeler her hafta ezilmesin.'
+    },
+    {
+      title: 'Hareket Seçimi Denetimi',
+      desc: 'Uygulama "kaç set" sorusunu her açıdan yanıtlıyordu ama "hangi hareket" sorusuna hiç bakmıyordu. Haftalık Program ekranına, kas dökümünün üstüne bir denetim geldi: bir kasın hacminin tamamı tepe kasılma hareketlerinden geliyorsa (gerilmede yükleme yok), hacmin yüzde yetmişinden fazlası tek hareketten geliyorsa ya da kas hiçbir harekette hedef değilse uyarıyor. Her hareketin kas boyu profili (gerilmede / kısalmada / orta açıklık) listeleniyor ve eksik varsa kütüphaneden gerilmede yükleyen seçenekler öneriliyor. Bulgular hacimden bağımsız — hacim tablosu yemyeşilken de çıkabilir, çünkü aynı 16 set iki farklı hareket seçimiyle farklı sonuç verir.'
+    },
     {
       title: 'Kas Çalışma Sıklığı',
       desc: 'Haftalık hacim, 16 seti tek güne yığmakla iki güne bölmeyi ayırt etmiyordu. Analiz → Hacim sekmesinde artık her kasın haftada kaç kez çalıştığı, en yoğun seansa ne kadar yığıldığı ve bölünmesi gerekip gerekmediği görünüyor. Bir kas ancak o gün en az 2 set aldıysa "çalışıldı" sayılıyor — yoksa bench press\'in tricepse yazdığı yarım set bile sıklığı şişirirdi. Aynı hacimde yüksek sıklığın avantajı ölçülüdür; asıl kazanç setlerin yığılmaması, metinler de bunu böyle söylüyor.'

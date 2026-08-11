@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES } from '../src/utils/constants.js';
+import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import { suggestSubstitutes } from '../src/utils/substitution.js';
 import { analyzeDayConflicts } from '../src/utils/interference.js';
@@ -23,6 +23,8 @@ import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/u
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
 import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
+import { mesocycleState, muscleTarget, weeklyTargets, targetInstructions, mesocycleCoachItem } from '../src/utils/mesocycle.js';
+import { lengthBias, auditExerciseSelection } from '../src/utils/selectionAudit.js';
 import { buildCycleSummary, mergeCycleDay } from '../src/utils/cycle.js';
 import { analyzeTemplate } from '../src/utils/templateAssistant.js';
 import { sortExercisesForMuscle } from '../src/utils/exerciseSort.js';
@@ -1082,6 +1084,174 @@ test('aynı ağırlıkta sert tekrar kaybı yük düşürtür', () => {
   // Normal düşüşte sessiz kalmalı.
   assert.equal(sessionAdvice([advSet(100, 10, 2), advSet(100, 9, 1)], { repRangeMin: 6, repRangeMax: 10 }), null);
 });
+
+
+/* --- Mezosiklik (blok) planı --- */
+
+const mesoAyar = (over = {}) => ({
+  active: true, startDate: '2026-08-03', weeks: 5,
+  baseline: { 'Göğüs': 10, Kanat: 12 }, feedback: {}, ...over,
+});
+
+test('blok hafta indeksi tarihten yürür ve son hafta boşaltmadır', () => {
+  assert.equal(mesocycleState(mesoAyar(), '2026-08-03').weekIndex, 1);
+  assert.equal(mesocycleState(mesoAyar(), '2026-08-09').weekIndex, 1);
+  assert.equal(mesocycleState(mesoAyar(), '2026-08-10').weekIndex, 2);
+  const son = mesocycleState(mesoAyar(), '2026-08-31');
+  assert.equal(son.weekIndex, 5);
+  assert.equal(son.isDeload, true);
+  assert.equal(son.phase, 'deload');
+  // Süre dolduğunda kayıt silinmiyor, kapalı + expired sayılıyor.
+  const bitmis = mesocycleState(mesoAyar(), '2026-09-07');
+  assert.equal(bitmis.active, false);
+  assert.equal(bitmis.expired, true);
+  // İleri tarihli başlangıç henüz başlamamış demek.
+  assert.equal(mesocycleState(mesoAyar(), '2026-08-01').active, false);
+});
+
+test('geri bildirim girilmemişse hafta başına varsayılan bir set eklenir', () => {
+  const t = (h) => muscleTarget('Göğüs', { baseline: 10, weekIndex: h, totalWeeks: 5 });
+  assert.equal(t(1).target, 10);
+  assert.equal(t(2).target, 11);
+  assert.equal(t(4).target, 13);
+});
+
+test('artış geçen haftanın geri bildirimine göre değişir', () => {
+  const feedback = { 1: { 'Göğüs': 'easy' }, 2: { 'Göğüs': 'hard' } };
+  // 1. hafta kolay geldi (+2), 2. hafta zorladı (+0).
+  assert.equal(muscleTarget('Göğüs', { baseline: 10, weekIndex: 2, totalWeeks: 5, feedback }).target, 12);
+  assert.equal(muscleTarget('Göğüs', { baseline: 10, weekIndex: 3, totalWeeks: 5, feedback }).target, 12);
+  assert.equal(muscleTarget('Göğüs', { baseline: 10, weekIndex: 4, totalWeeks: 5, feedback }).target, 13);
+});
+
+test('hedef MRV tavanını aşmaz', () => {
+  const feedback = Object.fromEntries([1, 2, 3, 4].map(h => [h, { 'Bel': 'easy' }]));
+  const t = muscleTarget('Bel', { baseline: 8, weekIndex: 5, totalWeeks: 6, feedback });
+  const { mrv } = getVolumeLandmarks('Bel', 'intermediate');
+  assert.equal(t.target, mrv);
+  assert.equal(t.capped, true);
+});
+
+test('boşaltma haftası son haftanın değil BAŞLANGICIN yarısıdır', () => {
+  const feedback = Object.fromEntries([1, 2, 3].map(h => [h, { Kanat: 'easy' }]));
+  // 4. hafta 12 + 6 = 18 sete çıkmış olurdu; boşaltma yine de 6.
+  assert.equal(muscleTarget('Kanat', { baseline: 12, weekIndex: 4, totalWeeks: 5, feedback }).target, 18);
+  assert.equal(muscleTarget('Kanat', { baseline: 12, weekIndex: 5, totalWeeks: 5, feedback }).target, 6);
+});
+
+test('talimat en çok katkı veren harekete yazılır', () => {
+  const hedefler = weeklyTargets({ Kanat: 12 }, { weekIndex: 2, totalWeeks: 5 });
+  const [i] = targetInstructions(hedefler, [{
+    muscle: 'Kanat', volume: 12,
+    sources: [{ name: 'Lat Pulldown', volume: 8, dayLabel: 'Pazartesi' }],
+  }]);
+  assert.equal(i.action, 'add');
+  assert.equal(i.diff, 1);
+  assert.match(i.text, /Lat Pulldown/);
+  assert.match(i.text, /Pazartesi/);
+  // Hedefle mevcut eşitse dokunulmaz.
+  const [h] = targetInstructions(
+    weeklyTargets({ Kanat: 12 }, { weekIndex: 1, totalWeeks: 5 }),
+    [{ muscle: 'Kanat', volume: 12, sources: [] }]);
+  assert.equal(h.action, 'hold');
+});
+
+test('dolaylı çeyrek setlerden ibaret kaslar blok hedefine girmez', () => {
+  const h = weeklyTargets({ 'Göğüs': 10, Trapez: 1 }, { weekIndex: 2, totalWeeks: 5 });
+  assert.deepEqual(h.map(x => x.muscle), ['Göğüs']);
+});
+
+test('blok kapalıyken koç satırı çıkmaz', () => {
+  assert.equal(mesocycleCoachItem({ active: false }, []), null);
+  assert.match(mesocycleCoachItem({ active: true, isDeload: true, weekIndex: 5, totalWeeks: 5 }, []).title, /Boşaltma/);
+});
+
+/* --- Hareket seçimi denetimi --- */
+
+test('kas boyu profili doğru sınıflanır', () => {
+  assert.equal(lengthBias('Romanian Deadlift (RDL)'), 'stretch');
+  assert.equal(lengthBias('Incline Dumbbell Fly'), 'stretch');
+  assert.equal(lengthBias('Seated Leg Curl'), 'stretch');
+  assert.equal(lengthBias('Lying Leg Curl'), 'short');
+  assert.equal(lengthBias('Leg Extension'), 'short');
+  assert.equal(lengthBias('Barbell Shrug'), 'short');
+  assert.equal(lengthBias('Barbell Bench Press'), 'mid');
+  assert.equal(lengthBias('Barbell Row'), 'mid');
+  // Araya kelime giren adlar kaçmamalı — bitişik kalıp bunu yapamıyordu.
+  assert.equal(lengthBias('Leaning Cable Lateral Raise'), 'stretch');
+  // Baldır kuralı leg press kuralından önce gelmeli.
+  assert.equal(lengthBias('Leg Press Calf Raise'), 'stretch');
+});
+
+test('gerilmede yükleme yoksa uyarı ve öneri çıkar', () => {
+  const r = auditExerciseSelection([{
+    muscle: 'Kalça', volume: 12,
+    sources: [
+      { name: 'Hip Thrust', volume: 8, dayLabel: 'Pazartesi' },
+      { name: 'Cable Glute Kickback', volume: 4, dayLabel: 'Cuma' },
+    ],
+  }]);
+  const f = r.findings[0];
+  assert.ok(f.issues.some(i => i.key === 'noStretch'));
+  assert.equal(f.stretchVolume, 0);
+  // Öneriler birincil kas şartına takılmamalı: RDL ve split squat da kalçayı
+  // gerilmede yüklüyor ama ikisinin de birincil kası başka.
+  assert.ok(f.suggestions.length > 0);
+  assert.ok(f.suggestions.every(ad => lengthBias(ad) === 'stretch'));
+});
+
+test('gerilmede yükleme varsa o uyarı çıkmaz', () => {
+  const r = auditExerciseSelection([{
+    muscle: 'Hamstring', volume: 10,
+    sources: [
+      { name: 'Romanian Deadlift (RDL)', volume: 5, dayLabel: 'Salı' },
+      { name: 'Lying Leg Curl', volume: 5, dayLabel: 'Cuma' },
+    ],
+  }]);
+  assert.equal(r.findings.length, 0);
+  assert.equal(r.clean, true);
+});
+
+test('hacmin çoğu tek hareketten geliyorsa bağımlılık bildirilir', () => {
+  const r = auditExerciseSelection([{
+    muscle: 'Göğüs', volume: 12,
+    sources: [
+      { name: 'Incline Dumbbell Fly', volume: 10, dayLabel: 'Pazartesi' },
+      { name: 'Machine Chest Press', volume: 2, dayLabel: 'Cuma' },
+    ],
+  }]);
+  assert.ok(r.findings[0].issues.some(i => i.key === 'single'));
+});
+
+test('kas hiçbir harekette hedef değilse dolaylı hacim bildirilir', () => {
+  const r = auditExerciseSelection([{
+    muscle: 'Triseps', volume: 8,
+    sources: [{ name: 'Barbell Bench Press', volume: 8, dayLabel: 'Pazartesi' }],
+  }]);
+  const konu = r.findings[0].issues.find(i => i.key === 'indirectOnly');
+  assert.ok(konu);
+  assert.equal(konu.severity, 'high');
+});
+
+test('gerilme karşılığı olmayan kaslarda uyarı verilmez', () => {
+  // Trapez shrug ile, ön deltoid baş üstü basışla çalışıyor; ikisinin de
+  // uzun boyda yükleyen ayrı bir karşılığı yok, uyarı gürültü olurdu.
+  const r = auditExerciseSelection([
+    { muscle: 'Trapez', volume: 8, sources: [{ name: 'Barbell Shrug', volume: 5, dayLabel: 'Pazartesi' }, { name: 'Dumbbell Shrug', volume: 3, dayLabel: 'Cuma' }] },
+    { muscle: 'Ön Omuz', volume: 8, sources: [{ name: 'Overhead Press (OHP)', volume: 5, dayLabel: 'Salı' }, { name: 'Arnold Press', volume: 3, dayLabel: 'Cuma' }] },
+  ]);
+  assert.equal(r.findings.length, 0);
+});
+
+test('hacmi düşük kaslar denetlenmez', () => {
+  const r = auditExerciseSelection([{
+    muscle: 'Karın', volume: 3,
+    sources: [{ name: 'Machine Crunch', volume: 3, dayLabel: 'Cuma' }],
+  }]);
+  assert.equal(r.hasData, false);
+  assert.equal(r.findings.length, 0);
+});
+
 
 for (const { name, run } of tests) {
   try {

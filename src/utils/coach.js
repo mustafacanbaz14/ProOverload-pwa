@@ -53,6 +53,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     muscleVolume = {}, experienceLevel = 'intermediate',
     acwr, daysSinceMetric = null, plateaus = [], frequencyItem = null,
     deload = null, deloadSuggestion = null, gender = 'male', cycle = null,
+    mesocycleItem = null, selectionItem = null,
   } = ctx;
 
   const items = [];
@@ -239,6 +240,26 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'frequency', priority: 3, tone: TONES.info, action: 'analysis',
       title: frequencyItem.title,
       detail: frequencyItem.detail,
+    });
+  }
+
+  // Blok sürüyorsa haftanın hedefi 2. öncelik: bu haftanın programını
+  // değiştiren bir bilgi, ama bugünün seansını değiştirmiyor.
+  if (mesocycleItem) {
+    ekle({
+      key: 'mesocycle', priority: 2, tone: TONES.info, action: 'mesocycle',
+      title: mesocycleItem.title,
+      detail: mesocycleItem.detail,
+    });
+  }
+
+  // Hareket seçimi hacimden bağımsız bir eksik; acil değil, program
+  // düzenlenirken bakılacak bir şey.
+  if (selectionItem) {
+    ekle({
+      key: 'selection', priority: 3, tone: TONES.info, action: 'plan',
+      title: selectionItem.title,
+      detail: selectionItem.detail,
     });
   }
 

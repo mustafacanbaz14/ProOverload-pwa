@@ -18,6 +18,8 @@ import { buildCoachActions } from './utils/coach';
 import { effectiveLoad, bodyweightPortion } from './utils/bodyweight';
 import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/bodyweightAudit';
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
+import { mesocycleState, weeklyTargets, targetInstructions, mesocycleCoachItem, emptyMesocycle } from './utils/mesocycle';
+import { auditExerciseSelection, selectionCoachItem } from './utils/selectionAudit';
 import { buildSessionReport } from './utils/sessionReport';
 import { buildPlateauInsights } from './utils/insights';
 import { buildFrequencyReport, frequencyCoachItem } from './utils/frequency';
@@ -64,6 +66,7 @@ import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
 // Ana ekran için gerekli olmayan büyük pencereler ilk açılışta çalıştırılmaz.
 // Kullanıcı ilgili aracı açtığında ayrı parça indirilir ve değerlendirilir.
 const DeloadModal = lazy(() => import('./components/DeloadModal'));
+const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
 const SessionReportModal = lazy(() => import('./components/SessionReportModal'));
 const WeeklyReviewModal = lazy(() => import('./components/WeeklyReviewModal'));
@@ -139,6 +142,7 @@ export default function App() {
   const [isWellnessOpen, setIsWellnessOpen] = useState(false);
   const [isDeloadOpen, setIsDeloadOpen] = useState(false);
   const [isStarterOpen, setIsStarterOpen] = useState(false);
+  const [isMesocycleOpen, setIsMesocycleOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   // Seans bitince gösterilen rapor; kapatılana kadar duruyor.
   const [sessionReport, setSessionReport] = useState(null);
@@ -2182,6 +2186,30 @@ export default function App() {
     }),
     [readiness, dashboardStats]);
 
+  // Blok durumu deload gibi tarihten yeniden hesaplanıyor; süre dolduğunda
+  // ayar yazılmıyor, yalnızca kapalı sayılıyor.
+  const mesocycle = useMemo(
+    () => mesocycleState(settings.mesocycle),
+    [settings.mesocycle]);
+
+  // Bloğun bu haftaki talimatları hem koç satırında hem blok ekranında
+  // kullanılıyor; iki yerde ayrı hesaplanırsa ayrışma riski doğar.
+  const mesocycleInstructions = useMemo(() => {
+    if (!mesocycle.active) return [];
+    return targetInstructions(
+      weeklyTargets(settings.mesocycle?.baseline, {
+        weekIndex: mesocycle.weekIndex,
+        totalWeeks: mesocycle.totalWeeks,
+        experienceLevel: settings.experienceLevel,
+        feedback: settings.mesocycle?.feedback,
+      }),
+      weekPlanResult.statuses);
+  }, [mesocycle, settings.mesocycle, settings.experienceLevel, weekPlanResult.statuses]);
+
+  const selectionReport = useMemo(
+    () => auditExerciseSelection(weekPlanResult.statuses, { customExercises }),
+    [dashboardStats.planStatuses, customExercises]);
+
   /** Antrenmandaki bir hareketi başka bir hareketle değiştirir; setler korunur. */
   const handleSubstituteExercise = useCallback((exerciseId, newName) => {
     setActiveWorkout(prev => prev ? {
@@ -2220,6 +2248,8 @@ export default function App() {
       daysSinceMetric: gunFarki,
       plateaus: plateauInsights,
       frequencyItem: frequencyCoachItem(frequencyReport),
+      mesocycleItem: mesocycleCoachItem(mesocycle, mesocycleInstructions),
+      selectionItem: selectionCoachItem(selectionReport),
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -2228,6 +2258,7 @@ export default function App() {
   }, [readiness, todayCoach, sortedWorkouts, sortedMetrics, computedComp,
     settings.nutritionGoal, settings.proteinPerFfmBulk, settings.proteinPerFfmCut,
     settings.experienceLevel, dashboardStats, plateauInsights, deload, deloadSuggestion,
+    mesocycle, mesocycleInstructions, selectionReport,
     profileGender, todayCycleSummary]);
 
   const needsBackup = useMemo(() => {
@@ -2342,6 +2373,8 @@ export default function App() {
                 metrics: () => { setProgressTab('body'); handleChangeView('progress'); },
                 analysis: () => { setProgressTab('analysis'); handleChangeView('progress'); },
                 plan: () => setIsWeekPlanOpen(true),
+                deload: () => setIsDeloadOpen(true),
+                mesocycle: () => setIsMesocycleOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
               })[hedef]?.()}
               onOpenEnergy={() => setIsEnergyDetailOpen(true)}
@@ -2560,6 +2593,7 @@ export default function App() {
               sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
+              mesocycle: () => setIsMesocycleOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
             }[key];
             action?.();
@@ -2742,6 +2776,16 @@ export default function App() {
           gender={profileGender}
         />}
 
+        {isMesocycleOpen && <MesocycleModal
+          isOpen={isMesocycleOpen}
+          onClose={() => setIsMesocycleOpen(false)}
+          mesocycle={settings.mesocycle || emptyMesocycle()}
+          onChange={(next) => setSettings(prev => ({ ...prev, mesocycle: next }))}
+          statuses={weekPlanResult.statuses}
+          muscleVolume={weekPlanResult.muscleVolume}
+          experienceLevel={settings.experienceLevel}
+        />}
+
         {/* HAZIR PROGRAMLAR */}
         <StarterProgramModal
           isOpen={isStarterOpen}
@@ -2825,6 +2869,7 @@ export default function App() {
               sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
+              mesocycle: () => setIsMesocycleOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
               cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },

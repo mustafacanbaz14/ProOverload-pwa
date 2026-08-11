@@ -4,6 +4,7 @@ import {
   Plus, Trash2, Dumbbell, HeartPulse, Star, Pencil, Check, Zap, ChevronDown,
 } from 'lucide-react';
 import MuscleHeatmap from './MuscleHeatmap';
+import SelectionAuditCard from './SelectionAuditCard';
 import PlanningGuide from './PlanningGuide';
 import { WEEKDAYS, computeWeekPlan, STATUS_LABEL, STATUS_COLOR, emptyPlan } from '../utils/weekPlan';
 import { CARDIO_ACTIVITIES, CARDIO_SECTIONS, CARDIO_EFFORTS, DEFAULT_EFFORT } from '../utils/cardio';
@@ -522,6 +523,11 @@ const WeeklyPlanModal = memo(({
             </div>
           )}
         </div>
+
+        {/* Hareket seçimi denetimi. Kas dökümünden ÖNCE duruyor: döküm
+            "kaç set" sorusunu, bu kart "hangi hareket" sorusunu yanıtlıyor ve
+            ikincisi görülmeden birincisini düzeltmek eksik kalıyor. */}
+        <SelectionAuditCard statuses={result.statuses} customExercises={customExercises} />
 
         {/* Kas kas döküm */}
         <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
