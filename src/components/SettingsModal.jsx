@@ -56,6 +56,7 @@ const SettingsModal = memo(({
   // Vücut ağırlıklı kayıtların yazım biçimi denetimi; null = hesaplanmadı.
   bodyweightAudit = null,
   onNormalizeBodyweight,
+  onExportCsv,
 }) => {
   if (!isOpen) return null;
 
@@ -124,6 +125,37 @@ const SettingsModal = memo(({
             >
               <Smartphone size={14} /> Metin ile Cihaz Aktarımı
             </button>
+
+            {/* CSV yedek değil ANALİZ içindir: JSON tek satırda tüm durumu
+                taşıyor ve elektronik tabloda açılamıyor. Burada her satır bir
+                set — pivot tablo kurmak için doğal biçim. */}
+            {onExportCsv && (
+              <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
+                  Elektronik Tablo (CSV)
+                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {[
+                    { key: 'workouts', label: 'Setler' },
+                    { key: 'metrics', label: 'Ölçüm' },
+                    { key: 'nutrition', label: 'Besin' },
+                  ].map(o => (
+                    <button
+                      key={o.key}
+                      onClick={() => onExportCsv(o.key)}
+                      className="bg-zinc-900 border border-zinc-800 text-zinc-300 active:bg-zinc-800 font-bold py-2.5 rounded-xl uppercase tracking-wider text-[10px] transition-colors"
+                    >
+                      {o.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  Excel ve Google E-Tablolar için hazır: noktalı virgül ayraçlı,
+                  ondalıklar virgüllü. Geri yükleme için değil, kendi analizini
+                  kurmak için — geri yükleme JSON yedeğiyle yapılır.
+                </p>
+              </div>
+            )}
           </div>
 
           {/* --- GÖRÜNÜM --- */}

@@ -51,7 +51,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     readiness, sleep, lastReadiness, planDay, doneToday = 0, conflict,
     macros = {}, targetProtein = 0, calorieRemaining = null,
     muscleVolume = {}, experienceLevel = 'intermediate',
-    acwr, daysSinceMetric = null, plateaus = [],
+    acwr, daysSinceMetric = null, plateaus = [], frequencyItem = null,
     deload = null, deloadSuggestion = null, gender = 'male', cycle = null,
   } = ctx;
 
@@ -229,6 +229,16 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'plateau', priority: 3, tone: TONES.warn, action: 'analysis',
       title: `${durgun[0].name} gerilemede`,
       detail: durgun[0].advice,
+    });
+  }
+
+  // Hacim yeterli ama tek seansa yığılmışsa: acil değil, program kurarken
+  // düzeltilecek bir şey. Bu yüzden 2. öncelik değil 3.
+  if (frequencyItem) {
+    ekle({
+      key: 'frequency', priority: 3, tone: TONES.info, action: 'analysis',
+      title: frequencyItem.title,
+      detail: frequencyItem.detail,
     });
   }
 

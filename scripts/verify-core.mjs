@@ -29,6 +29,8 @@ import { sortExercisesForMuscle } from '../src/utils/exerciseSort.js';
 import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from '../src/utils/undo.js';
 import { inspectBackupPayload, mergeImportedRecords, backupImportSummary } from '../src/utils/backupImport.js';
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
+import { buildFrequencyReport, frequencyCoachItem } from '../src/utils/frequency.js';
+import { workoutsToCsv, metricsToCsv } from '../src/utils/csvExport.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
@@ -881,6 +883,115 @@ test('kayıt yoksa gözden geçirme uydurma ayar üretmez', () => {
   const review = buildWeeklyReview({ workouts: [], today: new Date('2026-08-05T12:00:00') });
   assert.equal(review.hasData, false);
   assert.deepEqual(review.adjustments.map(a => a.key), ['no-data']);
+});
+
+/* ------------------------------------------------------------------ *
+ *  KAS ÇALIŞMA SIKLIĞI
+ * ------------------------------------------------------------------ */
+
+const freqSets = (n) => Array.from({ length: n }, (_, i) => ({
+  id: `s${i}`, weight: '80', reps: '8', rir: 2, setType: 'normal',
+}));
+
+// 4 tam hafta; bugün çarşamba, içinde bulunulan hafta hesaba girmemeli.
+const freqWorkouts = () => {
+  const out = [];
+  ['2026-07-06', '2026-07-13', '2026-07-20', '2026-07-27'].forEach((pzt, i) => {
+    // Göğüs: tek günde 16 set (yığılmış)
+    out.push({ id: `a${i}`, date: pzt, exercises: [
+      { name: 'Barbell Bench Press', sets: freqSets(8) },
+      { name: 'Incline Dumbbell Press', sets: freqSets(8) },
+    ] });
+    // Kanat: iki güne bölünmüş
+    out.push({ id: `b${i}`, date: pzt, exercises: [{ name: 'Lat Pulldown', sets: freqSets(6) }] });
+    const per = new Date(`${pzt}T12:00:00`);
+    per.setDate(per.getDate() + 3);
+    out.push({ id: `c${i}`, date: per.toISOString().slice(0, 10), exercises: [{ name: 'Lat Pulldown', sets: freqSets(6) }] });
+  });
+  return out;
+};
+
+test('sıklık yalnızca tamamlanmış haftalara bakar', () => {
+  // İçinde bulunulan hafta bitmediği için ortalamayı aşağı çekerdi.
+  const r = buildFrequencyReport(freqWorkouts(), { today: new Date('2026-08-05T12:00:00'), weeks: 4 });
+  assert.equal(r.weeks, 4);
+  assert.equal(r.rangeStart, '2026-07-06');
+  assert.equal(r.rangeEnd, '2026-08-02');
+});
+
+test('aynı hacim tek güne yığılırsa işaretlenir', () => {
+  const r = buildFrequencyReport(freqWorkouts(), { today: new Date('2026-08-05T12:00:00'), weeks: 4 });
+  const gogus = r.byMuscle.find(m => m.muscle === 'Göğüs');
+  const kanat = r.byMuscle.find(m => m.muscle === 'Kanat');
+
+  // Göğüs 16 set ama tek gün: bölünmesi öneriliyor.
+  assert.equal(gogus.sessionsPerWeek, 1);
+  assert.equal(gogus.concentration, 1);
+  assert.equal(gogus.verdict, 'concentrated');
+  assert.equal(gogus.recommended, 2);
+
+  // Kanat aynı hacme yakın ama iki güne bölünmüş: uyarı yok.
+  assert.equal(kanat.sessionsPerWeek, 2);
+  assert.ok(kanat.concentration < 1);
+  assert.notEqual(kanat.verdict, 'concentrated');
+});
+
+test('yan katkıyla beslenen kas hedeflenmiş sayılmaz', () => {
+  // Eşik olmasa bench press'in tricepse yazdığı yarım set "triceps çalışıldı"
+  // sayılır ve sıklık her kas için şişerdi.
+  const r = buildFrequencyReport([
+    { id: 'x', date: '2026-07-27', exercises: [{ name: 'Barbell Bench Press', sets: freqSets(2) }] },
+  ], { today: new Date('2026-08-05T12:00:00'), weeks: 4 });
+  const triseps = r.byMuscle.find(m => m.muscle === 'Triseps');
+  assert.equal(triseps.sessionsPerWeek, 0);
+  assert.equal(triseps.verdict, 'incidental');
+});
+
+test('sorun yoksa koç sıklık maddesi üretmez', () => {
+  assert.equal(frequencyCoachItem(buildFrequencyReport([], { today: new Date('2026-08-05T12:00:00') })), null);
+  const item = frequencyCoachItem(buildFrequencyReport(freqWorkouts(), { today: new Date('2026-08-05T12:00:00'), weeks: 4 }));
+  assert.equal(item.muscle, 'Göğüs');
+});
+
+/* ------------------------------------------------------------------ *
+ *  CSV DIŞA AKTARMA
+ * ------------------------------------------------------------------ */
+
+test('CSV virgül ve tırnak içeren alanları kaçırır', () => {
+  // Kaçırılmazsa sütun kayması oluyor ve bu sessizce oluyor: dosyayı açan
+  // kişi yanlış sütundaki sayıyı doğru sanıyor.
+  const csv = workoutsToCsv([{
+    date: '2026-08-03', name: 'İtiş, A',
+    exercises: [{ name: 'Lateral Raise (Cable)', sets: [{ weight: '12.5', reps: '15', rir: 1, setType: 'normal' }] }],
+  }]);
+  const satir = csv.split('\r\n')[1];
+  assert.ok(satir.includes('"İtiş, A"'), satir);
+  // Ondalık virgüllü yazıldığı için o hücre de tırnaklanmalı.
+  assert.ok(satir.includes('"12,5"'), satir);
+  assert.equal(satir.split(';').length > 10, true);
+});
+
+test('CSV Excel için BOM ve noktalı virgülle üretilir', () => {
+  // BOM olmadan Excel UTF-8'i tanımıyor ve Türkçe karakterler bozuluyor.
+  const csv = metricsToCsv([{ date: '2026-08-01', weight: '80.5', measurements: {} }]);
+  assert.equal(csv.charCodeAt(0), 0xFEFF);
+  assert.ok(csv.includes('Yag Orani'));
+  assert.ok(csv.split('\r\n')[0].includes(';'));
+});
+
+test('ısınma setleri CSV\'de numaralandırılmaz ama satır olarak kalır', () => {
+  const csv = workoutsToCsv([{
+    date: '2026-08-03', name: 'A',
+    exercises: [{ name: 'Barbell Bench Press', sets: [
+      { weight: '40', reps: '10', rir: 4, setType: 'warmup' },
+      { weight: '80', reps: '8', rir: 2, setType: 'normal' },
+    ] }],
+  }]);
+  const satirlar = csv.trim().split('\r\n');
+  assert.equal(satirlar.length, 3); // başlık + 2 set
+  assert.ok(satirlar[1].includes('Isinma'));
+  // Isınma seti hacme sayılmadığı için set numarası ve hacim boş.
+  assert.equal(satirlar[1].split(';')[4], '');
 });
 
 for (const { name, run } of tests) {

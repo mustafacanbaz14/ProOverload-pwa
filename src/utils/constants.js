@@ -593,13 +593,25 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.6';
+export const APP_VERSION = '3.7';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.6',
+  title: 'ProOverload 3.7',
   date: '2026-08-11',
   items: [
+    {
+      title: 'Kas Çalışma Sıklığı',
+      desc: 'Haftalık hacim, 16 seti tek güne yığmakla iki güne bölmeyi ayırt etmiyordu. Analiz → Hacim sekmesinde artık her kasın haftada kaç kez çalıştığı, en yoğun seansa ne kadar yığıldığı ve bölünmesi gerekip gerekmediği görünüyor. Bir kas ancak o gün en az 2 set aldıysa "çalışıldı" sayılıyor — yoksa bench press\'in tricepse yazdığı yarım set bile sıklığı şişirirdi. Aynı hacimde yüksek sıklığın avantajı ölçülüdür; asıl kazanç setlerin yığılmaması, metinler de bunu böyle söylüyor.'
+    },
+    {
+      title: 'Isınma Setlerini Tek Dokunuşla Ekle',
+      desc: 'Plaka hesaplayıcı ısınma piramidini gösteriyordu ama setleri elle yazmak gerekiyordu. Artık doğrudan harekete ekleniyor: çalışma setlerinin önüne giriyor ve W (ısınma) işaretli olduğu için hacme sayılmıyor.'
+    },
+    {
+      title: 'CSV Dışa Aktarma',
+      desc: 'Setler, ölçümler ve beslenme ayrı ayrı elektronik tabloya aktarılabiliyor. Satır başına bir set; vücut ağırlıklı hareketlerde hem yazılan değer hem gerçek yük ayrı sütunda. Excel için hazır: noktalı virgül ayraçlı, ondalıklar virgüllü, UTF-8 işaretli. Geri yükleme için değil, kendi analizini kurmak için.'
+    },
     {
       title: 'Yedeği Yüklemeden Önce Gör',
       desc: 'Dosya adı, sürümü, tarihi ve içerdiği antrenman, ölçüm, beslenme, şablon ve diğer kayıt sayıları artık yükleme başlamadan gösterilir.'

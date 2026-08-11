@@ -1,5 +1,5 @@
 import React, { useState, memo } from 'react';
-import { X, Layers, Flame } from 'lucide-react';
+import { X, Layers, Flame, Plus } from 'lucide-react';
 import {
   calculatePlates, groupPlates, generateWarmup, BAR_OPTIONS, normalizePlates
 } from '../utils/plates';
@@ -17,7 +17,7 @@ const PLATE_COLOR = {
   0.5: 'bg-zinc-700 border-zinc-600',
 };
 
-const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availablePlates }) => {
+const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availablePlates, onAddWarmup }) => {
   const [weight, setWeight] = useState(initialWeight || 60);
   const [bar, setBar] = useState(20);
   const [tab, setTab] = useState('plates'); // 'plates' | 'warmup'
@@ -166,10 +166,22 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
                     <span className="text-[10px] font-mono text-cyan-500 uppercase font-bold">Çalışma Seti</span>
                     <span className="font-mono text-sm font-bold text-cyan-400">{weight} kg</span>
                   </div>
+                  {/* Piramidi görüp elle dört set yazmak gereksiz bir adımdı;
+                      setler doğrudan harekete ekleniyor ve W (ısınma) olarak
+                      işaretlendiği için hacme sayılmıyor. */}
+                  {onAddWarmup && (
+                    <button
+                      onClick={() => { onAddWarmup(warmup); onClose(); }}
+                      className="w-full bg-orange-600 active:bg-orange-700 text-white font-bold py-3 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors mt-1"
+                    >
+                      <Plus size={14} /> {warmup.length} ısınma setini ekle
+                    </button>
+                  )}
+
                   <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">
                     Isınma setleri tükenişe gitmez; amaç sinir sistemini hazırlamak, yorgunluk
-                    biriktirmemek. Uygulamada bunları <strong className="text-zinc-400">W</strong> ile
-                    işaretlersen hacme sayılmaz.
+                    biriktirmemek. Eklenen setler <strong className="text-zinc-400">W</strong> ile
+                    işaretlenir ve hacme sayılmaz.
                   </p>
                 </>
               )}

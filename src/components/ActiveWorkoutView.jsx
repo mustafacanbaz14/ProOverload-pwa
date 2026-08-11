@@ -446,7 +446,7 @@ const ActiveWorkoutView = memo(({
                     onClick={() => {
                       // Son çalışma setinin ağırlığıyla aç; yoksa bugünkü hedefle.
                       const lastWorking = [...(ex.sets || [])].reverse().find(s => isWorkingSet(s) && parseNumber(s.weight) > 0);
-                      onOpenPlateCalc?.(parseNumber(lastWorking?.weight) || target?.weight || 0);
+                      onOpenPlateCalc?.(parseNumber(lastWorking?.weight) || target?.weight || 0, ex.id);
                     }}
                     title="Plaka hesaplayıcı ve ısınma"
                     className="px-3 py-2 bg-zinc-950 active:bg-zinc-800 text-cyan-500 border border-cyan-900/50 rounded-xl transition-colors shrink-0"

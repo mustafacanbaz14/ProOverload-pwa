@@ -20,6 +20,8 @@ import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/body
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
 import { buildSessionReport } from './utils/sessionReport';
 import { buildPlateauInsights } from './utils/insights';
+import { buildFrequencyReport, frequencyCoachItem } from './utils/frequency';
+import { workoutsToCsv, metricsToCsv, nutritionToCsv } from './utils/csvExport';
 import { analyzeDayConflicts } from './utils/interference';
 import { averageDailyExercise, dayEnergyBreakdown, ACTIVITY_LEVELS, estimateMacrosForTef, thermicEffect, neatOptsForDay, buildEnergySeries, groupByWeek } from './utils/energyModel';
 import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
@@ -422,6 +424,34 @@ export default function App() {
       : null),
     [isSettingsModalOpen, workouts, sortedMetrics, currentMetricsForm, customExercises]);
 
+  /**
+   * Seçilen veri kümesini CSV olarak indirir.
+   *
+   * Yük çözücü setlere de uygulanıyor: barfiks satırında hem yazılan değer hem
+   * gerçek yük görünsün ki tabloyu açan kişi hangisiyle hesap yaptığını bilsin.
+   */
+  const handleExportCsv = useCallback((kind) => {
+    const uretici = {
+      workouts: () => ({
+        text: workoutsToCsv(sortedWorkouts, { customExercises, resolveLoad: resolveSetLoad }),
+        name: 'setler',
+      }),
+      metrics: () => ({ text: metricsToCsv(sortedMetrics), name: 'olcumler' }),
+      nutrition: () => ({ text: nutritionToCsv(sortedNutrition, dailyTotals), name: 'beslenme' }),
+    }[kind];
+    if (!uretici) return;
+
+    const { text, name } = uretici();
+    const blob = new Blob([text], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ProOverload_${name}_${getLocalDateString()}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('CSV indirildi.');
+  }, [sortedWorkouts, sortedMetrics, sortedNutrition, customExercises, resolveSetLoad, showToast]);
+
   const handleNormalizeBodyweight = useCallback(() => {
     const { workouts: next, changed } = normalizeBodyweightEntries(workouts, {
       metricsHistory: sortedMetrics,
@@ -762,6 +792,36 @@ export default function App() {
       return { ...prev, exercises: list };
     });
   }, []);
+
+  /**
+   * Isınma piramidini harekete ekler.
+   *
+   * Setler listenin BAŞINA giriyor: ısınma çalışma setlerinden önce yapılır ve
+   * sonuna eklenirse kullanıcı her seferinde elle yukarı taşımak zorunda kalır.
+   * `warmup` tipi hacme sayılmadığı için istatistikler etkilenmiyor.
+   */
+  const addWarmupSets = useCallback((exerciseId, steps) => {
+    if (!exerciseId || !Array.isArray(steps) || steps.length === 0) return;
+    setActiveWorkout(prev => prev ? {
+      ...prev,
+      exercises: (prev.exercises || []).map(ex => ex.id === exerciseId ? {
+        ...ex,
+        sets: [
+          ...steps.map(s => ({
+            id: generateId(),
+            weight: String(s.weight),
+            reps: String(s.reps),
+            rir: 4,
+            tempo: '',
+            formRating: 8,
+            setType: 'warmup',
+          })),
+          ...(ex.sets || []),
+        ],
+      } : ex),
+    } : prev);
+    showToast(`${steps.length} ısınma seti eklendi.`);
+  }, [showToast]);
 
   const removeSet = useCallback((exerciseId, setId) => {
     setActiveWorkout(prev => ({ ...prev, exercises: (prev?.exercises || []).map(ex => ex.id === exerciseId ? { ...ex, sets: (ex.sets || []).filter(s => s.id !== setId) } : ex) }));
@@ -2060,6 +2120,16 @@ export default function App() {
    */
   const plateauInsights = useMemo(() => buildPlateauInsights(workouts), [workouts]);
 
+  // Kas sıklığı: haftalık hacim 16 seti tek güne yığmakla ikiye bölmeyi ayırt
+  // etmiyor. Yalnızca tamamlanmış haftalara bakar.
+  const frequencyReport = useMemo(
+    () => buildFrequencyReport(workouts, {
+      customExercises,
+      experienceLevel: settings.experienceLevel,
+      weeks: 4,
+    }),
+    [workouts, customExercises, settings.experienceLevel]);
+
   // Haftalık kalori dengesi: gözden geçirme ekranı da kalori detayıyla aynı
   // motoru kullansın diye burada bir kez hesaplanıyor, iki ayrı sayı çıkmasın.
   const weeklyEnergy = useMemo(() => groupByWeek(buildEnergySeries(nutritionHistory, {
@@ -2125,6 +2195,7 @@ export default function App() {
       acwr: dashboardStats,
       daysSinceMetric: gunFarki,
       plateaus: plateauInsights,
+      frequencyItem: frequencyCoachItem(frequencyReport),
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -2346,6 +2417,7 @@ export default function App() {
               }}
               analyticsProps={{
                 analysisType,
+                frequency: frequencyReport,
                 setAnalysisType,
                 bodyMetricKey,
                 setBodyMetricKey,
@@ -2413,7 +2485,7 @@ export default function App() {
               repsOnFocusRef={repsOnFocusRef}
               startRest={startRest}
               stopRest={stopRest}
-              onOpenPlateCalc={(w) => setPlateCalc({ weight: w })}
+              onOpenPlateCalc={(w, exerciseId) => setPlateCalc({ weight: w, exerciseId })}
               onSaveAsTemplate={() => handleSaveAsTemplate(null)}
               onToggleSuperset={handleToggleSuperset}
               onEditExercise={setEditorExercise}
@@ -2494,6 +2566,7 @@ export default function App() {
           onOpenReleaseNotes={() => setIsReleaseNotesOpen(true)}
           bodyweightAudit={bodyweightAudit}
           onNormalizeBodyweight={handleNormalizeBodyweight}
+          onExportCsv={handleExportCsv}
           profileGender={profileGender}
         />}
 
@@ -2768,6 +2841,9 @@ export default function App() {
         {plateCalc && <PlateCalculatorModal
           isOpen={Boolean(plateCalc)}
           onClose={() => setPlateCalc(null)}
+          onAddWarmup={plateCalc?.exerciseId
+            ? (steps) => addWarmupSets(plateCalc.exerciseId, steps)
+            : null}
           initialWeight={plateCalc?.weight || 0}
           availablePlates={settings.availablePlates}
         />}

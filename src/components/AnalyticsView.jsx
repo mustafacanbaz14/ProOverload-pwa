@@ -19,8 +19,17 @@ const NUTRITION_METRICS = [
   { key: 'fats', label: 'Yağ', unit: ' g', color: '#a78bfa' },
 ];
 
+// Sıklık yargısının rengi. "incidental" uyarı değil bilgi: kas hedeflenmiyor.
+const FREQ_TONE = {
+  ok: 'text-emerald-400',
+  concentrated: 'text-amber-400',
+  'low-volume': 'text-cyan-400',
+  incidental: 'text-zinc-500',
+};
+
 const AnalyticsView = memo(({
   analysisType,
+  frequency = null,
   setAnalysisType,
   bodyMetricKey,
   setBodyMetricKey,
@@ -313,6 +322,55 @@ const AnalyticsView = memo(({
             Her nokta bir haftanın toplam hacmi. Katkı ağırlıkları dahildir:
             birincil hedef 1, yardımcı 0.5, hafif 0.25 set sayılır.
           </p>
+
+          {/* Sıklık: hacim tek başına 16 seti tek güne yığmakla ikiye bölmeyi
+              ayırt etmiyor, oysa son setlerin kalitesi arasındaki fark buradan
+              geliyor. */}
+          {frequency?.hasData && (
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
+                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Çalışma Sıklığı</h4>
+                <span className="text-[9px] font-mono text-zinc-600">son {frequency.weeks} tam hafta</span>
+              </div>
+
+              <div className="divide-y divide-zinc-800/70">
+                {frequency.byMuscle.filter(m => m.trained).map(m => (
+                  <div key={m.muscle} className="px-4 py-2.5 space-y-1.5">
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-[11px] font-bold text-zinc-200 truncate">{m.muscle}</span>
+                      <span className="text-[10px] font-mono shrink-0">
+                        <span className={FREQ_TONE[m.verdict] || 'text-zinc-400'}>
+                          haftada {m.sessionsPerWeek}×
+                        </span>
+                        <span className="text-zinc-600"> · {m.weeklyVolume} set</span>
+                      </span>
+                    </div>
+
+                    {/* Yığılma çubuğu: en yoğun seansın haftalık hacme oranı.
+                        Tamamen dolu = her şey tek güne sıkışmış. */}
+                    <div className="w-full bg-zinc-950 rounded-full h-1 border border-zinc-800 overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${m.concentration >= 0.9 ? 'bg-amber-500' : m.concentration >= 0.6 ? 'bg-cyan-500' : 'bg-emerald-500'}`}
+                        style={{ width: `${Math.min(100, m.concentration * 100)}%` }}
+                      />
+                    </div>
+
+                    {m.advice && (
+                      <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">{m.advice}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+
+              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-4 py-2.5 border-t border-zinc-800">
+                Çubuk, haftalık hacmin en yoğun seansa ne kadar yığıldığını gösterir.
+                Bir kas ancak o gün en az 2 set aldıysa "çalışıldı" sayılır — yoksa
+                bench press'in tricepse yazdığı yarım set bile sıklığı şişirirdi.
+                Aynı hacimde yüksek sıklığın avantajı ölçülü ve küçüktür; asıl
+                kazanç setlerin tek seansta yığılmaması.
+              </p>
+            </div>
+          )}
         </div>
       )}
 
