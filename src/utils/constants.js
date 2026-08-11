@@ -593,28 +593,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.5';
+export const APP_VERSION = '3.6';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.5',
-  date: '2026-08-10',
+  title: 'ProOverload 3.6',
+  date: '2026-08-11',
   items: [
     {
-      title: 'Silinen Kayıtları Geri Al',
-      desc: 'Antrenman, kardiyo, ölçüm, beslenme, şablon, özel hareket ve döngü kayıtları silindikten sonra 7 saniye boyunca Geri Al düğmesi gösterilir. Kayıt mümkün olduğunca eski sırasına ve plan bağlantılarıyla birlikte döner.'
+      title: 'Yedeği Yüklemeden Önce Gör',
+      desc: 'Dosya adı, sürümü, tarihi ve içerdiği antrenman, ölçüm, beslenme, şablon ve diğer kayıt sayıları artık yükleme başlamadan gösterilir.'
     },
     {
-      title: 'Bildirimler Artık Birbirini Bozmuyor',
-      desc: 'Eski bir bildirimin zamanlayıcısı yeni bildirimi erken kapatabiliyordu. Her yeni bildirim önceki sayacı güvenli biçimde iptal ediyor; hata ve geri alma bildirimleri daha uzun kalıyor.'
+      title: 'Birleştir veya Değiştir',
+      desc: 'Önerilen Birleştir seçeneği cihazdaki farklı kayıtları korur; aynı tarih veya kimlikte yedek sürümü kazanır. Tam geri dönüş gerektiğinde yedekle değiştirme seçeneği ayrıca sunulur.'
     },
     {
-      title: 'Çevrimdışı Durum Görünür',
-      desc: 'Bağlantı kesildiğinde üst çubukta çevrimdışı simgesi ve açıklayıcı bildirim görünür. Uygulamanın kayıtları cihazda tutmaya devam ettiği açıkça belirtilir; bağlantı dönünce ayrıca haber verilir.'
+      title: 'İçe Aktarmayı Geri Al',
+      desc: 'Yükleme tamamlandıktan sonra 12 saniye boyunca Geri Al düğmesi görünür. Yanlış dosya veya yanlış yöntem seçilirse önceki cihaz verileri tek dokunuşla geri gelir.'
     },
     {
-      title: 'Sürüm Kaynakları Eşitlendi',
-      desc: 'Paket kilidinde kalan eski 3.0.0 damgası düzeltildi. Ekran sürümü, package.json, package-lock.json ve sürüm notları artık her derlemede birlikte doğrulanıyor.'
+      title: 'Bozuk Dosya Koruması',
+      desc: 'Boş, ilgisiz veya alan türleri bozuk dosyalar artık değişiklik yapmadan reddedilir. Aynı dosya düzeltildikten sonra yeniden seçilebilir ve okuma hataları açıkça bildirilir.'
     }
   ]
 };

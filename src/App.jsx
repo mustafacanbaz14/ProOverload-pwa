@@ -27,6 +27,7 @@ import { caloriesFromMacros, dailyTotals } from './utils/nutritionStats';
 import { DEFAULT_READINESS, READINESS_FIELDS, computeReadiness, readinessTrend } from './utils/readiness';
 import { safeSetRawItem } from './utils/persist';
 import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from './utils/undo';
+import { backupValue, inspectBackupPayload, mergeImportedRecords, backupImportSummary } from './utils/backupImport';
 import { useAppPersistence } from './hooks/useAppPersistence';
 import { useDisplayPreferences } from './hooks/useDisplayPreferences';
 import { useDeferredPwaUpdate } from './hooks/useDeferredPwaUpdate';
@@ -82,6 +83,7 @@ const WeeklyPlanModal = lazy(() => import('./components/WeeklyPlanModal'));
 const GlobalSearchModal = lazy(() => import('./components/GlobalSearchModal'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 const ReleaseNotesModal = lazy(() => import('./components/ReleaseNotesModal'));
+const BackupImportPreviewModal = lazy(() => import('./components/BackupImportPreviewModal'));
 
 const ModalLoadingFallback = () => (
   <div className="fixed inset-0 z-[119] bg-black/70 backdrop-blur-sm flex items-center justify-center" role="status" aria-label="Ekran yükleniyor">
@@ -145,6 +147,7 @@ export default function App() {
     && initial.metricsHistory.length === 0
     && initial.nutritionHistory.length === 0);
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false);
+  const [pendingImport, setPendingImport] = useState(null);
 
   useEffect(() => {
     try {
@@ -254,14 +257,14 @@ export default function App() {
     };
   }, [showToast]);
 
-  const showUndoToast = useCallback((message, onUndo) => {
+  const showUndoToast = useCallback((message, onUndo, duration = 7000) => {
     showToast(message, 'info', {
-      duration: 7000,
+      duration,
       action: {
         label: 'Geri Al',
         onClick: () => {
           onUndo?.();
-          showToast('Silme işlemi geri alındı.');
+          showToast('İşlem geri alındı.');
         },
       },
     });
@@ -1371,67 +1374,130 @@ export default function App() {
   const handleImportFileSelect = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const input = e.currentTarget;
     const reader = new FileReader();
     reader.onload = (evt) => {
       try {
         const data = JSON.parse(evt.target.result);
-        if (data && typeof data === 'object') {
-          handleImportData(data);
-        }
+        handleImportRequest(data, { fileName: file.name });
       } catch {
         showToast('Yedek dosyası okunamadı.', 'error');
       }
     };
+    reader.onerror = () => showToast('Yedek dosyasına erişilemedi.', 'error');
+    reader.onloadend = () => { input.value = ''; };
     reader.readAsText(file);
   };
 
-  const handleImportData = (data) => {
+  const handleImportRequest = (data, { fileName = 'Cihaz aktarım kodu' } = {}) => {
+    const inspection = inspectBackupPayload(data);
+    if (!inspection.valid) {
+      showToast(inspection.errors[0] || 'Geçerli ProOverload verisi bulunamadı.', 'error');
+      return false;
+    }
+    setPendingImport({ data, inspection, fileName });
+    return true;
+  };
+
+  const applyPendingImport = (mode = 'merge') => {
+    if (!pendingImport?.data) return;
+    const data = pendingImport.data;
+    const before = {
+      workouts, templates, customExercises, customFoods, recentFoods,
+      metricsHistory, nutritionHistory, wellness, cycleHistory, settings,
+    };
+    const merge = mode === 'merge';
+
     // Antrenman ve şablonlar da ölçüm/beslenme gibi normalize edilir: bozuk
     // şekilli bir yedek (örn. `workouts: [{}]`) doğrudan state'e girerse
     // aşağıdaki hacim/tonaj hesapları eksik alanlarla çalışmak zorunda kalır.
-    if (Array.isArray(data.workouts || data.w)) setWorkouts((data.workouts || data.w).map(mergeWorkout));
-    if (Array.isArray(data.templates || data.t)) setTemplates((data.templates || data.t).map(mergeTemplate));
+    const importedWorkouts = backupValue(data, 'workouts', 'w');
+    if (Array.isArray(importedWorkouts)) {
+      const normalized = importedWorkouts.map(mergeWorkout);
+      setWorkouts(merge ? mergeImportedRecords(workouts, normalized) : normalized);
+    }
+    const importedTemplates = backupValue(data, 'templates', 't');
+    if (Array.isArray(importedTemplates)) {
+      const normalized = importedTemplates.map(mergeTemplate);
+      setTemplates(merge ? mergeImportedRecords(templates, normalized) : normalized);
+    }
     // Sürüm damgasına değil şekle bakılır: göç idempotent olduğu için yeni
     // yedekler dokunulmadan geçer, eski yedekler taşınır.
-    // Yerelde oluşturulmuş kayıtlar silinmesin diye isimle birleştirilir.
+    // Birleştirme modunda yerel kayıtlar silinmez; aynı isimde yedek kazanır.
     if (Array.isArray(data.customExercises)) {
       const incoming = migrateCustomExercises(data.customExercises);
-      setCustomExercises(prev => {
-        const byName = new Map(prev.map(ex => [typeof ex === 'object' ? ex.name : ex, ex]));
-        incoming.forEach(ex => byName.set(typeof ex === 'object' ? ex.name : ex, ex));
-        return [...byName.values()];
-      });
+      const keyOf = ex => foldForSearch(typeof ex === 'object' ? ex.name : ex);
+      setCustomExercises(merge ? mergeImportedRecords(customExercises, incoming, keyOf) : incoming);
     }
     if (Array.isArray(data.customFoods)) {
-      setCustomFoods(prev => {
-        const byName = new Map(prev.map(f => [f.name, f]));
-        data.customFoods.forEach(f => byName.set(f.name, f));
-        return [...byName.values()];
-      });
+      const incoming = data.customFoods.filter(food => food && typeof food.name === 'string');
+      setCustomFoods(merge
+        ? mergeImportedRecords(customFoods, incoming, food => foldForSearch(food?.name))
+        : incoming);
     }
     if (Array.isArray(data.recentFoods)) {
-      setRecentFoods(data.recentFoods.filter(f => f && typeof f.name === 'string').slice(0, 8));
+      const incoming = data.recentFoods.filter(f => f && typeof f.name === 'string').slice(0, 8);
+      setRecentFoods(merge
+        ? mergeImportedRecords(recentFoods, incoming, food => foldForSearch(food?.name)).slice(0, 8)
+        : incoming);
     }
-    if (Array.isArray(data.metricsHistory || data.m)) setMetricsHistory((data.metricsHistory || data.m).map(mergeMetrics));
-    if (Array.isArray(data.nutritionHistory || data.n)) {
+    const importedMetrics = backupValue(data, 'metricsHistory', 'm');
+    if (Array.isArray(importedMetrics)) {
+      const normalized = importedMetrics.map(mergeMetrics);
+      setMetricsHistory(merge
+        ? mergeImportedRecords(metricsHistory, normalized, record => record?.date || record?.id)
+        : normalized);
+    }
+    const importedNutrition = backupValue(data, 'nutritionHistory', 'n');
+    if (Array.isArray(importedNutrition)) {
       const importedSettings = data.settings || data.s || {};
       const resetImportedDayNeat = Number(importedSettings.dayNeatModelVersion) < 1;
-      setNutritionHistory((data.nutritionHistory || data.n)
-        .map(entry => mergeNutrition(resetImportedDayNeat ? resetDayNeatOverride(entry) : entry)));
+      const normalized = importedNutrition
+        .map(entry => mergeNutrition(resetImportedDayNeat ? resetDayNeatOverride(entry) : entry));
+      setNutritionHistory(merge
+        ? mergeImportedRecords(nutritionHistory, normalized, record => record?.date || record?.id)
+        : normalized);
     }
     if (Array.isArray(data.wellness)) {
-      setWellness(data.wellness
+      const normalized = data.wellness
         .map(day => mergeWellnessDay(day, generateId))
-        .filter(day => day.date));
+        .filter(day => day.date);
+      setWellness(merge
+        ? mergeImportedRecords(wellness, normalized, record => record?.date || record?.id)
+        : normalized);
     }
     if (Array.isArray(data.cycleHistory)) {
-      setCycleHistory(data.cycleHistory
+      const normalized = data.cycleHistory
         .map(day => mergeCycleDay(day, generateId))
-        .filter(day => day.date));
+        .filter(day => day.date);
+      setCycleHistory(merge
+        ? mergeImportedRecords(cycleHistory, normalized, record => record?.date || record?.id)
+        : normalized);
     }
     // Eski yedekler eksik/bozuk ayar taşıyabilir; aynı birleştirme kuralından geçirilir.
-    if (data.settings || data.s) setSettings(prev => mergeSettings({ ...prev, ...(data.settings || data.s) }));
-    showToast('Veriler başarıyla yüklendi.');
+    const importedSettings = backupValue(data, 'settings', 's');
+    if (importedSettings) setSettings(merge
+      ? mergeSettings({ ...settings, ...importedSettings })
+      : mergeSettings(importedSettings));
+
+    const summary = backupImportSummary(pendingImport.inspection);
+    setPendingImport(null);
+    showUndoToast(
+      `${merge ? 'Yedek birleştirildi' : 'Veriler yedekle değiştirildi'}: ${summary}.`,
+      () => {
+        setWorkouts(before.workouts);
+        setTemplates(before.templates);
+        setCustomExercises(before.customExercises);
+        setCustomFoods(before.customFoods);
+        setRecentFoods(before.recentFoods);
+        setMetricsHistory(before.metricsHistory);
+        setNutritionHistory(before.nutritionHistory);
+        setWellness(before.wellness);
+        setCycleHistory(before.cycleHistory);
+        setSettings(before.settings);
+      },
+      12000,
+    );
   };
 
   const handleDeleteConfirmExecute = () => {
@@ -2437,12 +2503,20 @@ export default function App() {
           onClose={() => setIsReleaseNotesOpen(false)}
         />}
 
+        {pendingImport && <BackupImportPreviewModal
+          isOpen={Boolean(pendingImport)}
+          fileName={pendingImport.fileName}
+          inspection={pendingImport.inspection}
+          onClose={() => setPendingImport(null)}
+          onApply={applyPendingImport}
+        />}
+
         {/* QR CODE MODAL */}
         {isQRModalOpen && <QRCodeModal
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
           fullData={{ schemaVersion: 3, version: pkg.version, workouts, templates, customExercises, customFoods, recentFoods, metricsHistory, nutritionHistory, wellness, cycleHistory, settings }}
-          onImportData={handleImportData}
+          onImportData={(data) => handleImportRequest(data, { fileName: 'Cihaz aktarım kodu' })}
         />}
 
         {/* FOOD SEARCH MODAL */}

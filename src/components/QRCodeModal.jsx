@@ -23,12 +23,13 @@ const QRCodeModal = memo(({ isOpen, onClose, fullData, onImportData }) => {
     try {
       const parsed = JSON.parse(inputString.trim());
       if (parsed && typeof parsed === 'object') {
-        onImportData(parsed);
-        setImportStatus('success');
-        setTimeout(() => {
-          setImportStatus(null);
-          onClose();
-        }, 1200);
+        const accepted = onImportData(parsed);
+        if (accepted === false) {
+          setImportStatus('error');
+          return;
+        }
+        setImportStatus(null);
+        onClose();
       } else {
         setImportStatus('error');
       }
@@ -83,9 +84,6 @@ const QRCodeModal = memo(({ isOpen, onClose, fullData, onImportData }) => {
             />
             {importStatus === 'error' && (
               <p className="text-[10px] text-red-400 font-mono">Geçersiz kod biçimi. Lütfen tam kopyaladığınızdan emin olun.</p>
-            )}
-            {importStatus === 'success' && (
-              <p className="text-[10px] text-emerald-400 font-mono">Veriler başarıyla aktarıldı!</p>
             )}
             <button
               onClick={handleImportSubmit}

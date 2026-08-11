@@ -27,10 +27,34 @@ import { buildCycleSummary, mergeCycleDay } from '../src/utils/cycle.js';
 import { analyzeTemplate } from '../src/utils/templateAssistant.js';
 import { sortExercisesForMuscle } from '../src/utils/exerciseSort.js';
 import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from '../src/utils/undo.js';
+import { inspectBackupPayload, mergeImportedRecords, backupImportSummary } from '../src/utils/backupImport.js';
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
+
+test('yedek incelemesi boş ve bozuk dosyayı reddeder', () => {
+  assert.equal(inspectBackupPayload({}).valid, false);
+  assert.equal(inspectBackupPayload({ workouts: 'bozuk' }).valid, false);
+  assert.equal(inspectBackupPayload([]).valid, false);
+});
+
+test('yedek incelemesi eski kısa anahtarları ve özeti tanır', () => {
+  const inspection = inspectBackupPayload({ version: '2.5', w: [{ id: 'w1' }], m: [{ id: 'm1' }], s: { theme: 'dark' } });
+  assert.equal(inspection.valid, true);
+  assert.equal(inspection.total, 2);
+  assert.match(backupImportSummary(inspection), /1 antrenman/);
+});
+
+test('yedek birleştirmede aynı anahtarın yedek sürümü kazanır ve yerel eşsiz kayıt korunur', () => {
+  const current = [{ id: 'a', value: 'yerel' }, { id: 'b', value: 'koru' }];
+  const incoming = [{ id: 'a', value: 'yedek' }, { id: 'c', value: 'yeni' }];
+  assert.deepEqual(mergeImportedRecords(current, incoming), [
+    { id: 'a', value: 'yedek' },
+    { id: 'c', value: 'yeni' },
+    { id: 'b', value: 'koru' },
+  ]);
+});
 
 test('silinen kayıt aynı sıraya geri alınır ve ikinci kez çoğalmaz', () => {
   const source = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
