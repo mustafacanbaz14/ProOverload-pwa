@@ -31,6 +31,8 @@ import { inspectBackupPayload, mergeImportedRecords, backupImportSummary } from 
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
 import { buildFrequencyReport, frequencyCoachItem } from '../src/utils/frequency.js';
 import { workoutsToCsv, metricsToCsv } from '../src/utils/csvExport.js';
+import { STARTER_PROGRAMS, instantiateStarterProgram } from '../src/utils/starterPrograms.js';
+import { sessionAdvice } from '../src/utils/autoregulation.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
@@ -992,6 +994,93 @@ test('ısınma setleri CSV\'de numaralandırılmaz ama satır olarak kalır', ()
   assert.ok(satirlar[1].includes('Isinma'));
   // Isınma seti hacme sayılmadığı için set numarası ve hacim boş.
   assert.equal(satirlar[1].split(';')[4], '');
+});
+
+/* ------------------------------------------------------------------ *
+ *  HAZIR PROGRAMLAR
+ * ------------------------------------------------------------------ */
+
+test('hazır programlardaki her hareket kütüphanede var', () => {
+  // Yazım hatası olan bir hareket adı sessizce "Diğer" kasına düşer ve program
+  // kurulduğunda hacim hesabı yanlış çıkar.
+  const eksik = STARTER_PROGRAMS.flatMap(p =>
+    p.days.flatMap(d => d.exercises.map(e => e.name)))
+    .filter(name => !DEFAULT_EXERCISES.includes(name));
+  assert.deepEqual([...new Set(eksik)], []);
+});
+
+test('hazır programlar her kası MEV üstünde ve MRV altında tutar', () => {
+  // Programın kendi vaadi bu; kaydığında sessizce kötü bir program dağıtılmış
+  // olur. Uygulamanın kendi hacim analiziyle doğrulanıyor.
+  let sayac = 0;
+  const gid = () => `sp-${++sayac}`;
+  const seviyeOf = (level) =>
+    (level === 'Yeni başlayan' ? 'beginner' : level === 'İleri' ? 'advanced' : 'intermediate');
+
+  STARTER_PROGRAMS.forEach(program => {
+    const { templates, plan } = instantiateStarterProgram(program, gid);
+    const sonuc = computeWeekPlan(plan, templates, { experienceLevel: seviyeOf(program.level) });
+    const dusuk = sonuc.statuses.filter(s => s.volume < s.mev).map(s => `${s.muscle} ${s.volume}/${s.mev}`);
+    const asiri = sonuc.statuses.filter(s => s.volume > s.mrv).map(s => s.muscle);
+    assert.deepEqual(dusuk, [], `${program.name} MEV altı: ${dusuk.join(', ')}`);
+    assert.deepEqual(asiri, [], `${program.name} MRV üstü: ${asiri.join(', ')}`);
+  });
+});
+
+test('program kurulumu şablonları ve haftalık planı üretir', () => {
+  let sayac = 0;
+  const program = STARTER_PROGRAMS.find(p => p.key === 'upperlower4');
+  const { templates, plan } = instantiateStarterProgram(program, () => `x-${++sayac}`);
+
+  assert.equal(templates.length, 4);
+  // Şablon adı program adını taşımalı: kullanıcı birden fazla program kurabiliyor.
+  assert.ok(templates[0].name.startsWith(program.name));
+  // Planlanan gün sayısı programın vaat ettiğiyle aynı.
+  const doluGun = Object.values(plan.days).filter(slots => slots.length > 0);
+  assert.equal(doluGun.length, program.daysPerWeek);
+  // Her slot gerçek bir şablona işaret etmeli.
+  const ids = new Set(templates.map(t => t.id));
+  doluGun.forEach(slots => assert.ok(ids.has(slots[0].templateId)));
+});
+
+/* ------------------------------------------------------------------ *
+ *  SEANS İÇİ YÜK AYARI
+ * ------------------------------------------------------------------ */
+
+const advSet = (w, r, rir) => ({ weight: String(w), reps: String(r), rir, setType: 'normal' });
+
+test('hedef aralıkta kalan sette öneri üretilmez', () => {
+  // Her sete yorum yapmak gürültü olurdu.
+  assert.equal(sessionAdvice([advSet(100, 8, 2)], { repRangeMin: 6, repRangeMax: 10 }), null);
+});
+
+test('aralığın altında tükenilince yük düşürülür', () => {
+  const a = sessionAdvice([advSet(100, 4, 0)], { repRangeMin: 6, repRangeMax: 10 });
+  assert.equal(a.action, 'decrease');
+  assert.ok(a.weight < 100);
+});
+
+test('aralığın üstünde yedek tekrar varsa yük artırılır', () => {
+  const a = sessionAdvice([advSet(100, 13, 3)], { repRangeMin: 6, repRangeMax: 10 });
+  assert.equal(a.action, 'increase');
+  assert.equal(a.weight, 102.5);
+  // Küçük kasta sıçrama daha ufak olmalı.
+  const k = sessionAdvice([advSet(10, 15, 3)], { repRangeMin: 6, repRangeMax: 10, isSmallMuscle: true });
+  assert.equal(k.weight, 11.25);
+});
+
+test('aralık üstünde ama tükenilmişse artırma önerilmez', () => {
+  assert.equal(sessionAdvice([advSet(100, 12, 0)], { repRangeMin: 6, repRangeMax: 10 }), null);
+});
+
+test('aynı ağırlıkta sert tekrar kaybı yük düşürtür', () => {
+  const a = sessionAdvice(
+    [advSet(100, 10, 1), advSet(100, 8, 0), advSet(100, 6, 0)],
+    { repRangeMin: 6, repRangeMax: 10 });
+  assert.equal(a.action, 'decrease');
+  assert.equal(a.weight, 92.5);
+  // Normal düşüşte sessiz kalmalı.
+  assert.equal(sessionAdvice([advSet(100, 10, 2), advSet(100, 9, 1)], { repRangeMin: 6, repRangeMax: 10 }), null);
 });
 
 for (const { name, run } of tests) {

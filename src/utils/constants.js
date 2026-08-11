@@ -593,11 +593,11 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.7';
+export const APP_VERSION = '3.8';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.7',
+  title: 'ProOverload 3.8',
   date: '2026-08-11',
   items: [
     {

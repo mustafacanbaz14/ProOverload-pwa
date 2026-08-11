@@ -22,6 +22,8 @@ import { buildSessionReport } from './utils/sessionReport';
 import { buildPlateauInsights } from './utils/insights';
 import { buildFrequencyReport, frequencyCoachItem } from './utils/frequency';
 import { workoutsToCsv, metricsToCsv, nutritionToCsv } from './utils/csvExport';
+import { findStarterProgram, instantiateStarterProgram } from './utils/starterPrograms';
+import StarterProgramModal from './components/StarterProgramModal';
 import { analyzeDayConflicts } from './utils/interference';
 import { averageDailyExercise, dayEnergyBreakdown, ACTIVITY_LEVELS, estimateMacrosForTef, thermicEffect, neatOptsForDay, buildEnergySeries, groupByWeek } from './utils/energyModel';
 import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
@@ -136,6 +138,7 @@ export default function App() {
   const [isWeekPlanOpen, setIsWeekPlanOpen] = useState(false);
   const [isWellnessOpen, setIsWellnessOpen] = useState(false);
   const [isDeloadOpen, setIsDeloadOpen] = useState(false);
+  const [isStarterOpen, setIsStarterOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   // Seans bitince gösterilen rapor; kapatılana kadar duruyor.
   const [sessionReport, setSessionReport] = useState(null);
@@ -451,6 +454,27 @@ export default function App() {
     URL.revokeObjectURL(url);
     showToast('CSV indirildi.');
   }, [sortedWorkouts, sortedMetrics, sortedNutrition, customExercises, resolveSetLoad, showToast]);
+
+  /**
+   * Hazır programı kurar: şablonları ekler, haftalık planı oluşturup aktif yapar.
+   *
+   * Mevcut şablonlar SİLİNMİYOR, yenileri yanına ekleniyor — kullanıcı bir
+   * programı denemek isteyip vazgeçebilir ve eski şablonlarını kaybetmemeli.
+   * Plan aktif yapılıyor çünkü kurmanın amacı zaten onu kullanmak.
+   */
+  const handleInstallStarter = useCallback((key) => {
+    const program = findStarterProgram(key);
+    const kurulum = instantiateStarterProgram(program, generateId);
+    if (!kurulum) return;
+
+    setTemplates(prev => [...prev, ...kurulum.templates]);
+    setSettings(prev => ({
+      ...prev,
+      weekPlans: [...(prev.weekPlans || []), kurulum.plan],
+      activePlanId: kurulum.plan.id,
+    }));
+    showToast(`${program.name} kuruldu — ${kurulum.templates.length} şablon eklendi.`);
+  }, [showToast]);
 
   const handleNormalizeBodyweight = useCallback(() => {
     const { workouts: next, changed } = normalizeBodyweightEntries(workouts, {
@@ -2535,6 +2559,7 @@ export default function App() {
               energy: () => setIsEnergyDetailOpen(true),
               sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
               deload: () => setIsDeloadOpen(true),
+              starter: () => setIsStarterOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
             }[key];
             action?.();
@@ -2717,6 +2742,14 @@ export default function App() {
           gender={profileGender}
         />}
 
+        {/* HAZIR PROGRAMLAR */}
+        <StarterProgramModal
+          isOpen={isStarterOpen}
+          onClose={() => setIsStarterOpen(false)}
+          onInstall={handleInstallStarter}
+          existingTemplateCount={templates.length}
+        />
+
         {/* DELOAD */}
         {/* SEANS RAPORU */}
         {sessionReport && <SessionReportModal
@@ -2791,6 +2824,7 @@ export default function App() {
               report: () => setIsReportCardOpen(true),
               sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
               deload: () => setIsDeloadOpen(true),
+              starter: () => setIsStarterOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
               cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },

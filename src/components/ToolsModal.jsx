@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import {
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
-  Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, ClipboardCheck, CalendarDays,
+  Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
 } from 'lucide-react';
 
 /**
@@ -20,6 +20,7 @@ const GROUPS = [
     title: 'Antrenman',
     items: [
       { key: 'library', label: 'Hareket Kütüphanesi', hint: '250+ hareket, kas eşlemesi düzenleme', icon: Dumbbell, color: 'text-cyan-400' },
+      { key: 'starter', label: 'Hazır Programlar', hint: 'Full Body, Üst/Alt, PPL — tek dokunuşla kur', icon: Sparkles, color: 'text-amber-400' },
       { key: 'builder', label: 'Program Oluştur', hint: 'Gün gün şablon yaz', icon: CalendarPlus, color: 'text-emerald-400' },
       { key: 'weekPlan', label: 'Haftalık Programlar', hint: 'Çoklu program, saatli kardiyo, çakışma asistanı', icon: CalendarRange, color: 'text-cyan-400' },
       { key: 'plates', label: 'Plaka Hesaplayıcı', hint: 'Bar yüklemesi ve ısınma setleri', icon: Calculator, color: 'text-amber-400' },

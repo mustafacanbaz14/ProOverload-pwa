@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
-import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow } from 'lucide-react';
+import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown } from 'lucide-react';
 import WorkoutTimer from './WorkoutTimer';
-import { FORM_RATINGS, SET_TYPES } from '../utils/constants';
+import { FORM_RATINGS, SET_TYPES, SMALL_MUSCLE_GROUPS } from '../utils/constants';
 import {
   getNextSetType, calcFatigueDropoff,
   isWarmupSet, isWorkingSet, parseNumber, estimate1RM,
@@ -10,6 +10,7 @@ import {
 import { formatDay } from '../utils/dates';
 import { READINESS_FIELDS, READINESS_ZONES } from '../utils/readiness';
 import { suggestRestSeconds } from '../utils/rest';
+import { sessionAdvice } from '../utils/autoregulation';
 
 const ActiveWorkoutView = memo(({
   activeWorkout,
@@ -330,6 +331,31 @@ const ActiveWorkoutView = memo(({
                       {isHighDropoff ? `Yorgunluk Yüksek (%${fatigue.dropoff} Güç Kaybı)` : `Hacim Korunumu: %${fatigue.retention}`}
                     </span>
                     <span className="text-zinc-500 text-[10px]">{fatigue.firstSet} → {fatigue.lastSet}</span>
+                  </div>
+                );
+              })()}
+
+              {/* Seans içi yük ayarı. Yorgunluk düşüşü yukarıda GÖSTERİLİYORDU
+                  ama ne yapılacağını söylemiyordu; karar anı tam da burası. */}
+              {(() => {
+                const advice = sessionAdvice(ex.sets, {
+                  repRangeMin: settings.repRangeMin,
+                  repRangeMax: settings.repRangeMax,
+                  isSmallMuscle: SMALL_MUSCLE_GROUPS.includes(muscle),
+                });
+                if (!advice) return null;
+                const artis = advice.action === 'increase';
+                return (
+                  <div className={`px-3 py-2 border-b border-zinc-800 flex items-start gap-2 ${artis ? 'bg-emerald-950/20' : 'bg-amber-950/20'}`}>
+                    {artis
+                      ? <TrendingUp size={11} className="text-emerald-400 shrink-0 mt-0.5" />
+                      : <TrendingDown size={11} className="text-amber-400 shrink-0 mt-0.5" />}
+                    <div className="min-w-0">
+                      <span className={`text-[10px] font-bold block ${artis ? 'text-emerald-300' : 'text-amber-300'}`}>
+                        Sıradaki set: {advice.weight} kg ({advice.delta > 0 ? '+' : ''}{advice.delta})
+                      </span>
+                      <span className="text-[9px] font-mono text-zinc-400 leading-relaxed block">{advice.reason}</span>
+                    </div>
                   </div>
                 );
               })()}
