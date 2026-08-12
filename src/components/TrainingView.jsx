@@ -36,19 +36,34 @@ const TrainingView = memo(({
     <section className="rounded-2xl border border-violet-900/40 bg-violet-950/15 p-3">
       <div className="mb-2.5">
         <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-violet-400">Program Hazırla</span>
-        <p className="mt-0.5 text-[9px] font-mono text-zinc-500">Sıfırdan düşünmek zorunda değilsin; kurduktan önce her hareketi değiştirebilirsin.</p>
+        <p className="mt-0.5 text-[9px] font-mono text-zinc-500">Bir düzen seç, taslağı gör ve istediğin hareketleri değiştir.</p>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        <button onClick={onWizard} className="rounded-xl border border-violet-800/60 bg-violet-950/35 p-3 text-left active:bg-violet-900/40">
-          <Wand2 size={16} className="mb-2 text-violet-300" />
-          <strong className="block text-[11px] text-zinc-100">Akıllı Sihirbaz</strong>
-          <span className="text-[9px] font-mono text-zinc-500">4 adımda kişisel taslak</span>
+      <div className="space-y-2">
+        <button onClick={onWizard} className="w-full rounded-2xl border border-violet-700/70 bg-gradient-to-r from-violet-950/60 to-fuchsia-950/20 p-3.5 text-left active:bg-violet-900/40 flex items-center gap-3">
+          <span className="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-700/50 flex items-center justify-center shrink-0">
+            <Wand2 size={18} className="text-violet-300" />
+          </span>
+          <span className="flex-1 min-w-0">
+            <span className="flex items-center gap-1.5">
+              <strong className="text-[12px] text-zinc-100">Akıllı Program Sihirbazı</strong>
+              <span className="text-[7px] font-bold text-violet-200 bg-violet-800/50 rounded-md px-1.5 py-0.5">YENİ</span>
+            </span>
+            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5">İtiş+bacak, gövde/uzuvlar, Arnold ve daha fazlası</span>
+          </span>
+          <ChevronRight size={16} className="text-violet-400 shrink-0" />
         </button>
-        <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-3 text-left active:bg-amber-900/30">
-          <Sparkles size={16} className="mb-2 text-amber-400" />
-          <strong className="block text-[11px] text-zinc-100">Hazır Programlar</strong>
-          <span className="text-[9px] font-mono text-zinc-500">Full Body, Üst/Alt, PPL</span>
-        </button>
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-3 text-left active:bg-amber-900/30">
+            <Sparkles size={15} className="mb-1.5 text-amber-400" />
+            <strong className="block text-[10px] text-zinc-100">Hazırdan Başla</strong>
+            <span className="text-[8px] font-mono text-zinc-500">Tek dokunuşla kur</span>
+          </button>
+          <button onClick={onBuilder} className="rounded-xl border border-cyan-900/50 bg-cyan-950/20 p-3 text-left active:bg-cyan-900/30">
+            <BookmarkPlus size={15} className="mb-1.5 text-cyan-400" />
+            <strong className="block text-[10px] text-zinc-100">Boş Program</strong>
+            <span className="text-[8px] font-mono text-zinc-500">Toplu hareket seç</span>
+          </button>
+        </div>
       </div>
     </section>
 
@@ -56,12 +71,11 @@ const TrainingView = memo(({
       {[
         { label: 'Hareketler', hint: 'Kütüphane & ince ayar', icon: Library, action: onLibrary },
         { label: 'Haftalık Plan', hint: 'Günleri ve saatleri düzenle', icon: CalendarRange, action: onWeekPlan },
-        { label: 'Elle Oluştur', hint: 'Çoklu hareket seçimiyle', icon: BookmarkPlus, action: onBuilder },
         { label: 'Kardiyo / Aktivite', hint: 'Kondisyon, spor & günlük hareket', icon: HeartPulse, action: onCardio },
       ].map(item => {
         const Icon = item.icon;
         return (
-          <button key={item.label} onClick={item.action} className="bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-2xl p-3 text-left">
+          <button key={item.label} onClick={item.action} className={`bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-2xl p-3 text-left ${item.label === 'Kardiyo / Aktivite' ? 'col-span-2' : ''}`}>
             <Icon size={16} className="text-cyan-400 mb-2" />
             <strong className="text-[11px] text-zinc-200 block">{item.label}</strong>
             <span className="text-[9px] font-mono text-zinc-600">{item.hint}</span>
@@ -73,7 +87,9 @@ const TrainingView = memo(({
     <section className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
       <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-center">
         <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Antrenman Şablonları</h3>
-        <span className="text-[9px] font-mono text-zinc-600">{templates.length} kayıt</span>
+        <button onClick={onBuilder} className="text-[9px] font-bold text-cyan-400 bg-cyan-950/40 border border-cyan-900/50 rounded-lg px-2 py-1.5">
+          + Yeni <span className="text-zinc-600 ml-1">{templates.length}</span>
+        </button>
       </div>
       {templates.length === 0 ? (
         <button onClick={onBuilder} className="w-full p-6 text-center text-[10px] font-mono text-zinc-500">

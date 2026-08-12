@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import {
   buildProgram, SPLIT_DAY_OPTIONS, EQUIPMENT_PROFILES, PRIORITY_MUSCLES, MAX_PRIORITY,
+  findSplitPreset, getSplitOptions,
 } from '../utils/programBuilder';
 import { WEEKDAYS } from '../utils/weekPlan';
 import { lengthBias, LENGTH_BIAS_LABEL } from '../utils/selectionAudit';
@@ -23,7 +24,8 @@ import { lengthBias, LENGTH_BIAS_LABEL } from '../utils/selectionAudit';
  * sorusunu cevaplamak zor; kurulmadan önce cevaplamak kolay.
  */
 
-const ADIMLAR = ['Gün', 'Ekipman', 'Öncelik', 'Önizleme'];
+const ADIMLAR = ['Düzen', 'Ekipman', 'Öncelik', 'Kontrol'];
+const EMPTY_PERFORMED = new Set();
 
 const ProgramWizardModal = memo(({
   isOpen,
@@ -32,17 +34,30 @@ const ProgramWizardModal = memo(({
   onCustomize,
   experienceLevel = 'intermediate',
   customExercises = [],
+  performedNames = EMPTY_PERFORMED,
   existingTemplateCount = 0,
 }) => {
   const [adim, setAdim] = useState(0);
   const [daysPerWeek, setDaysPerWeek] = useState(4);
+  const [splitId, setSplitId] = useState(() => findSplitPreset(null, 4).id);
   const [equipment, setEquipment] = useState('full');
   const [priority, setPriority] = useState([]);
+  const [preferPerformed, setPreferPerformed] = useState(true);
   const [openDay, setOpenDay] = useState(0);
 
+  const splitOptions = useMemo(() => getSplitOptions(daysPerWeek), [daysPerWeek]);
+
   const built = useMemo(
-    () => (isOpen ? buildProgram({ daysPerWeek, equipment, experienceLevel, priority, customExercises }) : null),
-    [isOpen, daysPerWeek, equipment, experienceLevel, priority, customExercises]);
+    () => (isOpen ? buildProgram({
+      daysPerWeek,
+      splitId,
+      equipment,
+      experienceLevel,
+      priority,
+      preferredExercises: preferPerformed ? [...performedNames] : [],
+      customExercises,
+    }) : null),
+    [isOpen, daysPerWeek, splitId, equipment, experienceLevel, priority, preferPerformed, performedNames, customExercises]);
 
   if (!isOpen) return null;
 
@@ -86,28 +101,115 @@ const ProgramWizardModal = memo(({
         {adim === 0 && (
           <>
             <p className="text-[10px] font-mono text-zinc-500 leading-relaxed px-1">
-              Haftada kaç gün antrenmana gelebilirsin? Bu, bölmeyi belirliyor —
-              az günde tüm vücut, çok günde bölünmüş program.
+              Önce haftalık gün sayını, sonra sana en rahat gelen çalışma
+              düzenini seç. Aynı gün sayısında tek bir doğru bölme yoktur.
             </p>
-            {SPLIT_DAY_OPTIONS.map(g => {
-              const secili = daysPerWeek === g;
-              const onizleme = buildProgram({ daysPerWeek: g, equipment, experienceLevel, priority, customExercises });
-              return (
-                <button
-                  key={g}
-                  onClick={() => { setDaysPerWeek(g); setOpenDay(0); }}
-                  className={`w-full text-left rounded-2xl p-3.5 border transition-colors ${secili ? 'border-violet-600 bg-violet-950/20' : 'border-zinc-800 bg-zinc-900'}`}
-                >
-                  <div className="flex justify-between items-baseline gap-2">
-                    <strong className={`text-[12px] ${secili ? 'text-violet-300' : 'text-zinc-200'}`}>
-                      {g} gün · {onizleme.split.name}
-                    </strong>
-                    <span className="text-[9px] font-mono text-zinc-500 shrink-0">{onizleme.totalSets} set/hafta</span>
-                  </div>
-                  <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">{onizleme.split.rationale}</p>
-                </button>
-              );
-            })}
+
+            <div className="grid grid-cols-5 gap-1.5">
+              {SPLIT_DAY_OPTIONS.map(g => {
+                const secili = daysPerWeek === g;
+                return (
+                  <button
+                    key={g}
+                    onClick={() => {
+                      const varsayilan = findSplitPreset(null, g);
+                      setDaysPerWeek(g);
+                      setSplitId(varsayilan.id);
+                      setOpenDay(0);
+                    }}
+                    aria-pressed={secili}
+                    className={`rounded-xl py-2.5 border font-mono transition-colors ${secili ? 'border-violet-500 bg-violet-950/35 text-violet-200' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                  >
+                    <strong className="text-sm block">{g}</strong>
+                    <span className="text-[8px]">gün</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="flex items-center justify-between px-1 pt-1">
+              <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+                {daysPerWeek} gün için {splitOptions.length} düzen
+              </h4>
+              <span className="text-[8px] font-mono text-zinc-600">birini seç</span>
+            </div>
+
+            <div className="space-y-2">
+              {splitOptions.map(secenek => {
+                const secili = splitId === secenek.id;
+                return (
+                  <button
+                    key={secenek.id}
+                    onClick={() => { setSplitId(secenek.id); setOpenDay(0); }}
+                    aria-pressed={secili}
+                    className={`w-full text-left rounded-2xl p-3.5 border transition-colors ${secili ? 'border-violet-500 bg-violet-950/25 shadow-lg shadow-violet-950/20' : 'border-zinc-800 bg-zinc-900'}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="min-w-0">
+                        <strong className={`text-[12px] block leading-snug ${secili ? 'text-violet-200' : 'text-zinc-200'}`}>
+                          {secenek.name}
+                        </strong>
+                        <span className="text-[9px] font-mono text-zinc-500 block mt-0.5">
+                          {secenek.summary}
+                        </span>
+                      </span>
+                      {secenek.recommended && (
+                        <span className="text-[8px] font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-900/50 px-2 py-1 rounded-lg shrink-0">
+                          DENGELİ
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-1 mt-2">
+                      {secenek.tags.map(tag => (
+                        <span key={tag} className="text-[8px] font-mono text-zinc-400 bg-zinc-950 border border-zinc-800 rounded-lg px-1.5 py-1">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    {secili && (
+                      <div className="mt-2.5 pt-2.5 border-t border-violet-900/30">
+                        <div className="flex flex-wrap gap-1 mb-2">
+                          {secenek.days.map(day => (
+                            <span key={day.name} className="text-[8px] font-mono text-violet-300 bg-violet-950/35 rounded-lg px-1.5 py-1">
+                              {day.name}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">{secenek.rationale}</p>
+                      </div>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {built && (
+              <div className="grid grid-cols-2 gap-2">
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-center">
+                  <strong className="text-sm font-mono text-zinc-100 block">{built.totalSets}</strong>
+                  <span className="text-[8px] font-mono text-zinc-500">set / hafta</span>
+                </div>
+                <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-center">
+                  <strong className="text-sm font-mono text-zinc-100 block">~{Math.round(built.totalSets / built.days.length)}</strong>
+                  <span className="text-[8px] font-mono text-zinc-500">set / seans</span>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-cyan-950/15 border border-cyan-900/30 rounded-xl p-3">
+              <p className="text-[9px] font-mono text-cyan-200/80 leading-relaxed">
+                Eşit haftalık hacimde Full Body, Üst/Alt veya hibrit bölmenin adı
+                tek başına gelişimi belirlemez. Düzenli sürdürebildiğin ve set
+                kalitesini koruduğun düzeni seç.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setAdim(ADIMLAR.length - 1)}
+              className="w-full py-3 rounded-2xl border border-violet-800/60 bg-violet-950/25 text-violet-300 font-bold text-[10px] uppercase tracking-wider"
+            >
+              Varsayılanlarla Hızlı Önizle
+            </button>
           </>
         )}
 
@@ -131,6 +233,25 @@ const ProgramWizardModal = memo(({
                 </button>
               );
             })}
+            {performedNames.size > 0 && (
+              <button
+                onClick={() => setPreferPerformed(v => !v)}
+                aria-pressed={preferPerformed}
+                className={`w-full rounded-2xl p-3.5 border flex items-center gap-3 text-left ${preferPerformed ? 'border-cyan-800/60 bg-cyan-950/20' : 'border-zinc-800 bg-zinc-900'}`}
+              >
+                <span className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${preferPerformed ? 'border-cyan-600 bg-cyan-500 text-zinc-950' : 'border-zinc-700 bg-zinc-950 text-zinc-600'}`}>
+                  {preferPerformed ? <Check size={15} /> : <Dumbbell size={14} />}
+                </span>
+                <span className="min-w-0">
+                  <strong className={`text-[11px] block ${preferPerformed ? 'text-cyan-200' : 'text-zinc-300'}`}>
+                    Bildiğim hareketleri öne al
+                  </strong>
+                  <span className="text-[9px] font-mono text-zinc-500 leading-relaxed block mt-0.5">
+                    Geçmişindeki {performedNames.size} hareket, uygun olduğu yerde önce seçilir.
+                  </span>
+                </span>
+              </button>
+            )}
             <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
               Deneyim seviyesi ayarlardan alınıyor; hacim referansları (MEV/MAV)
               ona göre ölçekleniyor.

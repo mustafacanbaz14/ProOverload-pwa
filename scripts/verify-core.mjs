@@ -25,7 +25,10 @@ import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
 import { mesocycleState, muscleTarget, weeklyTargets, targetInstructions, mesocycleCoachItem } from '../src/utils/mesocycle.js';
 import { lengthBias, auditExerciseSelection } from '../src/utils/selectionAudit.js';
-import { buildProgram, instantiateProgram, SPLIT_DAY_OPTIONS, EQUIPMENT_PROFILES } from '../src/utils/programBuilder.js';
+import {
+  buildProgram, instantiateProgram, EQUIPMENT_PROFILES,
+  SPLIT_PRESETS, findSplitPreset, getSplitOptions,
+} from '../src/utils/programBuilder.js';
 import { detectEquipment } from '../src/utils/substitution.js';
 import { buildCycleSummary, mergeCycleDay } from '../src/utils/cycle.js';
 import { analyzeTemplate } from '../src/utils/templateAssistant.js';
@@ -1319,14 +1322,16 @@ test('üretilen program her kombinasyonda hacim sınırlarını tutturur', () =>
   const oncelikler = [[], ['Kanat', 'Yan Omuz'], ['Göğüs'], ['Quadriceps', 'Biseps']];
   let sayac = 0;
 
-  for (const gun of SPLIT_DAY_OPTIONS) {
+  for (const preset of SPLIT_PRESETS) {
+    const gun = preset.daysPerWeek;
     for (const profil of EQUIPMENT_PROFILES) {
       for (const seviye of ['beginner', 'intermediate', 'advanced']) {
         for (const priority of oncelikler) {
           const r = buildProgram({
-            daysPerWeek: gun, equipment: profil.key, experienceLevel: seviye, priority,
+            daysPerWeek: gun, splitId: preset.id,
+            equipment: profil.key, experienceLevel: seviye, priority,
           });
-          const etiket = `${gun}g/${profil.key}/${seviye}/${priority.join('+') || 'öncelik yok'}`;
+          const etiket = `${preset.id}/${profil.key}/${seviye}/${priority.join('+') || 'öncelik yok'}`;
           assert.deepEqual(r.belowMev, [], `${etiket}: MEV altında kas var`);
           assert.deepEqual(r.aboveMrv, [], `${etiket}: MRV üstünde kas var`);
           assert.deepEqual(r.withoutStretch, [], `${etiket}: gerilmede yükleyen hareketi olmayan kas var`);
@@ -1337,7 +1342,45 @@ test('üretilen program her kombinasyonda hacim sınırlarını tutturur', () =>
       }
     }
   }
-  assert.equal(sayac, SPLIT_DAY_OPTIONS.length * EQUIPMENT_PROFILES.length * 3 * oncelikler.length);
+  assert.equal(sayac, SPLIT_PRESETS.length * EQUIPMENT_PROFILES.length * 3 * oncelikler.length);
+});
+
+test('aynı gün sayısı için hibrit program düzenleri sunulur', () => {
+  assert.ok(getSplitOptions(3).some(x => x.id === 'hybrid-3'));
+  assert.ok(getSplitOptions(4).some(x => x.id === 'push-pull-legs-4'));
+  assert.ok(getSplitOptions(4).some(x => x.id === 'torso-limbs-4'));
+  assert.ok(getSplitOptions(6).some(x => x.id === 'arnold-6'));
+  assert.equal(findSplitPreset(null, 4).id, 'upper-lower-4');
+});
+
+test('bütün program düzenleri geçerli hacim ve gün sayısı üretir', () => {
+  SPLIT_PRESETS.forEach(preset => {
+    const r = buildProgram({ daysPerWeek: preset.daysPerWeek, splitId: preset.id });
+    assert.equal(r.split.id, preset.id, `${preset.id}: seçilen düzen korunmadı`);
+    assert.equal(r.days.length, preset.daysPerWeek, `${preset.id}: gün sayısı yanlış`);
+    assert.deepEqual(r.belowMev, [], `${preset.id}: MEV altında kas var`);
+    assert.deepEqual(r.aboveMrv, [], `${preset.id}: MRV üstünde kas var`);
+  });
+});
+
+test('program üretici geçmişte yapılan uygun hareketleri öne alır', () => {
+  const r = buildProgram({
+    daysPerWeek: 4,
+    splitId: 'upper-lower-4',
+    preferredExercises: ['Machine Fly'],
+  });
+  const adlar = r.days.flatMap(day => day.exercises.map(ex => ex.name));
+  assert.ok(adlar.includes('Machine Fly'), 'geçmişte yapılan uygun hareket seçilmedi');
+});
+
+test('hibrit düzende bel hareketi itiş ve ön bacak gününe sızmaz', () => {
+  const r = buildProgram({ daysPerWeek: 4, splitId: 'push-pull-legs-4' });
+  [0, 3].forEach(index => {
+    assert.ok(
+      r.days[index].exercises.every(ex => ex.muscle !== 'Bel'),
+      `${r.days[index].name}: bel hareketi yanlış güne eklendi`,
+    );
+  });
 });
 
 test('ekipman profili aday havuzunu gerçekten süzer', () => {

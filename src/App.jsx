@@ -2846,6 +2846,7 @@ export default function App() {
           }}
           experienceLevel={settings.experienceLevel}
           customExercises={customExercises}
+          performedNames={performedNames}
           existingTemplateCount={templates.length}
         />}
 

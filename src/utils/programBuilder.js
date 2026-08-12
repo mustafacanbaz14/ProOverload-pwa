@@ -65,8 +65,14 @@ export const findEquipmentProfile = (key) =>
 const PUSH = ['Göğüs', 'Ön Omuz', 'Yan Omuz', 'Triseps'];
 const PULL = ['Kanat', 'Orta Sırt', 'Arka Omuz', 'Biseps', 'Trapez'];
 const LEGS = ['Quadriceps', 'Hamstring', 'Kalça', 'Baldır'];
-const CORE = ['Karın'];
+const CORE = ['Karın', 'Bel'];
 const UPPER = [...PUSH, ...PULL];
+const FULL_BODY = [...UPPER, ...LEGS, ...CORE];
+const QUAD_LEGS = ['Quadriceps', 'Baldır'];
+const POSTERIOR_LEGS = ['Hamstring', 'Kalça', ...CORE];
+const TORSO = ['Göğüs', 'Kanat', 'Orta Sırt', 'Trapez'];
+const LIMBS = ['Ön Omuz', 'Yan Omuz', 'Arka Omuz', 'Biseps', 'Triseps', ...LEGS, ...CORE];
+const SHOULDERS_ARMS = ['Ön Omuz', 'Yan Omuz', 'Arka Omuz', 'Biseps', 'Triseps'];
 
 /**
  * Gün sayısına göre bölme.
@@ -76,28 +82,50 @@ const UPPER = [...PUSH, ...PULL];
  * sığmayacak hacim güne yayılabilsin). Günler haftaya dinlenme kalacak şekilde
  * dağıtılıyor; arka arkaya aynı bölgeyi çalıştıran bir plan üretilmiyor.
  */
-export const SPLITS = {
-  2: {
+export const SPLIT_PRESETS = [
+  {
+    id: 'fullbody-2', daysPerWeek: 2, recommended: true,
     name: 'Full Body 2 Gün',
+    summary: 'İki dengeli tam vücut günü',
+    tags: ['En az gün', 'Tüm kaslar 2×'],
     rationale: 'İki günde bölmeye yer yok: her seans tüm vücudu görmeli, yoksa bazı kaslar haftada bir bile uyarılmaz. Hacim düşük kalır ama koruma eşiğinin üstüne çıkar.',
     days: [
-      { name: 'Tüm Vücut A', groups: [...UPPER, ...LEGS, ...CORE] },
-      { name: 'Tüm Vücut B', groups: [...UPPER, ...LEGS, ...CORE] },
+      { name: 'Tüm Vücut A', groups: [...FULL_BODY] },
+      { name: 'Tüm Vücut B', groups: [...FULL_BODY] },
     ],
     schedule: { mon: 0, thu: 1 },
   },
-  3: {
+  {
+    id: 'fullbody-3', daysPerWeek: 3, recommended: true,
     name: 'Full Body 3 Gün',
+    summary: 'Sık teknik tekrarı ve dengeli dağılım',
+    tags: ['Dengeli', 'Tüm kaslar 3×'],
     rationale: 'Haftada üç gün için tüm vücut hâlâ en verimlisi: her kas üç kez uyarılır, seans başına hacim düşük kaldığı için yorgunluk birikmez.',
     days: [
-      { name: 'Tüm Vücut A', groups: [...UPPER, ...LEGS, ...CORE] },
-      { name: 'Tüm Vücut B', groups: [...UPPER, ...LEGS, ...CORE] },
-      { name: 'Tüm Vücut C', groups: [...UPPER, ...LEGS, ...CORE] },
+      { name: 'Tüm Vücut A', groups: [...FULL_BODY] },
+      { name: 'Tüm Vücut B', groups: [...FULL_BODY] },
+      { name: 'Tüm Vücut C', groups: [...FULL_BODY] },
     ],
     schedule: { mon: 0, wed: 1, fri: 2 },
   },
-  4: {
+  {
+    id: 'hybrid-3', daysPerWeek: 3,
+    name: 'İtiş+Bacak / Çekiş+Bacak / Tam Vücut',
+    summary: 'Üst ve alt vücudu aynı gün eşleştir',
+    tags: ['Hibrit', 'Her kas 2×'],
+    rationale: 'İtiş kaslarını ön bacakla, çekiş kaslarını arka bacakla birleştirir; üçüncü tam vücut günü her bölgeye ikinci uyaranı verir. Klasik bölmelerden sıkılan ama üç günde sıklığı korumak isteyenler için.',
+    days: [
+      { name: 'İtiş + Ön Bacak', groups: [...PUSH, ...QUAD_LEGS] },
+      { name: 'Çekiş + Arka Bacak', groups: [...PULL, ...POSTERIOR_LEGS] },
+      { name: 'Tam Vücut Tamamlama', groups: [...FULL_BODY] },
+    ],
+    schedule: { mon: 0, wed: 1, fri: 2 },
+  },
+  {
+    id: 'upper-lower-4', daysPerWeek: 4, recommended: true,
     name: 'Üst / Alt 4 Gün',
+    summary: 'İki üst ve iki alt vücut günü',
+    tags: ['Dengeli', 'Kolay toparlanma'],
     rationale: 'Dört günde üst/alt, her bölgeyi haftada iki kez çalıştırır ve seans başına hacmi makul tutar. Tüm vücut bu hacimde tek seansa sığmaz.',
     days: [
       { name: 'Üst A', groups: [...UPPER] },
@@ -107,8 +135,53 @@ export const SPLITS = {
     ],
     schedule: { mon: 0, tue: 1, thu: 2, fri: 3 },
   },
-  5: {
+  {
+    id: 'push-pull-legs-4', daysPerWeek: 4,
+    name: 'İtiş+Bacak / Çekiş+Bacak 4 Gün',
+    summary: 'Her seansta bir üst ve bir alt bölüm',
+    tags: ['Hibrit', 'Bacakla birleştir'],
+    rationale: 'İtiş ve çekiş günlerinin yanına dönüşümlü olarak ön veya arka bacak ekler. Böylece dört günün tamamı karma çalışılırken her bölge haftada iki kez uyarılır ve ayrı bir uzun bacak gününe ihtiyaç kalmaz.',
+    days: [
+      { name: 'İtiş + Ön Bacak A', groups: [...PUSH, ...QUAD_LEGS] },
+      { name: 'Çekiş + Arka Bacak A', groups: [...PULL, ...POSTERIOR_LEGS] },
+      { name: 'İtiş + Arka Bacak B', groups: [...PUSH, ...POSTERIOR_LEGS] },
+      { name: 'Çekiş + Ön Bacak B', groups: [...PULL, ...QUAD_LEGS] },
+    ],
+    schedule: { mon: 0, tue: 1, thu: 2, fri: 3 },
+  },
+  {
+    id: 'torso-limbs-4', daysPerWeek: 4,
+    name: 'Gövde / Uzuvlar 4 Gün',
+    summary: 'Göğüs-sırt ile omuz-kol-bacağı ayır',
+    tags: ['Alternatif', 'Kol önceliği'],
+    rationale: 'Göğüs ve sırtı aynı seansta, omuz-kol-bacağı başka seansta toplar. Kolları üst günün sonuna bırakmak istemeyen ve antagonist kasları birlikte çalıştırmayı seven kullanıcılar için.',
+    days: [
+      { name: 'Gövde A', groups: [...TORSO] },
+      { name: 'Uzuvlar A', groups: [...LIMBS] },
+      { name: 'Gövde B', groups: [...TORSO] },
+      { name: 'Uzuvlar B', groups: [...LIMBS] },
+    ],
+    schedule: { mon: 0, tue: 1, thu: 2, fri: 3 },
+  },
+  {
+    id: 'fullbody-4', daysPerWeek: 4,
+    name: 'Dalgalı Tam Vücut 4 Gün',
+    summary: 'Her gün üst vücut, dönüşümlü ön/arka bacak',
+    tags: ['Yüksek sıklık', 'Az set/gün'],
+    rationale: 'Üst vücudu dört güne yayarken ön ve arka bacağı dönüşümlü çalıştırır. Böylece her seans bütün vücuttan bir bölüm içerir fakat başlangıç seviyesinde arka zincir hacmi gereksiz biçimde tavana çıkmaz.',
+    days: [
+      { name: 'Tam Vücut A · Ön Bacak', groups: [...UPPER, ...QUAD_LEGS] },
+      { name: 'Tam Vücut B · Arka Bacak', groups: [...UPPER, ...POSTERIOR_LEGS] },
+      { name: 'Tam Vücut C · Ön Bacak', groups: [...UPPER, ...QUAD_LEGS] },
+      { name: 'Tam Vücut D · Arka Bacak', groups: [...UPPER, ...POSTERIOR_LEGS] },
+    ],
+    schedule: { mon: 0, tue: 1, thu: 2, sat: 3 },
+  },
+  {
+    id: 'upper-lower-ppl-5', daysPerWeek: 5, recommended: true,
     name: 'Üst / Alt / İtiş / Çekiş / Alt 5 Gün',
+    summary: 'Üst-alt ile itiş-çekişi birleştir',
+    tags: ['Dengeli', 'Bacak önceliği'],
     rationale: 'Beş gün, üst/alt ile itiş-çekiş arasında bir melez ister: bölgeler haftada iki kez döner, beşinci gün en çok hacim isteyen bacağa gider.',
     days: [
       { name: 'Üst A', groups: [...UPPER] },
@@ -119,8 +192,41 @@ export const SPLITS = {
     ],
     schedule: { mon: 0, tue: 1, thu: 2, fri: 3, sat: 4 },
   },
-  6: {
+  {
+    id: 'hybrid-5', daysPerWeek: 5,
+    name: 'İtiş+Bacak / Çekiş+Bacak Hibrit 5 Gün',
+    summary: 'Bacağı üst günlere dağıt, ortada üst vücut ekle',
+    tags: ['Hibrit', 'Kısa bacak blokları'],
+    rationale: 'Ön ve arka bacak hacmini itiş-çekiş günlerine dağıtır; ortadaki üst vücut günü göğüs ve sırta üçüncü, daha küçük bir uyaran verir. Tek bir ağır bacak gününü sevmeyenler için.',
+    days: [
+      { name: 'İtiş + Ön Bacak', groups: [...PUSH, ...QUAD_LEGS] },
+      { name: 'Çekiş + Arka Bacak', groups: [...PULL, ...POSTERIOR_LEGS] },
+      { name: 'Üst Tamamlama', groups: [...UPPER] },
+      { name: 'İtiş + Arka Bacak', groups: [...PUSH, ...POSTERIOR_LEGS] },
+      { name: 'Çekiş + Ön Bacak', groups: [...PULL, ...QUAD_LEGS] },
+    ],
+    schedule: { mon: 0, tue: 1, wed: 2, fri: 3, sat: 4 },
+  },
+  {
+    id: 'full-upper-lower-5', daysPerWeek: 5,
+    name: 'Üst / Alt + Tam Vücut 5 Gün',
+    summary: 'İki üst, iki alt ve bir karma gün',
+    tags: ['Yüksek sıklık', 'Dengeli'],
+    rationale: 'İki üst ve iki alt güne eklenen tam vücut günü bütün kaslara üçüncü bir küçük uyaran sağlar. Aynı kası sık çalıştırmayı seven ama her gün tam vücut istemeyenler için.',
+    days: [
+      { name: 'Üst A', groups: [...UPPER] },
+      { name: 'Alt A', groups: [...LEGS, ...CORE] },
+      { name: 'Tam Vücut', groups: [...FULL_BODY] },
+      { name: 'Üst B', groups: [...UPPER] },
+      { name: 'Alt B', groups: [...LEGS, ...CORE] },
+    ],
+    schedule: { mon: 0, tue: 1, thu: 2, fri: 3, sat: 4 },
+  },
+  {
+    id: 'ppl-6', daysPerWeek: 6, recommended: true,
     name: 'Push / Pull / Legs 6 Gün',
+    summary: 'İtiş, çekiş ve bacak; iki tur',
+    tags: ['İleri', 'Kısa seanslar'],
     rationale: 'Altı günde itiş-çekiş-bacak iki tur döner. Her kas haftada iki kez, seans başına hacim düşük; toparlanma kapasitesi yüksek olanlar için.',
     days: [
       { name: 'İtiş A', groups: [...PUSH] },
@@ -132,7 +238,35 @@ export const SPLITS = {
     ],
     schedule: { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5 },
   },
-};
+  {
+    id: 'arnold-6', daysPerWeek: 6,
+    name: 'Göğüs+Sırt / Omuz+Kol / Bacak 6 Gün',
+    summary: 'Antagonist üst vücut kaslarını eşleştir',
+    tags: ['Arnold tipi', 'Kol önceliği'],
+    rationale: 'Göğüs ve sırtı aynı gün, omuz ve kolları ayrı gün çalıştırır; bacak günü döngüyü tamamlar. Üst günün sonunda kol çalışmak yerine kollara taze başlamak isteyenler için.',
+    days: [
+      { name: 'Göğüs + Sırt A', groups: [...TORSO] },
+      { name: 'Omuz + Kol A', groups: [...SHOULDERS_ARMS] },
+      { name: 'Bacak A', groups: [...LEGS, ...CORE] },
+      { name: 'Göğüs + Sırt B', groups: [...TORSO] },
+      { name: 'Omuz + Kol B', groups: [...SHOULDERS_ARMS] },
+      { name: 'Bacak B', groups: [...LEGS, ...CORE] },
+    ],
+    schedule: { mon: 0, tue: 1, wed: 2, thu: 3, fri: 4, sat: 5 },
+  },
+];
+
+export const SPLITS = Object.fromEntries(
+  [2, 3, 4, 5, 6].map(days => [days, SPLIT_PRESETS.find(p => p.daysPerWeek === days && p.recommended)]),
+);
+
+export const getSplitOptions = (daysPerWeek) =>
+  SPLIT_PRESETS.filter(p => p.daysPerWeek === Number(daysPerWeek));
+
+export const findSplitPreset = (splitId, daysPerWeek = 4) =>
+  SPLIT_PRESETS.find(p => p.id === splitId && p.daysPerWeek === Number(daysPerWeek))
+  || SPLITS[Number(daysPerWeek)]
+  || SPLITS[4];
 
 export const SPLIT_DAY_OPTIONS = Object.keys(SPLITS).map(Number).sort((a, b) => a - b);
 
@@ -259,9 +393,11 @@ const uygunMu = (name, profile) => {
 };
 
 /** Rol için profile uyan, henüz kullanılmamış ilk aday. */
-const adaySec = (muscle, role, profile, kullanilan) => {
+const adaySec = (muscle, role, profile, kullanilan, tercihEdilen = new Set()) => {
   const liste = POOL[muscle]?.[role] || [];
-  const uygun = liste.filter(ad => uygunMu(ad, profile));
+  const uygun = liste
+    .filter(ad => uygunMu(ad, profile))
+    .sort((a, b) => Number(tercihEdilen.has(b)) - Number(tercihEdilen.has(a)));
   return uygun.find(ad => !kullanilan.has(ad)) || uygun[0] || null;
 };
 
@@ -302,14 +438,17 @@ const hacimHesapla = (days, customExercises) => {
  */
 export const buildProgram = ({
   daysPerWeek = 4,
+  splitId = null,
   experienceLevel = 'intermediate',
   equipment = 'full',
   priority = [],
+  preferredExercises = [],
   customExercises = [],
 } = {}) => {
-  const split = SPLITS[daysPerWeek] || SPLITS[4];
+  const split = findSplitPreset(splitId, daysPerWeek);
   const profile = findEquipmentProfile(equipment);
   const oncelik = new Set((priority || []).filter(Boolean));
+  const tercihEdilen = new Set(preferredExercises || []);
 
   const landmarks = Object.fromEntries(
     MUSCLE_GROUPS.map(m => [m, getVolumeLandmarks(m, experienceLevel)]));
@@ -345,8 +484,8 @@ export const buildProgram = ({
       // Gerilmede yükleyen hareket ÖNCE seçiliyor: 3.9 denetiminin aradığı şey
       // bu ve her kasta bir tane olduğundan emin olmanın en kolay yolu, onu
       // isteğe bağlı değil zorunlu kılmak.
-      const gerilme = adaySec(kas, 'stretch', profile, kullanilan);
-      const ana = adaySec(kas, 'anchor', profile, kullanilan);
+      const gerilme = adaySec(kas, 'stretch', profile, kullanilan, tercihEdilen);
+      const ana = adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen);
       const secilen = [];
 
       if (gunBasi <= MAX_SETS_PER_EXERCISE && (ana || gerilme)) {
@@ -433,9 +572,9 @@ export const buildProgram = ({
     }
     // Bu kasın hiç hareketi yok ya da hepsi doldu: yeni hareket ekle.
     const rol = (POOL[kas]?.stretch || []).some(ad => uygunMu(ad, profile)) ? 'stretch' : 'anchor';
-    const yeni = adaySec(kas, rol, profile, kullanilan)
-      || adaySec(kas, 'anchor', profile, kullanilan)
-      || adaySec(kas, 'extra', profile, kullanilan);
+    const yeni = adaySec(kas, rol, profile, kullanilan, tercihEdilen)
+      || adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen)
+      || adaySec(kas, 'extra', profile, kullanilan, tercihEdilen);
     if (!yeni) return false;
     const gunIndexleri = gunler
       .map((g, i) => (g.groups.includes(kas) ? i : -1))

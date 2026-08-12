@@ -597,28 +597,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '4.1';
+export const APP_VERSION = '4.2';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 4.1',
+  title: 'ProOverload 4.2',
   date: '2026-08-12',
   items: [
     {
-      title: 'Hareketleri Toplu Seç',
-      desc: 'Şablon hazırlarken kütüphane artık her harekette kapanmıyor. İstediğin kası filtreleyip birden fazla hareketi işaretleyebilir, 2–5 setlik varsayılanı seçip hepsini tek dokunuşla güne ekleyebilirsin. Günde zaten bulunan hareketler ayrıca işaretlenir ve yanlışlıkla çoğaltılmaz.'
+      title: '12 Farklı Program Düzeni',
+      desc: 'Program sihirbazı artık gün sayısını tek bir bölmeye kilitlemiyor. İtiş+ön bacak, çekiş+arka bacak, gövde/uzuvlar, dalgalı tam vücut, Üst/Alt+Tam Vücut ve Göğüs+Sırt / Omuz+Kol gibi hibrit düzenler seçilebilir.'
     },
     {
-      title: 'Hareketi Yerinde Değiştir',
-      desc: 'Her hareket satırında değiştir düğmesi var. Alternatif hareket seçildiğinde sırası ve set sayısı korunur; hareketi silip yeniden eklemek gerekmez. Kütüphanedeki “Yaptıklarım” filtresi alışık olduğun hareketleri öne çıkarır.'
+      title: 'Bildiğin Hareketleri Kullan',
+      desc: 'Sihirbaz, daha önce yaptığın hareketleri uygun adaylar arasında öne alabilir. Böylece iyi bir program taslağı oluştururken alışık olmadığın hareketleri tek tek değiştirme ihtiyacı azalır.'
     },
     {
-      title: 'Günü Kopyala ve Haftaya Yerleştir',
-      desc: 'Program günleri setleriyle birlikte kopyalanabilir, silinebilir ve Pazartesi–Pazar arasına doğrudan atanabilir. Kaydetme sırasında “Haftalık plana da yerleştir” açıksa şablonlar ve yeni aktif haftalık program tek işlemde oluşur.'
+      title: 'İki Dokunuşta Taslak',
+      desc: 'Gün sayısı ve çalışma düzeni tek ekranda seçilir. “Varsayılanlarla Hızlı Önizle” ekipman ve öncelik adımlarını atlayarak doğrudan ölçülmüş program taslağını gösterir; ayrıntı isteyen normal akışa devam edebilir.'
     },
     {
-      title: 'Sihirbazdan Önce Düzenle',
-      desc: 'Akıllı sihirbazın ürettiği program artık doğrudan kurulmak zorunda değil. “Önce Düzenle” ile tüm günler elle oluşturucuya aktarılır; hareketleri, setleri, sıraları ve hafta günlerini kurulumdan önce değiştirebilirsin. Antrenman Merkezi’nde Sihirbaz, Hazır Program ve Elle Oluştur seçenekleri görünür biçimde bir araya getirildi.'
+      title: 'Daha Sade Antrenman Merkezi',
+      desc: 'Akıllı Sihirbaz ana seçenek olarak öne çıkarıldı. Hazırdan başlama ve boş program oluşturma hemen altında toplandı; şablon listesinin başlığından da doğrudan yeni program açılabilir.'
     }
   ]
 };
