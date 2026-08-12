@@ -1,7 +1,7 @@
 import React, { useState, useMemo, memo } from 'react';
 import {
   X, Wand2, ChevronLeft, ChevronRight, Check, AlertTriangle, CalendarRange,
-  Layers, Dumbbell, Target, RefreshCw,
+  Layers, Dumbbell, Target, Pencil,
 } from 'lucide-react';
 import {
   buildProgram, SPLIT_DAY_OPTIONS, EQUIPMENT_PROFILES, PRIORITY_MUSCLES, MAX_PRIORITY,
@@ -29,6 +29,7 @@ const ProgramWizardModal = memo(({
   isOpen,
   onClose,
   onInstall,
+  onCustomize,
   experienceLevel = 'intermediate',
   customExercises = [],
   existingTemplateCount = 0,
@@ -320,17 +321,16 @@ const ProgramWizardModal = memo(({
         {sonAdim ? (
           <>
             <button
-              onClick={() => setAdim(0)}
-              aria-label="Baştan ayarla"
-              className="px-3 py-3 rounded-2xl bg-zinc-800 active:bg-zinc-700 text-zinc-400"
+              onClick={() => onCustomize?.(built)}
+              className="flex-1 py-3 rounded-2xl border border-violet-800/60 bg-violet-950/30 active:bg-violet-900/40 text-violet-300 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1"
             >
-              <RefreshCw size={14} />
+              <Pencil size={13} /> Önce Düzenle
             </button>
             <button
               onClick={() => { onInstall(built); onClose(); }}
               className="flex-1 py-3 rounded-2xl bg-violet-600 active:bg-violet-700 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-2"
             >
-              <Check size={15} /> Programı kur
+              <Check size={15} /> Direkt Kur
             </button>
           </>
         ) : (

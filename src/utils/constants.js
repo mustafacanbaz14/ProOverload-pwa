@@ -597,56 +597,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '4.0';
+export const APP_VERSION = '4.1';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 4.0',
+  title: 'ProOverload 4.1',
   date: '2026-08-12',
   items: [
     {
-      title: 'Program Sihirbazı',
-      desc: 'Hazır programlar üç sabit seçenek sunuyordu; "4 gün gelebiliyorum, salonumda barbell yok ve kanadım geride" diyene verecek cevabı yoktu. Sihirbaz dört şey soruyor — gün sayısı, ekipman, deneyim ve en fazla iki öncelikli kas — ve programı üretiyor. Kritik nokta şu: set sayıları elle ayarlanmıyor, ÖLÇÜLEREK yakınsatılıyor. Üretici taslağı kuruyor, uygulamanın kendi hacim çözümleyicisinden geçiriyor, tavanı aşan kastan set kısıp eşiğin altında kalana set ekliyor ve sonuç oturana kadar yineliyor. Böylece hareketlerin yan kaslara yazdığı dolaylı hacim de hesaba katılmış oluyor. Kurmadan önce gün gün hareketler, kas kas ölçülen hacim ve varsa uyarılar gösteriliyor. Program bilerek verimli bandın ALT ucunda başlıyor ki mezosikliğin artıracak yeri kalsın.'
+      title: 'Hareketleri Toplu Seç',
+      desc: 'Şablon hazırlarken kütüphane artık her harekette kapanmıyor. İstediğin kası filtreleyip birden fazla hareketi işaretleyebilir, 2–5 setlik varsayılanı seçip hepsini tek dokunuşla güne ekleyebilirsin. Günde zaten bulunan hareketler ayrıca işaretlenir ve yanlışlıkla çoğaltılmaz.'
     },
     {
-      title: 'Şablonu Kopyala',
-      desc: 'Program kurarken en sık yapılan iş var olan bir günü alıp bir iki hareketini değiştirmek ("Üst A"dan "Üst B" türetmek). Bunun yolu sıfırdan şablon açıp hareketleri tek tek yeniden eklemekti. Artık şablon listesindeki kopyala düğmesi setleriyle birlikte bir kopya oluşturuyor; iki şablon birbirine bağlı kalmıyor, birinde yapılan değişiklik diğerini etkilemiyor.'
+      title: 'Hareketi Yerinde Değiştir',
+      desc: 'Her hareket satırında değiştir düğmesi var. Alternatif hareket seçildiğinde sırası ve set sayısı korunur; hareketi silip yeniden eklemek gerekmez. Kütüphanedeki “Yaptıklarım” filtresi alışık olduğun hareketleri öne çıkarır.'
     },
     {
-      title: 'Mezosiklik (Blok) Planı',
-      desc: 'Haftalık program kurulduğu haftadan sonsuza kadar aynı set sayısında kalıyordu; oysa hipertrofi programlaması bir blok işi. Araçlar → Mezosiklik ekranından 4, 5 veya 6 haftalık blok başlatılıyor: bugünkü hacim taban alınıyor, her hafta kas kas artıyor, son hafta boşaltmayla bitiyor. Artış sabit değil — her haftanın sonunda kas kas "kolay geldi / yerinde / zorladı" seçiliyor ve gelecek haftanın artışı (+2 / +1 / +0 set) buna göre hesaplanıyor. Hedef, toparlanma tavanını (MRV) hiçbir koşulda aşmıyor. Hedefler şablona kendiliğinden yazılmıyor: hangi güne hangi harekete kaç set ekleneceği söyleniyor, ekleme kullanıcıda kalıyor ki elle yapılan düzenlemeler her hafta ezilmesin.'
+      title: 'Günü Kopyala ve Haftaya Yerleştir',
+      desc: 'Program günleri setleriyle birlikte kopyalanabilir, silinebilir ve Pazartesi–Pazar arasına doğrudan atanabilir. Kaydetme sırasında “Haftalık plana da yerleştir” açıksa şablonlar ve yeni aktif haftalık program tek işlemde oluşur.'
     },
     {
-      title: 'Hareket Seçimi Denetimi',
-      desc: 'Uygulama "kaç set" sorusunu her açıdan yanıtlıyordu ama "hangi hareket" sorusuna hiç bakmıyordu. Haftalık Program ekranına, kas dökümünün üstüne bir denetim geldi: bir kasın hacminin tamamı tepe kasılma hareketlerinden geliyorsa (gerilmede yükleme yok), hacmin yüzde yetmişinden fazlası tek hareketten geliyorsa ya da kas hiçbir harekette hedef değilse uyarıyor. Her hareketin kas boyu profili (gerilmede / kısalmada / orta açıklık) listeleniyor ve eksik varsa kütüphaneden gerilmede yükleyen seçenekler öneriliyor. Bulgular hacimden bağımsız — hacim tablosu yemyeşilken de çıkabilir, çünkü aynı 16 set iki farklı hareket seçimiyle farklı sonuç verir.'
-    },
-    {
-      title: 'Kas Çalışma Sıklığı',
-      desc: 'Haftalık hacim, 16 seti tek güne yığmakla iki güne bölmeyi ayırt etmiyordu. Analiz → Hacim sekmesinde artık her kasın haftada kaç kez çalıştığı, en yoğun seansa ne kadar yığıldığı ve bölünmesi gerekip gerekmediği görünüyor. Bir kas ancak o gün en az 2 set aldıysa "çalışıldı" sayılıyor — yoksa bench press\'in tricepse yazdığı yarım set bile sıklığı şişirirdi. Aynı hacimde yüksek sıklığın avantajı ölçülüdür; asıl kazanç setlerin yığılmaması, metinler de bunu böyle söylüyor.'
-    },
-    {
-      title: 'Isınma Setlerini Tek Dokunuşla Ekle',
-      desc: 'Plaka hesaplayıcı ısınma piramidini gösteriyordu ama setleri elle yazmak gerekiyordu. Artık doğrudan harekete ekleniyor: çalışma setlerinin önüne giriyor ve W (ısınma) işaretli olduğu için hacme sayılmıyor.'
-    },
-    {
-      title: 'CSV Dışa Aktarma',
-      desc: 'Setler, ölçümler ve beslenme ayrı ayrı elektronik tabloya aktarılabiliyor. Satır başına bir set; vücut ağırlıklı hareketlerde hem yazılan değer hem gerçek yük ayrı sütunda. Excel için hazır: noktalı virgül ayraçlı, ondalıklar virgüllü, UTF-8 işaretli. Geri yükleme için değil, kendi analizini kurmak için.'
-    },
-    {
-      title: 'Yedeği Yüklemeden Önce Gör',
-      desc: 'Dosya adı, sürümü, tarihi ve içerdiği antrenman, ölçüm, beslenme, şablon ve diğer kayıt sayıları artık yükleme başlamadan gösterilir.'
-    },
-    {
-      title: 'Birleştir veya Değiştir',
-      desc: 'Önerilen Birleştir seçeneği cihazdaki farklı kayıtları korur; aynı tarih veya kimlikte yedek sürümü kazanır. Tam geri dönüş gerektiğinde yedekle değiştirme seçeneği ayrıca sunulur.'
-    },
-    {
-      title: 'İçe Aktarmayı Geri Al',
-      desc: 'Yükleme tamamlandıktan sonra 12 saniye boyunca Geri Al düğmesi görünür. Yanlış dosya veya yanlış yöntem seçilirse önceki cihaz verileri tek dokunuşla geri gelir.'
-    },
-    {
-      title: 'Bozuk Dosya Koruması',
-      desc: 'Boş, ilgisiz veya alan türleri bozuk dosyalar artık değişiklik yapmadan reddedilir. Aynı dosya düzeltildikten sonra yeniden seçilebilir ve okuma hataları açıkça bildirilir.'
+      title: 'Sihirbazdan Önce Düzenle',
+      desc: 'Akıllı sihirbazın ürettiği program artık doğrudan kurulmak zorunda değil. “Önce Düzenle” ile tüm günler elle oluşturucuya aktarılır; hareketleri, setleri, sıraları ve hafta günlerini kurulumdan önce değiştirebilirsin. Antrenman Merkezi’nde Sihirbaz, Hazır Program ve Elle Oluştur seçenekleri görünür biçimde bir araya getirildi.'
     }
   ]
 };

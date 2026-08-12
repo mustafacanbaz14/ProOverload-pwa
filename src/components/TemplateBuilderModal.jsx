@@ -1,9 +1,14 @@
 import React, { useState, memo } from 'react';
-import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Flame } from 'lucide-react';
+import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Flame, Copy, RefreshCw } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { generateId } from '../utils/helpers';
 import { estimateLiftingCalories } from '../utils/cardio';
+import { WEEKDAYS } from '../utils/weekPlan';
+import {
+  addExercisesToDraftDay, duplicateDraftDay, nextUnusedWeekday,
+  replaceDraftExercise, suggestedWeekdays,
+} from '../utils/programDraft';
 import ExerciseLibraryModal from './ExerciseLibraryModal';
 import PlanningGuide from './PlanningGuide';
 import TemplateAssistantCard from './TemplateAssistantCard';
@@ -27,16 +32,19 @@ const TemplateBuilderModal = memo(({
   // Doluysa tek şablonu düzenleme kipi: gün sekmeleri gizlenir, program adı
   // doğrudan şablonun adıdır. Üst bileşen key ile yeniden bağlar.
   editing = null,
+  initialDraft = null,
   customExercises = [],
   restSeconds = 120,
   experienceLevel = 'intermediate',
   weightKg = 0,
   libraryProps = {},
 }) => {
-  const [programName, setProgramName] = useState(editing?.name || '');
+  const [programName, setProgramName] = useState(editing?.name || initialDraft?.name || '');
   const [days, setDays] = useState(() => editing
     ? [{
+      uid: generateId(),
       name: editing.name,
+      weekday: 'mon',
       exercises: (editing.exercises || []).map(ex => ({
         // Aynı hareket bir güne iki kez eklenebiliyor; listeyi index yerine
         // kalıcı bir kimlikle keylemek silme sonrası karışmayı önler.
@@ -45,11 +53,22 @@ const TemplateBuilderModal = memo(({
         sets: Math.max(1, (ex.sets || []).length),
       })),
     }]
-    : [{ name: DAY_NAMES[0], exercises: [] }]);
+    : initialDraft?.days?.length
+      ? initialDraft.days.map((day, index) => ({
+        uid: day.uid || generateId(),
+        name: day.name || DAY_NAMES[index],
+        weekday: day.weekday || suggestedWeekdays(initialDraft.days.length)[index],
+        exercises: (day.exercises || []).map(ex => ({ ...ex, uid: ex.uid || generateId(), sets: ex.sets || 3 })),
+      }))
+      : [{ uid: generateId(), name: DAY_NAMES[0], weekday: 'mon', exercises: [] }]);
   const [activeDay, setActiveDay] = useState(0);
   // Kütüphane bu bileşenin içinden açılır; böylece seçilen hareket bir üst
   // bileşene çıkıp geri dönmek zorunda kalmaz (render sırasında yan etki olurdu).
-  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerMode, setPickerMode] = useState(null); // { type: 'add' } | { type: 'replace', uid }
+  const [selectedExercises, setSelectedExercises] = useState(() => new Set());
+  const [defaultSets, setDefaultSets] = useState(3);
+  const [createWeekPlan, setCreateWeekPlan] = useState(!editing);
+  const [removeArmed, setRemoveArmed] = useState(false);
 
   if (!isOpen) return null;
 
@@ -86,6 +105,50 @@ const TemplateBuilderModal = memo(({
       : [...day.exercises, { uid: generateId(), name, sets: 3 }],
   });
 
+  const addDay = () => {
+    if (days.length >= 7) return;
+    const oldSuggestion = suggestedWeekdays(days.length);
+    const nextSuggestion = suggestedWeekdays(days.length + 1);
+    const followsSuggestion = days.every((item, index) => item.weekday === oldSuggestion[index]);
+    const nextDays = followsSuggestion
+      ? days.map((item, index) => ({ ...item, weekday: nextSuggestion[index] }))
+      : days;
+    const weekday = followsSuggestion ? nextSuggestion[days.length] : nextUnusedWeekday(days);
+    setDays([...nextDays, { uid: generateId(), name: DAY_NAMES[days.length], weekday, exercises: [] }]);
+    setActiveDay(days.length);
+    setRemoveArmed(false);
+  };
+
+  const duplicateDay = () => {
+    const next = duplicateDraftDay(days, activeDay, generateId);
+    if (next === days) return;
+    setDays(next);
+    setActiveDay(activeDay + 1);
+    setRemoveArmed(false);
+  };
+
+  const removeDay = () => {
+    if (days.length <= 1) return;
+    if (!removeArmed) {
+      setRemoveArmed(true);
+      return;
+    }
+    const next = days.filter((_, index) => index !== activeDay);
+    setDays(next);
+    setActiveDay(Math.min(activeDay, next.length - 1));
+    setRemoveArmed(false);
+  };
+
+  const openAddPicker = () => {
+    setSelectedExercises(new Set());
+    setPickerMode({ type: 'add' });
+  };
+
+  const openReplacePicker = (uid) => {
+    setSelectedExercises(new Set());
+    setPickerMode({ type: 'replace', uid });
+  };
+
   const canSave = programName.trim() && days.some(d => d.exercises.length > 0);
 
   return (
@@ -113,8 +176,8 @@ const TemplateBuilderModal = memo(({
         <div className="flex gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1 items-center">
           {days.map((d, i) => (
             <button
-              key={i}
-              onClick={() => setActiveDay(i)}
+              key={d.uid}
+              onClick={() => { setActiveDay(i); setRemoveArmed(false); }}
               className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${activeDay === i ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20' : 'border-zinc-800 text-zinc-500'}`}
             >
               {d.name} <span className="text-zinc-600">({d.exercises.length})</span>
@@ -122,7 +185,8 @@ const TemplateBuilderModal = memo(({
           ))}
           {days.length < 7 && (
             <button
-              onClick={() => { setDays(prev => [...prev, { name: DAY_NAMES[prev.length], exercises: [] }]); setActiveDay(days.length); }}
+              onClick={addDay}
+              aria-label="Yeni program günü ekle"
               className="shrink-0 px-2.5 py-1.5 rounded-lg border border-dashed border-zinc-700 text-zinc-500 active:text-cyan-400"
             >
               <Plus size={13} />
@@ -132,13 +196,35 @@ const TemplateBuilderModal = memo(({
         )}
 
         {!editing && (
-          <input
-            type="text"
-            value={day.name}
-            onChange={(e) => updateDay({ name: e.target.value })}
-            placeholder="Gün adı (örn. Push)"
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-300 outline-none font-mono text-[11px] focus:border-cyan-500 transition-colors"
-          />
+          <div className="space-y-2">
+            <input
+              type="text"
+              value={day.name}
+              onChange={(e) => updateDay({ name: e.target.value })}
+              placeholder="Gün adı (örn. Push)"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-300 outline-none font-mono text-[11px] focus:border-cyan-500 transition-colors"
+            />
+            <div className="flex gap-1 overflow-x-auto hide-scrollbar" aria-label="Haftanın günü">
+              {WEEKDAYS.map(weekday => (
+                <button
+                  key={weekday.key}
+                  type="button"
+                  onClick={() => updateDay({ weekday: weekday.key })}
+                  className={`shrink-0 rounded-lg border px-2 py-1.5 text-[9px] font-bold ${day.weekday === weekday.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 text-zinc-600'}`}
+                >
+                  {weekday.short}
+                </button>
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <button type="button" onClick={duplicateDay} disabled={days.length >= 7} className="rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-[9px] font-bold text-zinc-400 active:bg-zinc-800 disabled:opacity-30">
+                <Copy size={11} className="inline mr-1" /> Günü Kopyala
+              </button>
+              <button type="button" onClick={removeDay} disabled={days.length <= 1} className={`rounded-lg border py-2 text-[9px] font-bold disabled:opacity-30 ${removeArmed ? 'border-red-700 bg-red-950/30 text-red-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}>
+                <Trash2 size={11} className="inline mr-1" /> {removeArmed ? 'Tekrar Dokun: Sil' : 'Günü Sil'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
@@ -187,6 +273,14 @@ const TemplateBuilderModal = memo(({
                 </span>
                 <div className="flex items-center shrink-0">
                   <button
+                    onClick={() => openReplacePicker(ex.uid)}
+                    title="Hareketi değiştir"
+                    aria-label={`${ex.name} hareketini değiştir`}
+                    className="text-zinc-600 active:text-emerald-400 p-1.5"
+                  >
+                    <RefreshCw size={13} />
+                  </button>
+                  <button
                     onClick={() => moveExercise(exIndex, -1)}
                     disabled={exIndex === 0}
                     title="Yukarı taşı"
@@ -206,6 +300,7 @@ const TemplateBuilderModal = memo(({
                   </button>
                   <button
                     onClick={() => updateDay({ exercises: day.exercises.filter(e => e.uid !== ex.uid) })}
+                    aria-label={`${ex.name} hareketini çıkar`}
                     className="text-zinc-600 active:text-red-500 p-1.5"
                   >
                     <Trash2 size={13} />
@@ -228,12 +323,24 @@ const TemplateBuilderModal = memo(({
           ))}
         </div>
 
-        <button
-          onClick={() => setPickerOpen(true)}
-          className="w-full bg-zinc-900 border border-dashed border-cyan-900/50 text-cyan-400 font-bold py-3 rounded-xl flex justify-center items-center uppercase tracking-wide text-[11px] active:bg-zinc-800 transition-colors"
-        >
-          <Plus size={15} className="mr-2" /> Kütüphaneden Hareket Ekle
-        </button>
+        <div className="rounded-xl border border-dashed border-cyan-900/50 bg-zinc-900 p-2.5 space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[9px] font-mono text-zinc-500">Yeni hareketler</span>
+            <div className="flex gap-1">
+              {[2, 3, 4, 5].map(value => (
+                <button key={value} type="button" onClick={() => setDefaultSets(value)} className={`w-7 h-6 rounded-md border text-[9px] font-bold ${defaultSets === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 text-zinc-600'}`}>
+                  {value}s
+                </button>
+              ))}
+            </div>
+          </div>
+          <button
+            onClick={openAddPicker}
+            className="w-full bg-cyan-950/25 border border-cyan-900/50 text-cyan-400 font-bold py-3 rounded-xl flex justify-center items-center uppercase tracking-wide text-[11px] active:bg-cyan-900/30 transition-colors"
+          >
+            <Plus size={15} className="mr-2" /> Birden Fazla Hareket Seç
+          </button>
+        </div>
 
         {/* Kas dağılımı */}
         {ranked.length > 0 && (
@@ -265,11 +372,27 @@ const TemplateBuilderModal = memo(({
       </div>
 
       <div className="p-3 border-t border-zinc-800 bg-zinc-950 shrink-0 pb-safe">
+        {!editing && (
+          <button
+            type="button"
+            onClick={() => setCreateWeekPlan(value => !value)}
+            className="w-full flex items-center justify-between gap-3 rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2.5 mb-2 text-left"
+            aria-pressed={createWeekPlan}
+          >
+            <span className="min-w-0">
+              <span className="text-[10px] font-bold text-zinc-200 block">Haftalık plana da yerleştir</span>
+              <span className="text-[8px] font-mono text-zinc-600 block">Seçtiğin günlerle yeni aktif program oluşur</span>
+            </span>
+            <span className={`w-9 h-5 rounded-full relative shrink-0 ${createWeekPlan ? 'bg-emerald-600' : 'bg-zinc-700'}`}>
+              <span className="absolute top-1 w-3 h-3 rounded-full bg-white transition-all" style={{ left: createWeekPlan ? 20 : 4 }} />
+            </span>
+          </button>
+        )}
         <button
           disabled={!canSave}
           onClick={() => {
             if (editing) onUpdate(editing.id, programName.trim(), days[0].exercises);
-            else onSave(programName.trim(), days);
+            else onSave(programName.trim(), days, { createWeekPlan });
             onClose();
           }}
           className="w-full bg-cyan-600 active:bg-cyan-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold py-3.5 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"
@@ -277,20 +400,41 @@ const TemplateBuilderModal = memo(({
           <Save size={15} />
           {editing
             ? 'Şablonu Güncelle'
-            : `${days.filter(d => d.exercises.length > 0).length} Günü Şablon Olarak Kaydet`}
+            : createWeekPlan
+              ? `${days.filter(d => d.exercises.length > 0).length} Günü Kaydet ve Aktif Yap`
+              : `${days.filter(d => d.exercises.length > 0).length} Şablonu Kaydet`}
         </button>
       </div>
 
       <ExerciseLibraryModal
         {...libraryProps}
-        isOpen={pickerOpen}
-        onClose={() => setPickerOpen(false)}
+        isOpen={Boolean(pickerMode)}
+        onClose={() => { setPickerMode(null); setSelectedExercises(new Set()); }}
         selectMode
+        multiSelect={pickerMode?.type === 'add'}
+        selectedNames={selectedExercises}
+        disabledNames={pickerMode?.type === 'add'
+          ? new Set(day.exercises.map(ex => ex.name))
+          : new Set(day.exercises.filter(ex => ex.uid !== pickerMode?.uid).map(ex => ex.name))}
+        onToggleSelect={(name) => setSelectedExercises(prev => {
+          const next = new Set(prev);
+          if (next.has(name)) next.delete(name);
+          else next.add(name);
+          return next;
+        })}
+        onConfirmSelection={(names) => {
+          setDays(prev => prev.map((draftDay, index) => index === activeDay
+            ? addExercisesToDraftDay(draftDay, names, generateId, defaultSets)
+            : draftDay));
+          setPickerMode(null);
+          setSelectedExercises(new Set());
+        }}
         onSelect={(name) => {
-          setDays(prev => prev.map((d, i) => i === activeDay
-            ? { ...d, exercises: [...d.exercises, { uid: generateId(), name, sets: 3 }] }
-            : d));
-          setPickerOpen(false);
+          if (pickerMode?.type !== 'replace') return;
+          setDays(prev => prev.map((draftDay, index) => index === activeDay
+            ? replaceDraftExercise(draftDay, pickerMode.uid, name)
+            : draftDay));
+          setPickerMode(null);
         }}
       />
     </div>

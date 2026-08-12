@@ -42,6 +42,7 @@ import { useDeferredPwaUpdate } from './hooks/useDeferredPwaUpdate';
 // yedek dosyasına yazılan sürümün birbirinden sapması böyle engellenir.
 import pkg from '../package.json';
 import { templateToExercises, workoutToTemplate, suggestTemplateName } from './utils/templates';
+import { draftFromGeneratedProgram, instantiateDraftProgram } from './utils/programDraft';
 
 import {
   generateId, getLocalDateString, getMondayOfCurrentWeek, detectMuscleGroup,
@@ -135,6 +136,7 @@ export default function App() {
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
+  const [builderDraft, setBuilderDraft] = useState(null);
   const [isCardioOpen, setIsCardioOpen] = useState(false);
   const [cardioContext, setCardioContext] = useState(null);
   const [isEnergyDetailOpen, setIsEnergyDetailOpen] = useState(false);
@@ -1409,23 +1411,20 @@ export default function App() {
     showToast('Şablon güncellendi.');
   }, [showToast]);
 
-  const handleSaveProgram = useCallback((programName, days) => {
-    const created = days
-      .filter(d => d.exercises.length > 0)
-      .map(d => ({
-        id: generateId(),
-        name: `${programName} — ${d.name}`,
-        createdAt: new Date().toISOString(),
-        exercises: d.exercises.map(ex => ({
-          name: ex.name,
-          sets: Array.from({ length: ex.sets }, () => ({
-            id: generateId(), weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal'
-          })),
-        })),
+  const handleSaveProgram = useCallback((programName, days, { createWeekPlan = true } = {}) => {
+    const installation = instantiateDraftProgram(programName, days, generateId);
+    if (!installation?.templates.length) return;
+    setTemplates(prev => [...installation.templates, ...prev]);
+    if (createWeekPlan) {
+      setSettings(prev => ({
+        ...prev,
+        weekPlans: [...(prev.weekPlans || []), installation.plan],
+        activePlanId: installation.plan.id,
       }));
-    if (created.length === 0) return;
-    setTemplates(prev => [...created, ...prev]);
-    showToast(`${created.length} günlük "${programName}" programı kaydedildi.`);
+    }
+    showToast(createWeekPlan
+      ? `${installation.templates.length} günlük "${programName}" kaydedildi ve aktif program yapıldı.`
+      : `${installation.templates.length} şablon kaydedildi.`);
   }, [showToast]);
 
   const closeExercisePicker = useCallback(() => {
@@ -2250,7 +2249,7 @@ export default function App() {
 
   const selectionReport = useMemo(
     () => auditExerciseSelection(weekPlanResult.statuses, { customExercises }),
-    [dashboardStats.planStatuses, customExercises]);
+    [weekPlanResult.statuses, customExercises]);
 
   /** Antrenmandaki bir hareketi başka bir hareketle değiştirir; setler korunur. */
   const handleSubstituteExercise = useCallback((exerciseId, newName) => {
@@ -2300,7 +2299,7 @@ export default function App() {
   }, [readiness, todayCoach, sortedWorkouts, sortedMetrics, computedComp,
     settings.nutritionGoal, settings.proteinPerFfmBulk, settings.proteinPerFfmCut,
     settings.experienceLevel, dashboardStats, plateauInsights, deload, deloadSuggestion,
-    mesocycle, mesocycleInstructions, selectionReport,
+    mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
     profileGender, todayCycleSummary]);
 
   const needsBackup = useMemo(() => {
@@ -2440,6 +2439,8 @@ export default function App() {
               onStart={handleStartRequest}
               onLibrary={() => setIsLibraryOpen(true)}
               onBuilder={() => setIsBuilderOpen(true)}
+              onWizard={() => setIsWizardOpen(true)}
+              onStarter={() => setIsStarterOpen(true)}
               onWeekPlan={() => setIsWeekPlanOpen(true)}
               onCardio={() => setIsCardioOpen(true)}
               onPreview={setPreviewTemplate}
@@ -2785,12 +2786,13 @@ export default function App() {
 
         {/* PROGRAM OLUŞTURUCU */}
         {isBuilderOpen && <TemplateBuilderModal
-          key={editingTemplate?.id || 'new'}
+          key={editingTemplate?.id || builderDraft?.key || 'new'}
           isOpen={isBuilderOpen}
-          onClose={() => { setIsBuilderOpen(false); setEditingTemplate(null); }}
+          onClose={() => { setIsBuilderOpen(false); setEditingTemplate(null); setBuilderDraft(null); }}
           onSave={handleSaveProgram}
           onUpdate={handleUpdateTemplate}
           editing={editingTemplate}
+          initialDraft={builderDraft}
           customExercises={customExercises}
           restSeconds={settings.restSeconds}
           experienceLevel={settings.experienceLevel}
@@ -2835,6 +2837,13 @@ export default function App() {
           isOpen={isWizardOpen}
           onClose={() => setIsWizardOpen(false)}
           onInstall={handleInstallGenerated}
+          onCustomize={(built) => {
+            const draft = draftFromGeneratedProgram(built, generateId);
+            if (!draft) return;
+            setBuilderDraft({ ...draft, key: generateId() });
+            setIsWizardOpen(false);
+            setIsBuilderOpen(true);
+          }}
           experienceLevel={settings.experienceLevel}
           customExercises={customExercises}
           existingTemplateCount={templates.length}

@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play, ChevronRight, Copy } from 'lucide-react';
+import { Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play, ChevronRight, Copy, Wand2, Sparkles } from 'lucide-react';
 import { estimateDuration } from '../utils/templates';
 import { estimateLiftingCalories } from '../utils/cardio';
 
@@ -10,6 +10,8 @@ const TrainingView = memo(({
   onStart,
   onLibrary,
   onBuilder,
+  onWizard,
+  onStarter,
   onWeekPlan,
   onCardio,
   onPreview,
@@ -31,11 +33,30 @@ const TrainingView = memo(({
       <ChevronRight size={18} />
     </button>
 
+    <section className="rounded-2xl border border-violet-900/40 bg-violet-950/15 p-3">
+      <div className="mb-2.5">
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-violet-400">Program Hazırla</span>
+        <p className="mt-0.5 text-[9px] font-mono text-zinc-500">Sıfırdan düşünmek zorunda değilsin; kurduktan önce her hareketi değiştirebilirsin.</p>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={onWizard} className="rounded-xl border border-violet-800/60 bg-violet-950/35 p-3 text-left active:bg-violet-900/40">
+          <Wand2 size={16} className="mb-2 text-violet-300" />
+          <strong className="block text-[11px] text-zinc-100">Akıllı Sihirbaz</strong>
+          <span className="text-[9px] font-mono text-zinc-500">4 adımda kişisel taslak</span>
+        </button>
+        <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-3 text-left active:bg-amber-900/30">
+          <Sparkles size={16} className="mb-2 text-amber-400" />
+          <strong className="block text-[11px] text-zinc-100">Hazır Programlar</strong>
+          <span className="text-[9px] font-mono text-zinc-500">Full Body, Üst/Alt, PPL</span>
+        </button>
+      </div>
+    </section>
+
     <div className="grid grid-cols-2 gap-2">
       {[
         { label: 'Hareketler', hint: 'Kütüphane & ince ayar', icon: Library, action: onLibrary },
-        { label: 'Programlar', hint: 'Haftalık plan', icon: CalendarRange, action: onWeekPlan },
-        { label: 'Şablon Oluştur', hint: 'Gün gün planla', icon: BookmarkPlus, action: onBuilder },
+        { label: 'Haftalık Plan', hint: 'Günleri ve saatleri düzenle', icon: CalendarRange, action: onWeekPlan },
+        { label: 'Elle Oluştur', hint: 'Çoklu hareket seçimiyle', icon: BookmarkPlus, action: onBuilder },
         { label: 'Kardiyo / Aktivite', hint: 'Kondisyon, spor & günlük hareket', icon: HeartPulse, action: onCardio },
       ].map(item => {
         const Icon = item.icon;

@@ -32,6 +32,10 @@ import { analyzeTemplate } from '../src/utils/templateAssistant.js';
 import { sortExercisesForMuscle } from '../src/utils/exerciseSort.js';
 import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from '../src/utils/undo.js';
 import { inspectBackupPayload, mergeImportedRecords, backupImportSummary } from '../src/utils/backupImport.js';
+import {
+  addExercisesToDraftDay, draftFromGeneratedProgram, duplicateDraftDay,
+  instantiateDraftProgram, suggestedWeekdays,
+} from '../src/utils/programDraft.js';
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
 import { buildFrequencyReport, frequencyCoachItem } from '../src/utils/frequency.js';
 import { workoutsToCsv, metricsToCsv } from '../src/utils/csvExport.js';
@@ -40,6 +44,56 @@ import { sessionAdvice } from '../src/utils/autoregulation.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
+
+test('program taslağı günleri dengeli haftaya dağıtır', () => {
+  assert.deepEqual(suggestedWeekdays(3), ['mon', 'wed', 'fri']);
+  assert.deepEqual(suggestedWeekdays(4), ['mon', 'tue', 'thu', 'fri']);
+});
+
+test('çoklu hareket seçimi mevcut hareketi çoğaltmaz', () => {
+  let id = 0;
+  const day = { exercises: [{ uid: 'old', name: 'Squat', sets: 3 }] };
+  const next = addExercisesToDraftDay(day, ['Squat', 'Bench Press', 'Lat Pulldown'], () => `id-${++id}`, 4);
+  assert.deepEqual(next.exercises.map(ex => [ex.name, ex.sets]), [
+    ['Squat', 3], ['Bench Press', 4], ['Lat Pulldown', 4],
+  ]);
+});
+
+test('program günü kopyalanınca hareket kimlikleri ve hafta günü ayrışır', () => {
+  let id = 0;
+  const days = [{ name: 'Push', weekday: 'mon', exercises: [{ uid: 'e1', name: 'Bench', sets: 3 }] }];
+  const next = duplicateDraftDay(days, 0, () => `copy-${++id}`);
+  assert.equal(next.length, 2);
+  assert.equal(next[1].weekday, 'tue');
+  assert.notEqual(next[1].uid, next[0].uid);
+  assert.notEqual(next[1].exercises[0].uid, 'e1');
+});
+
+test('sihirbaz çıktısı kurmadan önce düzenlenebilir taslağa dönüşür', () => {
+  let id = 0;
+  const draft = draftFromGeneratedProgram({
+    split: { name: 'Üst Alt', schedule: { mon: 0, thu: 1 } },
+    days: [
+      { name: 'Üst', exercises: [{ name: 'Bench', sets: 3 }] },
+      { name: 'Alt', exercises: [{ name: 'Squat', sets: 4 }] },
+    ],
+  }, () => `draft-${++id}`);
+  assert.equal(draft.name, 'Üst Alt');
+  assert.deepEqual(draft.days.map(day => day.weekday), ['mon', 'thu']);
+  assert.equal(draft.days[1].exercises[0].sets, 4);
+});
+
+test('elle program tek işlemde şablon ve haftalık plan üretir', () => {
+  let id = 0;
+  const result = instantiateDraftProgram('Benim Programım', [
+    { name: 'Push', weekday: 'mon', exercises: [{ name: 'Bench', sets: 3 }] },
+    { name: 'Pull', weekday: 'thu', exercises: [{ name: 'Row', sets: 4 }] },
+  ], () => `program-${++id}`, '2026-08-12T00:00:00.000Z');
+  assert.equal(result.templates.length, 2);
+  assert.equal(result.plan.days.mon[0].templateId, result.templates[0].id);
+  assert.equal(result.plan.days.thu[0].templateId, result.templates[1].id);
+  assert.equal(result.templates[1].exercises[0].sets.length, 4);
+});
 
 test('yedek incelemesi boş ve bozuk dosyayı reddeder', () => {
   assert.equal(inspectBackupPayload({}).valid, false);

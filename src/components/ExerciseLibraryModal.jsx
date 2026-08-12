@@ -1,5 +1,5 @@
 import React, { useState, useMemo, memo } from 'react';
-import { X, Search, Star, Settings, Trash2, Eye, EyeOff, Plus, Dumbbell, Check } from 'lucide-react';
+import { X, Search, Star, Settings, Trash2, Eye, EyeOff, Plus, Dumbbell, Check, History } from 'lucide-react';
 import { MUSCLE_GROUPS } from '../utils/constants';
 import { foldForSearch } from '../utils/helpers';
 import { exerciseMuscleRank, exerciseRankLabel, sortExercisesForMuscle } from '../utils/exerciseSort';
@@ -32,15 +32,22 @@ const ExerciseLibraryModal = memo(({
   onAddNew,
   selectMode = false,
   onSelect,
+  multiSelect = false,
+  selectedNames = new Set(),
+  disabledNames = new Set(),
+  onToggleSelect,
+  onConfirmSelection,
 }) => {
   const [query, setQuery] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('Tümü');
   const [onlyMine, setOnlyMine] = useState(false);
+  const [onlyPerformed, setOnlyPerformed] = useState(false);
 
   const list = useMemo(() => {
     const q = foldForSearch(query).trim();
     const filtered = allExerciseNames.filter(name => {
       if (onlyMine && !isUserAdded(name)) return false;
+      if (onlyPerformed && !performedNames.has(name)) return false;
       if (q && !foldForSearch(name).includes(q)) return false;
       if (muscleFilter !== 'Tümü') {
         const c = getContributions(name);
@@ -49,7 +56,7 @@ const ExerciseLibraryModal = memo(({
       return true;
     });
     return sortExercisesForMuscle(filtered, muscleFilter, getContributions);
-  }, [allExerciseNames, query, muscleFilter, onlyMine, getContributions, isUserAdded]);
+  }, [allExerciseNames, query, muscleFilter, onlyMine, onlyPerformed, performedNames, getContributions, isUserAdded]);
 
   if (!isOpen) return null;
 
@@ -90,13 +97,23 @@ const ExerciseLibraryModal = memo(({
           ))}
         </div>
 
-        <div className="flex items-center justify-between">
-          <button
-            onClick={() => setOnlyMine(v => !v)}
-            className={`px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase border transition-colors flex items-center gap-1 ${onlyMine ? 'border-amber-600 text-amber-400 bg-amber-950/20' : 'border-zinc-800 text-zinc-500'}`}
-          >
-            <Star size={11} fill={onlyMine ? 'currentColor' : 'none'} /> Sadece Benimkiler
-          </button>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex gap-1.5 min-w-0 overflow-x-auto hide-scrollbar">
+            <button
+              onClick={() => setOnlyMine(v => !v)}
+              className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase border transition-colors flex items-center gap-1 ${onlyMine ? 'border-amber-600 text-amber-400 bg-amber-950/20' : 'border-zinc-800 text-zinc-500'}`}
+            >
+              <Star size={11} fill={onlyMine ? 'currentColor' : 'none'} /> Benimkiler
+            </button>
+            {selectMode && performedNames.size > 0 && (
+              <button
+                onClick={() => setOnlyPerformed(v => !v)}
+                className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase border transition-colors flex items-center gap-1 ${onlyPerformed ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20' : 'border-zinc-800 text-zinc-500'}`}
+              >
+                <History size={11} /> Yaptıklarım
+              </button>
+            )}
+          </div>
           <span className="text-[10px] font-mono text-zinc-600">{list.length} hareket</span>
         </div>
         {muscleFilter !== 'Tümü' && (
@@ -106,7 +123,7 @@ const ExerciseLibraryModal = memo(({
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto bg-zinc-950 hide-scrollbar pb-safe">
+      <div className={`flex-1 overflow-y-auto bg-zinc-950 hide-scrollbar ${multiSelect ? 'pb-24' : 'pb-safe'}`}>
         {!selectMode && (
           <button
             onClick={onAddNew}
@@ -126,6 +143,8 @@ const ExerciseLibraryModal = memo(({
           const mine = isUserAdded(name);
           const hidden = hiddenNames.has(name);
           const done = performedNames.has(name);
+          const selected = selectedNames.has(name);
+          const disabled = disabledNames.has(name);
           const rank = muscleFilter !== 'Tümü'
             ? exerciseMuscleRank(name, muscleFilter, getContributions)
             : null;
@@ -133,12 +152,16 @@ const ExerciseLibraryModal = memo(({
           return (
             <div
               key={name}
-              className={`px-4 py-3 border-b border-zinc-900 flex justify-between items-start gap-2 ${hidden ? 'opacity-45' : ''}`}
+              className={`px-4 py-3 border-b border-zinc-900 flex justify-between items-start gap-2 ${hidden ? 'opacity-45' : ''} ${selected ? 'bg-cyan-950/20' : ''}`}
             >
               <button
-                onClick={() => selectMode && onSelect?.(name)}
-                disabled={!selectMode}
-                className={`min-w-0 flex-1 text-left ${selectMode ? 'active:opacity-60' : 'cursor-default'}`}
+                onClick={() => {
+                  if (!selectMode || disabled) return;
+                  if (multiSelect) onToggleSelect?.(name);
+                  else onSelect?.(name);
+                }}
+                disabled={!selectMode || disabled}
+                className={`min-w-0 flex-1 text-left ${selectMode && !disabled ? 'active:opacity-60' : 'cursor-default'} ${disabled ? 'opacity-45' : ''}`}
               >
                 <div className="text-xs font-bold font-mono text-zinc-200 flex items-center gap-1.5">
                   {mine && <Star size={10} className="text-amber-400 shrink-0" fill="currentColor" />}
@@ -162,7 +185,13 @@ const ExerciseLibraryModal = memo(({
               </button>
 
               {selectMode ? (
-                <span className="text-cyan-500 p-1.5 shrink-0"><Check size={16} /></span>
+                disabled ? (
+                  <span className="text-[8px] font-bold text-zinc-600 border border-zinc-800 rounded-md px-1.5 py-1 shrink-0">EKLİ</span>
+                ) : selected ? (
+                  <span className="text-white bg-cyan-600 rounded-full p-1 shrink-0"><Check size={13} /></span>
+                ) : (
+                  <span className="text-zinc-600 border border-zinc-800 rounded-full p-1 shrink-0"><Plus size={13} /></span>
+                )
               ) : (
                 <div className="flex items-center shrink-0">
                   <button
@@ -194,6 +223,19 @@ const ExerciseLibraryModal = memo(({
           );
         })}
       </div>
+
+      {selectMode && multiSelect && (
+        <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-800 bg-zinc-950/95 p-3 pb-safe backdrop-blur-xl">
+          <button
+            type="button"
+            disabled={selectedNames.size === 0}
+            onClick={() => onConfirmSelection?.([...selectedNames])}
+            className="w-full rounded-xl bg-cyan-600 py-3.5 text-[11px] font-black uppercase tracking-wide text-white active:bg-cyan-700 disabled:bg-zinc-800 disabled:text-zinc-600"
+          >
+            {selectedNames.size > 0 ? `${selectedNames.size} hareketi ekle` : 'Eklemek için hareket seç'}
+          </button>
+        </div>
+      )}
     </div>
   );
 });
