@@ -564,6 +564,28 @@ test('ekrandaki sürüm package.json ile aynı', () => {
   assert.equal(lock.packages?.['']?.version, pkg.version);
 });
 
+test('lüks görsel sistem uygulama kabuğu ve ana navigasyonda etkin', () => {
+  const app = readFileSync(new URL('../src/App.jsx', import.meta.url), 'utf8');
+  const nav = readFileSync(new URL('../src/components/Navbar.jsx', import.meta.url), 'utf8');
+  const css = readFileSync(new URL('../src/index.css', import.meta.url), 'utf8');
+  assert.match(app, /className="luxury-app /);
+  assert.match(app, /className="luxury-frame /);
+  assert.match(nav, /className="luxury-nav"/);
+  assert.match(nav, /luxury-nav-item/);
+  assert.match(css, /--luxury-gold:/);
+  assert.match(css, /:root\[data-theme='light'\]/);
+  assert.match(css, /@media \(prefers-reduced-motion: reduce\)/);
+});
+
+test('PWA manifesti yeni premium ikonları ve obsidyen açılış rengini kullanır', () => {
+  const vite = readFileSync(new URL('../vite.config.js', import.meta.url), 'utf8');
+  const html = readFileSync(new URL('../index.html', import.meta.url), 'utf8');
+  assert.match(vite, /theme_color: '#080806'/);
+  assert.match(vite, /pwa-v5-192x192\.png/);
+  assert.match(vite, /pwa-v5-512x512\.png/);
+  assert.match(html, /apple-touch-icon-v5\.png/);
+});
+
 /* ------------------------------------------------------------------ *
  *  KOÇ
  * ------------------------------------------------------------------ */

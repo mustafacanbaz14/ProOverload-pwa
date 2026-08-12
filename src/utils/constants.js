@@ -597,28 +597,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '4.2';
+export const APP_VERSION = '5.0';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 4.2',
+  title: 'ProOverload 5.0',
   date: '2026-08-12',
   items: [
     {
-      title: '12 Farklı Program Düzeni',
-      desc: 'Program sihirbazı artık gün sayısını tek bir bölmeye kilitlemiyor. İtiş+ön bacak, çekiş+arka bacak, gövde/uzuvlar, dalgalı tam vücut, Üst/Alt+Tam Vücut ve Göğüs+Sırt / Omuz+Kol gibi hibrit düzenler seçilebilir.'
+      title: 'Obsidyen & Şampanya Kimliği',
+      desc: 'Koyu tema baştan sona sıcak obsidyen yüzeyler, metalik şampanya vurgular, daha kontrollü gölgeler ve ortak bir kart sistemiyle yenilendi.'
     },
     {
-      title: 'Bildiğin Hareketleri Kullan',
-      desc: 'Sihirbaz, daha önce yaptığın hareketleri uygun adaylar arasında öne alabilir. Böylece iyi bir program taslağı oluştururken alışık olmadığın hareketleri tek tek değiştirme ihtiyacı azalır.'
+      title: 'Yeni Mobil Navigasyon',
+      desc: 'Alt menü güvenli alana saygı duyan yüzen bir kontrol merkezine dönüştü. İkon ve etiketler ana ekrana kurulu iPhone görünümünde artık sıkışmıyor.'
     },
     {
-      title: 'İki Dokunuşta Taslak',
-      desc: 'Gün sayısı ve çalışma düzeni tek ekranda seçilir. “Varsayılanlarla Hızlı Önizle” ekipman ve öncelik adımlarını atlayarak doğrudan ölçülmüş program taslağını gösterir; ayrıntı isteyen normal akışa devam edebilir.'
+      title: 'Fildişi ve Gül Seçenekleri',
+      desc: 'Açık tema saf beyaz yerine göz yormayan fildişi ve bronz palete geçti. İsteğe bağlı gül vurgusu aynı premium yüzey sistemiyle çalışıyor.'
     },
     {
-      title: 'Daha Sade Antrenman Merkezi',
-      desc: 'Akıllı Sihirbaz ana seçenek olarak öne çıkarıldı. Hazırdan başlama ve boş program oluşturma hemen altında toplandı; şablon listesinin başlığından da doğrudan yeni program açılabilir.'
+      title: 'Tek Parça Görsel Sistem',
+      desc: 'Ana ekranlar, aktif antrenman, formlar, tablolar, modallar, kilit ekranı kartı ve rapor görselleri aynı tasarım dilinde birleştirildi. Yeni altın ProOverload ikonu da ana ekran kimliğini tamamlıyor.'
     }
   ]
 };

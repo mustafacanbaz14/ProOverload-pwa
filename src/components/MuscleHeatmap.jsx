@@ -82,7 +82,7 @@ const MuscleHeatmap = memo(({
   });
 
   return (
-    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+    <div className="luxury-feature-card bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
       <div className="flex justify-between items-center px-4 py-3 border-b border-zinc-800 bg-zinc-950/60">
         <h3 className="text-[11px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
           <Flame size={14} className="mr-2 text-orange-500" /> {title}

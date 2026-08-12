@@ -6,10 +6,10 @@ import CycleView from './CycleView';
 
 const ProgressHubView = memo(({ tab, setTab, metricsProps, analyticsProps, gender = 'male', cycleProps }) => {
   const visibleTab = gender === 'female' ? tab : tab === 'cycle' ? 'body' : tab;
-  return <div className="h-full flex flex-col bg-black">
+  return <div className="luxury-screen h-full flex flex-col bg-black">
     <div className="px-4 pt-4 pb-2 shrink-0">
-      <span className="text-[10px] font-mono text-emerald-500 uppercase tracking-widest">Gelişim Merkezi</span>
-      <div className={`grid ${gender === 'female' ? 'grid-cols-3' : 'grid-cols-2'} bg-zinc-900 p-1 rounded-2xl border border-zinc-800 mt-2`}>
+      <span className="luxury-eyebrow text-[10px] uppercase">Gelişim Merkezi</span>
+      <div className={`luxury-segmented grid ${gender === 'female' ? 'grid-cols-3' : 'grid-cols-2'} bg-zinc-900 p-1 rounded-2xl border border-zinc-800 mt-2`}>
         <button onClick={() => setTab('body')} className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'body' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>
           <Scale size={14} /> Vücut & Hedefler
         </button>

@@ -145,9 +145,9 @@ const MetricsView = memo(({
   ];
 
   return (
-    <div className={`${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-28 h-full overflow-y-auto hide-scrollbar bg-black`}>
+    <div className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-28 h-full overflow-y-auto hide-scrollbar bg-black`}>
 
-      <div className="bg-gradient-to-br from-cyan-950/35 to-zinc-900 border border-cyan-900/35 rounded-2xl p-4">
+      <div className="luxury-feature-card bg-gradient-to-br from-cyan-950/35 to-zinc-900 border border-cyan-900/35 rounded-2xl p-4">
         <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Son Durum</span>
         <div className="grid grid-cols-4 gap-2 mt-2 text-center">
           {[

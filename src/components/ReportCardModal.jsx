@@ -21,7 +21,7 @@ const ReportCardModal = memo(({ isOpen, onClose, workouts = [], personalRecords 
 
     // Arka plan gradyanı
     const grad = ctx.createLinearGradient(0, 0, 0, 700);
-    grad.addColorStop(0, '#09090b');
+    grad.addColorStop(0, '#080806');
     grad.addColorStop(1, '#18181b');
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, 600, 700);
@@ -32,7 +32,7 @@ const ReportCardModal = memo(({ isOpen, onClose, workouts = [], personalRecords 
     ctx.strokeRect(20, 20, 560, 660);
 
     // Başlık
-    ctx.fillStyle = '#06b6d4';
+    ctx.fillStyle = '#d8b66b';
     ctx.font = 'bold 28px sans-serif';
     ctx.fillText('HYPERTROPHY LAB', 50, 75);
 
@@ -104,7 +104,7 @@ const ReportCardModal = memo(({ isOpen, onClose, workouts = [], personalRecords 
           ctx.font = 'bold 14px monospace';
           ctx.fillText(exName.substring(0, 25), 65, y + 25);
 
-          ctx.fillStyle = '#06b6d4';
+          ctx.fillStyle = '#d8b66b';
           ctx.font = 'bold 14px monospace';
           ctx.fillText(`1RM: ${record.e1rm} kg (${record.weight}x${record.reps})`, 360, y + 25);
 

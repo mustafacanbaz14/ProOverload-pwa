@@ -12,7 +12,7 @@ export default defineConfig({
       // Kayıt main.jsx'te elle yapılıyor (yeni sürümde otomatik yenileme için);
       // eklenti de enjekte ederse çift kayıt olurdu.
       injectRegister: null,
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'pwa-192x192.png', 'pwa-512x512.png'],
+      includeAssets: ['apple-touch-icon-v5.png', 'pwa-v5-192x192.png', 'pwa-v5-512x512.png'],
       workbox: {
         // Barkod tarayıcı (zxing) ~450 KB ve zaten çevrimiçi ürün sorgusuyla
         // birlikte çalışıyor; ilk kuruluma yük olmasın diye önbelleğe alınmıyor,
@@ -28,22 +28,23 @@ export default defineConfig({
         name: 'ProOverload Tracker',
         short_name: 'ProOverload',
         description: 'Advanced Workout and Nutrition Tracker',
-        theme_color: '#000000',
-        background_color: '#000000',
+        lang: 'tr',
+        theme_color: '#080806',
+        background_color: '#080806',
         display: 'standalone',
         icons: [
           {
-            src: 'pwa-192x192.png',
+            src: 'pwa-v5-192x192.png',
             sizes: '192x192',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-v5-512x512.png',
             sizes: '512x512',
             type: 'image/png'
           },
           {
-            src: 'pwa-512x512.png',
+            src: 'pwa-v5-512x512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'

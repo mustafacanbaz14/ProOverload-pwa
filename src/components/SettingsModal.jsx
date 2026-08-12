@@ -164,8 +164,8 @@ const SettingsModal = memo(({
               <span className="text-zinc-200 text-[11px] font-bold block mb-2">Tema</span>
               <div className="grid grid-cols-2 gap-2">
                 {[
-                  { key: 'dark', label: 'Karanlık', icon: Moon },
-                  { key: 'light', label: 'Aydınlık', icon: Sun },
+                  { key: 'dark', label: 'Obsidyen', icon: Moon },
+                  { key: 'light', label: 'Fildişi', icon: Sun },
                 ].map(t => {
                   const Icon = t.icon;
                   const aktif = (settings.theme || 'dark') === t.key;
@@ -215,8 +215,8 @@ const SettingsModal = memo(({
                   {[
                     // Sabit hex kullanılır: rose tema seçiliyken global cyan değişkeni
                     // pembeye döner; sınıf kullanılsa iki önizleme noktası da pembe görünürdü.
-                    { key: 'cyan', label: 'Turkuaz', color: '#06b6d4' },
-                    { key: 'rose', label: 'Pembe', color: '#f43f5e' },
+                    { key: 'cyan', label: 'Şampanya', color: '#d8b66b' },
+                    { key: 'rose', label: 'Gül', color: '#de7fa2' },
                   ].map(option => {
                     const active = (settings.accentTheme || 'cyan') === option.key;
                     return (

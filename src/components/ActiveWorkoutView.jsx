@@ -46,9 +46,9 @@ const ActiveWorkoutView = memo(({
   if (!activeWorkout) return null;
 
   return (
-    <div className="absolute inset-0 bg-black z-40 flex flex-col h-[100dvh]">
+    <div className="luxury-workout absolute inset-0 bg-black z-40 flex flex-col h-[100dvh]">
       {/* Üst Bar: Kronometre ve Seans Durumu */}
-      <div className="flex justify-between items-center bg-zinc-950 px-4 py-3 border-b border-zinc-800 shadow-md pt-safe">
+      <div className="luxury-header flex justify-between items-center bg-zinc-950 px-4 py-3 border-b border-zinc-800 shadow-md pt-safe">
         <div className="flex items-center">
           <Activity size={16} className="mr-3 text-emerald-400 animate-pulse" />
           <div>

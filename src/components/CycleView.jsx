@@ -63,8 +63,8 @@ const CycleView = memo(({
       : 'text-emerald-300 border-emerald-900/50 bg-emerald-950/20';
 
   return (
-    <div className={`${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-28 h-full overflow-y-auto hide-scrollbar bg-black`}>
-      <section className="bg-gradient-to-br from-rose-950/45 via-zinc-900 to-zinc-900 border border-rose-900/40 rounded-3xl p-4 space-y-3">
+    <div className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-28 h-full overflow-y-auto hide-scrollbar bg-black`}>
+      <section className="luxury-feature-card bg-gradient-to-br from-rose-950/45 via-zinc-900 to-zinc-900 border border-rose-900/40 rounded-3xl p-4 space-y-3">
         <div className="flex justify-between items-start gap-3">
           <div>
             <span className="text-[9px] font-mono text-rose-400 uppercase tracking-[0.18em]">Döngü & Performans</span>

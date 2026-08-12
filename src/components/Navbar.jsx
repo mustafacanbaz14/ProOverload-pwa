@@ -3,11 +3,11 @@ import { Activity, Dumbbell, Beef, LineChart, History } from 'lucide-react';
 
 const Navbar = memo(({ view, setView }) => {
   const navItems = [
-    { key: 'home', label: 'Bugün', icon: Activity, activeColor: 'text-cyan-400', glowColor: 'bg-cyan-500' },
-    { key: 'training', label: 'Antrenman', icon: Dumbbell, activeColor: 'text-cyan-400', glowColor: 'bg-cyan-500' },
-    { key: 'nutrition', label: 'Beslenme', icon: Beef, activeColor: 'text-orange-400', glowColor: 'bg-orange-500' },
-    { key: 'progress', label: 'Gelişim', icon: LineChart, activeColor: 'text-emerald-400', glowColor: 'bg-emerald-500' },
-    { key: 'history', label: 'Geçmiş', icon: History, activeColor: 'text-cyan-400', glowColor: 'bg-cyan-500' },
+    { key: 'home', label: 'Bugün', icon: Activity },
+    { key: 'training', label: 'Antrenman', icon: Dumbbell },
+    { key: 'nutrition', label: 'Beslenme', icon: Beef },
+    { key: 'progress', label: 'Gelişim', icon: LineChart },
+    { key: 'history', label: 'Geçmiş', icon: History },
   ];
 
   return (
@@ -16,8 +16,8 @@ const Navbar = memo(({ view, setView }) => {
     // eklenmiş uygulamada iOS'un ~34px alt güvenli alanı 64px'in içinden
     // düşüyordu; içerik 30px'e sıkışıp ikonlar tarayıcıdakinden küçük
     // görünüyordu. Tarayıcıda güvenli alan 0 olduğu için sorun fark edilmiyordu.
-    <div className="fixed bottom-0 left-0 right-0 max-w-[420px] mx-auto bg-zinc-950/90 backdrop-blur-xl border-t border-zinc-800/80 z-30 pb-safe shadow-2xl">
-      <div className="h-16 flex items-center justify-around">
+    <div className="luxury-nav-wrap fixed bottom-0 left-0 right-0 max-w-[440px] mx-auto z-30 pb-safe">
+      <nav className="luxury-nav" aria-label="Ana gezinme">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = view === item.key;
@@ -27,19 +27,14 @@ const Navbar = memo(({ view, setView }) => {
               onClick={() => setView(item.key)}
               aria-label={`${item.label} sekmesi`}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center justify-center w-1/5 h-full transition-all duration-200 ${
-                isActive ? `${item.activeColor} scale-105 font-bold` : 'text-zinc-500 hover:text-zinc-300'
-              }`}
+              className={`luxury-nav-item ${isActive ? 'is-active' : ''}`}
             >
-              {isActive && (
-                <span className={`absolute top-0 w-8 h-0.5 rounded-full ${item.glowColor} shadow-lg animate-fade-in`} />
-              )}
-              <Icon size={19} className="transition-transform group-active:scale-90" />
-              <span className="text-[10px] font-mono mt-1 uppercase tracking-wider">{item.label}</span>
+              <span className="luxury-nav-icon"><Icon size={17} strokeWidth={isActive ? 2.25 : 1.8} /></span>
+              <span className="luxury-nav-label">{item.label}</span>
             </button>
           );
         })}
-      </div>
+      </nav>
     </div>
   );
 });

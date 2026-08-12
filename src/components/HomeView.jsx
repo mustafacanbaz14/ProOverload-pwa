@@ -37,7 +37,7 @@ const HomeView = memo(({
   onOpenCycle,
 }) => {
   return (
-    <div className="p-4 space-y-5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+    <div className="luxury-screen p-4 space-y-5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
 
       {needsBackup && (
         <div className="bg-orange-900/20 border border-orange-900/50 p-3 rounded-2xl flex items-start space-x-3">

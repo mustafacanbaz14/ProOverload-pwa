@@ -64,7 +64,7 @@ const TrendChart = memo(({ data, color = '#22d3ee', unit = '', decimals = 1 }) =
 
         {points.map((p, i) => (
           <g key={i}>
-            <circle cx={p.x} cy={p.y} r="3" fill="#09090b" stroke={color} strokeWidth="2" />
+            <circle cx={p.x} cy={p.y} r="3" fill="var(--color-zinc-950)" stroke={color} strokeWidth="2" />
             {(i === 0 || i === points.length - 1) && (
               <text x={p.x} y={p.y - 8} textAnchor="middle" fill="#a1a1aa" fontSize="8" className="font-mono">
                 {Number(p.val).toFixed(decimals)}

@@ -140,10 +140,10 @@ const HistoryView = memo(({
     [workouts, latestWeight, weightForDate]);
 
   return (
-    <div className="p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+    <div className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <div>
-        <span className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest">Kayıt Arşivi</span>
-        <h2 className="text-xl font-black text-zinc-100 mt-0.5">Geçmiş</h2>
+        <span className="luxury-eyebrow text-[10px] uppercase">Kayıt Arşivi</span>
+        <h2 className="luxury-title text-xl font-black mt-0.5">Geçmiş</h2>
       </div>
 
       <section className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
@@ -186,7 +186,7 @@ const HistoryView = memo(({
           </div>
         )}
       </section>
-      <div className="grid grid-cols-4 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+      <div className="luxury-segmented grid grid-cols-4 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
         <button
           onClick={() => setHistoryTab('workouts')}
           className={`py-2 rounded-xl text-[9px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'workouts' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}

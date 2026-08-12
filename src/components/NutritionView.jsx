@@ -227,12 +227,12 @@ const NutritionView = memo(({
   const scoreColor = !dayScore ? 'text-zinc-500' : dayScore.score >= 65 ? 'text-emerald-400' : dayScore.score >= 45 ? 'text-amber-400' : 'text-orange-400';
 
   return (
-    <div className="p-4 space-y-3.5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+    <div className="luxury-screen p-4 space-y-3.5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <header className="flex items-start justify-between gap-3">
         <div>
-          <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-orange-400">Günlük Takip</span>
-          <h2 className="text-xl font-black text-zinc-100 mt-0.5">Beslenme</h2>
-          <p className="text-[10px] font-mono text-zinc-500 mt-1">Önce {isToday ? 'bugünün' : 'seçili günün'} özeti, ayrıntılar aşağıda.</p>
+          <span className="luxury-eyebrow text-[10px] uppercase">Günlük Takip</span>
+          <h2 className="luxury-title text-xl font-black mt-0.5">Beslenme</h2>
+          <p className="luxury-subtitle text-[10px] mt-1">Önce {isToday ? 'bugünün' : 'seçili günün'} özeti, ayrıntılar aşağıda.</p>
         </div>
         <label className="text-right">
           <span className="text-[9px] font-bold uppercase text-zinc-600 block mb-1">{weekdayName(currentNutritionForm.date)}</span>
@@ -246,7 +246,7 @@ const NutritionView = memo(({
         </label>
       </header>
 
-      <section className="bg-gradient-to-br from-orange-950/40 via-zinc-900 to-zinc-900 rounded-3xl border border-orange-900/30 p-4 shadow-lg shadow-black/20">
+      <section className="luxury-feature-card bg-gradient-to-br from-orange-950/40 via-zinc-900 to-zinc-900 rounded-3xl border border-orange-900/30 p-4 shadow-lg shadow-black/20">
         <div className="flex items-start justify-between gap-3">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">{isToday ? 'Bugün Kalan' : 'O Gün Kalan'}</span>

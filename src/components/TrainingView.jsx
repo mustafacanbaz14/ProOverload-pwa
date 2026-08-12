@@ -18,14 +18,14 @@ const TrainingView = memo(({
   onEdit,
   onDuplicate,
 }) => (
-  <div className="p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+  <div className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
     <div>
-      <span className="text-[10px] font-mono text-cyan-500 uppercase tracking-widest">Antrenman Merkezi</span>
-      <h2 className="text-xl font-black text-zinc-100 mt-0.5">Bugünkü çalışmanı yönet</h2>
-      <p className="text-[10px] font-mono text-zinc-500 mt-1">Başlat, programla veya hareketlerini düzenle.</p>
+      <span className="luxury-eyebrow text-[10px] uppercase">Antrenman Merkezi</span>
+      <h2 className="luxury-title text-xl font-black mt-0.5">Bugünkü çalışmanı yönet</h2>
+      <p className="luxury-subtitle text-[10px] mt-1">Başlat, programla veya hareketlerini düzenle.</p>
     </div>
 
-    <button onClick={() => onStart?.()} className="w-full bg-cyan-600 active:bg-cyan-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-cyan-950/30">
+    <button onClick={() => onStart?.()} className="luxury-primary-card w-full bg-cyan-600 active:bg-cyan-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-cyan-950/30">
       <span className="flex items-center gap-3">
         <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center"><Zap size={19} /></span>
         <span className="text-left"><strong className="text-sm block">Serbest Antrenman Başlat</strong><span className="text-[10px] text-cyan-100">Hazır oluşluk kontrolüyle</span></span>
@@ -33,7 +33,7 @@ const TrainingView = memo(({
       <ChevronRight size={18} />
     </button>
 
-    <section className="rounded-2xl border border-violet-900/40 bg-violet-950/15 p-3">
+    <section className="luxury-feature-card rounded-2xl border border-violet-900/40 bg-violet-950/15 p-3">
       <div className="mb-2.5">
         <span className="text-[9px] font-bold uppercase tracking-[0.16em] text-violet-400">Program Hazırla</span>
         <p className="mt-0.5 text-[9px] font-mono text-zinc-500">Bir düzen seç, taslağı gör ve istediğin hareketleri değiştir.</p>
@@ -84,7 +84,7 @@ const TrainingView = memo(({
       })}
     </div>
 
-    <section className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+    <section className="luxury-feature-card bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
       <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-center">
         <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Antrenman Şablonları</h3>
         <button onClick={onBuilder} className="text-[9px] font-bold text-cyan-400 bg-cyan-950/40 border border-cyan-900/50 rounded-lg px-2 py-1.5">

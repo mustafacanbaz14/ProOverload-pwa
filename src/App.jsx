@@ -2309,12 +2309,12 @@ export default function App() {
   }, [lastBackupDate, todayTime]);
 
   return (
-    <div className="flex justify-center bg-black min-h-screen font-sans antialiased text-zinc-100 select-none">
-      <div className="w-full max-w-[420px] bg-zinc-950 h-[100dvh] flex flex-col relative overflow-hidden shadow-2xl">
+    <div className="luxury-app flex justify-center min-h-screen font-sans antialiased text-zinc-100 select-none">
+      <div className="luxury-frame w-full max-w-[440px] h-[100dvh] flex flex-col relative overflow-hidden">
 
         {/* TOAST BİLDİRİMİ */}
         {toast && (
-          <div role="status" aria-live="polite" className={`absolute top-4 left-4 right-4 z-50 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-mono animate-in fade-in slide-in-from-top-4 ${
+          <div role="status" aria-live="polite" className={`luxury-toast absolute top-4 left-4 right-4 z-50 px-4 py-3 rounded-2xl shadow-xl flex items-center gap-2 text-xs font-mono animate-in fade-in slide-in-from-top-4 ${
             toast.type === 'error'
               ? 'bg-red-950/95 border border-red-800 text-red-100'
               : toast.type === 'warning'
@@ -2345,22 +2345,22 @@ export default function App() {
         )}
 
         {/* HEADER */}
-        <header className="bg-zinc-950/90 backdrop-blur-md border-b border-zinc-800/80 pt-safe flex justify-between items-center z-10 shadow-lg shadow-black/40">
-          <div className="px-4 py-3.5 flex items-center space-x-2">
-            <div className="p-1.5 bg-cyan-950/50 border border-cyan-800/50 rounded-xl">
-              <Activity size={16} className="text-cyan-400 animate-pulse" />
+        <header className="luxury-header pt-safe flex justify-between items-center z-10">
+          <div className="pl-4 pr-2 py-3 flex items-center gap-2.5 min-w-0">
+            <div className="luxury-brand-mark shrink-0">
+              <Activity size={16} strokeWidth={1.8} />
             </div>
             <div className="min-w-0">
-              <h1 className="text-sm font-black tracking-widest uppercase bg-gradient-to-r from-cyan-400 via-emerald-400 to-cyan-500 bg-clip-text text-transparent">
-                Hypertrophy<span className="text-cyan-400 font-light ml-0.5">LAB</span>
+              <h1 className="luxury-brand-title text-[13px] font-black uppercase whitespace-nowrap">
+                Hypertrophy <strong>LAB</strong>
               </h1>
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-[0.2em] block -mt-0.5">
-                by Afacan Tech
+              <span className="text-[8px] font-medium text-zinc-600 uppercase tracking-[0.2em] block mt-0.5">
+                Crafted by Afacan Tech
               </span>
             </div>
-            <span className="text-[9px] font-mono text-zinc-600 self-center">v{pkg.version}</span>
+            <span className="luxury-version text-[8px] font-mono self-center whitespace-nowrap">v{pkg.version}</span>
           </div>
-          <div className="flex items-center">
+          <div className="flex items-center gap-0.5 pr-2 shrink-0">
             {!isOnline && (
               <span aria-label="Çevrimdışı; kayıtlar cihazda tutuluyor" title="Çevrimdışı · kayıtlar cihazda tutuluyor" className="w-7 h-7 rounded-full border border-amber-900/60 bg-amber-950/40 text-amber-400 flex items-center justify-center">
                 <WifiOff size={12} />
@@ -2369,21 +2369,21 @@ export default function App() {
             <button
               onClick={() => setIsQuickCaptureOpen(true)}
               aria-label="Hızlı kayıt aç"
-              className="mx-1 w-9 h-9 rounded-xl bg-cyan-600 text-white flex items-center justify-center shadow-lg shadow-cyan-950/40 active:scale-95 transition-transform"
+              className="luxury-icon-button luxury-icon-button--primary"
             >
               <Plus size={18} />
             </button>
-            <button onClick={() => setIsGlobalSearchOpen(true)} aria-label="Uygulamada ara" className="px-3 py-3.5 text-zinc-400 hover:text-cyan-400 active:scale-95 transition-all">
+            <button onClick={() => setIsGlobalSearchOpen(true)} aria-label="Uygulamada ara" className="luxury-icon-button">
               <Search size={18} />
             </button>
-            <button onClick={() => setIsSettingsModalOpen(true)} aria-label="Ayarları aç" className="px-3 py-3.5 text-zinc-400 hover:text-cyan-400 active:scale-95 transition-all">
+            <button onClick={() => setIsSettingsModalOpen(true)} aria-label="Ayarları aç" className="luxury-icon-button">
               <Settings size={18} />
             </button>
           </div>
         </header>
 
         {/* MAIN VIEW CONTENT */}
-        <div className="flex-1 overflow-hidden relative">
+        <div className="flex-1 overflow-hidden relative z-[1]">
           {view === 'home' && (
             <HomeView
               needsBackup={needsBackup}

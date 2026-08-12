@@ -15,7 +15,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
   if (!data) return null;
   const planned = Boolean(data.workoutTemplate);
   return (
-    <section className="bg-gradient-to-br from-cyan-950/45 via-zinc-900 to-zinc-900 rounded-3xl border border-cyan-900/40 overflow-hidden shadow-lg shadow-cyan-950/10">
+    <section className="luxury-feature-card bg-gradient-to-br from-cyan-950/45 via-zinc-900 to-zinc-900 rounded-3xl border border-cyan-900/40 overflow-hidden shadow-lg shadow-cyan-950/10">
       <div className="px-4 py-3 border-b border-zinc-800/80 flex justify-between items-center gap-3">
         <div className="min-w-0">
           <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-[0.18em]">Bugünün Koçu</span>

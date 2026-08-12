@@ -117,7 +117,7 @@ const drawArtwork = ({
   const isResting = Number(restSecondsLeft) > 0;
 
   // Zemin
-  ctx.fillStyle = '#09090b';
+  ctx.fillStyle = '#080806';
   ctx.fillRect(0, 0, SIZE, SIZE);
   ctx.textBaseline = 'top';
 
@@ -140,7 +140,7 @@ const drawArtwork = ({
   // ---------- ÜST ŞERİT: durum + ilerleme ----------
   // Dinlenmedeyken renk kodu değişir; kilide bakan biri tek bakışta
   // "çalışıyor mu, dinleniyor mu" ayırt edebilsin.
-  const accent = isResting ? '#06b6d4' : isPaused ? '#71717a' : '#34d399';
+  const accent = isResting ? '#d8b66b' : isPaused ? '#8e8677' : '#34d399';
   ctx.fillStyle = accent;
   ctx.fillRect(0, 0, SIZE, 5);
 
@@ -175,7 +175,7 @@ const drawArtwork = ({
     ctx.fillStyle = '#18181b';
     roundRect(PAD, y, W, 12, 6);
     ctx.fill();
-    ctx.fillStyle = '#06b6d4';
+    ctx.fillStyle = '#d8b66b';
     roundRect(PAD, y, Math.max(12, W * ratio), 12, 6);
     ctx.fill();
     y += 30;
