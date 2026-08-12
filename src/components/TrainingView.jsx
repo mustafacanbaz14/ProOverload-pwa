@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play, ChevronRight } from 'lucide-react';
+import { Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play, ChevronRight, Copy } from 'lucide-react';
 import { estimateDuration } from '../utils/templates';
 import { estimateLiftingCalories } from '../utils/cardio';
 
@@ -14,6 +14,7 @@ const TrainingView = memo(({
   onCardio,
   onPreview,
   onEdit,
+  onDuplicate,
 }) => (
   <div className="p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
     <div>
@@ -70,6 +71,9 @@ const TrainingView = memo(({
                     {(template.exercises || []).length} hareket · ~{minutes} dk{weightKg > 0 ? ` · ~${kcal} kcal` : ''}
                   </span>
                 </button>
+                {/* Kopyala: program kurarken en sık yapılan iş, var olan bir
+                    günü alıp bir iki hareketini değiştirmek. */}
+                <button onClick={() => onDuplicate?.(template)} aria-label={`${template.name} kopyala`} title="Kopyala" className="p-2 text-zinc-500 active:text-cyan-400"><Copy size={14} /></button>
                 <button onClick={() => onEdit?.(template)} aria-label={`${template.name} düzenle`} className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={14} /></button>
                 <button onClick={() => onStart?.(template)} aria-label={`${template.name} başlat`} className="p-2.5 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-900"><Play size={14} /></button>
               </div>

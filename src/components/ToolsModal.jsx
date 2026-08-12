@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import {
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
   Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
-  Layers3,
+  Layers3, Wand2,
 } from 'lucide-react';
 
 /**
@@ -21,6 +21,7 @@ const GROUPS = [
     title: 'Antrenman',
     items: [
       { key: 'library', label: 'Hareket Kütüphanesi', hint: '250+ hareket, kas eşlemesi düzenleme', icon: Dumbbell, color: 'text-cyan-400' },
+      { key: 'wizard', label: 'Program Sihirbazı', hint: 'Gün, ekipman ve önceliğe göre program üret', icon: Wand2, color: 'text-violet-400' },
       { key: 'starter', label: 'Hazır Programlar', hint: 'Full Body, Üst/Alt, PPL — tek dokunuşla kur', icon: Sparkles, color: 'text-amber-400' },
       { key: 'mesocycle', label: 'Mezosiklik', hint: 'Blok planı: hacim haftadan haftaya artar, sonda boşalır', icon: Layers3, color: 'text-cyan-400' },
       { key: 'builder', label: 'Program Oluştur', hint: 'Gün gün şablon yaz', icon: CalendarPlus, color: 'text-emerald-400' },

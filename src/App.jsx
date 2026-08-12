@@ -20,6 +20,7 @@ import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/body
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
 import { mesocycleState, weeklyTargets, targetInstructions, mesocycleCoachItem, emptyMesocycle } from './utils/mesocycle';
 import { auditExerciseSelection, selectionCoachItem } from './utils/selectionAudit';
+import { instantiateProgram } from './utils/programBuilder';
 import { buildSessionReport } from './utils/sessionReport';
 import { buildPlateauInsights } from './utils/insights';
 import { buildFrequencyReport, frequencyCoachItem } from './utils/frequency';
@@ -67,6 +68,7 @@ import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
 // Kullanıcı ilgili aracı açtığında ayrı parça indirilir ve değerlendirilir.
 const DeloadModal = lazy(() => import('./components/DeloadModal'));
 const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
+const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
 const SessionReportModal = lazy(() => import('./components/SessionReportModal'));
 const WeeklyReviewModal = lazy(() => import('./components/WeeklyReviewModal'));
@@ -143,6 +145,7 @@ export default function App() {
   const [isDeloadOpen, setIsDeloadOpen] = useState(false);
   const [isStarterOpen, setIsStarterOpen] = useState(false);
   const [isMesocycleOpen, setIsMesocycleOpen] = useState(false);
+  const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   // Seans bitince gösterilen rapor; kapatılana kadar duruyor.
   const [sessionReport, setSessionReport] = useState(null);
@@ -478,6 +481,45 @@ export default function App() {
       activePlanId: kurulum.plan.id,
     }));
     showToast(`${program.name} kuruldu — ${kurulum.templates.length} şablon eklendi.`);
+  }, [showToast]);
+
+  /** Sihirbazın ürettiği programı şablonlara ve haftalık plana yazar. */
+  const handleInstallGenerated = useCallback((built) => {
+    const kurulum = instantiateProgram(built, generateId);
+    if (!kurulum) return;
+
+    setTemplates(prev => [...prev, ...kurulum.templates]);
+    setSettings(prev => ({
+      ...prev,
+      weekPlans: [...(prev.weekPlans || []), kurulum.plan],
+      activePlanId: kurulum.plan.id,
+    }));
+    showToast(`${kurulum.plan.name} kuruldu — ${kurulum.templates.length} şablon eklendi.`);
+  }, [showToast]);
+
+  /**
+   * Şablonu kopyalar.
+   *
+   * Program kurarken en sık yapılan iş, var olan bir günü alıp bir iki
+   * hareketini değiştirmek ("Üst A"dan "Üst B" türetmek). Bunun yolu şimdiye
+   * kadar sıfırdan şablon açıp hareketleri tek tek yeniden eklemekti.
+   * Kopyanın setleri de geliyor; kimlikler yeniden üretiliyor ki iki şablon
+   * birbirine bağlı kalmasın.
+   */
+  const handleDuplicateTemplate = useCallback((template) => {
+    if (!template) return;
+    const kopya = {
+      ...template,
+      id: generateId(),
+      name: `${template.name} (kopya)`,
+      createdAt: new Date().toISOString(),
+      exercises: (template.exercises || []).map(ex => ({
+        ...ex,
+        sets: (ex.sets || []).map(set => ({ ...set })),
+      })),
+    };
+    setTemplates(prev => [...prev, kopya]);
+    showToast(`${template.name} kopyalandı.`);
   }, [showToast]);
 
   const handleNormalizeBodyweight = useCallback(() => {
@@ -2375,6 +2417,7 @@ export default function App() {
                 plan: () => setIsWeekPlanOpen(true),
                 deload: () => setIsDeloadOpen(true),
                 mesocycle: () => setIsMesocycleOpen(true),
+              wizard: () => setIsWizardOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
               })[hedef]?.()}
               onOpenEnergy={() => setIsEnergyDetailOpen(true)}
@@ -2401,6 +2444,7 @@ export default function App() {
               onCardio={() => setIsCardioOpen(true)}
               onPreview={setPreviewTemplate}
               onEdit={(template) => { setEditingTemplate(template); setIsBuilderOpen(true); }}
+              onDuplicate={handleDuplicateTemplate}
             />
           )}
 
@@ -2594,6 +2638,7 @@ export default function App() {
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
               mesocycle: () => setIsMesocycleOpen(true),
+              wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
             }[key];
             action?.();
@@ -2786,6 +2831,15 @@ export default function App() {
           experienceLevel={settings.experienceLevel}
         />}
 
+        {isWizardOpen && <ProgramWizardModal
+          isOpen={isWizardOpen}
+          onClose={() => setIsWizardOpen(false)}
+          onInstall={handleInstallGenerated}
+          experienceLevel={settings.experienceLevel}
+          customExercises={customExercises}
+          existingTemplateCount={templates.length}
+        />}
+
         {/* HAZIR PROGRAMLAR */}
         <StarterProgramModal
           isOpen={isStarterOpen}
@@ -2870,6 +2924,7 @@ export default function App() {
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
               mesocycle: () => setIsMesocycleOpen(true),
+              wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
               cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },

@@ -597,13 +597,21 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '3.9';
+export const APP_VERSION = '4.0';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 3.9',
+  title: 'ProOverload 4.0',
   date: '2026-08-12',
   items: [
+    {
+      title: 'Program Sihirbazı',
+      desc: 'Hazır programlar üç sabit seçenek sunuyordu; "4 gün gelebiliyorum, salonumda barbell yok ve kanadım geride" diyene verecek cevabı yoktu. Sihirbaz dört şey soruyor — gün sayısı, ekipman, deneyim ve en fazla iki öncelikli kas — ve programı üretiyor. Kritik nokta şu: set sayıları elle ayarlanmıyor, ÖLÇÜLEREK yakınsatılıyor. Üretici taslağı kuruyor, uygulamanın kendi hacim çözümleyicisinden geçiriyor, tavanı aşan kastan set kısıp eşiğin altında kalana set ekliyor ve sonuç oturana kadar yineliyor. Böylece hareketlerin yan kaslara yazdığı dolaylı hacim de hesaba katılmış oluyor. Kurmadan önce gün gün hareketler, kas kas ölçülen hacim ve varsa uyarılar gösteriliyor. Program bilerek verimli bandın ALT ucunda başlıyor ki mezosikliğin artıracak yeri kalsın.'
+    },
+    {
+      title: 'Şablonu Kopyala',
+      desc: 'Program kurarken en sık yapılan iş var olan bir günü alıp bir iki hareketini değiştirmek ("Üst A"dan "Üst B" türetmek). Bunun yolu sıfırdan şablon açıp hareketleri tek tek yeniden eklemekti. Artık şablon listesindeki kopyala düğmesi setleriyle birlikte bir kopya oluşturuyor; iki şablon birbirine bağlı kalmıyor, birinde yapılan değişiklik diğerini etkilemiyor.'
+    },
     {
       title: 'Mezosiklik (Blok) Planı',
       desc: 'Haftalık program kurulduğu haftadan sonsuza kadar aynı set sayısında kalıyordu; oysa hipertrofi programlaması bir blok işi. Araçlar → Mezosiklik ekranından 4, 5 veya 6 haftalık blok başlatılıyor: bugünkü hacim taban alınıyor, her hafta kas kas artıyor, son hafta boşaltmayla bitiyor. Artış sabit değil — her haftanın sonunda kas kas "kolay geldi / yerinde / zorladı" seçiliyor ve gelecek haftanın artışı (+2 / +1 / +0 set) buna göre hesaplanıyor. Hedef, toparlanma tavanını (MRV) hiçbir koşulda aşmıyor. Hedefler şablona kendiliğinden yazılmıyor: hangi güne hangi harekete kaç set ekleneceği söyleniyor, ekleme kullanıcıda kalıyor ki elle yapılan düzenlemeler her hafta ezilmesin.'

@@ -68,7 +68,10 @@ export const LENGTH_BIAS_RULES = [
   // eşleşme gerekiyor; bitişik kalıp (`leaning lateral raise`) bunları kaçırır.
   // Kabloda kol gövdenin arkasındayken yan deltoid gergin yüklenir.
   { bias: 'stretch', re: /(incline|leaning|lu|cable)\b.*lateral raise|lateral raise \(cable\)/i },
-  { bias: 'stretch', re: /(incline|bayesian|overhead cable|preacher) curl/i },
+  // Yan omuzdaki gibi araya kelime giren adlar var: "Incline Dumbbell Curl",
+  // "Bayesian Cable Curl". Bitişik kalıp ikisini de kaçırıyordu ve bu, biseps
+  // gerilme adaylarının hepsini eleyen sessiz bir hataydı.
+  { bias: 'stretch', re: /(incline|bayesian|overhead cable|preacher)\b.*curl/i },
   { bias: 'stretch', re: /overhead (tricep )?extension|french press|skull ?crusher|lying dumbbell extension|cable overhead/i },
   { bias: 'stretch', re: /sissy|hack squat|pendulum|heels elevated|cyclist squat|front squat|pause squat|deficit|split squat|step down|leg press/i },
   { bias: 'stretch', re: /romanian deadlift|\brdl\b|good morning|seated leg curl|nordic|glute ham raise/i },

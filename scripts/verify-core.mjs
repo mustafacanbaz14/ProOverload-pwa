@@ -25,6 +25,8 @@ import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
 import { mesocycleState, muscleTarget, weeklyTargets, targetInstructions, mesocycleCoachItem } from '../src/utils/mesocycle.js';
 import { lengthBias, auditExerciseSelection } from '../src/utils/selectionAudit.js';
+import { buildProgram, instantiateProgram, SPLIT_DAY_OPTIONS, EQUIPMENT_PROFILES } from '../src/utils/programBuilder.js';
+import { detectEquipment } from '../src/utils/substitution.js';
 import { buildCycleSummary, mergeCycleDay } from '../src/utils/cycle.js';
 import { analyzeTemplate } from '../src/utils/templateAssistant.js';
 import { sortExercisesForMuscle } from '../src/utils/exerciseSort.js';
@@ -1250,6 +1252,84 @@ test('hacmi düşük kaslar denetlenmez', () => {
   }]);
   assert.equal(r.hasData, false);
   assert.equal(r.findings.length, 0);
+});
+
+
+
+/* --- Program üretici --- */
+
+test('üretilen program her kombinasyonda hacim sınırlarını tutturur', () => {
+  // Üreticinin tek gerçek iddiası bu ve iddia burada ÖLÇÜLÜYOR. 3.8'de hazır
+  // programların hacim iddiası yorum satırında kalmıştı ve yanlış çıkmıştı;
+  // bu test aynı hatanın tekrarını imkânsız kılıyor.
+  const oncelikler = [[], ['Kanat', 'Yan Omuz'], ['Göğüs'], ['Quadriceps', 'Biseps']];
+  let sayac = 0;
+
+  for (const gun of SPLIT_DAY_OPTIONS) {
+    for (const profil of EQUIPMENT_PROFILES) {
+      for (const seviye of ['beginner', 'intermediate', 'advanced']) {
+        for (const priority of oncelikler) {
+          const r = buildProgram({
+            daysPerWeek: gun, equipment: profil.key, experienceLevel: seviye, priority,
+          });
+          const etiket = `${gun}g/${profil.key}/${seviye}/${priority.join('+') || 'öncelik yok'}`;
+          assert.deepEqual(r.belowMev, [], `${etiket}: MEV altında kas var`);
+          assert.deepEqual(r.aboveMrv, [], `${etiket}: MRV üstünde kas var`);
+          assert.deepEqual(r.withoutStretch, [], `${etiket}: gerilmede yükleyen hareketi olmayan kas var`);
+          assert.ok(r.days.length === gun, `${etiket}: gün sayısı tutmuyor`);
+          assert.ok(r.totalSets > 0, `${etiket}: boş program`);
+          sayac += 1;
+        }
+      }
+    }
+  }
+  assert.equal(sayac, SPLIT_DAY_OPTIONS.length * EQUIPMENT_PROFILES.length * 3 * oncelikler.length);
+});
+
+test('ekipman profili aday havuzunu gerçekten süzer', () => {
+  const ev = buildProgram({ daysPerWeek: 4, equipment: 'home' });
+  const adlar = ev.days.flatMap(d => d.exercises.map(e => e.name));
+  // Ev profilinde makine ve kablo hareketi olmamalı.
+  adlar.forEach(ad => {
+    const eq = detectEquipment(ad);
+    if (!eq) return;
+    assert.ok(eq.key !== 'machine' && eq.key !== 'cable', `${ad} ev profilinde çıkmamalı`);
+  });
+});
+
+test('öncelik seçilen kasın hacmini yükseltir', () => {
+  const normal = buildProgram({ daysPerWeek: 4 });
+  const oncelikli = buildProgram({ daysPerWeek: 4, priority: ['Yan Omuz'] });
+  const v = (r) => r.report.find(x => x.muscle === 'Yan Omuz').volume;
+  assert.ok(v(oncelikli) > v(normal), 'öncelik hacmi artırmadı');
+});
+
+test('üretici verimli bandın alt ucunda başlar, tavanda değil', () => {
+  // Blok planının artıracak yeri kalmalı: hiçbir kas doğrudan MAV'ın üstünde
+  // başlamamalı, çoğunluk MEV ile MAV ortasının altında olmalı.
+  const r = buildProgram({ daysPerWeek: 4 });
+  const calisan = r.report.filter(x => x.volume > 0);
+  assert.ok(calisan.every(x => x.volume <= x.mrv));
+  const altYarida = calisan.filter(x => x.volume <= (x.mev + x.mav) / 2).length;
+  assert.ok(altYarida > calisan.length / 2, 'program bandın üst yarısında başlıyor');
+});
+
+test('program şablonlara ve haftalık plana çevrilir', () => {
+  const r = buildProgram({ daysPerWeek: 4 });
+  let n = 0;
+  const kurulum = instantiateProgram(r, () => `id-${n += 1}`);
+  assert.equal(kurulum.templates.length, 4);
+  // Setler boş ağırlıkla açılmalı: uydurma bir başlangıç ağırlığı vermek yerine
+  // hedefi ilk seanstan sonra geçmişten öğrenmek doğru.
+  assert.ok(kurulum.templates.every(t => t.exercises.every(e => e.sets.every(x => x.weight === ''))));
+  const dolu = Object.values(kurulum.plan.days).filter(d => d.length > 0);
+  assert.equal(dolu.length, 4);
+  // Plandaki her slot gerçek bir şablona işaret etmeli ve kimliği olmalı.
+  const kimlikler = new Set(kurulum.templates.map(t => t.id));
+  dolu.flat().forEach(slot => {
+    assert.ok(slot.id, 'slot kimliksiz');
+    assert.ok(kimlikler.has(slot.templateId), 'slot var olmayan şablona işaret ediyor');
+  });
 });
 
 
