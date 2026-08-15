@@ -205,6 +205,7 @@ export const buildSessionReport = (workout, history = [], {
     records,
     improved: ilerleyen,
     declined: gerileyen,
+    adaptation: workout.adaptation || null,
     planAdherence,
     byMuscle,
     topMuscles: Object.entries(byMuscle).sort((a, b) => b[1] - a[1]).slice(0, 3),

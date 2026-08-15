@@ -34,6 +34,7 @@ import { averageDailyExercise, dayEnergyBreakdown, ACTIVITY_LEVELS, estimateMacr
 import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
 import { caloriesFromMacros, dailyTotals } from './utils/nutritionStats';
 import { DEFAULT_READINESS, READINESS_FIELDS, computeReadiness, readinessTrend } from './utils/readiness';
+import { buildSessionAdaptation } from './utils/sessionAdaptation';
 import { safeSetRawItem } from './utils/persist';
 import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from './utils/undo';
 import { backupValue, inspectBackupPayload, mergeImportedRecords, backupImportSummary } from './utils/backupImport';
@@ -1055,16 +1056,24 @@ export default function App() {
         sleep: Math.min(10, Math.max(1, Math.round(uyku.score / 10))),
       }));
     }
-    setPreWorkoutModal({ template: templateOrWorkout, sleepScore: uyku?.score ?? null });
+    setPreWorkoutModal({
+      template: templateOrWorkout,
+      sleepScore: uyku?.score ?? null,
+      adaptationChoice: null,
+    });
   }, [wellness]);
 
   const confirmStartWorkout = () => {
     const template = preWorkoutModal?.template;
     const todayStr = getLocalDateString();
     const hazir = computeReadiness(readinessForm);
+    const readinessSnapshot = { ...readinessForm, score: hazir.score, zone: hazir.zone.key };
+    const adaptation = buildSessionAdaptation(template, readinessSnapshot);
+    const useAdaptedPlan = preWorkoutModal?.adaptationChoice ?? adaptation.recommended;
+    const sessionTemplate = useAdaptedPlan ? adaptation.template : template;
 
     // Süperset bağları ve set yapısı şablondan aynen taşınır.
-    const initialExercises = template ? templateToExercises(template, generateId) : [];
+    const initialExercises = sessionTemplate ? templateToExercises(sessionTemplate, generateId) : [];
 
     const sourceTemplateId = template?.id && templates.some(item => item.id === template.id)
       ? template.id
@@ -1075,15 +1084,24 @@ export default function App() {
       name: template?.name || 'Serbest Antrenman',
       exercises: initialExercises,
       activeExerciseId: initialExercises[0]?.id || null,
-      readiness: { ...readinessForm, score: hazir.score, zone: hazir.zone.key },
+      readiness: readinessSnapshot,
       timer: { status: 'running', startTime: Date.now(), accumulatedSeconds: 0 },
       rating: 4,
       notes: ''
     };
     if (sourceTemplateId) {
       newWorkout.sourceTemplateId = sourceTemplateId;
-      const plannedTemplate = snapshotTemplatePlan(template);
+      const plannedTemplate = snapshotTemplatePlan(sessionTemplate);
       if (plannedTemplate) newWorkout.plannedTemplate = plannedTemplate;
+    }
+    if (useAdaptedPlan && adaptation.recommended) {
+      newWorkout.adaptation = {
+        mode: adaptation.mode.key,
+        label: adaptation.mode.label,
+        summary: adaptation.mode.summary,
+        reasons: adaptation.reasons,
+        ...adaptation.changes,
+      };
     }
 
     setActiveWorkout(newWorkout);
@@ -3182,8 +3200,15 @@ export default function App() {
               {/* Skor, bölge ve tavsiye anında hesaplanır. */}
               {(() => {
                 const h = computeReadiness(readinessForm);
+                const adaptation = buildSessionAdaptation(preWorkoutModal.template, {
+                  ...readinessForm,
+                  score: h.score,
+                  zone: h.zone.key,
+                });
+                const adaptedSelected = preWorkoutModal.adaptationChoice ?? adaptation.recommended;
                 return (
-                  <div className={`rounded-2xl border p-3.5 mb-5 ${h.zone.bg}`}>
+                  <>
+                  <div className={`rounded-2xl border p-3.5 mb-3 ${h.zone.bg}`}>
                     <div className="flex justify-between items-baseline mb-2">
                       <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Hazır Oluşluk</span>
                       <span className={`text-[11px] font-bold uppercase ${h.zone.text}`}>{h.zone.label}</span>
@@ -3207,6 +3232,34 @@ export default function App() {
                       </p>
                     ))}
                   </div>
+                  {preWorkoutModal.template && (
+                    <div className={`rounded-2xl border p-3.5 mb-5 ${adaptation.mode.key === 'normal' ? 'border-emerald-900/50 bg-emerald-950/20' : adaptation.mode.key === 'reduced' ? 'border-amber-900/50 bg-amber-950/20' : 'border-red-900/50 bg-red-950/20'}`}>
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Akıllı Seans Planı</span>
+                          <strong className={`text-[12px] block mt-0.5 ${adaptation.mode.key === 'normal' ? 'text-emerald-400' : adaptation.mode.key === 'reduced' ? 'text-amber-400' : 'text-red-400'}`}>{adaptation.mode.label}</strong>
+                        </div>
+                        {adaptation.changes && (
+                          <span className="text-[9px] font-mono text-zinc-500 text-right shrink-0">
+                            {adaptation.changes.originalWorkingSets} → {adaptation.changes.adaptedWorkingSets} set
+                            {adaptation.changes.loadPercent > 0 && <span className="block">yük −%{adaptation.changes.loadPercent}</span>}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-2">{adaptation.mode.summary}</p>
+                      {adaptation.reasons.length > 0 && (
+                        <p className="text-[8px] font-mono text-zinc-600 mt-1">Neden: {adaptation.reasons.join(' · ')}</p>
+                      )}
+                      {adaptation.recommended && (
+                        <div className="grid grid-cols-2 gap-2 mt-3">
+                          <button type="button" onClick={() => setPreWorkoutModal(prev => ({ ...prev, adaptationChoice: true }))} className={`rounded-xl border py-2 text-[9px] font-bold ${adaptedSelected ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 text-zinc-500'}`}>Bugüne Uyarla</button>
+                          <button type="button" onClick={() => setPreWorkoutModal(prev => ({ ...prev, adaptationChoice: false }))} className={`rounded-xl border py-2 text-[9px] font-bold ${!adaptedSelected ? 'border-zinc-600 bg-zinc-800 text-zinc-200' : 'border-zinc-800 text-zinc-500'}`}>Planı Koru</button>
+                        </div>
+                      )}
+                      <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-2">Orijinal şablon değişmez; karar yalnızca bu seansa uygulanır.</p>
+                    </div>
+                  )}
+                  </>
                 );
               })()}
 

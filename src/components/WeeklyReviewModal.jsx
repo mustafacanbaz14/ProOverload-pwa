@@ -104,6 +104,13 @@ const WeeklyReviewModal = memo(({ isOpen, onClose, ...data }) => {
           />
         </div>
 
+        {training.adaptedSessions > 0 && (
+          <div className="rounded-xl border border-amber-900/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">
+            <span className="text-[9px] font-mono text-amber-300">Hazır oluşluğa göre uyarlanan seans</span>
+            <strong className="text-[10px] font-mono text-amber-400">{training.adaptedSessions}{training.recoverySessions > 0 ? ` · ${training.recoverySessions} toparlanma` : ''}</strong>
+          </div>
+        )}
+
         {/* Bir sonraki hafta için ayarlar — ekranın asıl çıktısı bu */}
         <div className="space-y-2">
           <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">

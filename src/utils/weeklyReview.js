@@ -128,6 +128,8 @@ export const buildWeeklyReview = ({
       tonnage: agirlikSeanslari.reduce((s, w) => s + calcTonnage(w.exercises), 0),
       previousSessions: oncekiSeanslar.length,
       previousEffectiveSets: oncekiSeanslar.reduce((s, w) => s + calcEffectiveSets(w.exercises), 0),
+      adaptedSessions: agirlikSeanslari.filter(w => w.adaptation).length,
+      recoverySessions: agirlikSeanslari.filter(w => w.adaptation?.mode === 'recovery').length,
     },
     volume: { statuses, under, over, optimal, muscleVolume },
     recovery: { sleepScore: uykuOrt, sleepMinutes: uykuSureOrt, nights: geceler.length, readiness: hazirOrt },
@@ -160,7 +162,8 @@ const ayarlar = (ozet, nutritionGoal) => {
 
   // Toparlanma sorunu varsa hacim artışı önerilmez.
   const toparlanmaSorunu = (recovery.readiness !== null && recovery.readiness < 50)
-    || (recovery.sleepMinutes !== null && recovery.sleepMinutes < 380);
+    || (recovery.sleepMinutes !== null && recovery.sleepMinutes < 380)
+    || training.adaptedSessions >= 2;
 
   if (volume.over.length > 0) {
     const isim = volume.over.map(s => s.muscle).slice(0, 3).join(', ');
@@ -175,6 +178,7 @@ const ayarlar = (ozet, nutritionGoal) => {
     const sebep = [];
     if (recovery.readiness !== null && recovery.readiness < 50) sebep.push(`hazır oluşluk ortalaması ${recovery.readiness}/100`);
     if (recovery.sleepMinutes !== null && recovery.sleepMinutes < 380) sebep.push(`uyku ortalaması ${Math.floor(recovery.sleepMinutes / 60)} sa ${recovery.sleepMinutes % 60} dk`);
+    if (training.adaptedSessions >= 2) sebep.push(`${training.adaptedSessions} seans hazır oluşluğa göre azaltıldı`);
     out.push({
       key: 'recovery', tone: 'warn',
       title: 'Önce toparlanma, sonra hacim',

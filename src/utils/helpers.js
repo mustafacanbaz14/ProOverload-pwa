@@ -231,6 +231,22 @@ const mergePlannedTemplate = (plan) => {
   };
 };
 
+const mergeAdaptation = (value) => {
+  if (!value || !['reduced', 'recovery'].includes(value.mode)) return null;
+  return {
+    mode: value.mode,
+    label: typeof value.label === 'string' ? value.label : value.mode === 'recovery' ? 'Toparlanma Seansı' : 'Kontrollü Seans',
+    summary: typeof value.summary === 'string' ? value.summary : '',
+    reasons: Array.isArray(value.reasons) ? value.reasons.filter(item => typeof item === 'string') : [],
+    removedSets: Math.max(0, Number(value.removedSets) || 0),
+    adjustedLoads: Math.max(0, Number(value.adjustedLoads) || 0),
+    adjustedRir: Math.max(0, Number(value.adjustedRir) || 0),
+    originalWorkingSets: Math.max(0, Number(value.originalWorkingSets) || 0),
+    adaptedWorkingSets: Math.max(0, Number(value.adaptedWorkingSets) || 0),
+    loadPercent: Math.max(0, Number(value.loadPercent) || 0),
+  };
+};
+
 /**
  * İçe aktarılan antrenman kaydını normalleştirir.
  *
@@ -270,6 +286,7 @@ export const mergeWorkout = (data) => ({
     : {}),
   timer: { status: 'finished' },
   ...(data?.readiness ? { readiness: data.readiness } : {}),
+  ...(mergeAdaptation(data?.adaptation) ? { adaptation: mergeAdaptation(data.adaptation) } : {}),
 });
 
 /** Şablonun antrenmandan tek farkı tarih değil ad taşıması. */

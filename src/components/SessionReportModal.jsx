@@ -65,6 +65,21 @@ const SessionReportModal = memo(({ report, onClose }) => {
             ))}
           </div>
 
+          {report.adaptation && (
+            <div className={`rounded-2xl border p-3.5 ${report.adaptation.mode === 'recovery' ? 'border-red-900/50 bg-red-950/15' : 'border-amber-900/50 bg-amber-950/15'}`}>
+              <div className="flex items-start gap-2.5">
+                <Sparkles size={14} className={report.adaptation.mode === 'recovery' ? 'text-red-400 shrink-0 mt-0.5' : 'text-amber-400 shrink-0 mt-0.5'} />
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-200 block">{report.adaptation.label} uygulandı</span>
+                  <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">
+                    Plan {report.adaptation.originalWorkingSets} setten {report.adaptation.adaptedWorkingSets} sete uyarlandı
+                    {report.adaptation.loadPercent > 0 ? `; kayıtlı yük hedefleri %${report.adaptation.loadPercent} azaltıldı` : ''}.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {report.planAdherence && (
             <div className={`rounded-2xl border p-3.5 space-y-2.5 ${report.planAdherence.percent >= 90 ? 'border-emerald-900/60 bg-emerald-950/20' : 'border-amber-900/60 bg-amber-950/15'}`}>
               <div className="flex items-start justify-between gap-3">

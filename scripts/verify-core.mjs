@@ -51,6 +51,7 @@ import { buildFrequencyReport, frequencyCoachItem } from '../src/utils/frequency
 import { workoutsToCsv, metricsToCsv } from '../src/utils/csvExport.js';
 import { STARTER_PROGRAMS, instantiateStarterProgram } from '../src/utils/starterPrograms.js';
 import { sessionAdvice } from '../src/utils/autoregulation.js';
+import { buildSessionAdaptation, adaptationModeFor } from '../src/utils/sessionAdaptation.js';
 import {
   duplicateTemplate, markTemplateUsed, organizeTemplates, toggleTemplateFavorite,
 } from '../src/utils/templateLibrary.js';
@@ -410,6 +411,62 @@ test('şiddetli eklem ağrısı Kritik seviyeyi aşamaz', () => {
   assert.equal(result.zone.key, 'critical');
 });
 
+test('orta hazır oluşluk şablonu mutasyonsuz kontrollü seansa çevirir', () => {
+  const template = {
+    id: 'push', name: 'Push A', exercises: [{ name: 'Bench Press', sets: [
+      { setType: 'warmup', weight: '50', reps: 8, rir: 5 },
+      ...Array.from({ length: 4 }, () => ({ setType: 'normal', weight: '100', reps: 8, rir: 1 })),
+    ] }],
+  };
+  const result = buildSessionAdaptation(template, { score: 52, jointPain: 2, carbs: 6 });
+  assert.equal(result.mode.key, 'reduced');
+  assert.equal(result.changes.originalWorkingSets, 4);
+  assert.equal(result.changes.adaptedWorkingSets, 3);
+  assert.equal(result.template.exercises[0].sets[0].setType, 'warmup');
+  assert.ok(result.template.exercises[0].sets.slice(1).every(set => set.weight === '95' && set.rir === 3));
+  assert.equal(template.exercises[0].sets.length, 5);
+  assert.equal(template.exercises[0].sets[1].weight, '100');
+});
+
+test('kritik hazır oluşluk çalışma setlerini ikiyle ve yükü yüzde on beş azaltır', () => {
+  const template = { name: 'Lower', exercises: [{ name: 'Squat', sets: Array.from(
+    { length: 5 }, () => ({ setType: 'normal', weight: '100', reps: 8, rir: 1 })) }] };
+  const result = buildSessionAdaptation(template, { score: 35, jointPain: 3 });
+  assert.equal(result.mode.key, 'recovery');
+  assert.equal(result.template.exercises[0].sets.length, 2);
+  assert.ok(result.template.exercises[0].sets.every(set => set.weight === '85' && set.rir === 4));
+  assert.equal(result.changes.removedSets, 3);
+});
+
+test('iyi hazır oluşlukta sistem sırf skor yüksek diye yük uydurmaz', () => {
+  const template = { name: 'Upper', exercises: [{ name: 'Row', sets: [
+    { setType: 'normal', weight: '', reps: '', rir: 2 },
+    { setType: 'normal', weight: '80', reps: 8, rir: 2 },
+  ] }] };
+  const result = buildSessionAdaptation(template, { score: 78, jointPain: 1 });
+  assert.equal(adaptationModeFor({ score: 78, jointPain: 1 }).key, 'normal');
+  assert.equal(result.recommended, false);
+  assert.deepEqual(result.template.exercises, template.exercises);
+});
+
+test('yüksek eklem ağrısı toplam skor iyi olsa da kontrollü moda geçer', () => {
+  assert.equal(adaptationModeFor({ score: 90, jointPain: 7 }).key, 'reduced');
+  assert.equal(adaptationModeFor({ score: 90, jointPain: 9 }).key, 'recovery');
+});
+
+test('seans uyarlaması yedekten geçerken korunur', () => {
+  const workout = mergeWorkout({
+    date: '2026-08-15', name: 'Push', exercises: [],
+    adaptation: {
+      mode: 'reduced', label: 'Kontrollü Seans', originalWorkingSets: 16,
+      adaptedWorkingSets: 12, removedSets: 4, loadPercent: 5,
+    },
+  });
+  assert.equal(workout.adaptation.mode, 'reduced');
+  assert.equal(workout.adaptation.adaptedWorkingSets, 12);
+  assert.equal(workout.adaptation.loadPercent, 5);
+});
+
 test('adaptif TDEE içindeki ortalama egzersiz iki kez sayılmaz', () => {
   const result = dayEnergyBreakdown({
     maintenance: 3000,
@@ -742,8 +799,8 @@ test('ekrandaki sürüm package.json ile aynı', () => {
   // İkisi ayrışınca sürüm notları açılmıyor ve yedek dosyası eski sürümü
   // yazıyordu; sessiz kaldığı için de fark edilmiyordu.
   assert.equal(APP_VERSION, pkg.version);
-  // Yama sürümü isteğe bağlıdır: MAJOR.MINOR veya MAJOR.MINOR.PATCH.
-  assert.match(pkg.version, /^\d+\.\d+(?:\.\d+)?$/);
+  // Projenin yayın kuralı iki parçalıdır: her yayın MINOR'u bir artırır.
+  assert.match(pkg.version, /^\d+\.\d+$/);
   assert.equal(LATEST_RELEASE_NOTES.version, pkg.version);
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages?.['']?.version, pkg.version);
@@ -1141,6 +1198,18 @@ test('toparlanma zayıfken hacim artışı önerilmez', () => {
   assert.ok(anahtarlar.includes('recovery'));
   // Aynı hafta hem "toparlan" hem "set ekle" demek çelişir.
   assert.ok(!anahtarlar.includes('under'));
+});
+
+test('aynı haftada iki uyarlanmış seans toparlanma sinyali sayılır', () => {
+  const adaptation = { mode: 'reduced', label: 'Kontrollü Seans', originalWorkingSets: 4, adaptedWorkingSets: 3 };
+  const workouts = [
+    { id: 'a', date: '2026-07-27', readiness: { score: 65 }, adaptation, exercises: [{ name: 'Barbell Bench Press', sets: setsOf(80, 8, 3) }] },
+    { id: 'b', date: '2026-07-30', readiness: { score: 62 }, adaptation, exercises: [{ name: 'Lat Pulldown', sets: setsOf(70, 8, 3) }] },
+  ];
+  const review = buildWeeklyReview({ workouts, today: new Date('2026-08-05T12:00:00') });
+  assert.equal(review.training.adaptedSessions, 2);
+  assert.ok(review.adjustments.some(item => item.key === 'recovery'));
+  assert.ok(!review.adjustments.some(item => item.key === 'under'));
 });
 
 test('gözden geçirme varsayılan olarak geçen tam haftaya bakar', () => {

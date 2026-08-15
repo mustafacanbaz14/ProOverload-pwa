@@ -601,28 +601,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '5.3.0';
+export const APP_VERSION = '5.4';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 5.3',
+  title: 'ProOverload 5.4',
   date: '2026-08-15',
   items: [
     {
-      title: 'Üç Basit Kullanım Yolu',
-      desc: 'Beslenme ekranı Hızlı, Öğünler ve Detaylı yollarına ayrıldı; gelişmiş NEAT alanları yalnızca istendiğinde açılıyor.'
+      title: 'Hazır Oluşluğa Göre Seans',
+      desc: 'Antrenman başlamadan önce uyku, stres, ağrı ve karbonhidrat verileri şablonla birleştirilerek o güne özel seans planı çıkarılıyor.'
     },
     {
-      title: 'Öğün, Gün ve Tarif Şablonları',
-      desc: 'Sık kullanılan öğünler, bütün günler ve porsiyon hesabı yapılan tarifler kaydedilip tek dokunuşla tekrar kullanılabiliyor.'
+      title: 'Kontrollü ve Toparlanma Modu',
+      desc: 'Orta hazır oluşlukta set ve yük küçük ölçüde; kritik durumda daha belirgin azaltılıyor. Isınma setleri ve boş yük alanları korunuyor.'
     },
     {
-      title: 'Geçmişten Hızlı Kopyalama',
-      desc: 'Dünün veya geçen haftanın aynı gününün beslenmesi kopyalanabiliyor; eski günün NEAT ve enerji varsayımları yeni güne taşınmıyor.'
+      title: 'Karar Kullanıcıda',
+      desc: 'Uyarlamanın set ve yük etkisi seans öncesinde gösteriliyor; kullanıcı tek dokunuşla bugüne uyarlayabiliyor veya orijinal planı koruyabiliyor.'
     },
     {
-      title: 'Açıklanabilir Enerji Hesabı',
-      desc: 'Bazal metabolizma, günlük hareket, termik etki ve egzersiz kalemlerinde sayının hangi veri veya formülden geldiği açıkça gösteriliyor.'
+      title: 'Haftalık Toparlanma Hafızası',
+      desc: 'Uyarlanan seanslar kayıtta ve seans raporunda saklanıyor; aynı hafta tekrarlandığında haftalık inceleme bunu toparlanma sinyali olarak değerlendiriyor.'
     }
   ]
 };

@@ -128,6 +128,22 @@ const ActiveWorkoutView = memo(({
           );
         })()}
 
+        {activeWorkout.adaptation && !activeWorkout.isEditingOld && (
+          <div className={`rounded-xl border px-3 py-2.5 flex items-start gap-2.5 ${activeWorkout.adaptation.mode === 'recovery' ? 'bg-red-950/20 border-red-900/50' : 'bg-amber-950/20 border-amber-900/50'}`}>
+            <TrendingDown size={15} className={activeWorkout.adaptation.mode === 'recovery' ? 'text-red-400 shrink-0 mt-0.5' : 'text-amber-400 shrink-0 mt-0.5'} />
+            <div className="min-w-0">
+              <span className={`text-[10px] font-bold block ${activeWorkout.adaptation.mode === 'recovery' ? 'text-red-300' : 'text-amber-300'}`}>
+                {activeWorkout.adaptation.label} · bugüne özel
+              </span>
+              <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">
+                {activeWorkout.adaptation.originalWorkingSets} → {activeWorkout.adaptation.adaptedWorkingSets} set
+                {activeWorkout.adaptation.loadPercent > 0 ? ` · kayıtlı yükler −%${activeWorkout.adaptation.loadPercent}` : ''}.
+                {' '}{activeWorkout.adaptation.summary}
+              </span>
+            </div>
+          </div>
+        )}
+
         {/* Deload bandı: hedeflerin neden düşük geldiği görünür olsun, yoksa
             "uygulama yanlış öneriyor" gibi okunuyor. */}
         {deload?.active && (
