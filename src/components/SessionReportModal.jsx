@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { X, Trophy, TrendingUp, TrendingDown, Minus, Sparkles, Layers, Clock, Dumbbell } from 'lucide-react';
+import { X, Trophy, TrendingUp, TrendingDown, Minus, Sparkles, Layers, Clock, Dumbbell, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { formatDay } from '../utils/dates';
 
 /**
@@ -64,6 +64,34 @@ const SessionReportModal = memo(({ report, onClose }) => {
               </div>
             ))}
           </div>
+
+          {report.planAdherence && (
+            <div className={`rounded-2xl border p-3.5 space-y-2.5 ${report.planAdherence.percent >= 90 ? 'border-emerald-900/60 bg-emerald-950/20' : 'border-amber-900/60 bg-amber-950/15'}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${report.planAdherence.percent >= 90 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {report.planAdherence.percent >= 90 ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />} Plan Uyumu
+                  </span>
+                  <strong className="text-[11px] text-zinc-200 block mt-1 truncate">{report.planAdherence.templateName}</strong>
+                  <span className="text-[9px] font-mono text-zinc-500">{report.planAdherence.label}</span>
+                </div>
+                <strong className={`text-xl font-mono shrink-0 ${report.planAdherence.percent >= 90 ? 'text-emerald-300' : 'text-amber-300'}`}>%{report.planAdherence.percent}</strong>
+              </div>
+              <div className="h-2 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden">
+                <div className={`h-full rounded-full ${report.planAdherence.percent >= 90 ? 'bg-emerald-500' : 'bg-amber-500'}`} style={{ width: `${report.planAdherence.percent}%` }} />
+              </div>
+              <div className="flex justify-between text-[9px] font-mono text-zinc-500">
+                <span>{report.planAdherence.matchedSets}/{report.planAdherence.plannedSets} planlı set</span>
+                <span>{report.planAdherence.completedPlannedExercises}/{report.planAdherence.plannedExercises} hareket</span>
+              </div>
+              {report.planAdherence.missedExercises.length > 0 && (
+                <p className="text-[9px] font-mono text-amber-300/80 leading-relaxed">Atlanan: {report.planAdherence.missedExercises.join(' · ')}</p>
+              )}
+              {(report.planAdherence.extraExercises.length > 0 || report.planAdherence.extraSets > 0) && (
+                <p className="text-[9px] font-mono text-cyan-300/75 leading-relaxed">Ek çalışma: {report.planAdherence.extraExercises.join(' · ') || `${report.planAdherence.extraSets} plan üstü set`}</p>
+              )}
+            </div>
+          )}
 
           {/* Hareket hareket kıyas */}
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">

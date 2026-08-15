@@ -216,6 +216,21 @@ const mergeExercise = (ex) => ({
   ...(ex?.supersetId ? { supersetId: ex.supersetId } : {}),
 });
 
+const mergePlannedTemplate = (plan) => {
+  if (!plan || typeof plan !== 'object' || !Array.isArray(plan.exercises)) return null;
+  const exercises = plan.exercises
+    .map(exercise => ({
+      name: typeof exercise?.name === 'string' ? exercise.name : '',
+      sets: Math.max(0, Number(exercise?.sets) || 0),
+    }))
+    .filter(exercise => exercise.name && exercise.sets > 0);
+  if (exercises.length === 0) return null;
+  return {
+    name: typeof plan.name === 'string' && plan.name.trim() ? plan.name : 'Şablon',
+    exercises,
+  };
+};
+
 /**
  * İçe aktarılan antrenman kaydını normalleştirir.
  *
@@ -250,6 +265,9 @@ export const mergeWorkout = (data) => ({
   rating: Number(data?.rating) > 0 ? Number(data.rating) : 3,
   notes: typeof data?.notes === 'string' ? data.notes : '',
   ...(data?.sourceTemplateId ? { sourceTemplateId: data.sourceTemplateId } : {}),
+  ...(mergePlannedTemplate(data?.plannedTemplate)
+    ? { plannedTemplate: mergePlannedTemplate(data.plannedTemplate) }
+    : {}),
   timer: { status: 'finished' },
   ...(data?.readiness ? { readiness: data.readiness } : {}),
 });
@@ -283,6 +301,9 @@ export const sortByDateDesc = (list) =>
 
 export const isWarmupSet = (set) => set?.setType === 'warmup';
 export const isWorkingSet = (set) => !isWarmupSet(set);
+// Şablonda boş normal set bir PLAN yuvasıdır; geçmiş hacimde ancak tekrar
+// girildiyse gerçekten tamamlanmış sayılır.
+export const isCompletedWorkingSet = (set) => isWorkingSet(set) && parseNumber(set?.reps) > 0;
 
 export const getNextSetType = (currentType) => {
   const idx = SET_TYPE_KEYS.indexOf(currentType || 'normal');
@@ -327,7 +348,7 @@ export const calcEffectiveSets = (workoutOrExercises) => {
   const exercises = workoutOrExercises?.exercises || workoutOrExercises;
   if (!Array.isArray(exercises)) return 0;
   return exercises.reduce((acc, ex) => acc + (ex.sets || [])
-    .filter(s => isWorkingSet(s) && parseNumber(s.rir) <= 3 && parseNumber(s.reps) > 0).length, 0);
+    .filter(s => isCompletedWorkingSet(s) && parseNumber(s.rir) <= 3).length, 0);
 };
 
 export const estimate1RM = (weight, reps, rir) => {

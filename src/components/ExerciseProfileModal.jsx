@@ -1,0 +1,146 @@
+import React, { memo } from 'react';
+import {
+  X, Trophy, Target, Calendar, Layers, TrendingUp, TrendingDown, Minus,
+  Pin, Play, Settings, Dumbbell, Bookmark,
+} from 'lucide-react';
+import TrendChart from './TrendChart';
+import { formatDay } from '../utils/dates';
+
+const contributionTone = weight => weight === 1
+  ? 'border-emerald-800/60 bg-emerald-950/30 text-emerald-300'
+  : weight === 0.5
+    ? 'border-cyan-900/60 bg-cyan-950/25 text-cyan-300'
+    : 'border-zinc-800 bg-zinc-950 text-zinc-500';
+
+const ExerciseProfileModal = memo(({
+  profile,
+  setupNote = '',
+  pinned = false,
+  onTogglePinned,
+  onEdit,
+  onStart,
+  onClose,
+}) => {
+  if (!profile) return null;
+  const trendIcon = profile.trend.direction === 'up'
+    ? <TrendingUp size={13} />
+    : profile.trend.direction === 'down'
+      ? <TrendingDown size={13} />
+      : <Minus size={13} />;
+  const metricUnit = profile.metric === 'e1rm' ? ' kg' : ' kg hacim';
+  const bestValue = profile.bestEver
+    ? (profile.metric === 'e1rm' ? profile.bestEver.bestE1RM : profile.bestEver.tonnage)
+    : 0;
+
+  return (
+    <div className="fixed inset-0 z-[97] bg-zinc-950 flex flex-col h-[100dvh] max-w-[440px] mx-auto">
+      <header className="px-4 py-3 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between gap-3 pt-safe shrink-0">
+        <div className="min-w-0">
+          <span className="text-[9px] font-mono uppercase tracking-widest text-cyan-500 block">Hareket Profili</span>
+          <h3 className="text-[13px] font-black text-zinc-100 truncate">{profile.name}</h3>
+        </div>
+        <button onClick={onClose} aria-label="Hareket profilini kapat" className="p-2 text-zinc-400 active:text-white"><X size={20} /></button>
+      </header>
+
+      <div className="flex-1 overflow-y-auto hide-scrollbar p-4 pb-nav space-y-3">
+        <section className="rounded-3xl border border-cyan-900/50 bg-gradient-to-br from-cyan-950/35 via-zinc-900 to-zinc-950 p-4 space-y-3">
+          <div className="flex flex-wrap gap-1.5">
+            {Object.entries(profile.contributions || {}).sort((a, b) => b[1] - a[1]).map(([muscle, weight]) => (
+              <span key={muscle} className={`rounded-lg border px-2 py-1 text-[9px] font-bold ${contributionTone(weight)}`}>
+                {muscle} · %{Math.round(weight * 100)}
+              </span>
+            ))}
+          </div>
+          <div className="grid grid-cols-3 gap-2">
+            <div className="rounded-xl border border-zinc-800 bg-black/30 p-2.5">
+              <Calendar size={12} className="text-cyan-400 mb-1" />
+              <strong className="text-sm font-mono text-zinc-100 block">{profile.sessionCount}</strong>
+              <span className="text-[8px] font-mono text-zinc-500">seans</span>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-black/30 p-2.5">
+              <Layers size={12} className="text-violet-400 mb-1" />
+              <strong className="text-sm font-mono text-zinc-100 block">{profile.totalSets}</strong>
+              <span className="text-[8px] font-mono text-zinc-500">tamamlanan set</span>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-black/30 p-2.5">
+              <Trophy size={12} className="text-amber-400 mb-1" />
+              <strong className="text-sm font-mono text-zinc-100 block">{bestValue || '—'}</strong>
+              <span className="text-[8px] font-mono text-zinc-500">{profile.metric === 'e1rm' ? 'en iyi 1RM' : 'en iyi hacim'}</span>
+            </div>
+          </div>
+        </section>
+
+        {profile.target && (
+          <section className="rounded-2xl border border-emerald-900/50 bg-emerald-950/20 p-3.5">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400 flex items-center gap-1.5"><Target size={13} /> Sıradaki Hedef</span>
+              <strong className="text-base font-mono text-emerald-300">{profile.target.weight} kg × {profile.target.reps}</strong>
+            </div>
+            <p className="text-[10px] font-mono text-emerald-200/70 leading-relaxed mt-1.5">{profile.target.note}</p>
+          </section>
+        )}
+
+        {profile.chartData.length >= 2 ? (
+          <section className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Son {profile.chartData.length} Seans</h4>
+              <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${profile.trend.direction === 'up' ? 'text-emerald-400' : profile.trend.direction === 'down' ? 'text-amber-400' : 'text-zinc-500'}`}>
+                {trendIcon}{profile.trend.deltaPct > 0 ? '+' : ''}{profile.trend.deltaPct ?? 0}%
+              </span>
+            </div>
+            <TrendChart
+              data={profile.chartData.map(point => ({ ...point, label: formatDay(point.label) }))}
+              color="#22d3ee"
+              unit={metricUnit}
+              decimals={1}
+            />
+          </section>
+        ) : (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center">
+            <Dumbbell size={18} className="text-zinc-700 mx-auto mb-2" />
+            <p className="text-[10px] font-mono text-zinc-500">Trend için en az iki tamamlanmış seans gerekli.</p>
+          </div>
+        )}
+
+        {profile.sessions.length > 0 && (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+            <div className="px-3.5 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
+              <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Seans Geçmişi</h4>
+            </div>
+            <div className="divide-y divide-zinc-800/70">
+              {profile.sessions.slice(0, 8).map(session => (
+                <div key={`${session.workoutId}-${session.date}`} className="px-3.5 py-2.5 flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <strong className="text-[10px] text-zinc-200 block truncate">{formatDay(session.date, 'medium')}</strong>
+                    <span className="text-[8px] font-mono text-zinc-600">{session.setCount} set · {session.workoutName || 'Antrenman'}</span>
+                  </div>
+                  <span className="text-[10px] font-mono font-bold text-cyan-400 shrink-0">
+                    {profile.metric === 'e1rm' ? `${session.bestE1RM || '—'} kg 1RM` : `${session.tonnage} kg`}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {(setupNote || profile.templateNames.length > 0) && (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5 space-y-2">
+            {setupNote && <p className="text-[10px] font-mono text-zinc-400 leading-relaxed"><Settings size={11} className="inline text-cyan-500 mr-1" />{setupNote}</p>}
+            {profile.templateNames.length > 0 && (
+              <p className="text-[10px] font-mono text-zinc-400 leading-relaxed"><Bookmark size={11} className="inline text-violet-400 mr-1" />{profile.templateNames.join(' · ')}</p>
+            )}
+          </section>
+        )}
+      </div>
+
+      <footer className="p-3 border-t border-zinc-800 bg-zinc-950 grid grid-cols-[auto_auto_1fr] gap-2 pb-safe shrink-0">
+        <button onClick={onTogglePinned} aria-label={pinned ? 'Sabitlemeyi kaldır' : 'Seçim listesine sabitle'} className={`w-11 rounded-xl border flex items-center justify-center ${pinned ? 'border-amber-700 bg-amber-950/30 text-amber-400' : 'border-zinc-800 text-zinc-500'}`}><Pin size={16} fill={pinned ? 'currentColor' : 'none'} /></button>
+        <button onClick={onEdit} aria-label="Hareket ayarlarını düzenle" className="w-11 rounded-xl border border-zinc-800 text-zinc-500 flex items-center justify-center"><Settings size={16} /></button>
+        <button onClick={onStart} className="rounded-xl bg-cyan-600 active:bg-cyan-700 py-3.5 text-[11px] font-black uppercase tracking-wide text-white flex items-center justify-center gap-2"><Play size={15} /> Bu Hareketle Başla</button>
+      </footer>
+    </div>
+  );
+});
+
+ExerciseProfileModal.displayName = 'ExerciseProfileModal';
+export default ExerciseProfileModal;

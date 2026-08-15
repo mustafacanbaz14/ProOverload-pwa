@@ -10,7 +10,9 @@ import { suggestRestSeconds } from '../src/utils/rest.js';
 import { effectiveLoad, bodyweightFactorOf } from '../src/utils/bodyweight.js';
 import { auditBodyweightEntries, normalizeBodyweightEntries } from '../src/utils/bodyweightAudit.js';
 import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
-import { buildSessionReport } from '../src/utils/sessionReport.js';
+import { buildSessionReport, buildPlanAdherence, snapshotTemplatePlan } from '../src/utils/sessionReport.js';
+import { rankTemplateRecommendations } from '../src/utils/templateRecommendation.js';
+import { buildExerciseProfile } from '../src/utils/exerciseProfile.js';
 import { buildWeeklyReview, lastCompletedWeekStart } from '../src/utils/weeklyReview.js';
 import { computeReadiness } from '../src/utils/readiness.js';
 import { dayEnergyBreakdown, theoreticalWeek, estimateMacrosForTef, groupByWeek, buildEnergySeries, neatOptsForDay } from '../src/utils/energyModel.js';
@@ -50,6 +52,72 @@ import {
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
+
+test('akıllı şablon sıralaması tavanı dolu kas yerine hacim açığını seçer', () => {
+  const sets = count => Array.from({ length: count }, () => ({ setType: 'normal' }));
+  const ranked = rankTemplateRecommendations([
+    { id: 'push', name: 'Göğüs', exercises: [{ name: 'Bench Press', sets: sets(4) }] },
+    { id: 'pull', name: 'Kanat', exercises: [{ name: 'Lat Pulldown', sets: sets(4) }] },
+  ], {
+    currentVolume: { Göğüs: getVolumeLandmarks('Göğüs').mrv, Kanat: 0, Biseps: 0 },
+    workouts: [],
+    today: '2026-08-15',
+  });
+  assert.equal(ranked[0].template.id, 'pull');
+  assert.ok(ranked[0].reasons.some(reason => reason.includes('Kanat')));
+  assert.ok(ranked.find(item => item.template.id === 'push').risks.some(reason => reason.includes('Göğüs')));
+});
+
+test('şablon anlık görüntüsü sonradan düzenlenen şablondan etkilenmez', () => {
+  const template = {
+    name: 'Üst A',
+    exercises: [{ name: 'Bench Press', sets: Array.from({ length: 3 }, () => ({ setType: 'normal' })) }],
+  };
+  const snapshot = snapshotTemplatePlan(template);
+  template.exercises[0].sets.push({ setType: 'normal' });
+  assert.equal(snapshot.exercises[0].sets, 3);
+});
+
+test('seans plan uyumu atlanan ve eklenen hareketleri ayırır', () => {
+  const done = count => Array.from({ length: count }, () => ({ setType: 'normal', reps: 8, weight: 50 }));
+  const adherence = buildPlanAdherence({
+    name: 'Üst A',
+    plannedTemplate: { name: 'Üst A', exercises: [{ name: 'Bench Press', sets: 3 }, { name: 'Row', sets: 3 }] },
+    exercises: [{ name: 'Bench Press', sets: done(3) }, { name: 'Lateral Raise', sets: done(2) }],
+  });
+  assert.equal(adherence.percent, 50);
+  assert.deepEqual(adherence.missedExercises, ['Row']);
+  assert.deepEqual(adherence.extraExercises, ['Lateral Raise']);
+  assert.equal(adherence.extraSets, 2);
+});
+
+test('kısmi şablon seansında boş set yuvaları gerçek hacme yazılmaz', () => {
+  const report = buildSessionReport({
+    id: 'partial', date: '2026-08-15', name: 'Kısmi', duration: 20,
+    exercises: [
+      { name: 'Barbell Back Squat', sets: [{ setType: 'normal', weight: 100, reps: 8, rir: 2 }, { setType: 'normal', weight: '', reps: '', rir: 2 }] },
+      { name: 'Barbell Bench Press', sets: [{ setType: 'normal', weight: '', reps: '', rir: 2 }] },
+    ],
+  });
+  assert.deepEqual(report.exercises.map(exercise => exercise.name), ['Barbell Back Squat']);
+  assert.equal(report.byMuscle.Göğüs, undefined);
+  assert.equal(report.byMuscle.Quadriceps, 1);
+});
+
+test('hareket profili geçmiş trendi, hedefi ve şablon kullanımını birleştirir', () => {
+  const workouts = [
+    { id: 'new', date: '2026-08-10', name: 'Üst', exercises: [{ name: 'Bench Press', sets: [{ setType: 'normal', weight: 85, reps: 8, rir: 2 }] }] },
+    { id: 'old', date: '2026-07-20', name: 'Üst', exercises: [{ name: 'Bench Press', sets: [{ setType: 'normal', weight: 80, reps: 8, rir: 2 }] }] },
+  ];
+  const profile = buildExerciseProfile('Bench Press', workouts, {
+    templates: [{ name: 'Push A', exercises: [{ name: 'Bench Press' }] }],
+    settings: { repRangeMin: 6, repRangeMax: 10 },
+  });
+  assert.equal(profile.sessionCount, 2);
+  assert.equal(profile.trend.direction, 'up');
+  assert.ok(profile.target);
+  assert.deepEqual(profile.templateNames, ['Push A']);
+});
 
 test('şablon kütüphanesi favori ve kullanım tarihine göre düzenlenir', () => {
   const list = organizeTemplates([

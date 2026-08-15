@@ -1,6 +1,6 @@
 import { parseNumber } from './number.js';
 import { MUSCLE_GROUPS, getVolumeLandmarks, volumeStatusOf } from './constants.js';
-import { detectMuscleGroup, isWorkingSet, calcTonnage, calcEffectiveSets } from './helpers.js';
+import { detectMuscleGroup, isCompletedWorkingSet, calcTonnage, calcEffectiveSets } from './helpers.js';
 import { weekBounds, dayKey, formatRange } from './dates.js';
 import { computeSleepScore } from './wellness.js';
 
@@ -63,7 +63,7 @@ export const buildWeeklyReview = ({
   const hacimHesapla = (list) => {
     const out = {};
     list.forEach(w => (w.exercises || []).forEach(ex => {
-      const sets = (ex.sets || []).filter(isWorkingSet).length;
+      const sets = (ex.sets || []).filter(isCompletedWorkingSet).length;
       if (sets === 0) return;
       const { contributions } = detectMuscleGroup(ex.name, customExercises);
       Object.entries(contributions || {}).forEach(([kas, agirlik]) => {

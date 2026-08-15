@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useMemo, useState } from 'react';
 import { Trash2, Calendar, Scale, Beef, Pencil, Copy, BookmarkPlus, HeartPulse, Search, Timer, Flame, Activity, Plus, Dumbbell, X, ChevronDown, FolderArchive } from 'lucide-react';
-import { calcTonnage, calcEffectiveSets, isWorkingSet, foldForSearch, getLocalDateString } from '../utils/helpers';
+import { calcTonnage, calcEffectiveSets, isCompletedWorkingSet, foldForSearch, getLocalDateString } from '../utils/helpers';
 import {
   findActivity, findEffort, effortDelta, cardioEntryCalories, totalCardioCalories,
   dayWorkoutCalories, cardioArchiveSummary, evaluateCardioEntry, isActiveRecoveryEntry,
@@ -336,7 +336,7 @@ const HistoryView = memo(({
                       <div key={i} className="text-[11px] font-mono text-zinc-300 bg-zinc-950/50 p-2 rounded-xl border border-zinc-800/50 flex justify-between items-start gap-2">
                         <span className="font-bold text-zinc-200 truncate shrink-0 max-w-[45%]">{ex.name}</span>
                         <span className="text-zinc-400 text-[10px] text-right break-words min-w-0">
-                          {(ex.sets || []).filter(isWorkingSet).map(s => `${s.weight}x${s.reps}`).join(' · ')}
+                          {(ex.sets || []).filter(isCompletedWorkingSet).map(s => `${s.weight}x${s.reps}`).join(' · ') || 'Tamamlanan set yok'}
                         </span>
                       </div>
                     ))}

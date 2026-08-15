@@ -1,5 +1,5 @@
 import { MUSCLE_GROUPS, getVolumeLandmarks } from './constants.js';
-import { detectMuscleGroup, isWorkingSet } from './helpers.js';
+import { detectMuscleGroup, isCompletedWorkingSet } from './helpers.js';
 import { weekBounds, dayKey } from './dates.js';
 
 /**
@@ -69,7 +69,7 @@ export const buildFrequencyReport = (workouts = [], {
     // içinde toplanıyor, sonra eşiğe bakılıyor.
     const gunlukHacim = {};
     (workout.exercises || []).forEach(ex => {
-      const setSayisi = (ex.sets || []).filter(isWorkingSet).length;
+      const setSayisi = (ex.sets || []).filter(isCompletedWorkingSet).length;
       if (setSayisi === 0) return;
       const { contributions } = detectMuscleGroup(ex.name, customExercises);
       Object.entries(contributions || {}).forEach(([kas, katki]) => {

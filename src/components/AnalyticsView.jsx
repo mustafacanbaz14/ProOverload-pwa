@@ -2,7 +2,7 @@ import React, { memo, useState, useMemo } from 'react';
 import { Search, Eye, EyeOff, BrainCircuit, TrendingDown, Utensils } from 'lucide-react';
 import TrendChart from './TrendChart';
 import { BODY_METRICS, MUSCLE_GROUPS, getVolumeLandmarks } from '../utils/constants';
-import { estimate1RM, isWorkingSet, parseNumber, detectMuscleGroup, foldForSearch } from '../utils/helpers';
+import { estimate1RM, isWorkingSet, isCompletedWorkingSet, parseNumber, detectMuscleGroup, foldForSearch } from '../utils/helpers';
 import { movingAverage } from '../utils/tdee';
 import {
   buildNutritionSeries, averageOverDays, macroSplit, proteinPerKg, adherenceStats
@@ -128,7 +128,7 @@ const AnalyticsView = memo(({
       let total = byWeek.get(key) || 0;
       (w.exercises || []).forEach(ex => {
         const { contributions } = detectMuscleGroup(ex.name, customExercises);
-        const sets = (ex.sets || []).filter(isWorkingSet).length;
+        const sets = (ex.sets || []).filter(isCompletedWorkingSet).length;
         const weight = (contributions || {})[muscleKey];
         if (sets > 0 && weight) total += sets * weight;
       });

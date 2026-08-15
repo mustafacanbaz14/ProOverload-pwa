@@ -1,5 +1,5 @@
 import React, { useState, useMemo, memo } from 'react';
-import { X, Search, Star, Settings, Trash2, Eye, EyeOff, Plus, Dumbbell, Check, History } from 'lucide-react';
+import { X, Search, Star, Settings, Trash2, Eye, EyeOff, Plus, Dumbbell, Check, History, Pin, ChevronRight } from 'lucide-react';
 import { MUSCLE_GROUPS } from '../utils/constants';
 import { foldForSearch } from '../utils/helpers';
 import { exerciseMuscleRank, exerciseRankLabel, sortExercisesForMuscle } from '../utils/exerciseSort';
@@ -26,9 +26,12 @@ const ExerciseLibraryModal = memo(({
   isUserAdded,
   performedNames = new Set(),
   hiddenNames = new Set(),
+  pinnedNames = new Set(),
   onEditExercise,
   onDeleteExercise,
   onToggleHidden,
+  onTogglePinned,
+  onOpenProfile,
   onAddNew,
   selectMode = false,
   onSelect,
@@ -55,8 +58,9 @@ const ExerciseLibraryModal = memo(({
       }
       return true;
     });
-    return sortExercisesForMuscle(filtered, muscleFilter, getContributions);
-  }, [allExerciseNames, query, muscleFilter, onlyMine, onlyPerformed, performedNames, getContributions, isUserAdded]);
+    const sorted = sortExercisesForMuscle(filtered, muscleFilter, getContributions);
+    return sorted.sort((a, b) => Number(pinnedNames.has(b)) - Number(pinnedNames.has(a)));
+  }, [allExerciseNames, query, muscleFilter, onlyMine, onlyPerformed, performedNames, pinnedNames, getContributions, isUserAdded]);
 
   if (!isOpen) return null;
 
@@ -142,6 +146,7 @@ const ExerciseLibraryModal = memo(({
           const parts = Object.entries(contributions).sort((a, b) => b[1] - a[1]);
           const mine = isUserAdded(name);
           const hidden = hiddenNames.has(name);
+          const pinned = pinnedNames.has(name);
           const done = performedNames.has(name);
           const selected = selectedNames.has(name);
           const disabled = disabledNames.has(name);
@@ -156,17 +161,19 @@ const ExerciseLibraryModal = memo(({
             >
               <button
                 onClick={() => {
-                  if (!selectMode || disabled) return;
-                  if (multiSelect) onToggleSelect?.(name);
+                  if (disabled) return;
+                  if (!selectMode) onOpenProfile?.(name);
+                  else if (multiSelect) onToggleSelect?.(name);
                   else onSelect?.(name);
                 }}
-                disabled={!selectMode || disabled}
-                className={`min-w-0 flex-1 text-left ${selectMode && !disabled ? 'active:opacity-60' : 'cursor-default'} ${disabled ? 'opacity-45' : ''}`}
+                disabled={disabled || (!selectMode && !onOpenProfile)}
+                className={`min-w-0 flex-1 text-left ${!disabled ? 'active:opacity-60' : 'cursor-default'} ${disabled ? 'opacity-45' : ''}`}
               >
                 <div className="text-xs font-bold font-mono text-zinc-200 flex items-center gap-1.5">
                   {mine && <Star size={10} className="text-amber-400 shrink-0" fill="currentColor" />}
                   <span className="truncate">{name}</span>
                   {done && <span className="text-[8px] font-sans text-cyan-600 shrink-0">YAPILDI</span>}
+                  {pinned && <span className="text-[8px] font-sans text-amber-500 shrink-0">SABİT</span>}
                 </div>
                 <div className="flex flex-wrap gap-1 mt-1.5">
                   {rank && (
@@ -195,8 +202,17 @@ const ExerciseLibraryModal = memo(({
               ) : (
                 <div className="flex items-center shrink-0">
                   <button
+                    onClick={() => onTogglePinned?.(name)}
+                    title={pinned ? 'Sabitlemeyi kaldır' : 'Seçim listesine sabitle'}
+                    aria-label={pinned ? `${name} sabitlemesini kaldır` : `${name} hareketini sabitle`}
+                    className={`p-1.5 ${pinned ? 'text-amber-400' : 'text-zinc-600 active:text-amber-400'}`}
+                  >
+                    <Pin size={14} fill={pinned ? 'currentColor' : 'none'} />
+                  </button>
+                  <button
                     onClick={() => onToggleHidden(name)}
                     title={hidden ? 'Seçim listesinde göster' : 'Seçim listesinde gizle'}
+                    aria-label={hidden ? `${name} seçim listesinde göster` : `${name} seçim listesinde gizle`}
                     className="text-zinc-600 active:text-cyan-400 p-1.5"
                   >
                     {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
@@ -204,6 +220,7 @@ const ExerciseLibraryModal = memo(({
                   <button
                     onClick={() => onEditExercise(name)}
                     title="Kas eşlemesini düzenle"
+                    aria-label={`${name} kas eşlemesini düzenle`}
                     className="text-zinc-600 active:text-cyan-400 p-1.5"
                   >
                     <Settings size={14} />
@@ -212,11 +229,13 @@ const ExerciseLibraryModal = memo(({
                     <button
                       onClick={() => onDeleteExercise(name)}
                       title="Bu hareketi sil"
+                      aria-label={`${name} hareketini sil`}
                       className="text-zinc-600 active:text-red-500 p-1.5"
                     >
                       <Trash2 size={14} />
                     </button>
                   )}
+                  <ChevronRight size={14} className="text-zinc-700 ml-0.5" aria-hidden="true" />
                 </div>
               )}
             </div>

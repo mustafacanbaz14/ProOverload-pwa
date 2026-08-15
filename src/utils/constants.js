@@ -597,28 +597,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '5.1';
+export const APP_VERSION = '5.2';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 5.1',
+  title: 'ProOverload 5.2',
   date: '2026-08-15',
   items: [
     {
-      title: 'Şablon Kütüphanesi',
-      desc: 'Şablonlar artık ad veya hareketle aranabiliyor, favorilenebiliyor ve son kullanıma göre düzenleniyor. Kullanım sayısı ile son kullanım tarihi de görünür.'
+      title: 'Akıllı Sıradaki Antrenman',
+      desc: 'Antrenman Merkezi; bu haftaki MEV/MAV açığını, MRV tavanını ve son 48 saat yüklenmesini birlikte tartıp en uygun şablonu gerekçeleriyle öneriyor.'
     },
     {
-      title: 'Güvenli Şablon Silme',
-      desc: 'Şablon silme artık Antrenman Merkezi ve önizleme ekranında açıkça erişilebilir. Onay, haftalık program bağlantılarını temizleme ve geri alma birlikte çalışıyor.'
+      title: 'Hareket Performans Profili',
+      desc: 'Kütüphanedeki her hareket artık seans trendini, tahmini 1RM veya hacim rekorunu, sıradaki progresyon hedefini ve kullanıldığı şablonları tek ekranda gösteriyor.'
     },
     {
-      title: 'Daha Hızlı Antrenman Akışı',
-      desc: 'Son güç antrenmanı tek dokunuşla tekrarlanabiliyor; şablon favorileme, kopyalama, düzenleme ve başlatma eylemleri aynı kartta toplandı.'
+      title: 'Plan – Gerçekleşen Uyumu',
+      desc: 'Şablondan başlayan seanslarda planın anlık görüntüsü korunuyor; seans sonunda tamamlanan, atlanan ve eklenen hareket/setler yüzde uyumla raporlanıyor.'
     },
     {
-      title: 'Gerçek Basit Görünüm',
-      desc: 'Basit arayüz modu artık programlama araçlarını gerektiğinde kapalı tutuyor ve ana ekranda yalnızca öne çıkan şablonları gösteriyor; hiçbir özellik kaldırılmadı.'
+      title: 'Daha İşlevli Hareket Kütüphanesi',
+      desc: 'Boş kalan hareket satırları artık profile açılıyor; sık kullanılan hareketler açıkça sabitlenebiliyor ve seçim listesinde öncelikli tutuluyor.'
     }
   ]
 };

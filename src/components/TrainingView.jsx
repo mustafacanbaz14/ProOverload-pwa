@@ -2,7 +2,7 @@ import React, { memo, useMemo, useState } from 'react';
 import {
   Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play,
   ChevronRight, ChevronDown, Copy, Wand2, Sparkles, Search, Star, Trash2,
-  RotateCcw, SlidersHorizontal,
+  RotateCcw, SlidersHorizontal, Target, AlertTriangle,
 } from 'lucide-react';
 import { estimateDuration } from '../utils/templates';
 import { estimateLiftingCalories } from '../utils/cardio';
@@ -15,6 +15,7 @@ const TrainingView = memo(({
   weightKg = 0,
   recentWorkout = null,
   interfaceMode = 'simple',
+  recommendation = null,
   onStart,
   onRepeat,
   onLibrary,
@@ -49,6 +50,35 @@ const TrainingView = memo(({
         <h2 className="luxury-title text-xl font-black mt-0.5">Bugünkü çalışmanı yönet</h2>
         <p className="luxury-subtitle text-[10px] mt-1">Başlat, kaldığın yerden devam et veya programını düzenle.</p>
       </div>
+
+      {recommendation && (
+        <section className="rounded-3xl border border-emerald-800/60 bg-gradient-to-br from-emerald-950/45 via-zinc-900 to-cyan-950/25 p-4 shadow-lg shadow-emerald-950/20 space-y-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <span className="text-[9px] font-mono uppercase tracking-widest text-emerald-400 flex items-center gap-1.5"><Target size={12} /> Bu Hafta İçin Akıllı Seçim</span>
+              <h3 className="text-[15px] font-black text-zinc-100 truncate mt-1">{recommendation.template.name}</h3>
+              <span className="text-[9px] font-mono text-zinc-500">~{recommendation.minutes} dk · {recommendation.preview.totalSets} set</span>
+            </div>
+            <div className="rounded-2xl border border-emerald-700/60 bg-emerald-950/50 px-3 py-2 text-center shrink-0">
+              <strong className="text-lg font-mono text-emerald-300 block leading-none">{recommendation.score}</strong>
+              <span className="text-[7px] font-bold uppercase tracking-wider text-emerald-500">{recommendation.label}</span>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            {recommendation.reasons.slice(0, 2).map(reason => (
+              <p key={reason} className="text-[9px] font-mono text-zinc-300 leading-relaxed flex gap-1.5"><span className="text-emerald-400">•</span>{reason}</p>
+            ))}
+            {recommendation.risks.slice(0, 1).map(risk => (
+              <p key={risk} className="text-[9px] font-mono text-amber-300/90 leading-relaxed flex gap-1.5"><AlertTriangle size={10} className="shrink-0 mt-0.5" />{risk}</p>
+            ))}
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <button onClick={() => onPreview?.(recommendation.template)} className="rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 active:bg-zinc-800">Planı İncele</button>
+            <button onClick={() => onStart?.(recommendation.template)} className="rounded-xl bg-emerald-600 py-2.5 text-[9px] font-black uppercase text-white active:bg-emerald-700 flex items-center justify-center gap-1.5"><Play size={12} /> Başlat</button>
+          </div>
+          <p className="text-[8px] font-mono text-zinc-600">Puan; haftalık hacim açığı, tavan riski ve son 48 saat yüklenmesini birlikte tartar.</p>
+        </section>
+      )}
 
       <button onClick={() => onStart?.()} className="luxury-primary-card w-full bg-cyan-600 active:bg-cyan-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-cyan-950/30">
         <span className="flex items-center gap-3">

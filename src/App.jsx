@@ -21,7 +21,9 @@ import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
 import { mesocycleState, weeklyTargets, targetInstructions, mesocycleCoachItem, emptyMesocycle } from './utils/mesocycle';
 import { auditExerciseSelection, selectionCoachItem } from './utils/selectionAudit';
 import { instantiateProgram } from './utils/programBuilder';
-import { buildSessionReport } from './utils/sessionReport';
+import { buildSessionReport, snapshotTemplatePlan } from './utils/sessionReport';
+import { bestTemplateRecommendation } from './utils/templateRecommendation';
+import { buildExerciseProfile } from './utils/exerciseProfile';
 import { buildPlateauInsights } from './utils/insights';
 import { buildFrequencyReport, frequencyCoachItem } from './utils/frequency';
 import { workoutsToCsv, metricsToCsv, nutritionToCsv } from './utils/csvExport';
@@ -50,7 +52,7 @@ import { draftFromGeneratedProgram, instantiateDraftProgram } from './utils/prog
 import {
   generateId, getLocalDateString, getMondayOfCurrentWeek, detectMuscleGroup,
   foldForSearch, parseNumber, mergeMetrics, mergeNutrition,
-  isWorkingSet, calcEffectiveSets, buildPersonalRecords, loadPersistedState, exerciseSetupNote,
+  isWorkingSet, isCompletedWorkingSet, calcEffectiveSets, buildPersonalRecords, loadPersistedState, exerciseSetupNote,
   computeComposition, sortByDateDesc, suggestNextTarget, mergeSettings,
   mergeWorkout, mergeTemplate, isWarmupSet, estimate1RM, findMetricsForDate,
   resetDayNeatOverride,
@@ -86,6 +88,7 @@ const PlateCalculatorModal = lazy(() => import('./components/PlateCalculatorModa
 const TemplatePreviewModal = lazy(() => import('./components/TemplatePreviewModal'));
 const ExerciseEditorModal = lazy(() => import('./components/ExerciseEditorModal'));
 const ExerciseLibraryModal = lazy(() => import('./components/ExerciseLibraryModal'));
+const ExerciseProfileModal = lazy(() => import('./components/ExerciseProfileModal'));
 const TemplateBuilderModal = lazy(() => import('./components/TemplateBuilderModal'));
 const CardioModal = lazy(() => import('./components/CardioModal'));
 const EnergyDetailModal = lazy(() => import('./components/EnergyDetailModal'));
@@ -136,6 +139,7 @@ export default function App() {
   const [plateCalc, setPlateCalc] = useState(null); // { weight } | null
   const [previewTemplate, setPreviewTemplate] = useState(null);
   const [editorExercise, setEditorExercise] = useState(null); // hareket adı
+  const [profileExercise, setProfileExercise] = useState(null); // hareket adı
   const [isLibraryOpen, setIsLibraryOpen] = useState(false);
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
@@ -337,6 +341,11 @@ export default function App() {
     workouts.forEach(w => (w.exercises || []).forEach(ex => { if (ex?.name) s.add(ex.name); }));
     return s;
   }, [workouts]);
+
+  const pinnedExerciseNames = useMemo(
+    () => new Set(settings.pinnedExercises || []),
+    [settings.pinnedExercises],
+  );
 
   // Her hareketin kaç ayrı seansta yapıldığı. 1RM grafiği en az iki ölçüm
   // olmadan bir eğilim gösteremediği için o liste bu sayıya göre filtrelenir.
@@ -558,6 +567,16 @@ export default function App() {
     return buildPersonalRecords(workouts, activeWorkout?.id, resolveSetLoad);
   }, [workouts, activeWorkout?.id, resolveSetLoad]);
 
+  const exerciseProfile = useMemo(
+    () => buildExerciseProfile(profileExercise, sortedWorkouts, {
+      templates,
+      customExercises,
+      settings,
+      resolveLoad: resolveSetLoad,
+    }),
+    [profileExercise, sortedWorkouts, templates, customExercises, settings, resolveSetLoad],
+  );
+
   // Rekor kontrolü set güncellenirken yapılıyor; o an güncel tabloyu okumak
   // için ref kullanılır, yoksa bağımlılık zinciri her tuşta yeniden kurulurdu.
   const personalRecordsRef = useRef(personalRecords);
@@ -640,7 +659,7 @@ export default function App() {
     thisWeekWorkouts.forEach(w => {
       (w.exercises || []).forEach(ex => {
         const { contributions } = detectMuscleGroup(ex.name, customExercises);
-        const count = (ex.sets || []).filter(isWorkingSet).length;
+        const count = (ex.sets || []).filter(isCompletedWorkingSet).length;
         if (count === 0) return;
 
         Object.entries(contributions || {}).forEach(([muscle, weight]) => {
@@ -762,6 +781,19 @@ export default function App() {
     };
   }, [workouts, customExercises, settings.experienceLevel]);
 
+  const templateRecommendation = useMemo(
+    () => bestTemplateRecommendation(templates, {
+      currentVolume: dashboardStats.muscleVolume,
+      customExercises,
+      experienceLevel: settings.experienceLevel,
+      workouts: sortedWorkouts,
+      restSeconds: settings.restSeconds,
+      today: getLocalDateString(),
+    }),
+    [templates, dashboardStats.muscleVolume, customExercises, settings.experienceLevel,
+      settings.restSeconds, sortedWorkouts],
+  );
+
   // Kas başına haftalık hacmin hangi hareketlerden geldiği.
   // Hacim hesabıyla aynı kuralları izler: yalnızca çalışma setleri, katkı ağırlığıyla.
   const muscleBreakdown = useMemo(() => {
@@ -773,7 +805,7 @@ export default function App() {
       .forEach(w => {
         (w.exercises || []).forEach(ex => {
           const { contributions } = detectMuscleGroup(ex.name, customExercises);
-          const sets = (ex.sets || []).filter(isWorkingSet).length;
+          const sets = (ex.sets || []).filter(isCompletedWorkingSet).length;
           if (sets === 0) return;
 
           Object.entries(contributions || {}).forEach(([muscle, weight]) => {
@@ -911,7 +943,7 @@ export default function App() {
       if (w.id === activeWorkout?.id) continue;
       const ex = (w.exercises || []).find(e => e.name === exerciseName);
       if (ex && Array.isArray(ex.sets) && ex.sets.some(s => isWorkingSet(s) && parseNumber(s.reps) > 0)) {
-        history.push({ date: w.date, sets: ex.sets.filter(isWorkingSet) });
+        history.push({ date: w.date, sets: ex.sets.filter(isCompletedWorkingSet) });
         if (history.length >= 3) break;
       }
     }
@@ -963,7 +995,7 @@ export default function App() {
       updateLockScreenActivity({
         elapsedSeconds: elapsed,
         exerciseName: active?.name || '',
-        previousSets: (history?.sets || []).filter(isWorkingSet),
+        previousSets: (history?.sets || []).filter(isCompletedWorkingSet),
         previousDate: history ? formatDay(history.date, 'numeric') : '',
         effectiveSets: calcEffectiveSets(exercises),
         isPaused: workout.timer?.status !== 'running',
@@ -1041,7 +1073,11 @@ export default function App() {
       rating: 4,
       notes: ''
     };
-    if (sourceTemplateId) newWorkout.sourceTemplateId = sourceTemplateId;
+    if (sourceTemplateId) {
+      newWorkout.sourceTemplateId = sourceTemplateId;
+      const plannedTemplate = snapshotTemplatePlan(template);
+      if (plannedTemplate) newWorkout.plannedTemplate = plannedTemplate;
+    }
 
     setActiveWorkout(newWorkout);
     setPreWorkoutModal(null);
@@ -1373,6 +1409,18 @@ export default function App() {
       return { ...prev, hiddenExercises: [...hidden], pinnedExercises: [...pinned] };
     });
   }, [performedNames]);
+
+  const handleTogglePinnedExercise = useCallback((name) => {
+    const wasPinned = (settings.pinnedExercises || []).includes(name);
+    setSettings(prev => {
+      const pinned = new Set(prev.pinnedExercises || []);
+      const hidden = new Set(prev.hiddenExercises || []);
+      if (pinned.has(name)) pinned.delete(name);
+      else { pinned.add(name); hidden.delete(name); }
+      return { ...prev, pinnedExercises: [...pinned], hiddenExercises: [...hidden] };
+    });
+    showToast(wasPinned ? 'Hareket sabitlemesi kaldırıldı.' : 'Hareket seçim listesine sabitlendi.');
+  }, [settings.pinnedExercises, showToast]);
 
   const handleDeleteExercise = useCallback((name) => {
     const index = customExercises.findIndex(ex => (typeof ex === 'object' ? ex.name : ex) === name);
@@ -2455,6 +2503,7 @@ export default function App() {
               weightKg={latestWeight}
               recentWorkout={recentStrengthWorkout}
               interfaceMode={settings.interfaceMode}
+              recommendation={templateRecommendation}
               onStart={handleStartRequest}
               onRepeat={handleRepeatWorkout}
               onLibrary={() => setIsLibraryOpen(true)}
@@ -2806,10 +2855,36 @@ export default function App() {
           isUserAdded={isUserAddedExercise}
           performedNames={performedNames}
           hiddenNames={pickerHiddenNames}
+          pinnedNames={pinnedExerciseNames}
           onEditExercise={setEditorExercise}
           onDeleteExercise={(name) => setDeleteConfirm({ isOpen: true, type: 'exercise', id: name })}
           onToggleHidden={handleTogglePickerVisibility}
+          onTogglePinned={handleTogglePinnedExercise}
+          onOpenProfile={setProfileExercise}
           onAddNew={() => { setPickerReturnsToLibrary(true); setIsLibraryOpen(false); setIsExerciseModalOpen(true); setIsAddingCustom(true); }}
+        />}
+
+        {profileExercise && <ExerciseProfileModal
+          profile={exerciseProfile}
+          setupNote={exerciseSetupNote(profileExercise, customExercises)}
+          pinned={pinnedExerciseNames.has(profileExercise)}
+          onTogglePinned={() => handleTogglePinnedExercise(profileExercise)}
+          onEdit={() => { setProfileExercise(null); setEditorExercise(profileExercise); }}
+          onStart={() => {
+            const name = profileExercise;
+            setProfileExercise(null);
+            setIsLibraryOpen(false);
+            handleStartRequest({
+              name: `${name} Odak`,
+              exercises: [{
+                name,
+                sets: Array.from({ length: 3 }, () => ({
+                  weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal',
+                })),
+              }],
+            });
+          }}
+          onClose={() => setProfileExercise(null)}
         />}
 
         {/* PROGRAM OLUŞTURUCU */}

@@ -1,5 +1,5 @@
 import { MUSCLE_GROUPS, getVolumeLandmarks } from './constants.js';
-import { detectMuscleGroup, estimate1RM, isWorkingSet, parseNumber } from './helpers.js';
+import { detectMuscleGroup, estimate1RM, isCompletedWorkingSet, parseNumber } from './helpers.js';
 import { toLocalDate } from './dates.js';
 
 const mondayKey = (value) => {
@@ -47,7 +47,7 @@ export const buildPersonalVolumeGuidance = (
 
     (workout.exercises || []).forEach(exercise => {
       const detected = detectMuscleGroup(exercise.name, customExercises);
-      const working = (exercise.sets || []).filter(isWorkingSet);
+      const working = (exercise.sets || []).filter(isCompletedWorkingSet);
       Object.entries(detected.contributions || {}).forEach(([muscle, coefficient]) => {
         if (volume[muscle]) volume[muscle][wk] += working.length * coefficient;
       });

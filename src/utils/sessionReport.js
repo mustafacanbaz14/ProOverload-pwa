@@ -1,5 +1,5 @@
 import { parseNumber } from './number.js';
-import { calcEffectiveSets, estimate1RM, isWorkingSet, detectMuscleGroup } from './helpers.js';
+import { calcEffectiveSets, estimate1RM, isWorkingSet, isCompletedWorkingSet, detectMuscleGroup } from './helpers.js';
 
 /**
  * Seans sonu raporu.
@@ -16,7 +16,7 @@ import { calcEffectiveSets, estimate1RM, isWorkingSet, detectMuscleGroup } from 
 
 /** Bir hareketin o seanstaki en iyi tahmini 1RM'i ve tonajı. */
 const exerciseStats = (exercise, resolveLoad = null, workout = null) => {
-  const working = (exercise?.sets || []).filter(isWorkingSet);
+  const working = (exercise?.sets || []).filter(isCompletedWorkingSet);
   let best = 0;
   let bestSet = null;
   let tonnage = 0;
@@ -32,6 +32,74 @@ const exerciseStats = (exercise, resolveLoad = null, workout = null) => {
 };
 
 /**
+ * Şablonun o anki halini seansa gömer. Şablon daha sonra düzenlense veya
+ * silinse bile geçmişteki "planlanan" değer değişmez.
+ */
+export const snapshotTemplatePlan = (template) => {
+  if (!template?.name || !Array.isArray(template.exercises)) return null;
+  const exercises = template.exercises
+    .map(exercise => ({
+      name: exercise?.name || '',
+      sets: (exercise?.sets || []).filter(isWorkingSet).length,
+    }))
+    .filter(exercise => exercise.name && exercise.sets > 0);
+  if (exercises.length === 0) return null;
+  return { name: template.name, exercises };
+};
+
+/** Şablondaki planlanan setlerle gerçekten tamamlanan setleri kıyaslar. */
+export const buildPlanAdherence = (workout) => {
+  const plan = workout?.plannedTemplate;
+  if (!plan || !Array.isArray(plan.exercises) || plan.exercises.length === 0) return null;
+
+  const planned = new Map();
+  plan.exercises.forEach(exercise => {
+    const name = typeof exercise?.name === 'string' ? exercise.name : '';
+    const sets = Math.max(0, Number(exercise?.sets) || 0);
+    if (name && sets > 0) planned.set(name, (planned.get(name) || 0) + sets);
+  });
+  if (planned.size === 0) return null;
+
+  const actual = new Map();
+  (workout.exercises || []).forEach(exercise => {
+    const sets = (exercise.sets || []).filter(isCompletedWorkingSet).length;
+    if (sets > 0) actual.set(exercise.name, (actual.get(exercise.name) || 0) + sets);
+  });
+
+  let matchedSets = 0;
+  let extraSets = 0;
+  const missedExercises = [];
+  const completedExercises = [];
+  planned.forEach((plannedSets, name) => {
+    const actualSets = actual.get(name) || 0;
+    matchedSets += Math.min(plannedSets, actualSets);
+    extraSets += Math.max(0, actualSets - plannedSets);
+    if (actualSets > 0) completedExercises.push(name);
+    else missedExercises.push(name);
+  });
+  const extraExercises = [...actual.keys()].filter(name => !planned.has(name));
+  extraExercises.forEach(name => { extraSets += actual.get(name) || 0; });
+
+  const plannedSets = [...planned.values()].reduce((sum, sets) => sum + sets, 0);
+  const completedSets = [...actual.values()].reduce((sum, sets) => sum + sets, 0);
+  const percent = plannedSets > 0 ? Math.min(100, Math.round((matchedSets / plannedSets) * 100)) : 0;
+
+  return {
+    templateName: plan.name || workout.name || 'Şablon',
+    plannedSets,
+    completedSets,
+    matchedSets,
+    percent,
+    plannedExercises: planned.size,
+    completedPlannedExercises: completedExercises.length,
+    missedExercises,
+    extraExercises,
+    extraSets,
+    label: percent >= 90 ? 'Plan tamamlandı' : percent >= 70 ? 'Büyük ölçüde tamamlandı' : 'Plan kısmen tamamlandı',
+  };
+};
+
+/**
  * @param workout      biten antrenman
  * @param history      diğer antrenmanlar (bu seans HARİÇ), tarihe göre azalan
  * @param opts.customExercises kas eşlemeleri
@@ -42,7 +110,7 @@ export const buildSessionReport = (workout, history = [], {
   previousRecords = new Map(),
   resolveLoad = null,
 } = {}) => {
-  const exercises = (workout?.exercises || []).filter(ex => (ex.sets || []).some(isWorkingSet));
+  const exercises = (workout?.exercises || []).filter(ex => (ex.sets || []).some(isCompletedWorkingSet));
   if (exercises.length === 0) return null;
 
   // Aynı hareketin en son yapıldığı seans — hareket bazında ayrı ayrı aranıyor,
@@ -52,7 +120,7 @@ export const buildSessionReport = (workout, history = [], {
     for (const w of history) {
       if (w.id === workout.id) continue;
       const ex = (w.exercises || []).find(e => e.name === name);
-      if (ex && (ex.sets || []).some(s => isWorkingSet(s) && parseNumber(s.reps) > 0)) {
+      if (ex && (ex.sets || []).some(isCompletedWorkingSet)) {
         // Geçen seans da kendi tarihindeki vücut ağırlığıyla çözülüyor;
         // yoksa kilo değişimi sahte bir ilerleme/gerileme üretirdi.
         return { date: w.date, stats: exerciseStats(ex, resolveLoad, w) };
@@ -115,11 +183,12 @@ export const buildSessionReport = (workout, history = [], {
   const ilerleyen = satirlar.filter(r => r.delta !== null && r.delta > 0);
   const gerileyen = satirlar.filter(r => r.delta !== null && r.delta < 0);
   const records = satirlar.filter(r => r.isPR);
+  const planAdherence = buildPlanAdherence(workout);
 
   // Bu seansın kas hacmi katkısı: haftalık tabloya ne eklendi.
   const byMuscle = {};
   exercises.forEach(ex => {
-    const sets = (ex.sets || []).filter(isWorkingSet).length;
+    const sets = (ex.sets || []).filter(isCompletedWorkingSet).length;
     const { contributions } = detectMuscleGroup(ex.name, customExercises);
     Object.entries(contributions || {}).forEach(([kas, agirlik]) => {
       byMuscle[kas] = Math.round(((byMuscle[kas] || 0) + sets * agirlik) * 4) / 4;
@@ -136,6 +205,7 @@ export const buildSessionReport = (workout, history = [], {
     records,
     improved: ilerleyen,
     declined: gerileyen,
+    planAdherence,
     byMuscle,
     topMuscles: Object.entries(byMuscle).sort((a, b) => b[1] - a[1]).slice(0, 3),
     headline: baslik({ records, ilerleyen, gerileyen, satirlar }),
