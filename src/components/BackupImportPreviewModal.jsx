@@ -1,8 +1,8 @@
 import React, { memo, useState } from 'react';
-import { AlertTriangle, CalendarDays, FileCheck2, GitMerge, Replace, X } from 'lucide-react';
+import { AlertTriangle, CalendarDays, FileCheck2, GitMerge, Replace, RefreshCw, X } from 'lucide-react';
 import { formatDay } from '../utils/dates';
 
-const BackupImportPreviewModal = memo(({ isOpen, fileName, inspection, onClose, onApply }) => {
+const BackupImportPreviewModal = memo(({ isOpen, fileName, inspection, migrations = [], onClose, onApply }) => {
   const [confirmReplace, setConfirmReplace] = useState(false);
   if (!isOpen || !inspection) return null;
 
@@ -18,6 +18,7 @@ const BackupImportPreviewModal = memo(({ isOpen, fileName, inspection, onClose, 
             <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-cyan-400">Güvenli Yedek Yükleme</span>
             <h2 id="backup-preview-title" className="mt-0.5 text-base font-black text-zinc-100">Dosyayı kontrol et</h2>
           </div>
+
           <button type="button" onClick={onClose} aria-label="Yedek önizlemesini kapat" className="rounded-xl p-2 text-zinc-500 active:bg-zinc-800 active:text-zinc-100">
             <X size={19} />
           </button>
@@ -34,6 +35,18 @@ const BackupImportPreviewModal = memo(({ isOpen, fileName, inspection, onClose, 
               </div>
             </div>
           </div>
+
+          {migrations.length > 0 && (
+            <div className="rounded-2xl border border-cyan-900/50 bg-cyan-950/20 p-3 flex items-start gap-2.5">
+              <RefreshCw size={15} className="mt-0.5 shrink-0 text-cyan-400" />
+              <div>
+                <p className="text-[10px] font-bold text-cyan-300">Eski yedek güvenle güncellenecek</p>
+                <p className="mt-0.5 text-[9px] font-mono leading-relaxed text-zinc-500">
+                  {migrations.map(item => item.description).join(' ')} Mevcut dosya değiştirilmez.
+                </p>
+              </div>
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-2">
             {inspection.items.map(item => (

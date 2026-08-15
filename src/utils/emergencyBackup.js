@@ -1,4 +1,5 @@
 import { APP_VERSION, STORAGE_VERSIONS } from './constants.js';
+import { createBackupPayload } from './dataSchema.js';
 
 const readWithFallback = (storage, name, fallback) => {
   for (const version of STORAGE_VERSIONS) {
@@ -16,19 +17,17 @@ const readWithFallback = (storage, name, fallback) => {
  * React henüz açılmadan çökerse bile standart içe aktarma biçiminde bir yedek
  * üretir. En yeni anahtar yoksa v16…v13 geri dönüşleri de denenir.
  */
-export const buildEmergencyBackup = (storage, exportedAt = new Date().toISOString()) => ({
-  schemaVersion: 3,
-  version: APP_VERSION,
-  exportedAt,
-  emergencyRecovery: true,
+export const buildEmergencyBackup = (storage, exportedAt = new Date().toISOString()) => createBackupPayload({
   workouts: readWithFallback(storage, 'workouts', []),
   templates: readWithFallback(storage, 'templates', []),
   customExercises: readWithFallback(storage, 'custom_exercises', []),
   customFoods: readWithFallback(storage, 'custom_foods', []),
   recentFoods: readWithFallback(storage, 'recent_foods', []),
+  mealTemplates: readWithFallback(storage, 'meal_templates', []),
+  dayTemplates: readWithFallback(storage, 'day_templates', []),
   metricsHistory: readWithFallback(storage, 'metrics', []),
   nutritionHistory: readWithFallback(storage, 'nutrition', []),
   wellness: readWithFallback(storage, 'wellness', []),
   cycleHistory: readWithFallback(storage, 'cycle', []),
   settings: readWithFallback(storage, 'settings', {}),
-});
+}, { version: APP_VERSION, exportedAt, emergencyRecovery: true });

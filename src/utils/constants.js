@@ -102,7 +102,11 @@ export const DELETE_LABELS = {
   cardio: 'Kardiyo kaydı'
 };
 
-export const BACKUP_KEYS = ['workouts', 'templates', 'customExercises', 'metricsHistory', 'nutritionHistory', 'mealTemplates', 'dayTemplates', 'wellness', 'cycleHistory', 'settings'];
+export const BACKUP_KEYS = [
+  'workouts', 'templates', 'customExercises', 'customFoods', 'recentFoods',
+  'metricsHistory', 'nutritionHistory', 'mealTemplates', 'dayTemplates',
+  'wellness', 'cycleHistory', 'settings',
+];
 
 export const DEFAULT_EXERCISES = [
   "Barbell Back Squat", "Barbell Front Squat", "Zercher Squat", "Hack Squat", "Bulgarian Split Squat", "Leg Press", "Walking Lunges",
@@ -597,28 +601,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '5.2';
+export const APP_VERSION = '5.3.0';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 5.2',
+  title: 'ProOverload 5.3',
   date: '2026-08-15',
   items: [
     {
-      title: 'Akıllı Sıradaki Antrenman',
-      desc: 'Antrenman Merkezi; bu haftaki MEV/MAV açığını, MRV tavanını ve son 48 saat yüklenmesini birlikte tartıp en uygun şablonu gerekçeleriyle öneriyor.'
+      title: 'Üç Basit Kullanım Yolu',
+      desc: 'Beslenme ekranı Hızlı, Öğünler ve Detaylı yollarına ayrıldı; gelişmiş NEAT alanları yalnızca istendiğinde açılıyor.'
     },
     {
-      title: 'Hareket Performans Profili',
-      desc: 'Kütüphanedeki her hareket artık seans trendini, tahmini 1RM veya hacim rekorunu, sıradaki progresyon hedefini ve kullanıldığı şablonları tek ekranda gösteriyor.'
+      title: 'Öğün, Gün ve Tarif Şablonları',
+      desc: 'Sık kullanılan öğünler, bütün günler ve porsiyon hesabı yapılan tarifler kaydedilip tek dokunuşla tekrar kullanılabiliyor.'
     },
     {
-      title: 'Plan – Gerçekleşen Uyumu',
-      desc: 'Şablondan başlayan seanslarda planın anlık görüntüsü korunuyor; seans sonunda tamamlanan, atlanan ve eklenen hareket/setler yüzde uyumla raporlanıyor.'
+      title: 'Geçmişten Hızlı Kopyalama',
+      desc: 'Dünün veya geçen haftanın aynı gününün beslenmesi kopyalanabiliyor; eski günün NEAT ve enerji varsayımları yeni güne taşınmıyor.'
     },
     {
-      title: 'Daha İşlevli Hareket Kütüphanesi',
-      desc: 'Boş kalan hareket satırları artık profile açılıyor; sık kullanılan hareketler açıkça sabitlenebiliyor ve seçim listesinde öncelikli tutuluyor.'
+      title: 'Açıklanabilir Enerji Hesabı',
+      desc: 'Bazal metabolizma, günlük hareket, termik etki ve egzersiz kalemlerinde sayının hangi veri veya formülden geldiği açıkça gösteriliyor.'
     }
   ]
 };

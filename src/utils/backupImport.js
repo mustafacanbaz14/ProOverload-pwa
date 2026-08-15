@@ -4,6 +4,8 @@ const ARRAY_FIELDS = [
   { key: 'customExercises', label: 'Özel hareket' },
   { key: 'customFoods', label: 'Özel besin' },
   { key: 'recentFoods', label: 'Son besin' },
+  { key: 'mealTemplates', label: 'Öğün şablonu' },
+  { key: 'dayTemplates', label: 'Beslenme şablonu' },
   { key: 'metricsHistory', alias: 'm', label: 'Vücut ölçümü' },
   { key: 'nutritionHistory', alias: 'n', label: 'Beslenme günü' },
   { key: 'wellness', label: 'Toparlanma günü' },
@@ -75,4 +77,3 @@ export const backupImportSummary = (inspection) => inspection?.items
   .slice(0, 3)
   .map(item => `${item.count} ${item.label.toLocaleLowerCase('tr')}`)
   .join(' · ') || 'ayarlar';
-

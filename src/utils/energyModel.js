@@ -198,15 +198,25 @@ export const dayEnergyBreakdown = ({
     ? Math.round(base + neat + tef.total + eat + epoc)
     : Math.round(base + tef.total + eat + epoc);
 
+  const neatSourceLabel = neatSource === 'manual'
+    ? 'Elle girildi'
+    : neatSource === 'steps'
+      ? 'Adım kaydından'
+      : neatSource === 'level'
+        ? 'Aktivite seviyesinden'
+        : neatSource === 'auto'
+          ? 'Adaptif TDEE artığından'
+          : 'Hesaplanamadı';
+
   const parts = [
-    { key: 'bmr', label: 'Bazal Metabolizma', value: base, color: 'bg-zinc-500', hint: 'Hiçbir şey yapmasan da yakılan' },
-    { key: 'neat', label: 'Günlük Hareket', value: neat ?? 0, color: 'bg-cyan-500', hint: 'Yürüme, ayakta durma, iş' },
-    { key: 'tef', label: `Sindirim (Termik)${tefEstimated ? ' · Tahmini' : ''}`, value: tef.total, color: 'bg-amber-500', hint: tefEstimated ? 'Besin girilene kadar son ortalamadan hesaplanır' : 'Girdiğin makrolardan hesaplandı' },
-    { key: 'lifting', label: 'Ağırlık Antrenmanı', value: eatLifting, color: 'bg-emerald-500', hint: 'Seans süresi × şiddet' },
-    { key: 'cardio', label: 'Kardiyo', value: eatCardio, color: 'bg-red-500', hint: 'Aktiviteye göre MET değeri' },
-    { key: 'recovery', label: 'Meditasyon & Esneme', value: eatRecovery, color: 'bg-violet-500', hint: 'Dinlenmenin üstündeki küçük hareket katkısı' },
-    { key: 'manual', label: 'Elle Eklenen', value: eatManual, color: 'bg-purple-500', hint: 'Senin girdiğin ekstra' },
-    { key: 'epoc', label: 'Toparlanma (EPOC)', value: epoc, color: 'bg-orange-500', hint: 'Antrenman sonrası yükselen metabolizma' },
+    { key: 'bmr', label: 'Bazal Metabolizma', value: base, color: 'bg-zinc-500', hint: 'Hiçbir şey yapmasan da yakılan', source: 'O günün vücut ölçümünden' },
+    { key: 'neat', label: 'Günlük Hareket', value: neat ?? 0, color: 'bg-cyan-500', hint: 'Yürüme, ayakta durma, iş', source: neatSourceLabel },
+    { key: 'tef', label: `Sindirim (Termik)${tefEstimated ? ' · Tahmini' : ''}`, value: tef.total, color: 'bg-amber-500', hint: tefEstimated ? 'Besin girilene kadar son ortalamadan hesaplanır' : 'Girdiğin makrolardan hesaplandı', source: tefEstimated ? 'Geçici makro tahmini' : 'Kayıtlı makrolardan' },
+    { key: 'lifting', label: 'Ağırlık Antrenmanı', value: eatLifting, color: 'bg-emerald-500', hint: 'Seans süresi × şiddet', source: 'Kayıtlı antrenmandan' },
+    { key: 'cardio', label: 'Kardiyo', value: eatCardio, color: 'bg-red-500', hint: 'Aktiviteye göre MET değeri', source: 'Kayıtlı kardiyodan' },
+    { key: 'recovery', label: 'Meditasyon & Esneme', value: eatRecovery, color: 'bg-violet-500', hint: 'Dinlenmenin üstündeki küçük hareket katkısı', source: 'Toparlanma kaydından' },
+    { key: 'manual', label: 'Elle Eklenen', value: eatManual, color: 'bg-purple-500', hint: 'Senin girdiğin ekstra', source: 'Elle girildi' },
+    { key: 'epoc', label: 'Toparlanma (EPOC)', value: epoc, color: 'bg-orange-500', hint: 'Antrenman sonrası yükselen metabolizma', source: 'Egzersizden formül tahmini' },
   ].filter(p => p.value > 0);
 
   return {

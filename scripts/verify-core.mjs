@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks } from '../src/utils/constants.js';
+import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import { suggestSubstitutes } from '../src/utils/substitution.js';
 import { analyzeDayConflicts } from '../src/utils/interference.js';
@@ -21,6 +21,10 @@ import { mergeWellnessDay, computeSleepScore } from '../src/utils/wellness.js';
 import { migrateWeekPlans, removeTemplateFromPlans } from '../src/utils/planMigration.js';
 import { suggestNextTarget, mergeWorkout, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords } from '../src/utils/helpers.js';
 import { dailyTotals, nutritionDayScore } from '../src/utils/nutritionStats.js';
+import {
+  createDayTemplate, createMealTemplate, createRecipeTemplate,
+  instantiateDayTemplate, instantiateMealTemplate,
+} from '../src/utils/nutritionTemplates.js';
 import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/utils/insights.js';
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
 import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
@@ -42,6 +46,7 @@ import {
   instantiateDraftProgram, suggestedWeekdays,
 } from '../src/utils/programDraft.js';
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
+import { createBackupPayload, migrateBackupPayload, DATA_SCHEMA_VERSION } from '../src/utils/dataSchema.js';
 import { buildFrequencyReport, frequencyCoachItem } from '../src/utils/frequency.js';
 import { workoutsToCsv, metricsToCsv } from '../src/utils/csvExport.js';
 import { STARTER_PROGRAMS, instantiateStarterProgram } from '../src/utils/starterPrograms.js';
@@ -226,6 +231,32 @@ test('yedek birleştirmede aynı anahtarın yedek sürümü kazanır ve yerel e�
   ]);
 });
 
+test('şema v4 tüm kalıcı yedek koleksiyonlarını tek çıktıda korur', () => {
+  const backup = createBackupPayload({
+    workouts: [{ id: 'w1' }],
+    mealTemplates: [{ id: 'meal-1', name: 'Kahvaltı' }],
+    dayTemplates: [{ id: 'day-1', name: 'Antrenman Günü' }],
+    settings: { theme: 'dark' },
+  }, { version: APP_VERSION, exportedAt: '2026-08-15T10:00:00.000Z' });
+  assert.equal(backup.schemaVersion, DATA_SCHEMA_VERSION);
+  assert.equal(backup.mealTemplates[0].id, 'meal-1');
+  assert.equal(backup.dayTemplates[0].id, 'day-1');
+  BACKUP_KEYS.forEach(key => assert.ok(Object.hasOwn(backup, key), `yedekte ${key} eksik`));
+  assert.equal(inspectBackupPayload(backup).valid, true);
+});
+
+test('eski yedek şema v4 biçimine idempotent taşınır', () => {
+  const old = { schemaVersion: 3, version: '5.2', workouts: [{ id: 'w1' }], settings: {} };
+  const first = migrateBackupPayload(old);
+  const second = migrateBackupPayload(first.payload);
+  assert.equal(first.payload.schemaVersion, DATA_SCHEMA_VERSION);
+  assert.deepEqual(first.payload.mealTemplates, []);
+  assert.deepEqual(first.payload.dayTemplates, []);
+  assert.equal(first.applied.length, 1);
+  assert.equal(second.applied.length, 0);
+  assert.deepEqual(second.payload, first.payload);
+});
+
 test('silinen kayıt aynı sıraya geri alınır ve ikinci kez çoğalmaz', () => {
   const source = [{ id: 'a' }, { id: 'b' }, { id: 'c' }];
   const snapshot = removeById(source, 'b');
@@ -256,11 +287,16 @@ test('acil yedek en yeni kayıt yoksa eski depolama sürümüne düşer', () => 
     ['po_workouts_v16', JSON.stringify([{ id: 'legacy-workout' }])],
     ['po_metrics_v17', '{bozuk-json'],
     ['po_metrics_v15', JSON.stringify([{ id: 'safe-metric' }])],
+    ['po_meal_templates_v17', JSON.stringify([{ id: 'meal-safe' }])],
+    ['po_day_templates_v17', JSON.stringify([{ id: 'day-safe' }])],
   ]);
   const backup = buildEmergencyBackup({ getItem: key => values.get(key) ?? null }, '2026-08-06T12:00:00.000Z');
   assert.equal(backup.version, APP_VERSION);
   assert.equal(backup.workouts[0].id, 'legacy-workout');
   assert.equal(backup.metricsHistory[0].id, 'safe-metric');
+  assert.equal(backup.mealTemplates[0].id, 'meal-safe');
+  assert.equal(backup.dayTemplates[0].id, 'day-safe');
+  assert.equal(backup.schemaVersion, DATA_SCHEMA_VERSION);
   assert.equal(backup.emergencyRecovery, true);
 });
 
@@ -393,6 +429,7 @@ test('besin girilmediyse termik etki tahmini olarak işaretlenir', () => {
   assert.equal(result.tefEstimated, true);
   assert.ok(result.tef.total > 0);
   assert.ok(result.parts.find(part => part.key === 'tef').label.includes('Tahmini'));
+  assert.equal(result.parts.find(part => part.key === 'tef').source, 'Geçici makro tahmini');
 });
 
 test('teorik rutin TDEE içindeki ortalama egzersizi ikinci kez saymaz ve kardiyoyu gün sayar', () => {
@@ -518,6 +555,49 @@ test('beslenme toplamı mikro değerleri ve öğünleri birlikte toplar', () => 
   assert.equal(totals.protein, 55);
   assert.equal(totals.fiber, 11);
   assert.ok(Math.abs(totals.sodium - 0.6) < 0.0001);
+});
+
+test('öğün şablonu her kullanımda bağımsız kimlik ve kaynak üretir', () => {
+  let id = 0;
+  const template = createMealTemplate(
+    { id: 'old', name: 'Kahvaltı', calories: 500, protein: 35, carbs: 50, fats: 18 },
+    'Standart Kahvaltı',
+    () => `id-${id += 1}`,
+    '2026-08-15T00:00:00.000Z',
+  );
+  const first = instantiateMealTemplate(template, () => `id-${id += 1}`);
+  const second = instantiateMealTemplate(template, () => `id-${id += 1}`);
+  assert.notEqual(first.id, second.id);
+  assert.equal(first.source.label, 'Öğün şablonu');
+  first.protein = 99;
+  assert.equal(template.meal.protein, 35);
+});
+
+test('tarif toplamı porsiyon sayısına bölünür', () => {
+  let id = 0;
+  const recipe = createRecipeTemplate('Fırın Yulaf', [
+    { name: 'Yulaf', calories: 600, protein: 20, carbs: 100, fats: 12 },
+    { name: 'Yoğurt', calories: 300, protein: 30, carbs: 20, fats: 8 },
+  ], 3, () => `id-${id += 1}`, '2026-08-15T00:00:00.000Z');
+  assert.equal(recipe.meal.calories, 300);
+  assert.equal(recipe.meal.protein, 16.7);
+  assert.equal(recipe.servings, 3);
+});
+
+test('gün şablonu eski tarihin NEAT ve enerji alanlarını yeni güne taşımaz', () => {
+  let id = 0;
+  const template = createDayTemplate({
+    date: '2026-08-08', entryMode: 'meals', waterMl: 2500,
+    neatMultiplier: 1.4, activeCaloriesOut: 700, energySnapshot: { total: 4200 },
+    meals: [{ id: 'old', name: 'Öğün', calories: 800, protein: 50, carbs: 90, fats: 25 }],
+  }, 'Antrenman Günü', () => `id-${id += 1}`, '2026-08-15T00:00:00.000Z');
+  const day = instantiateDayTemplate(template, '2026-08-15', () => `id-${id += 1}`);
+  assert.equal(day.date, '2026-08-15');
+  assert.equal(day.meals.length, 1);
+  assert.equal(day.neatMultiplier, undefined);
+  assert.equal(day.activeCaloriesOut, undefined);
+  assert.equal(day.energySnapshot, undefined);
+  assert.equal(day.meals[0].source.label, 'Gün şablonu');
 });
 
 test('günlük beslenme uyumu hedef ve suya göre puanlanır', () => {
@@ -662,8 +742,8 @@ test('ekrandaki sürüm package.json ile aynı', () => {
   // İkisi ayrışınca sürüm notları açılmıyor ve yedek dosyası eski sürümü
   // yazıyordu; sessiz kaldığı için de fark edilmiyordu.
   assert.equal(APP_VERSION, pkg.version);
-  // Sürüm iki parçalı: MAJOR.MINOR. Yama parçası kullanılmıyor.
-  assert.match(pkg.version, /^\d+\.\d+$/);
+  // Yama sürümü isteğe bağlıdır: MAJOR.MINOR veya MAJOR.MINOR.PATCH.
+  assert.match(pkg.version, /^\d+\.\d+(?:\.\d+)?$/);
   assert.equal(LATEST_RELEASE_NOTES.version, pkg.version);
   assert.equal(lock.version, pkg.version);
   assert.equal(lock.packages?.['']?.version, pkg.version);

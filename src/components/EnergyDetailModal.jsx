@@ -165,6 +165,7 @@ const EnergyDetailModal = memo(({
                       <span className="min-w-0">
                         <span className="text-[11px] font-bold text-zinc-200 block truncate">{p.label}</span>
                         <span className="text-[9px] font-mono text-zinc-600 block leading-snug">{p.hint}</span>
+                        <span className="inline-block mt-0.5 rounded border border-zinc-800 px-1 py-0.5 text-[8px] font-mono text-zinc-500">{p.source}</span>
                       </span>
                     </span>
                     <span className="text-[11px] font-mono text-zinc-300 shrink-0">
@@ -319,10 +320,13 @@ const EnergyDetailModal = memo(({
                                   Harcama dökümü
                                 </span>
                                 {d.breakdown.parts.map(p => (
-                                  <div key={p.key} className="flex justify-between items-center">
-                                    <span className="flex items-center gap-1.5">
+                                  <div key={p.key} className="flex justify-between items-start gap-2">
+                                    <span className="flex items-start gap-1.5 min-w-0">
                                       <span className={`w-1.5 h-1.5 rounded-full ${p.color}`} />
-                                      <span className="text-zinc-400">{p.label}</span>
+                                      <span className="min-w-0">
+                                        <span className="text-zinc-400 block">{p.label}</span>
+                                        <span className="text-[8px] text-zinc-600 block">{p.source}</span>
+                                      </span>
                                     </span>
                                     <span className="text-zinc-300">{p.value} kcal</span>
                                   </div>

@@ -9,6 +9,8 @@ export const useAppPersistence = ({
   customExercises,
   customFoods,
   recentFoods,
+  mealTemplates,
+  dayTemplates,
   activeWorkout,
   metricsHistory,
   nutritionHistory,
@@ -29,6 +31,8 @@ export const useAppPersistence = ({
   useEffect(() => { persist('custom_exercises', customExercises); }, [customExercises, persist]);
   useEffect(() => { persist('custom_foods', customFoods); }, [customFoods, persist]);
   useEffect(() => { persist('recent_foods', recentFoods); }, [recentFoods, persist]);
+  useEffect(() => { persist('meal_templates', mealTemplates); }, [mealTemplates, persist]);
+  useEffect(() => { persist('day_templates', dayTemplates); }, [dayTemplates, persist]);
   useEffect(() => { persist('active_workout', activeWorkout); }, [activeWorkout, persist]);
   useEffect(() => { persist('metrics', metricsHistory); }, [metricsHistory, persist]);
   useEffect(() => { persist('nutrition', nutritionHistory); }, [nutritionHistory, persist]);

@@ -25,6 +25,11 @@ const FoodSearchModal = memo(({
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('Tümü');
   const [servingGram, setServingGram] = useState(100);
+  const [servingUnit, setServingUnit] = useState('g');
+  const [unitGram, setUnitGram] = useState(100);
+  const effectiveGram = servingUnit === 'g'
+    ? (parseNumber(servingGram) || 100)
+    : Math.max(1, parseNumber(servingGram) || 1) * Math.max(1, parseNumber(unitGram) || 100);
 
   const [onlineMode, setOnlineMode] = useState('text'); // 'text' | 'barcode'
   const [loading, setLoading] = useState(false);
@@ -117,13 +122,13 @@ const FoodSearchModal = memo(({
   };
 
   const addToMeal = (food) => {
-    const factor = (parseNumber(servingGram) || 100) / 100;
+    const factor = effectiveGram / 100;
     const scale = (v, digits = 1) => {
       const m = Math.pow(10, digits);
       return Math.round(parseNumber(v) * factor * m) / m;
     };
     onAddFoodToMeal({
-      name: `${food.name}${food.brand ? ` (${food.brand})` : ''} · ${servingGram}g`,
+      name: `${food.name}${food.brand ? ` (${food.brand})` : ''} · ${servingUnit === 'g' ? `${servingGram}g` : `${servingGram} ${servingUnit}`}`,
       calories: Math.round(parseNumber(food.calories100g) * factor),
       protein: scale(food.protein100g),
       carbs: scale(food.carbs100g),
@@ -133,6 +138,12 @@ const FoodSearchModal = memo(({
       ...(food.fiber100g ? { fiber: scale(food.fiber100g) } : {}),
       ...(food.sugars100g ? { sugars: scale(food.sugars100g) } : {}),
       ...(food.sodium100g ? { sodium: scale(food.sodium100g, 3) } : {}),
+      serving: { amount: parseNumber(servingGram), unit: servingUnit, grams: effectiveGram },
+      source: {
+        type: food.source || 'local',
+        label: food.source === 'online' ? 'Open Food Facts' : food.source === 'custom' ? 'Kendi besinin' : 'Yerel veri',
+        foodId: food.id,
+      },
     }, food);
     onClose();
   };
@@ -294,10 +305,22 @@ const FoodSearchModal = memo(({
                 </div>
               )}
 
-              <div className="flex items-center justify-between text-[11px] font-mono text-zinc-400">
-                <span>Porsiyon</span>
-                <div className="flex items-center gap-1.5">
-                  {[50, 100, 150, 200].map(g => (
+              <div className="space-y-2 text-[11px] font-mono text-zinc-400">
+                <div className="flex items-center justify-between gap-2">
+                  <span>Porsiyon</span>
+                  <select value={servingUnit} onChange={event => {
+                    const unit = event.target.value;
+                    setServingUnit(unit);
+                    setServingGram(unit === 'g' ? 100 : 1);
+                  }} className="bg-zinc-900 border border-zinc-800 rounded-lg px-2 py-1 text-[10px] text-orange-400 outline-none">
+                    <option value="g">gram</option>
+                    <option value="adet">adet</option>
+                    <option value="dilim">dilim</option>
+                    <option value="porsiyon">porsiyon</option>
+                  </select>
+                </div>
+                <div className="flex items-center justify-end gap-1.5">
+                  {servingUnit === 'g' && [50, 100, 150, 200].map(g => (
                     <button
                       key={g}
                       onClick={() => setServingGram(g)}
@@ -312,8 +335,15 @@ const FoodSearchModal = memo(({
                     onChange={(e) => setServingGram(parseNumber(e.target.value) || 0)}
                     className="w-14 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center font-mono text-orange-400 outline-none"
                   />
-                  <span className="text-zinc-500">g</span>
+                  <span className="text-zinc-500">{servingUnit}</span>
                 </div>
+                {servingUnit !== 'g' && (
+                  <label className="flex items-center justify-end gap-1.5 text-[9px] text-zinc-600">
+                    1 {servingUnit} =
+                    <input type="number" inputMode="decimal" min="1" max="2000" value={unitGram} onChange={event => setUnitGram(parseNumber(event.target.value) || 0)} className="w-14 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center font-mono text-orange-400 outline-none" />
+                    g <span className="text-zinc-500">· toplam {Math.round(effectiveGram)}g</span>
+                  </label>
+                )}
               </div>
             </>
           )}
@@ -422,7 +452,7 @@ const FoodSearchModal = memo(({
               )}
 
               {results.map((food) => {
-                const factor = (parseNumber(servingGram) || 100) / 100;
+                const factor = effectiveGram / 100;
                 const macros = [
                   { label: 'KCAL', value: Math.round(food.calories100g * factor), color: 'text-cyan-400' },
                   { label: 'PROT', value: `${Math.round(food.protein100g * factor * 10) / 10}g`, color: 'text-emerald-400' },

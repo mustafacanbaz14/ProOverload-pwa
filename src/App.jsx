@@ -40,6 +40,8 @@ import { backupValue, inspectBackupPayload, mergeImportedRecords, backupImportSu
 import { useAppPersistence } from './hooks/useAppPersistence';
 import { useDisplayPreferences } from './hooks/useDisplayPreferences';
 import { useDeferredPwaUpdate } from './hooks/useDeferredPwaUpdate';
+import { useAppDataState } from './hooks/useAppDataState';
+import { createBackupPayload, migrateBackupPayload } from './utils/dataSchema';
 // Sürüm tek kaynaktan okunur: package.json. Ekranda gösterilen sürüm ile
 // yedek dosyasına yazılan sürümün birbirinden sapması böyle engellenir.
 import pkg from '../package.json';
@@ -112,10 +114,28 @@ const ModalLoadingFallback = () => (
 
 export default function App() {
   const [initial] = useState(loadPersistedState);
-
-  const [workouts, setWorkouts] = useState(initial.workouts);
-  const [templates, setTemplates] = useState(initial.templates);
-  const [activeWorkout, setActiveWorkout] = useState(initial.activeWorkout);
+  const appData = useAppDataState(initial);
+  const {
+    workouts, setWorkouts,
+    templates, setTemplates,
+    activeWorkout, setActiveWorkout,
+    customExercises, setCustomExercises,
+  } = appData.training;
+  const {
+    customFoods, setCustomFoods,
+    recentFoods, setRecentFoods,
+    mealTemplates, setMealTemplates,
+    dayTemplates, setDayTemplates,
+    nutritionHistory, setNutritionHistory,
+    currentNutritionForm, setCurrentNutritionForm,
+  } = appData.nutrition;
+  const {
+    metricsHistory, setMetricsHistory,
+    currentMetricsForm, setCurrentMetricsForm,
+  } = appData.body;
+  const { wellness, setWellness, cycleHistory, setCycleHistory } = appData.recovery;
+  const { settings, setSettings } = appData.preferences;
+  const { lastBackupDate, setLastBackupDate } = appData.meta;
 
   const [preWorkoutModal, setPreWorkoutModal] = useState(null);
   const [isEndWorkoutModalOpen, setIsEndWorkoutModalOpen] = useState(false);
@@ -126,9 +146,6 @@ export default function App() {
   const [analysisType, setAnalysisType] = useState('body');
   const [progressTab, setProgressTab] = useState('body');
 
-  const [customExercises, setCustomExercises] = useState(initial.customExercises);
-  const [customFoods, setCustomFoods] = useState(initial.customFoods);
-  const [recentFoods, setRecentFoods] = useState(initial.recentFoods);
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
@@ -195,16 +212,6 @@ export default function App() {
   const [newExContribs, setNewExContribs] = useState({});
   const [newExMechanics, setNewExMechanics] = useState('Push');
 
-  const [settings, setSettings] = useState(initial.settings);
-  // Uyku ve meditasyon/esneme: tarih başına tek kayıt.
-  const [wellness, setWellness] = useState(initial.wellness);
-  const [cycleHistory, setCycleHistory] = useState(initial.cycleHistory);
-  const [metricsHistory, setMetricsHistory] = useState(initial.metricsHistory);
-  const [currentMetricsForm, setCurrentMetricsForm] = useState(initial.currentMetricsForm);
-
-  const [nutritionHistory, setNutritionHistory] = useState(initial.nutritionHistory);
-  const [currentNutritionForm, setCurrentNutritionForm] = useState(initial.currentNutritionForm);
-
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, type: null, id: null });
   const [rest, setRest] = useState(null);
   const [restSecondsLeft, setRestSecondsLeft] = useState(0);
@@ -212,7 +219,6 @@ export default function App() {
   const [analysisExercise, setAnalysisExercise] = useState('');
   const [bodyMetricKey, setBodyMetricKey] = useState('weight');
 
-  const [lastBackupDate, setLastBackupDate] = useState(initial.lastBackupDate);
   const [isMeasurementGuideOpen, setIsMeasurementGuideOpen] = useState(false);
 
   const [toast, setToast] = useState(null);
@@ -293,6 +299,7 @@ export default function App() {
 
   useAppPersistence({
     workouts, templates, customExercises, customFoods, recentFoods,
+    mealTemplates, dayTemplates,
     activeWorkout, metricsHistory, nutritionHistory, wellness, cycleHistory, settings,
   }, showToast);
   useDisplayPreferences(settings);
@@ -371,7 +378,7 @@ export default function App() {
       if (hidden.has(name)) hidden.delete(name); else hidden.add(name);
       return { ...prev, hidden1RMExercises: [...hidden] };
     });
-  }, []);
+  }, [setSettings]);
 
   // Yerleşik veritabanında olmayan her ad kullanıcının kendi eklediğidir.
   // Yerleşik bir hareketin kas eşlemesini düzenlemek de customExercises'a kayıt
@@ -499,7 +506,7 @@ export default function App() {
       activePlanId: kurulum.plan.id,
     }));
     showToast(`${program.name} kuruldu — ${kurulum.templates.length} şablon eklendi.`);
-  }, [showToast]);
+  }, [setSettings, setTemplates, showToast]);
 
   /** Sihirbazın ürettiği programı şablonlara ve haftalık plana yazar. */
   const handleInstallGenerated = useCallback((built) => {
@@ -513,7 +520,7 @@ export default function App() {
       activePlanId: kurulum.plan.id,
     }));
     showToast(`${kurulum.plan.name} kuruldu — ${kurulum.templates.length} şablon eklendi.`);
-  }, [showToast]);
+  }, [setSettings, setTemplates, showToast]);
 
   /**
    * Şablonu kopyalar.
@@ -529,13 +536,13 @@ export default function App() {
     if (!kopya) return;
     setTemplates(prev => [...prev, kopya]);
     showToast(`${template.name} kopyalandı.`);
-  }, [showToast]);
+  }, [setTemplates, showToast]);
 
   const handleToggleTemplateFavorite = useCallback((template) => {
     if (!template?.id) return;
     setTemplates(prev => toggleTemplateFavorite(prev, template.id));
     showToast(template.favorite ? 'Şablon favorilerden çıkarıldı.' : 'Şablon favorilere eklendi.');
-  }, [showToast]);
+  }, [setTemplates, showToast]);
 
   const handleNormalizeBodyweight = useCallback(() => {
     const { workouts: next, changed } = normalizeBodyweightEntries(workouts, {
@@ -552,7 +559,7 @@ export default function App() {
     // seçilmesi ileride sınıra yakın bir setin yanlış okunmasını da engelliyor.
     setSettings(prev => ({ ...prev, bodyweightEntry: 'added' }));
     showToast(`${changed} set ek yük biçimine çevrildi.`);
-  }, [workouts, sortedMetrics, currentMetricsForm, customExercises, showToast]);
+  }, [workouts, sortedMetrics, currentMetricsForm, customExercises, setSettings, setWorkouts, showToast]);
 
   /** Tonaj hesapları için o tarihin vücut ağırlığı bağlamı. */
   const loadOptsFor = useCallback((dateStr) => ({
@@ -840,7 +847,7 @@ export default function App() {
     });
     setIsExerciseModalOpen(false);
     setExerciseSearchQuery('');
-  }, []);
+  }, [setActiveWorkout]);
 
   const addSet = useCallback((exerciseId) => {
     setActiveWorkout(prev => ({
@@ -855,7 +862,7 @@ export default function App() {
         return ex;
       })
     }));
-  }, [settings.autoCopyLastSet]);
+  }, [settings.autoCopyLastSet, setActiveWorkout]);
 
   const updateSet = useCallback((exerciseId, setId, field, value) => {
     // Rekor tespiti: yalnızca ağırlık/tekrar değişince ve set anlamlı hale
@@ -882,7 +889,7 @@ export default function App() {
       exercises: (prev?.exercises || []).map(ex => ex.id === exerciseId
         ? { ...ex, sets: (ex.sets || []).map(s => s.id === setId ? { ...s, [field]: value } : s) } : ex)
     }));
-  }, []);
+  }, [setActiveWorkout]);
 
   /**
    * Hareketi bir sıra yukarı/aşağı taşır.
@@ -899,7 +906,7 @@ export default function App() {
       [list[from], list[to]] = [list[to], list[from]];
       return { ...prev, exercises: list };
     });
-  }, []);
+  }, [setActiveWorkout]);
 
   /**
    * Isınma piramidini harekete ekler.
@@ -929,11 +936,11 @@ export default function App() {
       } : ex),
     } : prev);
     showToast(`${steps.length} ısınma seti eklendi.`);
-  }, [showToast]);
+  }, [setActiveWorkout, showToast]);
 
   const removeSet = useCallback((exerciseId, setId) => {
     setActiveWorkout(prev => ({ ...prev, exercises: (prev?.exercises || []).map(ex => ex.id === exerciseId ? { ...ex, sets: (ex.sets || []).filter(s => s.id !== setId) } : ex) }));
-  }, []);
+  }, [setActiveWorkout]);
 
   // Sıralı liste üzerinden gezilir: sırasız bir dizide ilk eşleşme en eski seans olur
   // ve "geçen antrenman" bilgisi ile progresyon önerisi yanlış çıkardı.
@@ -1183,21 +1190,21 @@ export default function App() {
     setCurrentMetricsForm(prev => sonuncu
       ? { ...mergeMetrics(sonuncu), id: generateId(), date }
       : { ...prev, date });
-  }, [metricsHistory]);
+  }, [metricsHistory, setCurrentMetricsForm]);
 
   const handleEditMetric = useCallback((metric) => {
     setCurrentMetricsForm(mergeMetrics(metric));
     setProgressTab('body');
     setView('progress');
     showToast('Ölçüm düzenleniyor.');
-  }, [showToast]);
+  }, [setCurrentMetricsForm, showToast]);
 
   // Geçmişteki bir beslenme kaydını beslenme sayfasında düzenlemeye açar.
   const handleEditNutrition = useCallback((entry) => {
     setCurrentNutritionForm(mergeNutrition(entry));
     setView('nutrition');
     showToast('Beslenme kaydı düzenleniyor.');
-  }, [showToast]);
+  }, [setCurrentNutritionForm, showToast]);
 
   const handleSaveNutrition = () => {
     const date = currentNutritionForm.date;
@@ -1263,7 +1270,7 @@ export default function App() {
       }
     });
     showToast('Geçmiş antrenman düzenleniyor.');
-  }, [showToast]);
+  }, [setActiveWorkout, showToast]);
 
   // Geçmiş bir seansı bugün için şablon olarak tekrarlar.
   const handleRepeatWorkout = useCallback((workout) => {
@@ -1287,14 +1294,14 @@ export default function App() {
     });
     setIsExerciseModalOpen(true);
     showToast(`${formatDay(date, 'short')} için antrenman oluşturuluyor.`);
-  }, [showToast]);
+  }, [setActiveWorkout, showToast]);
 
   const handleAddHistoricalNutrition = useCallback((date) => {
     const existing = nutritionHistory.find(record => record.date === date);
     setCurrentNutritionForm(mergeNutrition(existing || { id: generateId(), date, manualEntry: true }));
     setView('nutrition');
     showToast(existing ? 'Bu günün beslenme kaydı düzenleniyor.' : 'Geçmiş beslenme kaydı oluşturuluyor.');
-  }, [nutritionHistory, showToast]);
+  }, [nutritionHistory, setCurrentNutritionForm, showToast]);
 
   const handleAddHistoricalMetric = useCallback((date) => {
     handleMetricsDateChange(date);
@@ -1334,7 +1341,7 @@ export default function App() {
           idx === i || idx === i + 1 ? { ...e, supersetId: groupId } : e)
       };
     });
-  }, []);
+  }, [setActiveWorkout]);
 
   // --- ŞABLONLAR ---
 
@@ -1352,7 +1359,7 @@ export default function App() {
     }
     setTemplates(prev => [template, ...prev]);
     showToast(`"${suggested}" şablon olarak kaydedildi.`);
-  }, [customExercises, showToast]);
+  }, [customExercises, setTemplates, showToast]);
 
 
   // --- HAREKET KAS EŞLEMESİ ---
@@ -1370,7 +1377,7 @@ export default function App() {
     });
     setEditorExercise(null);
     showToast('Kaydedildi.');
-  }, [showToast]);
+  }, [setCustomExercises, showToast]);
 
   /**
    * Kas eşlemesini yerleşik kurala döndürür.
@@ -1388,7 +1395,7 @@ export default function App() {
     }));
     setEditorExercise(null);
     showToast('Varsayılan eşlemeye dönüldü.');
-  }, [showToast]);
+  }, [setCustomExercises, showToast]);
 
   // --- HAREKET KÜTÜPHANESİ ---
 
@@ -1408,7 +1415,7 @@ export default function App() {
       else { hidden.delete(name); if (!performedNames.has(name)) pinned.add(name); }
       return { ...prev, hiddenExercises: [...hidden], pinnedExercises: [...pinned] };
     });
-  }, [performedNames]);
+  }, [performedNames, setSettings]);
 
   const handleTogglePinnedExercise = useCallback((name) => {
     const wasPinned = (settings.pinnedExercises || []).includes(name);
@@ -1420,7 +1427,7 @@ export default function App() {
       return { ...prev, pinnedExercises: [...pinned], hiddenExercises: [...hidden] };
     });
     showToast(wasPinned ? 'Hareket sabitlemesi kaldırıldı.' : 'Hareket seçim listesine sabitlendi.');
-  }, [settings.pinnedExercises, showToast]);
+  }, [settings.pinnedExercises, setSettings, showToast]);
 
   const handleDeleteExercise = useCallback((name) => {
     const index = customExercises.findIndex(ex => (typeof ex === 'object' ? ex.name : ex) === name);
@@ -1445,7 +1452,7 @@ export default function App() {
       });
       setSettings(prev => ({ ...prev, ...visibility }));
     });
-  }, [customExercises, settings.hiddenExercises, settings.pinnedExercises, showUndoToast]);
+  }, [customExercises, settings.hiddenExercises, settings.pinnedExercises, setCustomExercises, setSettings, showUndoToast]);
 
   // Program oluşturucu her dolu günü ayrı bir şablon yapar: uygulamanın şablon
   // modeli tek seanslık, program adı gün adının önüne eklenir.
@@ -1471,7 +1478,7 @@ export default function App() {
       };
     }));
     showToast('Şablon güncellendi.');
-  }, [showToast]);
+  }, [setTemplates, showToast]);
 
   const handleSaveProgram = useCallback((programName, days, { createWeekPlan = true } = {}) => {
     const installation = instantiateDraftProgram(programName, days, generateId);
@@ -1487,7 +1494,7 @@ export default function App() {
     showToast(createWeekPlan
       ? `${installation.templates.length} günlük "${programName}" kaydedildi ve aktif program yapıldı.`
       : `${installation.templates.length} şablon kaydedildi.`);
-  }, [showToast]);
+  }, [setSettings, setTemplates, showToast]);
 
   const closeExercisePicker = useCallback(() => {
     setIsExerciseModalOpen(false);
@@ -1516,7 +1523,7 @@ export default function App() {
         ? prev.map(r => r.date === date ? yeni : r)
         : [...prev, yeni];
     });
-  }, []);
+  }, [setWellness]);
 
   const handleUpdateCycleDay = useCallback((date, updater) => {
     setCycleHistory(prev => {
@@ -1527,7 +1534,7 @@ export default function App() {
         ? prev.map(record => record.date === date ? next : record)
         : [...prev, next];
     });
-  }, []);
+  }, [setCycleHistory]);
 
   const handleDeleteCycleDay = useCallback((date) => {
     const record = cycleHistory.find(item => item.date === date);
@@ -1537,16 +1544,14 @@ export default function App() {
     showUndoToast('Döngü kaydı silindi.', () => {
       setCycleHistory(prev => restoreAtIndex(prev, snapshot));
     });
-  }, [cycleHistory, showUndoToast]);
+  }, [cycleHistory, setCycleHistory, showUndoToast]);
 
   const handleExportData = () => {
-    const backup = {
-      schemaVersion: 3,
-      version: pkg.version,
-      exportedAt: new Date().toISOString(),
+    const backup = createBackupPayload({
       workouts, templates, customExercises, customFoods, recentFoods,
+      mealTemplates, dayTemplates,
       metricsHistory, nutritionHistory, wellness, cycleHistory, settings
-    };
+    }, { version: pkg.version });
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1581,12 +1586,13 @@ export default function App() {
   };
 
   const handleImportRequest = (data, { fileName = 'Cihaz aktarım kodu' } = {}) => {
-    const inspection = inspectBackupPayload(data);
+    const migrated = migrateBackupPayload(data);
+    const inspection = inspectBackupPayload(migrated.payload);
     if (!inspection.valid) {
       showToast(inspection.errors[0] || 'Geçerli ProOverload verisi bulunamadı.', 'error');
       return false;
     }
-    setPendingImport({ data, inspection, fileName });
+    setPendingImport({ data: migrated.payload, inspection, fileName, migrations: migrated.applied });
     return true;
   };
 
@@ -1595,6 +1601,7 @@ export default function App() {
     const data = pendingImport.data;
     const before = {
       workouts, templates, customExercises, customFoods, recentFoods,
+      mealTemplates, dayTemplates,
       metricsHistory, nutritionHistory, wellness, cycleHistory, settings,
     };
     const merge = mode === 'merge';
@@ -1630,6 +1637,18 @@ export default function App() {
       const incoming = data.recentFoods.filter(f => f && typeof f.name === 'string').slice(0, 8);
       setRecentFoods(merge
         ? mergeImportedRecords(recentFoods, incoming, food => foldForSearch(food?.name)).slice(0, 8)
+        : incoming);
+    }
+    if (Array.isArray(data.mealTemplates)) {
+      const incoming = data.mealTemplates.filter(item => item && typeof item === 'object');
+      setMealTemplates(merge
+        ? mergeImportedRecords(mealTemplates, incoming)
+        : incoming);
+    }
+    if (Array.isArray(data.dayTemplates)) {
+      const incoming = data.dayTemplates.filter(item => item && typeof item === 'object');
+      setDayTemplates(merge
+        ? mergeImportedRecords(dayTemplates, incoming)
         : incoming);
     }
     const importedMetrics = backupValue(data, 'metricsHistory', 'm');
@@ -1681,6 +1700,8 @@ export default function App() {
         setCustomExercises(before.customExercises);
         setCustomFoods(before.customFoods);
         setRecentFoods(before.recentFoods);
+        setMealTemplates(before.mealTemplates);
+        setDayTemplates(before.dayTemplates);
         setMetricsHistory(before.metricsHistory);
         setNutritionHistory(before.nutritionHistory);
         setWellness(before.wellness);
@@ -1779,7 +1800,7 @@ export default function App() {
       const target = prev && nutritionHistory.find(n => n.id === id);
       return target && target.date === prev.date ? { ...prev, ...normalizedPatch } : prev;
     });
-  }, [nutritionHistory]);
+  }, [nutritionHistory, setCurrentNutritionForm, setNutritionHistory]);
 
   /**
    * Bir güne özel günlük hareket (NEAT) çarpanı yazar.
@@ -1816,7 +1837,7 @@ export default function App() {
     });
     setCurrentNutritionForm(prev =>
       prev?.date === date ? { ...prev, ...patch } : prev);
-  }, []);
+  }, [setCurrentNutritionForm, setNutritionHistory]);
 
   const handleNutritionDateChange = (date) => {
     const existing = nutritionHistory.find(n => n.date === date);
@@ -1836,7 +1857,7 @@ export default function App() {
       });
     }
     setView(next);
-  }, [nutritionHistory]);
+  }, [nutritionHistory, setCurrentNutritionForm]);
 
   const handleGlobalNavigate = useCallback((next, subTab) => {
     if (next === 'progress' && subTab) setProgressTab(subTab);
@@ -2025,7 +2046,7 @@ export default function App() {
       }, ...prev];
     });
     showToast('Kardiyo bugüne kaydedildi.');
-  }, [showToast, bodyContextForDate]);
+  }, [showToast, bodyContextForDate, setActiveWorkout, setWorkouts]);
 
   const handleOpenHistoricalCardio = useCallback((date) => {
     setCardioContext({ date });
@@ -2087,7 +2108,7 @@ export default function App() {
       }, ...next];
     });
     showToast(cardioContext?.entry ? 'Kardiyo kaydı güncellendi.' : 'Geçmiş kardiyo kaydedildi.');
-  }, [cardioContext, handleAddCardio, showToast, bodyContextForDate]);
+  }, [cardioContext, handleAddCardio, showToast, bodyContextForDate, setWorkouts]);
 
   const handleDeleteCardio = useCallback((entryId) => {
     if (activeWorkoutRef.current) {
@@ -2103,7 +2124,7 @@ export default function App() {
         : w)
       // Son kardiyo da silinince boş kayıt geride kalmasın.
       .filter(w => (w.exercises || []).length > 0 || (w.cardio || []).length > 0));
-  }, [cardioContext]);
+  }, [cardioContext, setActiveWorkout, setWorkouts]);
 
   // Kardiyo penceresinde listelenecek girişler: aktif seans varsa onunkiler.
   /**
@@ -2320,7 +2341,7 @@ export default function App() {
       exercises: (prev.exercises || []).map(ex => ex.id === exerciseId ? { ...ex, name: newName } : ex),
     } : prev);
     showToast(`Hareket ${newName} ile değiştirildi.`);
-  }, [showToast]);
+  }, [setActiveWorkout, showToast]);
 
   const coachActions = useMemo(() => {
     const bugun = getLocalDateString();
@@ -2554,6 +2575,10 @@ export default function App() {
               energyForRecord={energyForNutritionRecord}
               onOpenEnergyDetail={() => setIsEnergyDetailOpen(true)}
               bodyContextForDate={bodyContextForDate}
+              mealTemplates={mealTemplates}
+              setMealTemplates={setMealTemplates}
+              dayTemplates={dayTemplates}
+              setDayTemplates={setDayTemplates}
             />
           )}
 
@@ -2756,6 +2781,7 @@ export default function App() {
           isOpen={Boolean(pendingImport)}
           fileName={pendingImport.fileName}
           inspection={pendingImport.inspection}
+          migrations={pendingImport.migrations}
           onClose={() => setPendingImport(null)}
           onApply={applyPendingImport}
         />}
@@ -2764,7 +2790,11 @@ export default function App() {
         {isQRModalOpen && <QRCodeModal
           isOpen={isQRModalOpen}
           onClose={() => setIsQRModalOpen(false)}
-          fullData={{ schemaVersion: 3, version: pkg.version, workouts, templates, customExercises, customFoods, recentFoods, metricsHistory, nutritionHistory, wellness, cycleHistory, settings }}
+          fullData={createBackupPayload({
+            workouts, templates, customExercises, customFoods, recentFoods,
+            mealTemplates, dayTemplates,
+            metricsHistory, nutritionHistory, wellness, cycleHistory, settings,
+          }, { version: pkg.version })}
           onImportData={(data) => handleImportRequest(data, { fileName: 'Cihaz aktarım kodu' })}
         />}
 

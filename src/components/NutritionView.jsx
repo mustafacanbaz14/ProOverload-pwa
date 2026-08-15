@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import {
-  Activity, BarChart3, Beef, ChevronDown, Copy,
-  Droplets, Flame, Plus, Save, Search, Sparkles, Trash2, TrendingUp, Footprints,
+  Activity, BarChart3, Beef, BookOpen, ChevronDown, Copy,
+  Droplets, Flame, ListChecks, Plus, Save, Search, Sparkles, Trash2, TrendingUp, Footprints,
 } from 'lucide-react';
 import {
   parseNumber, clampNumber, INPUT_LIMITS, getLocalDateString,
@@ -14,6 +14,7 @@ import DisclosureCard from './DisclosureCard';
 import { formatDay, weekdayName } from '../utils/dates';
 import { dayMindCalories } from '../utils/wellness';
 import { dayEnergyBreakdown, hasDayNeatOverride, neatOptsForDay } from '../utils/energyModel';
+import NutritionTemplatesModal from './NutritionTemplatesModal';
 
 const MacroTile = ({ label, value, numericValue, target, color, bar }) => {
   const ratio = target > 0 ? Math.min(100, Math.round((parseNumber(numericValue) / target) * 100)) : null;
@@ -52,12 +53,18 @@ const NutritionView = memo(({
   onOpenEnergyDetail,
   bodyContextForDate,
   energyForRecord,
+  mealTemplates = [],
+  setMealTemplates,
+  dayTemplates = [],
+  setDayTemplates,
 }) => {
   const safeMeals = Array.isArray(currentNutritionForm.meals) ? currentNutritionForm.meals : [];
   const isDaily = currentNutritionForm.entryMode === 'daily';
   const isToday = currentNutritionForm.date === getLocalDateString();
   const detailed = settings.interfaceMode === 'detailed';
   const [expandedMeals, setExpandedMeals] = useState(() => new Set());
+  const [advancedOpen, setAdvancedOpen] = useState(detailed);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
 
   const dailyMeal = safeMeals[0] || {};
   const totals = dailyTotals(currentNutritionForm);
@@ -146,6 +153,13 @@ const NutritionView = memo(({
     return (nutritionHistory || []).find(record => record.date === yesterday) || null;
   }, [currentNutritionForm.date, nutritionHistory]);
 
+  const previousWeekRecord = useMemo(() => {
+    const date = new Date(`${currentNutritionForm.date}T12:00:00`);
+    date.setDate(date.getDate() - 7);
+    const previousWeek = getLocalDateString(date);
+    return (nutritionHistory || []).find(record => record.date === previousWeek) || null;
+  }, [currentNutritionForm.date, nutritionHistory]);
+
   const setEntryMode = (mode) => {
     setCurrentNutritionForm(prev => {
       if (mode === prev.entryMode) return prev;
@@ -192,17 +206,21 @@ const NutritionView = memo(({
     setExpandedMeals(prev => new Set([...prev, id]));
   };
 
-  const copyYesterday = () => {
-    if (!yesterdayRecord) return;
+  const copyRecord = (record) => {
+    if (!record) return;
     setCurrentNutritionForm(prev => ({
       ...prev,
-      entryMode: yesterdayRecord.entryMode || 'meals',
-      meals: (yesterdayRecord.meals || []).map((meal, index) => ({
+      entryMode: record.entryMode || 'meals',
+      meals: (record.meals || []).map((meal, index) => ({
         ...meal,
         id: `copy-${Date.now()}-${index}`,
+        source: { type: 'copied-day', label: 'Geçmiş günden kopyalandı', date: record.date },
       })),
+      waterMl: record.waterMl || '',
+      energySnapshot: null,
     }));
   };
+  const copyYesterday = () => copyRecord(yesterdayRecord);
 
   const dayHasNeatOverride = hasDayNeatOverride(currentNutritionForm);
   const resetDayNeat = () => setCurrentNutritionForm(prev => ({
@@ -294,11 +312,30 @@ const NutritionView = memo(({
         )}
       </section>
 
-      <section className="grid grid-cols-4 gap-2" aria-label="Hızlı işlemler">
+      <section className="grid grid-cols-3 gap-2" aria-label="Beslenme kullanım yolu">
+        {[
+          { key: 'quick', label: 'Hızlı', note: 'Sadece toplam', icon: Beef, active: isDaily && !advancedOpen, action: () => { setEntryMode('daily'); setAdvancedOpen(false); } },
+          { key: 'meals', label: 'Öğünler', note: 'Besin ve öğün', icon: ListChecks, active: !isDaily && !advancedOpen, action: () => { setEntryMode('meals'); setAdvancedOpen(false); } },
+          { key: 'detailed', label: 'Detaylı', note: 'Enerji & NEAT', icon: Sparkles, active: advancedOpen, action: () => { setEntryMode('meals'); setAdvancedOpen(true); } },
+        ].map(path => {
+          const Icon = path.icon;
+          return (
+            <button key={path.key} type="button" onClick={path.action} className={`rounded-2xl border py-2.5 px-1 text-center ${path.active ? 'border-orange-600 bg-orange-950/30' : 'border-zinc-800 bg-zinc-900'}`}>
+              <Icon size={14} className={`mx-auto mb-1 ${path.active ? 'text-orange-400' : 'text-zinc-600'}`} />
+              <span className={`text-[10px] font-bold block ${path.active ? 'text-orange-300' : 'text-zinc-400'}`}>{path.label}</span>
+              <span className="text-[8px] font-mono text-zinc-600 block">{path.note}</span>
+            </button>
+          );
+        })}
+      </section>
+
+      <section className="grid grid-cols-3 gap-2" aria-label="Hızlı işlemler">
         {[
           { label: 'Besin Ekle', icon: Search, action: () => setIsFoodSearchOpen(true), enabled: !isDaily, color: 'text-orange-400' },
+          { label: 'Şablon & Tarif', icon: BookOpen, action: () => setTemplatesOpen(true), enabled: true, color: 'text-purple-400' },
           { label: 'Dünü Kopyala', icon: Copy, action: copyYesterday, enabled: Boolean(yesterdayRecord), color: 'text-cyan-400' },
-          { label: 'Toplam Gir', icon: Beef, action: () => setEntryMode('daily'), enabled: true, color: 'text-emerald-400' },
+          { label: 'Geçen Hafta', icon: Copy, action: () => copyRecord(previousWeekRecord), enabled: Boolean(previousWeekRecord), color: 'text-blue-400' },
+          { label: 'Toplam Gir', icon: Beef, action: () => { setEntryMode('daily'); setAdvancedOpen(false); }, enabled: true, color: 'text-emerald-400' },
           { label: 'Kalori Detayı', icon: BarChart3, action: onOpenEnergyDetail, enabled: true, color: 'text-red-400' },
         ].map(item => {
           const Icon = item.icon;
@@ -368,7 +405,7 @@ const NutritionView = memo(({
           </span>
         </div>
 
-        <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 space-y-2">
+        {advancedOpen && <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 space-y-2">
           <div className="flex items-center justify-between">
             <span className="flex items-center gap-2 text-[10px] font-bold text-zinc-400">
               <Footprints size={14} className="text-emerald-400" /> Hareket Modu & Çarpanı
@@ -448,7 +485,7 @@ const NutritionView = memo(({
               Bu Günü Genel Ayara Döndür
             </button>
           )}
-        </div>
+        </div>}
 
         {isDaily ? (
           <div className="space-y-3">
@@ -506,6 +543,11 @@ const NutritionView = memo(({
                         <span className="text-[9px] font-mono text-zinc-500 block">
                           {meal.calories || 0} kcal · P {meal.protein || 0} · K {meal.carbs || 0} · Y {meal.fats || 0}
                         </span>
+                        {meal.source?.label && (
+                          <span className="inline-block mt-1 rounded-md border border-zinc-800 bg-zinc-900 px-1.5 py-0.5 text-[8px] font-mono text-zinc-500">
+                            {meal.source.label}
+                          </span>
+                        )}
                       </span>
                     </button>
                     {safeMeals.length > 1 && (
@@ -586,11 +628,11 @@ const NutritionView = memo(({
       </button>
 
       <DisclosureCard
-        key={`energy-${detailed}`}
+        key={`energy-${detailed || advancedOpen}`}
         icon={Flame}
         title="Enerji dengesi"
         summary={calorieData?.ready ? `${Math.abs(calorieData.balance)} kcal ${calorieData.balance < 0 ? 'açık' : calorieData.balance > 0 ? 'fazla' : 'korunum'}` : 'Vücut verisiyle hesaplanır'}
-        defaultOpen={detailed}
+        defaultOpen={detailed || advancedOpen}
         accentClass="text-red-400"
       >
         <CalorieBalanceCard
@@ -613,11 +655,11 @@ const NutritionView = memo(({
       </DisclosureCard>
 
       <DisclosureCard
-        key={`analysis-${detailed}`}
+        key={`analysis-${detailed || advancedOpen}`}
         icon={TrendingUp}
         title="7 günlük analiz"
         summary={weeklyAvg ? `${recent7Days.length} gün · ort. ${weeklyAvg.calories} kcal · ${weeklyAvg.protein}g protein` : 'Henüz yeterli kayıt yok'}
-        defaultOpen={detailed}
+        defaultOpen={detailed || advancedOpen}
         accentClass="text-emerald-400"
       >
         {weeklyAvg ? (
@@ -692,6 +734,17 @@ const NutritionView = memo(({
         <Sparkles size={12} className="text-orange-400 shrink-0" />
         Basit görünüm yalnızca kartları kapalı başlatır; tüm hesaplar ve girişler kullanılmaya devam eder.
       </div>
+
+      <NutritionTemplatesModal
+        isOpen={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+        currentNutritionForm={currentNutritionForm}
+        setCurrentNutritionForm={setCurrentNutritionForm}
+        mealTemplates={mealTemplates}
+        setMealTemplates={setMealTemplates}
+        dayTemplates={dayTemplates}
+        setDayTemplates={setDayTemplates}
+      />
     </div>
   );
 });
