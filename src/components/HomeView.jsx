@@ -1,7 +1,8 @@
 import React, { memo } from 'react';
-import { AlertCircle, Activity, Target, Zap, BookmarkPlus, Trash2, Clock, Layers, ChevronRight, ChevronDown, Dumbbell, CalendarPlus, HeartPulse, Flame, CalendarRange, Pencil, Wrench } from 'lucide-react';
+import { AlertCircle, Activity, Target, Zap, BookmarkPlus, Trash2, Clock, Layers, ChevronRight, ChevronDown, Dumbbell, CalendarPlus, HeartPulse, Flame, CalendarRange, Pencil, Wrench, Star } from 'lucide-react';
 import { MUSCLE_SECTIONS, getVolumeLandmarks, volumeStatusOf, VOLUME_STATUS, acwrStatusOf, ACWR_STATUS, ACWR_HINT } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
+import { organizeTemplates } from '../utils/templateLibrary';
 import MuscleHeatmap from './MuscleHeatmap';
 import TodayCoachCard from './TodayCoachCard';
 import CycleSummaryCard from './CycleSummaryCard';
@@ -35,7 +36,15 @@ const HomeView = memo(({
   gender = 'male',
   cycleSummary,
   onOpenCycle,
+  interfaceMode = 'simple',
+  onOpenTraining,
+  onToggleTemplateFavorite,
 }) => {
+  const orderedTemplates = organizeTemplates(templates);
+  const visibleTemplates = interfaceMode === 'simple'
+    ? orderedTemplates.slice(0, 3)
+    : orderedTemplates;
+
   return (
     <div className="luxury-screen p-4 space-y-5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
 
@@ -285,10 +294,15 @@ const HomeView = memo(({
       {/* Bölüm liste boşken de görünür: eskiden tamamen gizleniyordu ve
           kullanıcı şablon diye bir özellik olduğunu fark edemiyordu. */}
       <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-        <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60">
+        <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between gap-2">
           <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center">
-            <BookmarkPlus size={13} className="mr-2 text-cyan-400" /> Şablonlar
+            <BookmarkPlus size={13} className="mr-2 text-cyan-400" /> {interfaceMode === 'simple' ? 'Öne Çıkan Şablonlar' : 'Şablonlar'}
           </h3>
+          {templates.length > 0 && (
+            <button onClick={() => onOpenTraining?.()} className="text-[8px] font-bold text-cyan-400 flex items-center">
+              Tümünü Yönet <ChevronRight size={11} />
+            </button>
+          )}
         </div>
 
         {templates.length === 0 ? (
@@ -312,7 +326,7 @@ const HomeView = memo(({
         ) : (
           <>
           <div className="divide-y divide-zinc-800">
-            {templates.map(t => {
+            {visibleTemplates.map(t => {
               // Kart üzerinde kısa önizleme: süre, set ve en çok yüklenen üç bölge.
               const { byMuscle, totalSets } = previewTemplateVolume(t.exercises, customExercises);
               const minutes = estimateDuration(t.exercises, restSeconds);
@@ -335,6 +349,14 @@ const HomeView = memo(({
                       </span>
                     </button>
                     <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        onClick={() => onToggleTemplateFavorite?.(t)}
+                        title={t.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
+                        aria-label={t.favorite ? 'Şablonu favorilerden çıkar' : 'Şablonu favorilere ekle'}
+                        className={`p-1.5 ${t.favorite ? 'text-amber-400' : 'text-zinc-600 active:text-amber-400'}`}
+                      >
+                        <Star size={13} fill={t.favorite ? 'currentColor' : 'none'} />
+                      </button>
                       <button onClick={() => handleStartRequest(t)} className="bg-cyan-900/30 active:bg-cyan-900/60 text-cyan-400 border border-cyan-800 text-[10px] font-bold py-1.5 px-3 rounded-lg uppercase tracking-wider">Başlat</button>
                       <button onClick={() => onEditTemplate?.(t)} title="Şablonu düzenle" aria-label="Şablonu düzenle" className="text-zinc-600 active:text-cyan-400 p-1.5"><Pencil size={14} /></button>
                       <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'template', id: t.id })} title="Şablonu sil" aria-label="Şablonu sil" className="text-zinc-600 active:text-red-500 p-1.5"><Trash2 size={14} /></button>
@@ -354,6 +376,11 @@ const HomeView = memo(({
               );
             })}
           </div>
+          {interfaceMode === 'simple' && orderedTemplates.length > visibleTemplates.length && (
+            <button onClick={() => onOpenTraining?.()} className="w-full border-t border-zinc-800 py-2.5 text-[9px] font-bold text-zinc-500 active:text-cyan-400">
+              {orderedTemplates.length - visibleTemplates.length} şablon daha · kütüphaneyi aç
+            </button>
+          )}
           </>
         )}
       </div>

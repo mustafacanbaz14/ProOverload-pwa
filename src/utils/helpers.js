@@ -249,6 +249,7 @@ export const mergeWorkout = (data) => ({
   // yük eğrisi sessizce değişir, bu yüzden varsayılanı oradaki fallback ile aynı.
   rating: Number(data?.rating) > 0 ? Number(data.rating) : 3,
   notes: typeof data?.notes === 'string' ? data.notes : '',
+  ...(data?.sourceTemplateId ? { sourceTemplateId: data.sourceTemplateId } : {}),
   timer: { status: 'finished' },
   ...(data?.readiness ? { readiness: data.readiness } : {}),
 });
@@ -258,6 +259,9 @@ export const mergeTemplate = (data) => ({
   id: data?.id || generateId(),
   name: typeof data?.name === 'string' && data.name.trim() ? data.name : 'Adsız Şablon',
   createdAt: data?.createdAt || new Date().toISOString(),
+  favorite: Boolean(data?.favorite),
+  lastUsedAt: data?.lastUsedAt || null,
+  useCount: Math.max(0, Number(data?.useCount) || 0),
   exercises: Array.isArray(data?.exercises) ? data.exercises.map(mergeExercise) : [],
 });
 

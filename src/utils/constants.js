@@ -597,28 +597,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '5.0';
+export const APP_VERSION = '5.1';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 5.0',
-  date: '2026-08-12',
+  title: 'ProOverload 5.1',
+  date: '2026-08-15',
   items: [
     {
-      title: 'Obsidyen & Şampanya Kimliği',
-      desc: 'Koyu tema baştan sona sıcak obsidyen yüzeyler, metalik şampanya vurgular, daha kontrollü gölgeler ve ortak bir kart sistemiyle yenilendi.'
+      title: 'Şablon Kütüphanesi',
+      desc: 'Şablonlar artık ad veya hareketle aranabiliyor, favorilenebiliyor ve son kullanıma göre düzenleniyor. Kullanım sayısı ile son kullanım tarihi de görünür.'
     },
     {
-      title: 'Yeni Mobil Navigasyon',
-      desc: 'Alt menü güvenli alana saygı duyan yüzen bir kontrol merkezine dönüştü. İkon ve etiketler ana ekrana kurulu iPhone görünümünde artık sıkışmıyor.'
+      title: 'Güvenli Şablon Silme',
+      desc: 'Şablon silme artık Antrenman Merkezi ve önizleme ekranında açıkça erişilebilir. Onay, haftalık program bağlantılarını temizleme ve geri alma birlikte çalışıyor.'
     },
     {
-      title: 'Fildişi ve Gül Seçenekleri',
-      desc: 'Açık tema saf beyaz yerine göz yormayan fildişi ve bronz palete geçti. İsteğe bağlı gül vurgusu aynı premium yüzey sistemiyle çalışıyor.'
+      title: 'Daha Hızlı Antrenman Akışı',
+      desc: 'Son güç antrenmanı tek dokunuşla tekrarlanabiliyor; şablon favorileme, kopyalama, düzenleme ve başlatma eylemleri aynı kartta toplandı.'
     },
     {
-      title: 'Tek Parça Görsel Sistem',
-      desc: 'Ana ekranlar, aktif antrenman, formlar, tablolar, modallar, kilit ekranı kartı ve rapor görselleri aynı tasarım dilinde birleştirildi. Yeni altın ProOverload ikonu da ana ekran kimliğini tamamlıyor.'
+      title: 'Gerçek Basit Görünüm',
+      desc: 'Basit arayüz modu artık programlama araçlarını gerektiğinde kapalı tutuyor ve ana ekranda yalnızca öne çıkan şablonları gösteriyor; hiçbir özellik kaldırılmadı.'
     }
   ]
 };

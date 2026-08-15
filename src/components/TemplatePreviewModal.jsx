@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { X, Zap, Clock, Layers, Link2, Flame } from 'lucide-react';
+import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { isWorkingSet } from '../utils/helpers';
@@ -17,6 +17,9 @@ const TemplatePreviewModal = memo(({
   experienceLevel = 'intermediate',
   weightKg = 0,
   gender = 'male',
+  onEdit,
+  onDelete,
+  onToggleFavorite,
 }) => {
   if (!isOpen || !template) return null;
 
@@ -162,7 +165,22 @@ const TemplatePreviewModal = memo(({
           </p>
         </div>
 
-        <div className="p-3 border-t border-zinc-800 bg-zinc-950 shrink-0 pb-safe">
+        <div className="p-3 border-t border-zinc-800 bg-zinc-950 shrink-0 pb-safe space-y-2">
+          <div className="grid grid-cols-3 gap-1.5">
+            <button
+              type="button"
+              onClick={() => onToggleFavorite?.(template)}
+              className={`rounded-lg border py-2 text-[8px] font-bold flex items-center justify-center gap-1 ${template.favorite ? 'border-amber-800/60 bg-amber-950/25 text-amber-400' : 'border-zinc-800 text-zinc-500'}`}
+            >
+              <Star size={11} fill={template.favorite ? 'currentColor' : 'none'} /> {template.favorite ? 'Favoride' : 'Favori'}
+            </button>
+            <button type="button" onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-2 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1">
+              <Pencil size={11} /> Düzenle
+            </button>
+            <button type="button" onClick={() => onDelete?.(template)} className="rounded-lg border border-red-950/70 py-2 text-[8px] font-bold text-red-500/80 flex items-center justify-center gap-1">
+              <Trash2 size={11} /> Şablonu Sil
+            </button>
+          </div>
           <button
             onClick={() => { onStart(template); onClose(); }}
             className="w-full bg-cyan-600 active:bg-cyan-700 text-white font-bold py-3.5 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"

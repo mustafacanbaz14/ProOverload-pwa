@@ -122,6 +122,9 @@ export const workoutToTemplate = (workout, name, generateId) => ({
   id: generateId(),
   name,
   createdAt: new Date().toISOString(),
+  favorite: false,
+  lastUsedAt: null,
+  useCount: 0,
   exercises: (workout?.exercises || []).map(ex => ({
     name: ex.name,
     supersetId: ex.supersetId || null,

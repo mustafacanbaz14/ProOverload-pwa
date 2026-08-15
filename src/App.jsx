@@ -42,6 +42,9 @@ import { useDeferredPwaUpdate } from './hooks/useDeferredPwaUpdate';
 // yedek dosyasına yazılan sürümün birbirinden sapması böyle engellenir.
 import pkg from '../package.json';
 import { templateToExercises, workoutToTemplate, suggestTemplateName } from './utils/templates';
+import {
+  duplicateTemplate, markTemplateUsed, toggleTemplateFavorite,
+} from './utils/templateLibrary';
 import { draftFromGeneratedProgram, instantiateDraftProgram } from './utils/programDraft';
 
 import {
@@ -391,6 +394,10 @@ export default function App() {
   // Tarihe göre azalan sıralı listeler: hem arşiv görünümü hem de "en son ne yaptım"
   // sorguları bunlara dayanır, böylece kayıt sırasından bağımsız olarak doğru çalışır.
   const sortedWorkouts = useMemo(() => sortByDateDesc(workouts), [workouts]);
+  const recentStrengthWorkout = useMemo(
+    () => sortedWorkouts.find(workout => (workout.exercises || []).length > 0) || null,
+    [sortedWorkouts],
+  );
   const sortedMetrics = useMemo(() => sortByDateDesc(metricsHistory), [metricsHistory]);
   const sortedNutrition = useMemo(() => sortByDateDesc(nutritionHistory), [nutritionHistory]);
   const profileGender = sortedMetrics[0]?.gender || currentMetricsForm.gender || 'male';
@@ -509,19 +516,16 @@ export default function App() {
    * birbirine bağlı kalmasın.
    */
   const handleDuplicateTemplate = useCallback((template) => {
-    if (!template) return;
-    const kopya = {
-      ...template,
-      id: generateId(),
-      name: `${template.name} (kopya)`,
-      createdAt: new Date().toISOString(),
-      exercises: (template.exercises || []).map(ex => ({
-        ...ex,
-        sets: (ex.sets || []).map(set => ({ ...set })),
-      })),
-    };
+    const kopya = duplicateTemplate(template, generateId);
+    if (!kopya) return;
     setTemplates(prev => [...prev, kopya]);
     showToast(`${template.name} kopyalandı.`);
+  }, [showToast]);
+
+  const handleToggleTemplateFavorite = useCallback((template) => {
+    if (!template?.id) return;
+    setTemplates(prev => toggleTemplateFavorite(prev, template.id));
+    showToast(template.favorite ? 'Şablon favorilerden çıkarıldı.' : 'Şablon favorilere eklendi.');
   }, [showToast]);
 
   const handleNormalizeBodyweight = useCallback(() => {
@@ -1023,6 +1027,9 @@ export default function App() {
     // Süperset bağları ve set yapısı şablondan aynen taşınır.
     const initialExercises = template ? templateToExercises(template, generateId) : [];
 
+    const sourceTemplateId = template?.id && templates.some(item => item.id === template.id)
+      ? template.id
+      : null;
     const newWorkout = {
       id: generateId(),
       date: todayStr,
@@ -1034,6 +1041,7 @@ export default function App() {
       rating: 4,
       notes: ''
     };
+    if (sourceTemplateId) newWorkout.sourceTemplateId = sourceTemplateId;
 
     setActiveWorkout(newWorkout);
     setPreWorkoutModal(null);
@@ -1084,6 +1092,12 @@ export default function App() {
       }
       return [saved, ...prev];
     });
+
+    // Şablon kullanım bilgisi yalnız gerçekten kaydedilen yeni seanslarda artar;
+    // başlatıp vazgeçmek veya geçmiş bir kaydı düzenlemek istatistiği bozmaz.
+    if (saved.sourceTemplateId && !activeWorkout.isEditingOld) {
+      setTemplates(prev => markTemplateUsed(prev, saved.sourceTemplateId));
+    }
 
     // Rapor kaydetmeden ÖNCEKİ geçmiş ve rekorlarla kuruluyor: bu seans
     // listeye girdikten sonra kıyaslansaydı hareket kendi kendisiyle
@@ -2416,7 +2430,7 @@ export default function App() {
                 plan: () => setIsWeekPlanOpen(true),
                 deload: () => setIsDeloadOpen(true),
                 mesocycle: () => setIsMesocycleOpen(true),
-              wizard: () => setIsWizardOpen(true),
+                wizard: () => setIsWizardOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
               })[hedef]?.()}
               onOpenEnergy={() => setIsEnergyDetailOpen(true)}
@@ -2428,6 +2442,9 @@ export default function App() {
               weeklyCardioKcal={weeklyCardioKcal}
               showMuscleVolume={settings.showMuscleVolume}
               onToggleMuscleVolume={() => setSettings(prev => ({ ...prev, showMuscleVolume: !prev.showMuscleVolume }))}
+              interfaceMode={settings.interfaceMode}
+              onOpenTraining={() => handleChangeView('training')}
+              onToggleTemplateFavorite={handleToggleTemplateFavorite}
             />
           )}
 
@@ -2436,7 +2453,10 @@ export default function App() {
               templates={templates}
               restSeconds={settings.restSeconds}
               weightKg={latestWeight}
+              recentWorkout={recentStrengthWorkout}
+              interfaceMode={settings.interfaceMode}
               onStart={handleStartRequest}
+              onRepeat={handleRepeatWorkout}
               onLibrary={() => setIsLibraryOpen(true)}
               onBuilder={() => setIsBuilderOpen(true)}
               onWizard={() => setIsWizardOpen(true)}
@@ -2446,6 +2466,8 @@ export default function App() {
               onPreview={setPreviewTemplate}
               onEdit={(template) => { setEditingTemplate(template); setIsBuilderOpen(true); }}
               onDuplicate={handleDuplicateTemplate}
+              onDelete={(template) => setDeleteConfirm({ isOpen: true, type: 'template', id: template.id })}
+              onToggleFavorite={handleToggleTemplateFavorite}
             />
           )}
 
@@ -2753,6 +2775,12 @@ export default function App() {
           weightKg={latestWeight}
           gender={profileGender}
           onStart={(t) => handleStartRequest(t)}
+          onEdit={(t) => { setPreviewTemplate(null); setEditingTemplate(t); setIsBuilderOpen(true); }}
+          onDelete={(t) => { setPreviewTemplate(null); setDeleteConfirm({ isOpen: true, type: 'template', id: t.id }); }}
+          onToggleFavorite={(t) => {
+            handleToggleTemplateFavorite(t);
+            setPreviewTemplate(prev => prev ? { ...prev, favorite: !prev.favorite } : prev);
+          }}
         />}
 
         {/* EXERCISE MAPPING EDITOR */}
@@ -3144,7 +3172,9 @@ export default function App() {
               <p className="text-[11px] text-zinc-400 font-mono">
                 {deleteConfirm.type === 'exercise'
                   ? `"${deleteConfirm.id}" kütüphaneden silinecek. Geçmiş antrenman kayıtların korunur.`
-                  : 'Bu kaydı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.'}
+                  : deleteConfirm.type === 'template'
+                    ? 'Bu antrenman şablonu silinecek ve haftalık plandaki bağlantıları temizlenecek. İşlemi 12 saniye içinde geri alabilirsin.'
+                    : 'Bu kaydı silmek istediğinizden emin misiniz? İşlemi 12 saniye içinde geri alabilirsin.'}
               </p>
               <div className="flex space-x-2 pt-2">
                 <button onClick={() => setDeleteConfirm({ isOpen: false, type: null, id: null })} className="flex-1 bg-zinc-800 text-zinc-300 font-bold py-2.5 rounded-xl text-xs uppercase">İptal</button>

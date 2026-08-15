@@ -44,9 +44,46 @@ import { buildFrequencyReport, frequencyCoachItem } from '../src/utils/frequency
 import { workoutsToCsv, metricsToCsv } from '../src/utils/csvExport.js';
 import { STARTER_PROGRAMS, instantiateStarterProgram } from '../src/utils/starterPrograms.js';
 import { sessionAdvice } from '../src/utils/autoregulation.js';
+import {
+  duplicateTemplate, markTemplateUsed, organizeTemplates, toggleTemplateFavorite,
+} from '../src/utils/templateLibrary.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
+
+test('şablon kütüphanesi favori ve kullanım tarihine göre düzenlenir', () => {
+  const list = organizeTemplates([
+    { id: 'old', name: 'Eski', createdAt: '2026-01-01', exercises: [] },
+    { id: 'used', name: 'Son', lastUsedAt: '2026-08-10', exercises: [{ name: 'Bench Press' }] },
+    { id: 'fav', name: 'Favori', favorite: true, createdAt: '2025-01-01', exercises: [] },
+  ]);
+  assert.deepEqual(list.map(item => item.id), ['fav', 'used', 'old']);
+  assert.deepEqual(organizeTemplates(list, { query: 'bench' }).map(item => item.id), ['used']);
+  assert.deepEqual(organizeTemplates(list, { favoritesOnly: true }).map(item => item.id), ['fav']);
+});
+
+test('şablon favorisi ve kullanım sayacı diğer kayıtları değiştirmez', () => {
+  const source = [{ id: 'a', favorite: false, useCount: 1 }, { id: 'b', favorite: false }];
+  const favored = toggleTemplateFavorite(source, 'a');
+  const used = markTemplateUsed(favored, 'a', '2026-08-15T10:00:00.000Z');
+  assert.equal(used[0].favorite, true);
+  assert.equal(used[0].useCount, 2);
+  assert.equal(used[0].lastUsedAt, '2026-08-15T10:00:00.000Z');
+  assert.deepEqual(used[1], source[1]);
+});
+
+test('şablon kopyası bağımsız kimliklerle ve sıfır kullanım bilgisiyle oluşur', () => {
+  let id = 0;
+  const copy = duplicateTemplate({
+    id: 't1', name: 'Üst A', favorite: true, useCount: 8,
+    exercises: [{ id: 'e1', name: 'Bench Press', sets: [{ id: 's1', reps: 8 }] }],
+  }, () => `new-${++id}`, '2026-08-15T12:00:00.000Z');
+  assert.equal(copy.name, 'Üst A (kopya)');
+  assert.equal(copy.favorite, false);
+  assert.equal(copy.useCount, 0);
+  assert.notEqual(copy.exercises[0].id, 'e1');
+  assert.notEqual(copy.exercises[0].sets[0].id, 's1');
+});
 
 test('program taslağı günleri dengeli haftaya dağıtır', () => {
   assert.deepEqual(suggestedWeekdays(3), ['mon', 'wed', 'fri']);
