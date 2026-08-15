@@ -2,7 +2,7 @@ import React, { memo, useMemo, useState } from 'react';
 import {
   Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play,
   ChevronRight, ChevronDown, Copy, Wand2, Sparkles, Search, Star, Trash2,
-  RotateCcw, SlidersHorizontal, Target, AlertTriangle,
+  RotateCcw, SlidersHorizontal, Target, AlertTriangle, ShieldCheck,
 } from 'lucide-react';
 import { estimateDuration } from '../utils/templates';
 import { estimateLiftingCalories } from '../utils/cardio';
@@ -24,6 +24,7 @@ const TrainingView = memo(({
   onStarter,
   onWeekPlan,
   onCardio,
+  onCoach,
   onPreview,
   onEdit,
   onDuplicate,
@@ -158,10 +159,11 @@ const TrainingView = memo(({
                 { label: 'Hareketler', hint: 'Kütüphane & ince ayar', icon: Library, action: onLibrary },
                 { label: 'Haftalık Plan', hint: 'Günleri ve saatleri düzenle', icon: CalendarRange, action: onWeekPlan },
                 { label: 'Kardiyo / Aktivite', hint: 'Kondisyon, spor & hareket', icon: HeartPulse, action: onCardio },
+                { label: 'Koç Merkezi', hint: 'Haftalık karar & veri güveni', icon: ShieldCheck, action: onCoach },
               ].map(item => {
                 const Icon = item.icon;
                 return (
-                  <button key={item.label} onClick={item.action} className={`bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl p-3 text-left ${item.label === 'Kardiyo / Aktivite' ? 'col-span-2' : ''}`}>
+                  <button key={item.label} onClick={item.action} className="bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl p-3 text-left">
                     <Icon size={15} className="text-cyan-400 mb-1.5" />
                     <strong className="text-[10px] text-zinc-200 block">{item.label}</strong>
                     <span className="text-[8px] font-mono text-zinc-600">{item.hint}</span>

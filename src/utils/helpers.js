@@ -8,6 +8,7 @@ import { parseNumber } from './number.js';
 import { effectiveLoad } from './bodyweight.js';
 import { mergeWellnessDay } from './wellness.js';
 import { DEFAULT_CYCLE_CONFIG, mergeCycleDay } from './cycle.js';
+import { normalizeCoachProtocol } from './coachProtocol.js';
 
 /** Yazma daima en yeni sürüm anahtarına yapılır. */
 export const storageKey = (name) => `po_${name}${STORAGE_VERSION}`;
@@ -232,10 +233,16 @@ const mergePlannedTemplate = (plan) => {
 };
 
 const mergeAdaptation = (value) => {
-  if (!value || !['reduced', 'recovery'].includes(value.mode)) return null;
+  if (!value || !['consolidate', 'reduced', 'recovery'].includes(value.mode)) return null;
   return {
     mode: value.mode,
-    label: typeof value.label === 'string' ? value.label : value.mode === 'recovery' ? 'Toparlanma Seansı' : 'Kontrollü Seans',
+    label: typeof value.label === 'string'
+      ? value.label
+      : value.mode === 'recovery'
+        ? 'Toparlanma Seansı'
+        : value.mode === 'consolidate'
+          ? 'Haftalık Toparlanma Planı'
+          : 'Kontrollü Seans',
     summary: typeof value.summary === 'string' ? value.summary : '',
     reasons: Array.isArray(value.reasons) ? value.reasons.filter(item => typeof item === 'string') : [],
     removedSets: Math.max(0, Number(value.removedSets) || 0),
@@ -244,6 +251,8 @@ const mergeAdaptation = (value) => {
     originalWorkingSets: Math.max(0, Number(value.originalWorkingSets) || 0),
     adaptedWorkingSets: Math.max(0, Number(value.adaptedWorkingSets) || 0),
     loadPercent: Math.max(0, Number(value.loadPercent) || 0),
+    ...(typeof value.protocolId === 'string' ? { protocolId: value.protocolId } : {}),
+    ...(typeof value.source === 'string' ? { source: value.source } : {}),
   };
 };
 
@@ -501,7 +510,7 @@ const TRUTHY_SETTINGS = [
 ];
 
 // Dizi olması gereken alanlar; kayıt bozuksa varsayılana dönülür.
-const ARRAY_SETTINGS = ['hiddenExercises', 'pinnedExercises', 'hidden1RMExercises', 'favoriteFoods', 'strengthGoals'];
+const ARRAY_SETTINGS = ['hiddenExercises', 'pinnedExercises', 'hidden1RMExercises', 'favoriteFoods', 'strengthGoals', 'coachHistory'];
 
 /**
  * Kaydedilmiş ayarları varsayılanların ÜSTÜNE serer.
@@ -519,6 +528,11 @@ export const mergeSettings = (saved = {}) => {
     ...DEFAULT_CYCLE_CONFIG,
     ...(merged.cycleConfig && typeof merged.cycleConfig === 'object' ? merged.cycleConfig : {}),
   };
+  merged.coachProtocol = normalizeCoachProtocol(merged.coachProtocol);
+  merged.coachHistory = merged.coachHistory
+    .map(normalizeCoachProtocol)
+    .filter(Boolean)
+    .slice(0, 12);
   if (!merged.weekPlan || typeof merged.weekPlan !== 'object') merged.weekPlan = {};
   // Tek programdan çoklu program listesine göç. Idempotent: yeni biçim aynen
   // geçer, eski `weekPlan` nesnesi ilk programa dönüşür.

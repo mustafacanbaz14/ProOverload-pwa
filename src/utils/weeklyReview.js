@@ -129,10 +129,16 @@ export const buildWeeklyReview = ({
       previousSessions: oncekiSeanslar.length,
       previousEffectiveSets: oncekiSeanslar.reduce((s, w) => s + calcEffectiveSets(w.exercises), 0),
       adaptedSessions: agirlikSeanslari.filter(w => w.adaptation).length,
-      recoverySessions: agirlikSeanslari.filter(w => w.adaptation?.mode === 'recovery').length,
+      recoverySessions: agirlikSeanslari.filter(w => ['consolidate', 'recovery'].includes(w.adaptation?.mode)).length,
     },
     volume: { statuses, under, over, optimal, muscleVolume },
-    recovery: { sleepScore: uykuOrt, sleepMinutes: uykuSureOrt, nights: geceler.length, readiness: hazirOrt },
+    recovery: {
+      sleepScore: uykuOrt,
+      sleepMinutes: uykuSureOrt,
+      nights: geceler.length,
+      readiness: hazirOrt,
+      readinessEntries: hazirSkorlar.length,
+    },
     energy: enerji,
     hasData: agirlikSeanslari.length > 0 || geceler.length > 0 || Boolean(enerji),
   };

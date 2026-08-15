@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import {
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
   Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
-  Layers3, Wand2,
+  Layers3, Wand2, ShieldCheck,
 } from 'lucide-react';
 
 /**
@@ -40,6 +40,7 @@ const GROUPS = [
   {
     title: 'Toparlanma',
     items: [
+      { key: 'coach', label: 'Koç Merkezi', hint: 'Haftalık karar, veri güveni ve protokol geçmişi', icon: ShieldCheck, color: 'text-emerald-400' },
       { key: 'sleep', label: 'Uyku Takibi', hint: 'Yatış/uyanış saati, 100 üzerinden puan', icon: Moon, color: 'text-purple-400' },
       { key: 'mind', label: 'Meditasyon & Esneme', hint: 'Günlük, haftalık, aylık log', icon: Brain, color: 'text-cyan-400' },
     ],

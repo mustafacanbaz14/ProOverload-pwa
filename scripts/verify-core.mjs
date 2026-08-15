@@ -53,11 +53,112 @@ import { STARTER_PROGRAMS, instantiateStarterProgram } from '../src/utils/starte
 import { sessionAdvice } from '../src/utils/autoregulation.js';
 import { buildSessionAdaptation, adaptationModeFor } from '../src/utils/sessionAdaptation.js';
 import {
+  buildCoachProtocol, isCoachProtocolActive, archiveCoachProtocol,
+} from '../src/utils/coachProtocol.js';
+import {
   duplicateTemplate, markTemplateUsed, organizeTemplates, toggleTemplateFavorite,
 } from '../src/utils/templateLibrary.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
+
+const coachReviewFixture = (overrides = {}) => ({
+  startKey: '2026-08-03', endKey: '2026-08-09', range: '3–9 Ağustos', hasData: true,
+  training: {
+    sessions: 3, days: 3, plannedDays: 4, adaptedSessions: 2,
+    recoverySessions: 1, effectiveSets: 24, previousEffectiveSets: 22,
+  },
+  recovery: { nights: 4, sleepMinutes: 410, sleepScore: 72, readiness: 45, readinessEntries: 3 },
+  energy: { days: 6, balance: -1400, kg: -0.18 },
+  volume: {
+    over: [], optimal: [{ muscle: 'Göğüs', volume: 12 }], under: [],
+    statuses: [
+      { muscle: 'Göğüs', volume: 12, mev: 8, mav: 16, mrv: 22, status: 'optimal', change: 1 },
+      { muscle: 'Kanat', volume: 7, mev: 10, mav: 18, mrv: 25, status: 'under', change: -1 },
+    ],
+  },
+  ...overrides,
+});
+
+test('6.0 koç protokolü yeterli veride haftalık toparlanma kararını üretir', () => {
+  const protocol = buildCoachProtocol(coachReviewFixture(), 'bulk', {
+    now: new Date('2026-08-15T12:00:00'), id: 'p-1',
+  });
+  assert.equal(protocol.mode, 'recovery');
+  assert.equal(protocol.canApply, true);
+  assert.equal(protocol.validFrom, '2026-08-10');
+  assert.equal(protocol.validUntil, '2026-08-16');
+  assert.ok(protocol.confidence.score >= 75);
+  assert.ok(protocol.reasons.some(reason => reason.includes('hazır oluşluk')));
+});
+
+test('düşük veri güveni koç protokolünü aktive ettirmez', () => {
+  const review = coachReviewFixture({
+    training: { sessions: 1, days: 1, plannedDays: 0, adaptedSessions: 0 },
+    recovery: { nights: 0, sleepMinutes: null, readiness: null, readinessEntries: 0 },
+    energy: null,
+  });
+  const protocol = buildCoachProtocol(review, 'maintain', { now: new Date('2026-08-15T12:00:00') });
+  assert.ok(protocol.confidence.score < 35);
+  assert.equal(protocol.canApply, false);
+  assert.ok(protocol.confidence.missing.length >= 3);
+});
+
+test('aktif haftalık toparlanma protokolü yükü uydurmadan setleri azaltır', () => {
+  const protocol = {
+    id: 'p-1', active: true, mode: 'recovery', label: 'Toparlanmayı Öncele',
+    validFrom: '2026-08-10', validUntil: '2026-08-16',
+  };
+  const template = {
+    name: 'Üst', exercises: [{ name: 'Bench Press', sets: [
+      { setType: 'warmup', weight: '40', reps: 8, rir: 4 },
+      ...Array.from({ length: 4 }, (_, i) => ({ setType: 'normal', weight: '100', reps: 8, rir: i ? 2 : 3 })),
+    ] }],
+  };
+  const adapted = buildSessionAdaptation(template, { score: 80, jointPain: 1, carbs: 6 }, {
+    coachProtocol: protocol, date: '2026-08-15',
+  });
+  assert.equal(adapted.mode.key, 'consolidate');
+  assert.equal(adapted.changes.originalWorkingSets, 4);
+  assert.equal(adapted.changes.adaptedWorkingSets, 3);
+  assert.equal(adapted.template.exercises[0].sets[0].setType, 'warmup');
+  assert.equal(adapted.template.exercises[0].sets[1].weight, '100');
+  assert.ok(adapted.template.exercises[0].sets.slice(1).every(set => Number(set.rir) >= 3));
+  assert.equal(template.exercises[0].sets.length, 5, 'orijinal şablon değişmemeli');
+});
+
+test('kritik günlük hazır oluşluk haftalık protokolden daha korumacı davranır', () => {
+  const protocol = { active: true, mode: 'recovery', validFrom: '2026-08-10', validUntil: '2026-08-16' };
+  const template = { exercises: [{ name: 'Squat', sets: Array.from({ length: 4 }, () => ({ setType: 'normal', weight: '100', rir: 1 })) }] };
+  const adapted = buildSessionAdaptation(template, { score: 30, jointPain: 1, carbs: 5 }, {
+    coachProtocol: protocol, date: '2026-08-15',
+  });
+  assert.equal(adapted.mode.key, 'recovery');
+  assert.equal(adapted.changes.adaptedWorkingSets, 2);
+  assert.equal(adapted.template.exercises[0].sets[0].weight, '85');
+});
+
+test('koç karar hafızası aynı protokolü çoğaltmaz ve sınırı korur', () => {
+  const history = Array.from({ length: 12 }, (_, i) => ({ id: `p-${i}`, mode: 'hold' }));
+  const next = archiveCoachProtocol(history, { id: 'p-3', mode: 'progress' });
+  assert.equal(next.length, 12);
+  assert.equal(next[0].mode, 'progress');
+  assert.equal(next.filter(item => item.id === 'p-3').length, 1);
+  assert.equal(isCoachProtocolActive({ active: true, validFrom: '2026-08-10', validUntil: '2026-08-16' }, '2026-08-15'), true);
+  assert.equal(isCoachProtocolActive({ active: true, validFrom: '2026-08-10', validUntil: '2026-08-16' }, '2026-08-17'), false);
+});
+
+test('günlük koç aktif haftalık protokolü ilgili merkeze bağlar', () => {
+  const actions = buildCoachActions({
+    coachProtocol: {
+      active: true, mode: 'recovery', label: 'Toparlanmayı Öncele',
+      validUntil: '2026-08-16', confidence: { score: 82 }, summary: 'Setler kontrollü azalır.',
+    },
+  }, new Date('2026-08-12T12:00:00'));
+  const item = actions.find(action => action.key === 'coach-protocol');
+  assert.equal(item.action, 'coach');
+  assert.ok(item.detail.includes('82/100'));
+});
 
 test('akıllı şablon sıralaması tavanı dolu kas yerine hacim açığını seçer', () => {
   const sets = count => Array.from({ length: count }, () => ({ setType: 'normal' }));

@@ -25,6 +25,7 @@ const GlobalSearchModal = memo(({
     { label: 'Geçmiş', hint: 'Tüm kayıtlar', action: () => onNavigate('history'), icon: Clock },
     { label: 'Hareket Kütüphanesi', hint: 'Hareketleri düzenle', action: () => onTool('library'), icon: Wrench },
     { label: 'Haftalık Program', hint: 'Aktif şablon ve plan', action: () => onTool('weekPlan'), icon: Wrench },
+    { label: 'Koç Merkezi', hint: 'Haftalık karar, veri güveni ve protokol', action: () => onTool('coach'), icon: Wrench },
     { label: 'Kalori Detayı', hint: 'Enerji girdisi ve çıktısı', action: () => onTool('energy'), icon: Wrench },
     { label: 'Uyku ve Toparlanma', hint: 'Uyku, meditasyon, esneme', action: () => onTool('sleep'), icon: Wrench },
   ], [onNavigate, onTool]);

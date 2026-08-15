@@ -53,7 +53,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     muscleVolume = {}, experienceLevel = 'intermediate',
     acwr, daysSinceMetric = null, plateaus = [], frequencyItem = null,
     deload = null, deloadSuggestion = null, gender = 'male', cycle = null,
-    mesocycleItem = null, selectionItem = null,
+    mesocycleItem = null, selectionItem = null, coachProtocol = null,
   } = ctx;
 
   const items = [];
@@ -141,6 +141,16 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
   }
 
   /* --- 2. öncelik: haftayı değiştirenler --- */
+
+  if (coachProtocol?.active) {
+    ekle({
+      key: 'coach-protocol', priority: 2,
+      tone: coachProtocol.mode === 'recovery' ? TONES.warn : TONES.info,
+      action: 'coach',
+      title: `Bu haftanın protokolü: ${coachProtocol.label}`,
+      detail: `${coachProtocol.validUntil} tarihine kadar aktif · veri güveni ${coachProtocol.confidence?.score || 0}/100. ${coachProtocol.summary}`,
+    });
+  }
 
   // Hafta ilerledikçe MEV altındaki kaslar için uyarı sertleşir: pazartesi
   // "eksik" demek anlamsız, perşembeden sonra gerçekten sorun.

@@ -15,6 +15,7 @@ import { computeWeekPlan, findPlan } from './utils/weekPlan';
 import { removeTemplateFromPlans } from './utils/planMigration';
 import { buildPersonalVolumeGuidance } from './utils/personalization';
 import { buildCoachActions } from './utils/coach';
+import { activateCoachProtocol, archiveCoachProtocol, isCoachProtocolActive } from './utils/coachProtocol';
 import { effectiveLoad, bodyweightPortion } from './utils/bodyweight';
 import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/bodyweightAudit';
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
@@ -81,6 +82,7 @@ const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'))
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
 const SessionReportModal = lazy(() => import('./components/SessionReportModal'));
 const WeeklyReviewModal = lazy(() => import('./components/WeeklyReviewModal'));
+const CoachCenterModal = lazy(() => import('./components/CoachCenterModal'));
 const SettingsModal = lazy(() => import('./components/SettingsModal'));
 const QRCodeModal = lazy(() => import('./components/QRCodeModal'));
 const FoodSearchModal = lazy(() => import('./components/FoodSearchModal'));
@@ -174,6 +176,7 @@ export default function App() {
   const [isMesocycleOpen, setIsMesocycleOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
+  const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
   // Seans bitince gösterilen rapor; kapatılana kadar duruyor.
   const [sessionReport, setSessionReport] = useState(null);
   // Yerine hareket aranan giriş: { name, exerciseId }
@@ -264,6 +267,28 @@ export default function App() {
     }, duration);
   }, []);
 
+  const handleActivateCoachProtocol = useCallback((proposal) => {
+    if (!proposal?.canApply) {
+      showToast('Bu protokol için veri güveni yeterli değil.', 'error');
+      return;
+    }
+    const activated = activateCoachProtocol(proposal);
+    setSettings(prev => ({
+      ...prev,
+      coachProtocol: activated,
+      coachHistory: archiveCoachProtocol(prev.coachHistory, activated),
+    }));
+    showToast(`${activated.label} bu hafta için aktive edildi.`);
+  }, [setSettings, showToast]);
+
+  const handleDeactivateCoachProtocol = useCallback(() => {
+    setSettings(prev => ({
+      ...prev,
+      coachProtocol: prev.coachProtocol ? { ...prev.coachProtocol, active: false } : null,
+    }));
+    showToast('Haftalık koç protokolü kapatıldı.');
+  }, [setSettings, showToast]);
+
   useEffect(() => () => {
     if (toastTimerRef.current) clearTimeout(toastTimerRef.current);
   }, []);
@@ -305,6 +330,12 @@ export default function App() {
   }, showToast);
   useDisplayPreferences(settings);
   useDeferredPwaUpdate(activeWorkout, showToast);
+
+  // Süresi biten protokol ayarlardan silinmez; karar hafızası korunur fakat
+  // seans ve beslenme hesabına yalnızca geçerli tarih aralığındaysa girer.
+  const activeCoachProtocol = useMemo(
+    () => isCoachProtocolActive(settings.coachProtocol) ? settings.coachProtocol : null,
+    [settings.coachProtocol]);
 
   // Dinlenme sayacı
   useEffect(() => {
@@ -1068,7 +1099,10 @@ export default function App() {
     const todayStr = getLocalDateString();
     const hazir = computeReadiness(readinessForm);
     const readinessSnapshot = { ...readinessForm, score: hazir.score, zone: hazir.zone.key };
-    const adaptation = buildSessionAdaptation(template, readinessSnapshot);
+    const adaptation = buildSessionAdaptation(template, readinessSnapshot, {
+      coachProtocol: activeCoachProtocol,
+      date: todayStr,
+    });
     const useAdaptedPlan = preWorkoutModal?.adaptationChoice ?? adaptation.recommended;
     const sessionTemplate = useAdaptedPlan ? adaptation.template : template;
 
@@ -1101,6 +1135,8 @@ export default function App() {
         summary: adaptation.mode.summary,
         reasons: adaptation.reasons,
         ...adaptation.changes,
+        source: adaptation.mode.key === 'consolidate' ? 'coach' : 'readiness',
+        ...(activeCoachProtocol?.id ? { protocolId: activeCoachProtocol.id } : {}),
       };
     }
 
@@ -2208,8 +2244,9 @@ export default function App() {
       bodyFatPct: parseNumber(computedComp?.activeBF),
       rate: settings.paceRate,
     });
+    const protocolCalorieDelta = activeCoachProtocol?.calorieDelta || 0;
     const adjustedTarget = recommendation
-      ? Math.max(0, recommendation.target + energy.total - maintenanceCalories)
+      ? Math.max(0, recommendation.target + protocolCalorieDelta + energy.total - maintenanceCalories)
       : 0;
     const remaining = Math.round(adjustedTarget - macros.calories);
 
@@ -2278,7 +2315,7 @@ export default function App() {
     };
   }, [weekPlanDays, nutritionHistory, currentNutritionForm, dayCaloriesFor,
     maintenanceCalories, computedComp, neatOpts, estimatedTefMacros, settings.nutritionGoal,
-    settings.paceRate, latestWeight, wellness, readiness, workouts]);
+    settings.paceRate, latestWeight, wellness, readiness, workouts, activeCoachProtocol]);
 
   /**
    * Koçun sıralanmış eylem listesi.
@@ -2396,12 +2433,13 @@ export default function App() {
       deloadSuggestion,
       gender: profileGender,
       cycle: todayCycleSummary,
+      coachProtocol: activeCoachProtocol,
     });
   }, [readiness, todayCoach, sortedWorkouts, sortedMetrics, computedComp,
     settings.nutritionGoal, settings.proteinPerFfmBulk, settings.proteinPerFfmCut,
     settings.experienceLevel, dashboardStats, plateauInsights, deload, deloadSuggestion,
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
-    profileGender, todayCycleSummary]);
+    profileGender, todayCycleSummary, activeCoachProtocol]);
 
   const needsBackup = useMemo(() => {
     if (!lastBackupDate) return true;
@@ -2518,6 +2556,7 @@ export default function App() {
                 deload: () => setIsDeloadOpen(true),
                 mesocycle: () => setIsMesocycleOpen(true),
                 wizard: () => setIsWizardOpen(true),
+                coach: () => setIsCoachCenterOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
               })[hedef]?.()}
               onOpenEnergy={() => setIsEnergyDetailOpen(true)}
@@ -2551,6 +2590,7 @@ export default function App() {
               onStarter={() => setIsStarterOpen(true)}
               onWeekPlan={() => setIsWeekPlanOpen(true)}
               onCardio={() => setIsCardioOpen(true)}
+              onCoach={() => setIsCoachCenterOpen(true)}
               onPreview={setPreviewTemplate}
               onEdit={(template) => { setEditingTemplate(template); setIsBuilderOpen(true); }}
               onDuplicate={handleDuplicateTemplate}
@@ -2597,6 +2637,7 @@ export default function App() {
               setMealTemplates={setMealTemplates}
               dayTemplates={dayTemplates}
               setDayTemplates={setDayTemplates}
+              coachProtocol={activeCoachProtocol}
             />
           )}
 
@@ -2755,6 +2796,7 @@ export default function App() {
               mesocycle: () => setIsMesocycleOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
+              coach: () => setIsCoachCenterOpen(true),
             }[key];
             action?.();
           }}
@@ -3027,6 +3069,25 @@ export default function App() {
           wellness={wellness}
           energyWeeks={weeklyEnergy}
           nutritionGoal={settings.nutritionGoal}
+          activeProtocol={activeCoachProtocol}
+          onActivateProtocol={handleActivateCoachProtocol}
+          onOpenCoach={() => { setIsWeeklyReviewOpen(false); setIsCoachCenterOpen(true); }}
+        />}
+
+        {isCoachCenterOpen && <CoachCenterModal
+          isOpen={isCoachCenterOpen}
+          onClose={() => setIsCoachCenterOpen(false)}
+          workouts={workouts}
+          customExercises={customExercises}
+          experienceLevel={settings.experienceLevel}
+          planDays={weekPlanDays}
+          wellness={wellness}
+          energyWeeks={weeklyEnergy}
+          nutritionGoal={settings.nutritionGoal}
+          activeProtocol={activeCoachProtocol}
+          history={settings.coachHistory || []}
+          onActivate={handleActivateCoachProtocol}
+          onDeactivate={handleDeactivateCoachProtocol}
         />}
 
         {isDeloadOpen && <DeloadModal
@@ -3087,6 +3148,7 @@ export default function App() {
               mesocycle: () => setIsMesocycleOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
+              coach: () => setIsCoachCenterOpen(true),
               mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
               cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
             }[key];
@@ -3204,6 +3266,9 @@ export default function App() {
                   ...readinessForm,
                   score: h.score,
                   zone: h.zone.key,
+                }, {
+                  coachProtocol: activeCoachProtocol,
+                  date: getLocalDateString(),
                 });
                 const adaptedSelected = preWorkoutModal.adaptationChoice ?? adaptation.recommended;
                 return (
@@ -3233,11 +3298,11 @@ export default function App() {
                     ))}
                   </div>
                   {preWorkoutModal.template && (
-                    <div className={`rounded-2xl border p-3.5 mb-5 ${adaptation.mode.key === 'normal' ? 'border-emerald-900/50 bg-emerald-950/20' : adaptation.mode.key === 'reduced' ? 'border-amber-900/50 bg-amber-950/20' : 'border-red-900/50 bg-red-950/20'}`}>
+                    <div className={`rounded-2xl border p-3.5 mb-5 ${adaptation.mode.key === 'normal' ? 'border-emerald-900/50 bg-emerald-950/20' : adaptation.mode.key === 'recovery' ? 'border-red-900/50 bg-red-950/20' : 'border-amber-900/50 bg-amber-950/20'}`}>
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
                           <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">Akıllı Seans Planı</span>
-                          <strong className={`text-[12px] block mt-0.5 ${adaptation.mode.key === 'normal' ? 'text-emerald-400' : adaptation.mode.key === 'reduced' ? 'text-amber-400' : 'text-red-400'}`}>{adaptation.mode.label}</strong>
+                          <strong className={`text-[12px] block mt-0.5 ${adaptation.mode.key === 'normal' ? 'text-emerald-400' : adaptation.mode.key === 'recovery' ? 'text-red-400' : 'text-amber-400'}`}>{adaptation.mode.label}</strong>
                         </div>
                         {adaptation.changes && (
                           <span className="text-[9px] font-mono text-zinc-500 text-right shrink-0">

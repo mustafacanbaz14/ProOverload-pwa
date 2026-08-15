@@ -1,10 +1,11 @@
 import React, { useState, useMemo, memo } from 'react';
 import {
   X, ClipboardCheck, ChevronLeft, ChevronRight, Layers, Dumbbell,
-  Moon, BrainCircuit, Flame, CalendarCheck,
+  Moon, BrainCircuit, Flame, CalendarCheck, ShieldCheck,
 } from 'lucide-react';
 import { buildWeeklyReview, lastCompletedWeekStart } from '../utils/weeklyReview';
 import { weekBounds, dayKey } from '../utils/dates';
+import { buildCoachProtocol, isCoachProtocolActive } from '../utils/coachProtocol';
 
 const TONE = {
   warn: 'border-amber-900/50 bg-amber-950/20 text-amber-300',
@@ -29,12 +30,17 @@ const Stat = ({ icon, value, label, sub }) => (
  * GEÇEN tam hafta — içinde bulunulan hafta bitmediği için "hacim eksik" demek
  * yanıltıcı olur; kullanıcı isterse oklarla o haftaya da bakabiliyor.
  */
-const WeeklyReviewModal = memo(({ isOpen, onClose, ...data }) => {
+const WeeklyReviewModal = memo(({
+  isOpen, onClose, activeProtocol, onActivateProtocol, onOpenCoach, ...data
+}) => {
   const [weekStart, setWeekStart] = useState(() => lastCompletedWeekStart());
 
   const review = useMemo(
     () => buildWeeklyReview({ ...data, weekStart }),
     [data, weekStart]);
+  const proposal = useMemo(
+    () => buildCoachProtocol(review, data.nutritionGoal),
+    [review, data.nutritionGoal]);
 
   if (!isOpen || !review) return null;
 
@@ -123,6 +129,33 @@ const WeeklyReviewModal = memo(({ isOpen, onClose, ...data }) => {
             </div>
           ))}
         </div>
+
+        {proposal && (
+          <div className="rounded-2xl border border-cyan-900/50 bg-cyan-950/15 p-3.5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <span className="text-[8px] font-mono text-cyan-500 uppercase tracking-wider flex items-center gap-1">
+                  <ShieldCheck size={10} /> 6.0 Koç Protokolü
+                </span>
+                <strong className="text-[11px] text-zinc-200 block mt-1">{proposal.label}</strong>
+                <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">{proposal.summary}</p>
+              </div>
+              <span className="text-[9px] font-mono text-cyan-400 shrink-0">{proposal.confidence.score}/100</span>
+            </div>
+            <div className="grid grid-cols-2 gap-2 mt-3">
+              <button
+                onClick={() => onActivateProtocol?.(proposal)}
+                disabled={!proposal.canApply || isCoachProtocolActive(activeProtocol)}
+                className="rounded-xl bg-cyan-600 disabled:bg-zinc-800 disabled:text-zinc-600 py-2.5 text-[9px] font-bold text-white"
+              >
+                {isCoachProtocolActive(activeProtocol) ? 'Protokol Aktif' : 'Bu Haftaya Uygula'}
+              </button>
+              <button onClick={onOpenCoach} className="rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 flex items-center justify-center gap-1">
+                <BrainCircuit size={11} /> Detay
+              </button>
+            </div>
+          </div>
+        )}
 
         {energy && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5">

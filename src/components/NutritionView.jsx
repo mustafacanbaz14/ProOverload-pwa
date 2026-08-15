@@ -15,6 +15,7 @@ import { formatDay, weekdayName } from '../utils/dates';
 import { dayMindCalories } from '../utils/wellness';
 import { dayEnergyBreakdown, hasDayNeatOverride, neatOptsForDay } from '../utils/energyModel';
 import NutritionTemplatesModal from './NutritionTemplatesModal';
+import { isCoachProtocolActive } from '../utils/coachProtocol';
 
 const MacroTile = ({ label, value, numericValue, target, color, bar }) => {
   const ratio = target > 0 ? Math.min(100, Math.round((parseNumber(numericValue) / target) * 100)) : null;
@@ -57,6 +58,7 @@ const NutritionView = memo(({
   setMealTemplates,
   dayTemplates = [],
   setDayTemplates,
+  coachProtocol = null,
 }) => {
   const safeMeals = Array.isArray(currentNutritionForm.meals) ? currentNutritionForm.meals : [];
   const isDaily = currentNutritionForm.entryMode === 'daily';
@@ -87,6 +89,9 @@ const NutritionView = memo(({
     bodyFatPct: parseNumber(selectedBody.bodyFat) || parseNumber(computedComp?.activeBF),
     rate: settings.paceRate,
   });
+  const protocolCalorieDelta = isCoachProtocolActive(coachProtocol, currentNutritionForm.date)
+    ? parseNumber(coachProtocol.calorieDelta)
+    : 0;
 
   const energyFor = (record) => {
     if (typeof energyForRecord === 'function') return energyForRecord(record);
@@ -119,13 +124,14 @@ const NutritionView = memo(({
     burnedAuto: automaticExercise,
     burnedManual: currentNutritionForm.activeCaloriesOut,
     maintenance: selectedMaintenance,
-    targetIntake: recommended?.target,
+    targetIntake: recommended ? recommended.target + protocolCalorieDelta : 0,
     totalOut: currentEnergy.total,
     weekDays: recent7Days.map(record => ({
       intake: dailyTotals(record).calories,
       out: energyFor(record).total,
     })),
   });
+  const targetCalories = calorieData?.adjustedTarget || (recommended ? recommended.target + protocolCalorieDelta : 0);
 
   const weeklyAvg = useMemo(() => {
     if (recent7Days.length === 0) return null;
@@ -140,7 +146,7 @@ const NutritionView = memo(({
 
   const dayScore = nutritionDayScore({
     totals,
-    targetCalories: calorieData?.adjustedTarget || recommended?.target,
+    targetCalories,
     targetProtein,
     waterMl: currentNutritionForm.waterMl,
     weightKg: selectedWeight,
@@ -239,7 +245,6 @@ const NutritionView = memo(({
     energySnapshot: null,
   }));
 
-  const targetCalories = calorieData?.adjustedTarget || recommended?.target || 0;
   const remaining = targetCalories > 0 ? targetCalories - totals.calories : null;
   const calorieProgress = targetCalories > 0 ? Math.min(100, totals.calories / targetCalories * 100) : 0;
   const scoreColor = !dayScore ? 'text-zinc-500' : dayScore.score >= 65 ? 'text-emerald-400' : dayScore.score >= 45 ? 'text-amber-400' : 'text-orange-400';
@@ -299,6 +304,11 @@ const NutritionView = memo(({
           <span>{totals.calories} kcal alındı</span>
           <span>{targetCalories > 0 ? `${targetCalories} kcal hedef` : 'Vücut verisi gerekli'}</span>
         </div>
+        {protocolCalorieDelta !== 0 && (
+          <p className="text-[8px] font-mono text-cyan-400 mt-1.5 text-right">
+            Koç protokolü {protocolCalorieDelta > 0 ? '+' : ''}{protocolCalorieDelta} kcal uyguladı
+          </p>
+        )}
 
         <div className="grid grid-cols-3 gap-2 mt-3">
           <MacroTile label="Protein" value={`${totals.protein}g`} numericValue={totals.protein} target={targetProtein} color="text-emerald-400" bar="bg-emerald-500" />

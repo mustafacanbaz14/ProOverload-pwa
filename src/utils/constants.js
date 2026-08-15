@@ -74,6 +74,10 @@ export const DEFAULT_SETTINGS = {
   // baseline blok başlarken dondurulan kas hacimleri; feedback hafta -> kas ->
   // toparlanma anahtarı. Deload gibi süre dolunca silinmiyor, kapalı sayılıyor.
   mesocycle: { active: false, startDate: '', weeks: 5, baseline: {}, feedback: {} },
+  // 6.0 Koç Merkezi: geçen haftadan üretilen protokol ve kullanıcının aktive
+  // ettiği kararların küçük geçmişi. Şablonların kendisi değiştirilmez.
+  coachProtocol: null,
+  coachHistory: [],
   // Görünüm teması: 'dark' | 'light'
   theme: 'dark',
   // Marka vurgu rengi temadan bağımsızdır. Kadın profili pembe paleti
@@ -601,28 +605,28 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '5.4';
+export const APP_VERSION = '6.0';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 5.4',
+  title: 'ProOverload 6.0',
   date: '2026-08-15',
   items: [
     {
-      title: 'Hazır Oluşluğa Göre Seans',
-      desc: 'Antrenman başlamadan önce uyku, stres, ağrı ve karbonhidrat verileri şablonla birleştirilerek o güne özel seans planı çıkarılıyor.'
+      title: 'Koç Merkezi',
+      desc: 'Antrenman, uyku, hazır oluşluk, hacim ve enerji verileri tek merkezde açıklanabilir bir haftalık karara dönüşüyor.'
     },
     {
-      title: 'Kontrollü ve Toparlanma Modu',
-      desc: 'Orta hazır oluşlukta set ve yük küçük ölçüde; kritik durumda daha belirgin azaltılıyor. Isınma setleri ve boş yük alanları korunuyor.'
+      title: 'Güven Puanlı Haftalık Protokol',
+      desc: 'Önerinin veri kapsamı görünür. Yetersiz kayıtla protokol aktive edilemiyor; nedenler ve eksik veriler açıkça gösteriliyor.'
     },
     {
-      title: 'Karar Kullanıcıda',
-      desc: 'Uyarlamanın set ve yük etkisi seans öncesinde gösteriliyor; kullanıcı tek dokunuşla bugüne uyarlayabiliyor veya orijinal planı koruyabiliyor.'
+      title: 'Toparlanma Protokolü',
+      desc: 'Toparlanma sinyalleri birikirse yalnızca o haftanın seanslarında çalışma setleri kontrollü azalıyor; şablon ve kayıtlı yükler korunuyor.'
     },
     {
-      title: 'Haftalık Toparlanma Hafızası',
-      desc: 'Uyarlanan seanslar kayıtta ve seans raporunda saklanıyor; aynı hafta tekrarlandığında haftalık inceleme bunu toparlanma sinyali olarak değerlendiriyor.'
+      title: 'Karar Hafızası',
+      desc: 'Aktive edilen haftalık kararlar geçmişte saklanıyor; günlük koç aktif protokolü hatırlatıyor ve seans raporu uygulanan uyarlamayı gösteriyor.'
     }
   ]
 };
