@@ -7,6 +7,7 @@ import {
 } from '../utils/cardio';
 import { clampNumber, INPUT_LIMITS, foldForSearch, getLocalDateString } from '../utils/helpers';
 import { formatDay } from '../utils/dates';
+import { supportsDistance, entryPace, zoneForEntry } from '../utils/cardioZones';
 
 const QUICK_MINUTES = [15, 20, 30, 45, 60];
 
@@ -18,7 +19,7 @@ const QUICK_MINUTES = [15, 20, 30, 45, 60];
  */
 const CardioModal = memo(({
   isOpen, onClose, onSave, weightKg, entriesFor, onDelete, planned = [],
-  initialDate, editingEntry = null,
+  initialDate, editingEntry = null, age = null,
 }) => {
   const [type, setType] = useState(editingEntry?.type || 'zone2');
   const [minutes, setMinutes] = useState(editingEntry?.minutes || 30);
@@ -26,6 +27,10 @@ const CardioModal = memo(({
   const [customEffortMultiplier, setCustomEffortMultiplier] = useState(editingEntry?.customEffortMultiplier ?? 0.72);
   const [date, setDate] = useState(initialDate || getLocalDateString());
   const [note, setNote] = useState(editingEntry?.note || '');
+  // Mesafe yalnızca ölçmenin anlamlı olduğu aktivitelerde soruluyor; HIIT ya
+  // da boks için "kaç km" hem doldurulmaz hem anlamsız bir sayı üretir.
+  const [distanceKm, setDistanceKm] = useState(editingEntry?.distanceKm ?? '');
+  const [avgHeartRate, setAvgHeartRate] = useState(editingEntry?.avgHeartRate ?? '');
   const [showActivities, setShowActivities] = useState(false);
   const [activityQuery, setActivityQuery] = useState('');
   // Ekran kapanmadan kaç aktivite eklendiği — geri bildirim için.
@@ -69,6 +74,8 @@ const CardioModal = memo(({
     type, minutes: Number(minutes), effort,
     ...(effort === 'custom' ? { customEffortMultiplier: Number(customEffortMultiplier) || 1.0 } : {}),
     date, note: note.trim(),
+    ...(Number(distanceKm) > 0 ? { distanceKm: Number(distanceKm) } : {}),
+    ...(Number(avgHeartRate) > 0 ? { avgHeartRate: Number(avgHeartRate) } : {}),
     ...(plan ? { plannedEffort: plan.effort, plannedMinutes: plan.minutes } : {}),
   });
 
@@ -227,6 +234,49 @@ const CardioModal = memo(({
               </button>
             ))}
           </div>
+        </div>
+
+        {/* Mesafe ve nabız. İkisi de isteğe bağlı: mesafe tempoyu, nabız ise
+            bölgeyi TAHMİN yerine ÖLÇÜM haline getiriyor. */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
+          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+            İsteğe bağlı · mesafe ve nabız
+          </span>
+          <div className="flex gap-2">
+            {supportsDistance(type) && (
+              <label className="flex-1">
+                <span className="text-[9px] font-mono text-zinc-500 block mb-1">Mesafe (km)</span>
+                <input
+                  type="number" inputMode="decimal" step="0.1" min="0"
+                  value={distanceKm}
+                  onChange={(e) => setDistanceKm(e.target.value)}
+                  placeholder="—"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 text-center font-mono text-cyan-400 text-sm outline-none focus:border-cyan-500"
+                />
+              </label>
+            )}
+            <label className="flex-1">
+              <span className="text-[9px] font-mono text-zinc-500 block mb-1">Ort. nabız</span>
+              <input
+                type="number" inputMode="numeric" min="0" max="230"
+                value={avgHeartRate}
+                onChange={(e) => setAvgHeartRate(e.target.value)}
+                placeholder="—"
+                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg py-2 text-center font-mono text-red-400 text-sm outline-none focus:border-red-500"
+              />
+            </label>
+          </div>
+          {(() => {
+            const tempo = entryPace({ type, minutes, distanceKm });
+            const { zone, source } = zoneForEntry({ type, effort, avgHeartRate }, { age });
+            return (
+              <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+                {tempo && <>Tempo <strong className="text-cyan-400">{tempo.label}</strong> · {tempo.speedKmh} km/s · </>}
+                Bölge <strong className={zone.color}>{zone.label}</strong> ({zone.name})
+                <span className="text-zinc-600"> · {source === 'heartRate' ? 'nabızdan ölçüldü' : 'aktivite ve tempodan tahmin'}</span>
+              </p>
+            );
+          })()}
         </div>
 
         {/* Tempo / zorluk */}

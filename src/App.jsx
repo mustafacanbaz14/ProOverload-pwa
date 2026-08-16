@@ -5,7 +5,8 @@ import {
 import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
   requestWakeLock, playRestAlert, vibrateAlert,
-  showRestNotification, requestNotificationPermission, notificationPermission
+  showRestNotification, requestNotificationPermission, notificationPermission,
+  primeRestAlert, REST_ALERT_INTENSITIES
 } from './lockScreen';
 
 import { DEFAULT_EXERCISES, MUSCLE_GROUPS, BODY_METRICS, getVolumeLandmarks, ACWR_MIN_DAYS, APP_VERSION } from './utils/constants';
@@ -20,6 +21,7 @@ import { buildWeekProjection, projectionCoachItem } from './utils/weekProjection
 import { buildPrWatch, prWatchCoachItem } from './utils/prWatch';
 import { buildRirCalibration, rirCoachItem } from './utils/rirCalibration';
 import { auditSessionQuality, sessionQualityCoachItem } from './utils/sessionQuality';
+import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from './utils/cardioGoals';
 import { computeAdaptiveTDEE } from './utils/tdee';
 import { totalCardioCalories, dayWorkoutCalories } from './utils/cardio';
 import { computeWeekPlan, findPlan } from './utils/weekPlan';
@@ -360,8 +362,9 @@ export default function App() {
       setRestSecondsLeft(remaining);
       if (remaining === 0) {
         setRest(null);
-        if (settings.restAlert) playRestAlert();
-        vibrateAlert();
+        // Şiddet ayarı: eski tek bip müzik çalarken duyulmuyordu.
+        if (settings.restAlert) playRestAlert(settings.restAlertIntensity);
+        vibrateAlert(settings.restAlertIntensity);
         // Bildirim, ses ve titreşimin YERİNE değil yanına: telefon sessizdeyken
         // ya da uygulama arka plandayken tek görünür uyarı bu.
         if (settings.restNotification) showRestNotification();
@@ -369,7 +372,7 @@ export default function App() {
     };
     const interval = setInterval(tick, 500);
     return () => clearInterval(interval);
-  }, [rest, settings.restAlert, settings.restNotification]);
+  }, [rest, settings.restAlert, settings.restNotification, settings.restAlertIntensity]);
 
 
   // Antrenman işlemleri
@@ -1209,6 +1212,11 @@ export default function App() {
     if (initialExercises.length === 0) {
       setIsExerciseModalOpen(true);
     }
+
+    // Ses motoru burada, kullanıcı hareketi içinde açılıyor. iOS
+    // AudioContext'i yalnızca bir dokunma sırasında başlatıyor; sonradan
+    // (dinlenme bitince) açmaya çalışmak sessizlikle sonuçlanıyordu.
+    primeRestAlert();
 
     // Müzik önceliği açıkken kart hiç başlatılmıyor: başlatmak, kullanıcının
     // dinlediği müziği kesmek demek ve bunu sessizce yapmak yanlış olurdu.
@@ -2522,6 +2530,24 @@ export default function App() {
     return auditSessionQuality(son.exercises, { customExercises, durationMinutes: son.duration });
   }, [sortedWorkouts, customExercises]);
 
+  // Kardiyo koçu. Yaş nabız bölgeleri için; yoksa bölge aktivite ve tempodan
+  // tahmin ediliyor.
+  const profileAge = parseNumber(currentMetricsForm?.age) || null;
+
+  const cardioReport = useMemo(
+    () => buildCardioReport(sortedWorkouts, settings.cardioGoal, {
+      age: profileAge,
+      planResult: weekPlanResult,
+    }),
+    [sortedWorkouts, settings.cardioGoal, profileAge, weekPlanResult]);
+
+  const cardioSuggestion = useMemo(
+    () => cardioSuggestionForToday(cardioReport, {
+      planDay: todayCoach?._signals?.planDay || null,
+      readinessScore: readiness?.sonSkor ?? null,
+    }),
+    [cardioReport, todayCoach, readiness]);
+
   const coachActions = useMemo(() => {
     const bugun = getLocalDateString();
     const sonOlcum = sortedMetrics[0]?.date;
@@ -2562,6 +2588,7 @@ export default function App() {
       prItem: prWatchCoachItem(prWatch),
       rirItem: rirCoachItem(rirCalibration),
       orderItem: sessionQualityCoachItem(lastSessionQuality),
+      cardioItem: cardioCoachItem(cardioReport, cardioSuggestion),
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -2574,6 +2601,7 @@ export default function App() {
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
+    cardioReport, cardioSuggestion,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
   // Koç hafızası: ertelenen/kapatılan maddeler ve çelişki çözümü. Ham liste
@@ -2855,6 +2883,12 @@ export default function App() {
                 planResult: weekPlanResult,
                 resolveLoad: resolveSetLoad,
                 today: getLocalDateString(),
+                cardioReport,
+                cardioSuggestion,
+                cardioGoal: settings.cardioGoal,
+                onChangeCardioGoal: (next) => setSettings(prev => ({ ...prev, cardioGoal: next })),
+                onOpenCardio: () => setIsCardioOpen(true),
+                age: profileAge,
                 settings,
                 computedComp,
                 adaptiveTDEE,
@@ -2996,6 +3030,7 @@ export default function App() {
           bodyweightAudit={bodyweightAudit}
           onNormalizeBodyweight={handleNormalizeBodyweight}
           onToggleRestNotification={handleToggleRestNotification}
+          onTestRestAlert={(key) => { playRestAlert(key); vibrateAlert(key); }}
           notificationState={notificationPermission()}
           onExportCsv={handleExportCsv}
           profileGender={profileGender}
@@ -3384,6 +3419,7 @@ export default function App() {
           onSave={handleSaveCardio}
           onDelete={handleDeleteCardio}
           weightKg={latestWeight}
+          age={profileAge}
           // Tek bir kaydı düzenlerken liste gizlenir; onun dışında (bugün ya da
           // geçmiş bir gün) o güne eklenenler görünür kalır, çünkü aynı güne
           // arka arkaya birkaç aktivite eklenebiliyor.

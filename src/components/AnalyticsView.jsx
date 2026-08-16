@@ -3,6 +3,7 @@ import { Search, Eye, EyeOff, BrainCircuit, TrendingDown, Utensils } from 'lucid
 import TrendChart from './TrendChart';
 import ConsistencyCard from './ConsistencyCard';
 import SessionQualityCard from './SessionQualityCard';
+import CardioCoachCard from './CardioCoachCard';
 import StrengthBalanceCard from './StrengthBalanceCard';
 import { BODY_METRICS, MUSCLE_GROUPS, getVolumeLandmarks } from '../utils/constants';
 import { estimate1RM, isWorkingSet, isCompletedWorkingSet, parseNumber, detectMuscleGroup, foldForSearch } from '../utils/helpers';
@@ -32,6 +33,12 @@ const FREQ_TONE = {
 
 const AnalyticsView = memo(({
   analysisType,
+  cardioReport = null,
+  cardioSuggestion = null,
+  cardioGoal = null,
+  onChangeCardioGoal,
+  onOpenCardio,
+  age = null,
   planResult = null,
   resolveLoad = null,
   today,
@@ -334,6 +341,14 @@ const AnalyticsView = memo(({
               kaslar arasında nasıl dağılmış". */}
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
           <SessionQualityCard workouts={workouts} customExercises={customExercises} />
+          <CardioCoachCard
+            report={cardioReport}
+            suggestion={cardioSuggestion}
+            goal={cardioGoal}
+            onChangeGoal={onChangeCardioGoal}
+            age={age}
+            onOpenCardio={onOpenCardio}
+          />
           <StrengthBalanceCard workouts={workouts} resolveLoad={resolveLoad} />
 
           {/* Sıklık: hacim tek başına 16 seti tek güne yığmakla ikiye bölmeyi

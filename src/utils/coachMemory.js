@@ -66,7 +66,7 @@ export const restoreCoachItem = (memory, key = null) => {
 export const CONFLICT_RULES = [
   {
     winner: 'deload-running',
-    losers: ['volume-low', 'mesocycle', 'pr-watch', 'no-week'],
+    losers: ['volume-low', 'mesocycle', 'pr-watch', 'no-week', 'cardio-todo'],
     reason: 'Deload haftasındasın; hacim ve rekor tavsiyeleri bu hafta geçerli değil.',
   },
   {
@@ -85,8 +85,15 @@ export const CONFLICT_RULES = [
     reason: 'Son seansta eklem ağrısı yüksekti; bugün rekor denemesi sırası değil.',
   },
   {
+    // Yüksek şiddet kardiyo ile bacak günü çakışması varken "bugün yüksek
+    // şiddet kardiyoya uygun" demek kendi kendiyle çelişirdi.
+    winner: 'cardio-balance',
+    losers: ['cardio-todo'],
+    reason: 'Önce kardiyo dağılımı düzeltilmeli; yeni seans eklemek dengesizliği büyütür.',
+  },
+  {
     winner: 'readiness-low',
-    losers: ['pr-watch', 'volume-low'],
+    losers: ['pr-watch', 'volume-low', 'cardio-todo'],
     reason: 'Hazır oluşluk üst üste düşük; bugün maksimal deneme ya da hacim artışı işe yaramaz.',
   },
   {

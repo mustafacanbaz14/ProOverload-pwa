@@ -464,39 +464,146 @@ export const stopLockScreenActivity = () => {
 };
 
 // --- Dinlenme bitiş uyarısı ---
+//
+// MÜZİK ÜSTÜNDE DUYULMASI. Eski uyarı 880 Hz'de iki kısa bipti ve müzik
+// çalarken pratikte kayboluyordu: tek frekanslı kısa bir sinüs, müziğin
+// spektrumunun içinde eriyor.
+//
+// Üç şey değişti:
+//
+//  1. TINI. Tek sinüs yerine yükselen üç notalı bir dizi ve her notada temel
+//     frekansın üstüne bir üst harmonik ekleniyor. Geniş spektrumlu ve
+//     yükselen bir ses, sabit bir bipten çok daha zor gözden kaçıyor.
+//  2. SÜRE VE TEKRAR. Dizi bir kez değil, seçilen şiddete göre birkaç kez
+//     çalıyor. Müzikte bir cümlenin ortasına denk gelen tek bip kaçıyor;
+//     aralıklı tekrar kaçmıyor.
+//  3. SES SEVİYESİ. Kazanç belirgin biçimde yükseltildi ve kırpılmayı
+//     önlemek için bir kompresör eklendi — kırpılan ses hem çirkin hem de
+//     paradoksal olarak daha az fark ediliyor.
+//
+// AudioContext kullanılıyor, <audio> elementi değil: AudioContext çoğu
+// platformda müzikle KARIŞIYOR, ses odağını almıyor. Yani uyarı müziği
+// durdurmuyor, üstüne biniyor.
+
+export const REST_ALERT_INTENSITIES = [
+  {
+    key: 'soft', label: 'Hafif', repeats: 1, gain: 0.35, gap: 0,
+    hint: 'Tek dizi, düşük ses. Sessiz ortamda yeterli.',
+  },
+  {
+    key: 'strong', label: 'Belirgin', repeats: 2, gain: 0.85, gap: 0.9,
+    hint: 'İki dizi, yüksek ses. Müzik dinlerken de duyulur.',
+  },
+  {
+    key: 'insistent', label: 'Israrcı', repeats: 4, gain: 1.0, gap: 1.1,
+    hint: 'Dört dizi, en yüksek ses. Telefon cepteyken ve müzik açıkken bile kaçmaz.',
+  },
+];
+
+export const findRestAlertIntensity = (key) =>
+  REST_ALERT_INTENSITIES.find(i => i.key === key) || REST_ALERT_INTENSITIES[1];
+
+// Yükselen üç nota (La5, Do#6, Mi6) — bir majör arpej. Yükselen dizi,
+// düşen ya da sabit diziye göre dikkat çekmede belirgin biçimde daha etkili.
+const ALERT_NOTES = [880, 1108.73, 1318.51];
+
+let alertCtx = null;
+
+/** AudioContext'i bir kez kurar; askıya alınmışsa uyandırır. */
+const ensureContext = () => {
+  const Ctx = window.AudioContext || window.webkitAudioContext;
+  if (!Ctx) return null;
+  if (!alertCtx || alertCtx.state === 'closed') alertCtx = new Ctx();
+  // Arka plandan dönüşte context askıda kalıyor; resume çağrılmazsa ses çıkmıyor.
+  if (alertCtx.state === 'suspended') { try { alertCtx.resume(); } catch { /* yoksay */ } }
+  return alertCtx;
+};
 
 /**
- * Kısa çift bip. iOS Safari titreşim API'sini desteklemediği için
- * telefon cepteyken tek güvenilir uyarı yolu sestir.
+ * Sessiz bir ses çalarak ses motorunu kullanıcı hareketiyle açar.
+ *
+ * iOS AudioContext'i yalnızca bir kullanıcı hareketi içinde başlatıyor.
+ * Antrenman başlatılırken bir kez çağrılıyor; sonra dinlenme bittiğinde
+ * (kullanıcı hareketi olmadan) ses çalınabiliyor.
  */
-export const playRestAlert = () => {
+export const primeRestAlert = () => {
+  const ctx = ensureContext();
+  if (!ctx) return false;
   try {
-    const Ctx = window.AudioContext || window.webkitAudioContext;
-    if (!Ctx) return;
-    const ctx = new Ctx();
-    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    gain.gain.value = 0.0001;
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.01);
+    return true;
+  } catch {
+    return false;
+  }
+};
 
-    [0, 0.24].forEach((offset) => {
+/** Tek bir yükselen dizi çalar. */
+const playSequence = (ctx, startAt, gainLevel) => {
+  // Kompresör: üst üste binen notalar kırpılmasın, algılanan ses yüksek kalsın.
+  const comp = ctx.createDynamicsCompressor();
+  comp.threshold.value = -18;
+  comp.ratio.value = 8;
+  comp.connect(ctx.destination);
+
+  ALERT_NOTES.forEach((freq, i) => {
+    const t = startAt + i * 0.13;
+    // Temel + bir oktav üstü: geniş spektrum, müziğin içinde kaybolmuyor.
+    [[freq, 1], [freq * 2, 0.45]].forEach(([f, oran]) => {
       const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.0001, now + offset);
-      gain.gain.exponentialRampToValueAtTime(0.4, now + offset + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + offset + 0.2);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start(now + offset);
-      osc.stop(now + offset + 0.22);
+      const g = ctx.createGain();
+      // Kare dalgaya yakın bir tını daha delici; sinüs müzikte eriyor.
+      osc.type = f === freq ? 'triangle' : 'sine';
+      osc.frequency.value = f;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.001, gainLevel * oran), t + 0.015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      osc.connect(g).connect(comp);
+      osc.start(t);
+      osc.stop(t + 0.28);
     });
+  });
+};
 
-    setTimeout(() => { try { ctx.close(); } catch { /* yoksay */ } }, 1000);
+/**
+ * Dinlenme bitiş sesi.
+ *
+ * @param intensityKey 'soft' | 'strong' | 'insistent'
+ */
+export const playRestAlert = (intensityKey = 'strong') => {
+  try {
+    const ctx = ensureContext();
+    if (!ctx) return;
+    const seviye = findRestAlertIntensity(intensityKey);
+    const now = ctx.currentTime;
+    for (let i = 0; i < seviye.repeats; i += 1) {
+      playSequence(ctx, now + i * (seviye.gap || 0.9), seviye.gain);
+    }
+    // Context KAPATILMIYOR: her uyarıda yeni context açmak iOS'ta bir süre
+    // sonra sessizliğe düşüyordu (açık context sayısı sınırlı).
   } catch { /* ses çalınamadı */ }
 };
 
-/** Destekleyen cihazlarda (Android) titreşim. iOS'ta sessizce yok sayılır. */
-export const vibrateAlert = () => {
-  try { navigator.vibrate?.([140, 70, 140]); } catch { /* yoksay */ }
+/**
+ * Titreşim.
+ *
+ * Desen şiddete göre uzuyor. Tek kısa titreşim telefon cepteyken ve yürürken
+ * hissedilmiyor; uzun-kısa-uzun bir desen hissediliyor.
+ */
+export const vibrateAlert = (intensityKey = 'strong') => {
+  const seviye = findRestAlertIntensity(intensityKey);
+  const desen = seviye.key === 'soft'
+    ? [140, 70, 140]
+    : seviye.key === 'strong'
+      ? [220, 90, 220, 90, 320]
+      : [260, 100, 260, 100, 260, 100, 420];
+  try { navigator.vibrate?.(desen); } catch { /* yoksay */ }
 };
+
 
 // --- Ekranı açık tutma (Wake Lock) ---
 // Salonda telefonu bırakıp sete girerken ekranın kapanmaması için.
@@ -561,18 +668,24 @@ export const requestNotificationPermission = async () => {
  * Aynı `tag` kullanılıyor: arka arkaya biten sayaçlar bildirim yığmıyor,
  * sonuncusu öncekinin yerine geçiyor.
  */
-export const showRestNotification = (body = 'Dinlenme bitti — sıradaki sete geç.') => {
+export const showRestNotification = (body = 'Sıradaki sete geç.') => {
   if (!isNotificationSupported() || Notification.permission !== 'granted') return false;
   try {
-    const n = new Notification('ProOverload', {
+    const n = new Notification('⏱ Dinlenme bitti', {
       body,
       tag: 'po-rest',
       renotify: true,
       silent: false,
+      // Ekranda kalsın: birkaç saniyede kaybolan bir bildirim, telefon
+      // cepteyken hiç görülmemiş oluyor. Destekleyen platformlarda kullanıcı
+      // kapatana kadar duruyor.
+      requireInteraction: true,
+      vibrate: [260, 100, 260, 100, 420],
     });
     n.onclick = () => { try { window.focus(); n.close(); } catch { /* yoksay */ } };
     // Bildirim ekranda takılı kalmasın; sayaç bilgisi kısa ömürlü.
-    setTimeout(() => { try { n.close(); } catch { /* yoksay */ } }, 20000);
+    // requireInteraction desteklenmiyorsa bile bir süre sonra temizlensin.
+    setTimeout(() => { try { n.close(); } catch { /* yoksay */ } }, 60000);
     return true;
   } catch {
     return false;

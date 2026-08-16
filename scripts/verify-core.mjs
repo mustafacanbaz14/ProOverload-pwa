@@ -29,6 +29,9 @@ import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/u
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
 import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
+import { estimateMaxHr, zoneForEntry, intensityClassOf, HR_ZONES, entryPace, paceTrend, supportsDistance } from '../src/utils/cardioZones.js';
+import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from '../src/utils/cardioGoals.js';
+import { findRestAlertIntensity } from '../src/lockScreen.js';
 import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem, emptyCoachMemory } from '../src/utils/coachMemory.js';
 import { buildWeekProjection, projectionCoachItem } from '../src/utils/weekProjection.js';
 import { buildPrWatch, prWatchCoachItem, repsNeededFor } from '../src/utils/prWatch.js';
@@ -2274,6 +2277,150 @@ test('süre verimliliği set başına dakikadan okunur', () => {
   assert.equal(auditSessionQuality(hareketler, { durationMinutes: 12 }).efficiency.pace, 'fast');
   // Süre yoksa verimlilik hesaplanmıyor; uydurmak yerine susuyor.
   assert.equal(auditSessionQuality(hareketler).efficiency, null);
+});
+
+
+
+/* --- Nabız bölgeleri --- */
+
+test('maksimum nabız Tanaka formülünden çıkar', () => {
+  assert.equal(estimateMaxHr(30), 187);
+  assert.equal(estimateMaxHr(50), 173);
+  assert.equal(estimateMaxHr(0), null);
+});
+
+test('ölçülen nabız bölge tahminini ezer', () => {
+  // Yürüyüş normalde zone 1; nabız 170 girilirse ölçüm kazanmalı.
+  const tahmin = zoneForEntry({ type: 'walk', effort: 'moderate' }, { age: 30 });
+  assert.equal(tahmin.zone.key, 'z1');
+  assert.equal(tahmin.source, 'estimate');
+
+  const olcum = zoneForEntry({ type: 'walk', effort: 'moderate', avgHeartRate: 170 }, { age: 30 });
+  assert.equal(olcum.source, 'heartRate');
+  assert.ok(['z4', 'z5'].includes(olcum.zone.key));
+});
+
+test('tempo seçimi bölgeyi kaydırır', () => {
+  const rahat = zoneForEntry({ type: 'run', effort: 'easy' });
+  const sert = zoneForEntry({ type: 'run', effort: 'hard' });
+  assert.ok(HR_ZONES.indexOf(rahat.zone) < HR_ZONES.indexOf(sert.zone));
+  // HIIT her koşulda yüksek şiddet sınıfında kalmalı.
+  assert.equal(intensityClassOf(zoneForEntry({ type: 'hiit', effort: 'easy' }).zone.key).key, 'high');
+});
+
+test('tempo mesafe ve süreden hesaplanır, yüzmede 100 m üzerinden', () => {
+  assert.equal(entryPace({ type: 'run', minutes: 50, distanceKm: 10 }).label, '5:00 /km');
+  assert.equal(entryPace({ type: 'swim', minutes: 30, distanceKm: 1.5 }).label, '2:00 /100 m');
+  // Mesafe yoksa tempo yok; uydurulmuyor.
+  assert.equal(entryPace({ type: 'run', minutes: 50 }), null);
+  assert.equal(supportsDistance('run'), true);
+  assert.equal(supportsDistance('hiit'), false);
+});
+
+test('tempo eğilimi yalnızca aynı şiddet sınıfını karşılaştırır', () => {
+  const w = [
+    { date: '2026-08-01', cardio: [{ type: 'run', minutes: 55, distanceKm: 10, effort: 'moderate' }] },
+    { date: '2026-08-10', cardio: [{ type: 'run', minutes: 50, distanceKm: 10, effort: 'moderate' }] },
+  ];
+  const t = paceTrend(w, 'run');
+  assert.equal(t.hasData, true);
+  // Tempoda düşüş iyileşme demek: aynı mesafe daha kısa sürede.
+  assert.equal(t.direction, 'improving');
+  assert.ok(t.deltaMinutes < 0);
+});
+
+/* --- Kardiyo hedefleri ve koçu --- */
+
+const kardiyoGun = (date, girisler) => ({ date, cardio: girisler });
+const PZT = '2026-08-10';
+const CAR = '2026-08-12';
+
+test('hedef yokken kardiyo koçu susar', () => {
+  const r = buildCardioReport([kardiyoGun(PZT, [{ type: 'run', minutes: 40, effort: 'moderate' }])],
+    { preset: 'off' }, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.active, false);
+  assert.equal(cardioCoachItem(r, null), null);
+});
+
+test('düşük şiddet eksikse kalan dakika bildirilir', () => {
+  const r = buildCardioReport([kardiyoGun(PZT, [{ type: 'walk', minutes: 30, effort: 'moderate' }])],
+    { preset: 'health' }, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.active, true);
+  assert.equal(r.minutes.low, 30);
+  const bulgu = r.findings.find(f => f.key === 'lowShort');
+  assert.ok(bulgu);
+  assert.match(bulgu.title, /30\/150/);
+});
+
+test('yüksek şiddet hedefi aşılırsa uyarı çıkar', () => {
+  const w = [
+    kardiyoGun(PZT, [{ type: 'hiit', minutes: 20, effort: 'moderate' }]),
+    kardiyoGun(CAR, [{ type: 'interval', minutes: 25, effort: 'hard' }]),
+    kardiyoGun('2026-08-14', [{ type: 'hiit', minutes: 20, effort: 'moderate' }]),
+  ];
+  const r = buildCardioReport(w, { preset: 'hypertrophy' }, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.highSessions, 3);
+  const bulgu = r.findings.find(f => f.key === 'highOver');
+  assert.ok(bulgu);
+  assert.equal(bulgu.severity, 'warn');
+});
+
+test('kısa yüksek şiddet bloğu seans sayılmaz', () => {
+  const r = buildCardioReport([kardiyoGun(PZT, [{ type: 'hiit', minutes: 5, effort: 'moderate' }])],
+    { preset: 'health' }, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.highSessions, 0);
+});
+
+test('orta bölge tuzağı yakalanır', () => {
+  const r = buildCardioReport([kardiyoGun(PZT, [{ type: 'run', minutes: 60, effort: 'moderate' }])],
+    { preset: 'health' }, { today: new Date('2026-08-16T12:00:00') });
+  assert.ok(r.findings.some(f => f.key === 'middleTrap'));
+});
+
+test('yüksek şiddet bacak gününe denk gelirse yerleşim uyarısı çıkar', () => {
+  // 10 Ağustos 2026 pazartesi; plan pazartesiyi bacak günü yapıyor.
+  const plan = { days: [{ key: 'mon', byMuscle: { Quadriceps: 12 } }] };
+  const r = buildCardioReport([kardiyoGun(PZT, [{ type: 'hiit', minutes: 20, effort: 'moderate' }])],
+    { preset: 'health' }, { today: new Date('2026-08-16T12:00:00'), planResult: plan });
+  const bulgu = r.findings.find(f => f.key === 'placement');
+  assert.ok(bulgu);
+  assert.equal(bulgu.severity, 'warn');
+  // Uyarı varken koç satırı dengesizliği söylemeli, yeni seans önermemeli.
+  const oneri = cardioSuggestionForToday(r);
+  assert.equal(cardioCoachItem(r, oneri).key, 'cardio-balance');
+});
+
+test('bacak gününde yüksek şiddet önerilmez, düşük şiddet önerilir', () => {
+  const r = buildCardioReport([], { preset: 'health' }, { today: new Date('2026-08-16T12:00:00') });
+  const bacakGunu = cardioSuggestionForToday(r, { planDay: { byMuscle: { Quadriceps: 12 } } });
+  assert.equal(bacakGunu.kind, 'low');
+  const normalGun = cardioSuggestionForToday(r, { planDay: { byMuscle: { 'Göğüs': 12 } } });
+  assert.equal(normalGun.kind, 'high');
+});
+
+test('hedef tamamlandığında ekleme baskısı yapılmaz', () => {
+  const w = [
+    kardiyoGun(PZT, [{ type: 'walk', minutes: 90, effort: 'moderate' }]),
+    kardiyoGun(CAR, [{ type: 'walk', minutes: 70, effort: 'moderate' }]),
+    kardiyoGun('2026-08-13', [{ type: 'hiit', minutes: 20, effort: 'moderate' }]),
+  ];
+  const r = buildCardioReport(w, { preset: 'health' }, { today: new Date('2026-08-16T12:00:00') });
+  const oneri = cardioSuggestionForToday(r);
+  assert.equal(oneri.kind, 'done');
+  assert.equal(cardioCoachItem(r, oneri), null);
+});
+
+/* --- Dinlenme uyarısı --- */
+
+test('uyarı şiddeti tekrar ve ses seviyesini yükseltir', () => {
+  const hafif = findRestAlertIntensity('soft');
+  const belirgin = findRestAlertIntensity('strong');
+  const israrci = findRestAlertIntensity('insistent');
+  assert.ok(belirgin.repeats > hafif.repeats);
+  assert.ok(israrci.repeats > belirgin.repeats);
+  assert.ok(belirgin.gain > hafif.gain);
+  // Bilinmeyen anahtar varsayılana düşmeli, çökmemeli.
+  assert.equal(findRestAlertIntensity('yok').key, 'strong');
 });
 
 

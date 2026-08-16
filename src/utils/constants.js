@@ -67,6 +67,12 @@ export const DEFAULT_SETTINGS = {
   // duyulmaz bir ses döngüsüyle var olduğu ve cihazda tek bir "Şu An Çalınan"
   // oturumu olabildiği için ikisi aynı anda yaşayamıyor.
   musicPriority: false,
+  // Dinlenme bitiş uyarısının şiddeti: 'soft' | 'strong' | 'insistent'.
+  // Varsayılan 'strong' — eski tek bip müzik çalarken duyulmuyordu.
+  restAlertIntensity: 'strong',
+  // Kardiyo hedefi: { preset, lowMinutes, highSessions }. Boş bırakılan
+  // sayılar önayarın değerini kullanıyor.
+  cardioGoal: { preset: 'off', lowMinutes: '', highSessions: '' },
   // Koç hafızası: ertelenen ve kapatılan madde anahtarları.
   coachMemory: { snoozed: {}, dismissed: [] },
   // Kadın profillerinde döngü takibinin takvim varsayımları. Günlük belirtiler
@@ -621,13 +627,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.2';
+export const APP_VERSION = '6.3';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.2',
+  title: 'ProOverload 6.3',
   date: '2026-08-16',
   items: [
+    {
+      title: 'Müzik Üstünde Duyulan Dinlenme Uyarısı',
+      desc: 'Eski uyarı 880 Hz seviyesinde iki kısa bipti ve müzik çalarken pratikte kayboluyordu — tek frekanslı kısa bir sinüs, müziğin spektrumunun içinde eriyor. Üç şey değişti. Tını: tek sinüs yerine yükselen üç notalı bir dizi ve her notada bir üst harmonik; geniş spektrumlu ve yükselen bir ses çok daha zor gözden kaçıyor. Tekrar: dizi bir kez değil, seçilen şiddete göre iki ya da dört kez çalıyor. Ses: kazanç belirgin yükseltildi ve kırpılmayı önlemek için kompresör eklendi. Titreşim deseni de uzadı — tek kısa titreşim telefon cepteyken hissedilmiyordu. Ayarlardan Hafif / Belirgin / Israrcı seçiliyor ve dokununca örnek çalıyor. Sistem bildirimi de artık ekranda kalıcı.'
+    },
+    {
+      title: 'Nabız Bölgeleri',
+      desc: 'Kardiyo iki eksende tutuluyordu: aktivite ve tempo. İkisi kalori için yeterli ama ne YAPILDIĞINI söylemiyor — "45 dakika koşu", zone 2 dayanıklılık koşusuyla interval seansını aynı kefeye koyuyor. Artık her kayıt bir bölgeye oturuyor: Z1 toparlanma, Z2 aerobik taban, Z3 tempo, Z4 eşik, Z5 maksimal. Yaş girilmişse maksimum nabız Tanaka formülüyle (208 − 0.7 × yaş) hesaplanıp bölge sınırları atım cinsinden gösteriliyor. Nabız girmezsen bölge aktivite ve tempodan tahmin ediliyor; girersen tahmin yerine ölçüm kullanılıyor.'
+    },
+    {
+      title: 'Kardiyo Hedefleri',
+      desc: 'Beş önayar: Hedef yok, Sağlık (150 dk + 1 seans), Hipertrofiyi Koru (90 dk + 1), Yağ Kaybı (180 dk + 2), Dayanıklılık (240 dk + 2). Hedef iki sayıdan oluşuyor — haftalık düşük şiddet dakikası ve yüksek şiddet seans sayısı — çünkü kardiyoda toplam süre tek başına yanıltıcı. Hipertrofi önayarının bilerek düşük tutulduğunu belirtmek gerek: kas kazanımı öncelikliyken kardiyo toparlanmadan çalıyor ve "daha çok kardiyo daha iyi" varsayımı orada geçerli değil.'
+    },
+    {
+      title: 'Kardiyo Koçu',
+      desc: 'Hedefe göre nerede olduğun, hacmin bölgelere nasıl dağıldığı ve bugün ne yapman gerektiği tek kartta. Günün önerisi bacak gününü ve hazır oluşluğu hesaba katıyor: bacak günündeysen yüksek şiddet önerilmiyor, düşük şiddet öneriliyor çünkü zone 2 bacak toparlanmasına dokunmuyor. Koç kartında da bir satır olarak çıkıyor.'
+    },
+    {
+      title: 'Orta Yoğunluk Tuzağı Denetimi',
+      desc: 'Kardiyonun yarısından fazlası zone 3 bandında geçiyorsa uyarı çıkıyor. Bu bölge taban geliştirmek için fazla yorucu, üst uç geliştirmek için fazla hafif — en yaygın kardiyo hatası. Ayrıca düşük şiddet payı yüzde yetmişin altına düşerse polarize dağılım hatırlatılıyor: hacmin çoğunu zone 2 bandına indirip küçük bir kısmını zone 4-5 bandına çıkarmak, aynı süreyle daha çok kazandırıyor.'
+    },
+    {
+      title: 'Kardiyo Yerleşimi',
+      desc: 'Yüksek şiddet kardiyo bacak günüyle aynı güne denk geldiğinde uyarı çıkıyor. Aynı gün zorunluysa sıra söyleniyor: ağırlık önce, kardiyo sonra — ters sırada çömeliş performansı ölçülebilir biçimde düşüyor. Koç çelişki motoruna da bağlandı: dağılım bozukken "bugün kardiyo ekle" demek kendi kendiyle çelişirdi, o yüzden susturuluyor.'
+    },
+    {
+      title: 'Mesafe ve Tempo',
+      desc: 'Koşu, yüzme, bisiklet ve kürekte mesafe girilebiliyor; süreyle birlikte tempo çıkıyor (yüzmede 100 m, diğerlerinde km başına). Tempo eğilimi yalnızca AYNI aktivite ve AYNI şiddet sınıfı içinde karşılaştırılıyor — zone 2 koşusunun temposunu interval seansıyla kıyaslamak "gerileme" gibi görünüyordu, oysa iki farklı iş. Mesafe alanı yalnızca ölçmenin anlamlı olduğu aktivitelerde çıkıyor; HIIT için "kaç km" sormak anlamsız bir sayı üretirdi.'
+    },
     {
       title: 'Müzik Çakışması Düzeltildi',
       desc: 'Antrenman sırasında müzik dinlerken uygulamayı açınca müzik susuyordu; müziği başlatınca da kilit ekranındaki antrenman kartı kayboluyordu. Sebep şu: kart, duyulmaz bir ses döngüsü çalarak var oluyor ve bir cihazda aynı anda yalnızca TEK bir "Şu An Çalınan" oturumu olabiliyor. İkisini birden çalıştırmak mümkün değil — bu tekniğin sınırı, düzeltilebilecek bir hata değil. Düzeltilen şey davranış: uygulama artık müziğe DİRENMİYOR. Müzik odağı aldığında kart sessizce kapanıyor, kendiliğinden geri gelip müziği tekrar kesmeye çalışmıyor ve ne olduğu bir bildirimle açıklanıyor. Kartı hiç istemiyorsan Ayarlar → Müzik Önceliği ile tamamen kapatabilirsin; o zaman müziğin hiçbir noktada kesilmez.'

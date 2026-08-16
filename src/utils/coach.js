@@ -56,6 +56,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     mesocycleItem = null, selectionItem = null, coachProtocol = null,
     painItem = null, balanceItem = null, consistencyItem = null, dataHealthItem = null,
     projectionItem = null, prItem = null, rirItem = null, orderItem = null,
+    cardioItem = null,
   } = ctx;
 
   const items = [];
@@ -353,6 +354,17 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'rir', priority: 3, tone: TONES.info, action: 'analysis',
       title: rirItem.title,
       detail: rirItem.detail,
+    });
+  }
+
+  // Kardiyo 2. öncelik: haftayı değiştiren bir karar. Dengesizlik uyarısı
+  // (çok yüksek şiddet, orta bölge tuzağı) hedefi tamamlamaktan önce geliyor;
+  // yanlış dağılımla tamamlanan hedef, tamamlanmamış hedeften daha kötü.
+  if (cardioItem) {
+    ekle({
+      key: cardioItem.key || 'cardio', priority: 2, tone: TONES.info, action: 'cardio',
+      title: cardioItem.title,
+      detail: cardioItem.detail,
     });
   }
 

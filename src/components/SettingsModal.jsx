@@ -1,3 +1,4 @@
+import { REST_ALERT_INTENSITIES } from '../lockScreen';
 import React, { memo } from 'react';
 import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles } from 'lucide-react';
 import { exportAppleHealthXML, exportGoogleFitJSON } from '../utils/healthSync';
@@ -58,6 +59,7 @@ const SettingsModal = memo(({
   onNormalizeBodyweight,
   onExportCsv,
   onToggleRestNotification,
+  onTestRestAlert,
   notificationState = 'default',
 }) => {
   if (!isOpen) return null;
@@ -412,6 +414,34 @@ const SettingsModal = memo(({
                 cihazda aynı anda tek bir "Şu An Çalınan" oturumu olabiliyor.
                 Bu yüzden kart ile müzik aynı anda yaşayamıyor — tekniğin
                 sınırı, düzeltilebilecek bir hata değil. Seçim kullanıcıda. */}
+            {/* Şiddet: tek bip müzik çalarken kayboluyordu. Yükselen üç
+                notalı dizi, tekrar ve güçlü titreşim deseni müziğin üstünde
+                duyuluyor. */}
+            {settings.restAlert && (
+              <div className="px-1 pb-1">
+                <span className="text-[10px] font-mono text-zinc-500 block mb-1.5">Uyarı şiddeti</span>
+                <div className="flex gap-1.5">
+                  {REST_ALERT_INTENSITIES.map(x => {
+                    const secili = (settings.restAlertIntensity || 'strong') === x.key;
+                    return (
+                      <button
+                        key={x.key}
+                        onClick={() => { set({ restAlertIntensity: x.key }); onTestRestAlert?.(x.key); }}
+                        title={x.hint}
+                        aria-pressed={secili}
+                        className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-colors ${secili ? 'border-cyan-600 bg-cyan-950/25 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                      >
+                        {x.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1.5">
+                  Dokununca örnek çalar. {REST_ALERT_INTENSITIES.find(x => x.key === (settings.restAlertIntensity || 'strong'))?.hint}
+                </p>
+              </div>
+            )}
+
             <Toggle
               label="Müzik Önceliği"
               hint="Açıkken kilit ekranı antrenman kartı hiç başlatılmaz ve müziğin kesilmez. Kapalıyken kart çalışır; müzik başlatırsan kart sessizce kapanır ve seans bitene kadar geri gelmez."
