@@ -87,7 +87,7 @@ const MIDDLE_TRAP_RATIO = 0.5;
 const LOW_SHARE_TARGET = 0.7;
 
 /** Verilen haftadaki kardiyo kayıtlarını toplar. */
-const haftaninKayitlari = (workouts = [], { today = new Date(), age = null } = {}) => {
+const haftaninKayitlari = (workouts = [], { today = new Date(), ...zoneOpts } = {}) => {
   const { start, end } = weekBounds(today);
   const kayitlar = [];
   (workouts || []).forEach(w => {
@@ -95,7 +95,7 @@ const haftaninKayitlari = (workouts = [], { today = new Date(), age = null } = {
     if (!d || d < start || d > end) return;
     (w.cardio || []).forEach(entry => {
       if (!(parseNumber(entry?.minutes) > 0)) return;
-      kayitlar.push({ ...describeCardioEntry(entry, { age }), date: w.date });
+      kayitlar.push({ ...describeCardioEntry(entry, zoneOpts), date: w.date });
     });
   });
   return { kayitlar, start: dayKey(start), end: dayKey(end) };
@@ -108,11 +108,11 @@ const haftaninKayitlari = (workouts = [], { today = new Date(), age = null } = {
  */
 export const buildCardioReport = (workouts = [], goal, {
   today = new Date(),
-  age = null,
   planResult = null,
+  ...zoneOpts
 } = {}) => {
   const hedef = resolveCardioGoal(goal);
-  const { kayitlar, start, end } = haftaninKayitlari(workouts, { today, age });
+  const { kayitlar, start, end } = haftaninKayitlari(workouts, { today, ...zoneOpts });
 
   const dakika = { low: 0, middle: 0, high: 0 };
   kayitlar.forEach(k => { dakika[k.intensity.key] += k.minutes; });

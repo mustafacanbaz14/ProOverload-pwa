@@ -281,12 +281,30 @@ const ActiveWorkoutView = memo(({
               {/* Bu hareketin bir setinin hangi kasa ne kadar yazıldığı */}
               {/* Vücut ağırlığı payı: ağırlık alanına 0 yazan kullanıcı, yükün
                   sıfır sayılmadığını görsün. */}
+              {/* Vücut ağırlığı bandı. Eskiden yalnızca "şu kadar ekleniyor"
+                  diyordu; sayının hangi kilodan çıktığı ve alana ne yazılması
+                  gerektiği görünmüyordu. Artık taban, kaynağı ve canlı toplam
+                  yazıyor — ayarın doğru olup olmadığı buradan anlaşılıyor. */}
               {bodyweightInfo && (
-                <div className="px-3 py-1.5 border-b border-zinc-800 bg-emerald-950/15 flex items-center gap-2">
-                  <Activity size={10} className="text-emerald-500 shrink-0" />
-                  <span className="text-[9px] font-mono text-emerald-300/90">
-                    Yüke <strong>{bodyweightInfo.kg} kg</strong> {bodyweightInfo.label} ekleniyor —
-                    ağırlık alanına yalnızca EK yükü yaz.
+                <div className={`px-3 py-1.5 border-b border-zinc-800 flex items-start gap-2 ${bodyweightInfo.style === 'total' ? 'bg-amber-950/15' : 'bg-emerald-950/15'}`}>
+                  <Activity size={10} className={`${bodyweightInfo.style === 'total' ? 'text-amber-500' : 'text-emerald-500'} shrink-0 mt-0.5`} />
+                  <span className={`text-[9px] font-mono ${bodyweightInfo.style === 'total' ? 'text-amber-300/90' : 'text-emerald-300/90'}`}>
+                    {bodyweightInfo.style === 'total' ? (
+                      <>Ağırlık alanı TOPLAM yük olarak okunuyor; vücut ağırlığı ayrıca eklenmiyor.</>
+                    ) : (
+                      <>
+                        Taban <strong>{bodyweightInfo.carried} kg</strong> ({bodyweightInfo.label},
+                        {' '}{bodyweightInfo.basis.kg} kg {bodyweightInfo.basis.label}) — alana yalnızca
+                        {' '}<strong>EK</strong> yükü yaz.
+                        {(() => {
+                          const sonSet = [...(ex.sets || [])].reverse().find(isWorkingSet);
+                          const ek = parseNumber(sonSet?.weight);
+                          return ek > 0
+                            ? <> Şu an: {bodyweightInfo.carried} + {ek} = <strong>{Math.round((bodyweightInfo.carried + ek) * 10) / 10} kg</strong></>
+                            : <> Ek yük yoksa 0 bırak.</>;
+                        })()}
+                      </>
+                    )}
                   </span>
                 </div>
               )}

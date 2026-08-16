@@ -22,6 +22,7 @@ import { buildPrWatch, prWatchCoachItem } from './utils/prWatch';
 import { buildRirCalibration, rirCoachItem } from './utils/rirCalibration';
 import { auditSessionQuality, sessionQualityCoachItem } from './utils/sessionQuality';
 import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from './utils/cardioGoals';
+import { bodyweightBasisFor, describeSetLoad } from './utils/bodyweight';
 import { computeAdaptiveTDEE } from './utils/tdee';
 import { totalCardioCalories, dayWorkoutCalories } from './utils/cardio';
 import { computeWeekPlan, findPlan } from './utils/weekPlan';
@@ -29,7 +30,7 @@ import { removeTemplateFromPlans } from './utils/planMigration';
 import { buildPersonalVolumeGuidance } from './utils/personalization';
 import { buildCoachActions } from './utils/coach';
 import { activateCoachProtocol, archiveCoachProtocol, isCoachProtocolActive } from './utils/coachProtocol';
-import { effectiveLoad, bodyweightPortion } from './utils/bodyweight';
+import { effectiveLoad } from './utils/bodyweight';
 import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/bodyweightAudit';
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
 import { mesocycleState, weeklyTargets, targetInstructions, mesocycleCoachItem, emptyMesocycle } from './utils/mesocycle';
@@ -94,6 +95,7 @@ const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
 const PainLogModal = lazy(() => import('./components/PainLogModal'));
 const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
+const CardioView = lazy(() => import('./components/CardioView'));
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
 const SessionReportModal = lazy(() => import('./components/SessionReportModal'));
 const WeeklyReviewModal = lazy(() => import('./components/WeeklyReviewModal'));
@@ -163,6 +165,10 @@ export default function App() {
   const [historyTab, setHistoryTab] = useState('workouts');
   const [analysisType, setAnalysisType] = useState('body');
   const [progressTab, setProgressTab] = useState('body');
+  // Antrenman sekmesi iki bölüme ayrıldı: ağırlık ve kardiyo. Kardiyonun
+  // kendi ekranı olmaması, uygulamanın ona bir ek özellik gibi davrandığı
+  // anlamına geliyordu.
+  const [trainingTab, setTrainingTab] = useState('lift');
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -486,8 +492,11 @@ export default function App() {
    */
   const resolveSetLoad = useCallback((exerciseName, setWeight, workout) => {
     const olcum = findMetricsForDate(sortedMetrics, workout?.date, currentMetricsForm);
+    // Seansın KENDİ kaydı önce: kaydedilirken dondurulan kilo, sonradan bir
+    // ölçüm silinse ya da düzeltilse bile geçmiş seansın yükünü değiştirmiyor.
+    const taban = bodyweightBasisFor(workout, parseNumber(olcum?.weight));
     return effectiveLoad(exerciseName, setWeight, {
-      bodyWeightKg: parseNumber(olcum?.weight),
+      bodyWeightKg: taban.kg,
       customExercises,
       bodyweightEnabled: settings.bodyweightLoad !== false,
       entryStyle: settings.bodyweightEntry || 'auto',
@@ -641,6 +650,27 @@ export default function App() {
     setSettings(prev => ({ ...prev, bodyweightEntry: 'added' }));
     showToast(`${changed} set ek yük biçimine çevrildi.`);
   }, [workouts, sortedMetrics, currentMetricsForm, customExercises, setSettings, setWorkouts, showToast]);
+
+  /**
+   * Antrenman ekranındaki vücut ağırlığı bilgisi.
+   *
+   * Yalnızca "ne kadar ekleniyor" değil, TABANIN NEREDEN geldiği de
+   * dönüyor: kullanıcı sayının hangi kilodan çıktığını göremeyince ayarın
+   * doğru olup olmadığını da anlayamıyordu.
+   */
+  const bodyweightContext = useCallback((exerciseName) => {
+    const olcum = findMetricsForDate(sortedMetrics, activeWorkout?.date, currentMetricsForm);
+    const taban = bodyweightBasisFor(activeWorkout, parseNumber(olcum?.weight));
+    const bilgi = describeSetLoad(exerciseName, 0, {
+      bodyWeightKg: taban.kg,
+      customExercises,
+      bodyweightEnabled: settings.bodyweightLoad !== false,
+      entryStyle: settings.bodyweightEntry || 'auto',
+    });
+    if (!bilgi || bilgi.style === 'plain') return null;
+    return { ...bilgi, basis: taban, kg: bilgi.carried };
+  }, [activeWorkout, sortedMetrics, currentMetricsForm, customExercises,
+    settings.bodyweightLoad, settings.bodyweightEntry]);
 
   /** Tonaj hesapları için o tarihin vücut ağırlığı bağlamı. */
   const loadOptsFor = useCallback((dateStr) => ({
@@ -2537,9 +2567,11 @@ export default function App() {
   const cardioReport = useMemo(
     () => buildCardioReport(sortedWorkouts, settings.cardioGoal, {
       age: profileAge,
+      restingHr: settings.restingHr,
+      method: settings.zoneMethod,
       planResult: weekPlanResult,
     }),
-    [sortedWorkouts, settings.cardioGoal, profileAge, weekPlanResult]);
+    [sortedWorkouts, settings.cardioGoal, profileAge, settings.restingHr, settings.zoneMethod, weekPlanResult]);
 
   const cardioSuggestion = useMemo(
     () => cardioSuggestionForToday(cardioReport, {
@@ -2766,6 +2798,44 @@ export default function App() {
           )}
 
           {view === 'training' && (
+            <div className="luxury-screen h-full flex flex-col bg-black">
+              <div className="px-4 pt-4 pb-2 shrink-0">
+                <div className="luxury-segmented grid grid-cols-2 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+                  <button
+                    onClick={() => setTrainingTab('lift')}
+                    className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${trainingTab === 'lift' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+                  >
+                    Ağırlık
+                  </button>
+                  <button
+                    onClick={() => setTrainingTab('cardio')}
+                    className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${trainingTab === 'cardio' ? 'bg-red-600 text-white' : 'text-zinc-500'}`}
+                  >
+                    Kardiyo & Aktivite
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 min-h-0">
+                {trainingTab === 'cardio' ? (
+                  <Suspense fallback={null}>
+                    <CardioView
+                      embedded
+                      report={cardioReport}
+                      suggestion={cardioSuggestion}
+                      cardioGoal={settings.cardioGoal}
+                      onChangeCardioGoal={(next) => setSettings(prev => ({ ...prev, cardioGoal: next }))}
+                      onOpenCardio={() => setIsCardioOpen(true)}
+                      onEditEntry={(entry) => { setCardioContext({ workoutId: entry.workoutId, entry, date: entry.date }); setIsCardioOpen(true); }}
+                      workouts={sortedWorkouts}
+                      age={profileAge}
+                      restingHr={settings.restingHr}
+                      zoneMethod={settings.zoneMethod}
+                      onChangeZoneSettings={(patch) => setSettings(prev => ({ ...prev, ...patch }))}
+                      activityTargets={settings.activityTargets}
+                      onChangeActivityTargets={(next) => setSettings(prev => ({ ...prev, activityTargets: next }))}
+                    />
+                  </Suspense>
+                ) : (
             <TrainingView
               templates={templates}
               restSeconds={settings.restSeconds}
@@ -2788,6 +2858,9 @@ export default function App() {
               onDelete={(template) => setDeleteConfirm({ isOpen: true, type: 'template', id: template.id })}
               onToggleFavorite={handleToggleTemplateFavorite}
             />
+                )}
+              </div>
+            </div>
           )}
 
           {view === 'nutrition' && (
@@ -2949,11 +3022,7 @@ export default function App() {
               onMoveExercise={moveExercise}
               onSubstitute={(name, exerciseId) => setSubstituteFor({ name, exerciseId })}
               resolveLoad={(name, weight) => resolveSetLoad(name, weight, activeWorkout)}
-              bodyweightInfoFor={(name) => bodyweightPortion(name, {
-                bodyWeightKg: parseNumber(findMetricsForDate(sortedMetrics, activeWorkout?.date, currentMetricsForm)?.weight),
-                customExercises,
-                bodyweightEnabled: settings.bodyweightLoad !== false,
-              })}
+              bodyweightInfoFor={bodyweightContext}
               deload={deload}
               onOpenCardio={() => setIsCardioOpen(true)}
               cardioKcal={totalCardioCalories(activeWorkout.cardio || [], latestWeight)}

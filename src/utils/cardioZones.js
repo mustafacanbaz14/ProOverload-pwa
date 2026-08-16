@@ -55,6 +55,59 @@ export const HR_ZONES = [
 export const findZone = (key) => HR_ZONES.find(z => z.key === key) || null;
 
 /**
+ * Bölge sınırlarının hesaplanma yöntemi.
+ *
+ * İki yaygın yöntem var ve aynı yüzde farklı atım veriyor:
+ *
+ *  - MAKS: sınır doğrudan maksimum nabzın yüzdesi. Basit ama dinlenme nabzını
+ *    yok sayıyor; iyi antrenmanlı birinde zone 2 gereğinden düşük çıkıyor.
+ *  - HRR (Karvonen): sınır, dinlenme ile maksimum arasındaki REZERVİN yüzdesi
+ *    üstüne dinlenme nabzı eklenerek bulunuyor. Kişinin kendi tabanını hesaba
+ *    kattığı için bireysel farkı daha iyi yakalıyor, ama dinlenme nabzı
+ *    ölçümü gerektiriyor.
+ *
+ * Aradaki fark küçük değil: 30 yaşında, dinlenme nabzı 55 olan biri için
+ * zone 2 üst sınırı maks yöntemiyle 131, Karvonen'le 147 çıkıyor. Bu yüzden
+ * yöntem kullanıcıya bırakılıyor ve hangi yöntemin kullanıldığı arayüzde
+ * yazıyor.
+ */
+export const ZONE_METHODS = [
+  {
+    key: 'max', label: '% Maks. Nabız', short: 'Maks',
+    hint: 'Sınırlar doğrudan maksimum nabzın yüzdesi. Dinlenme nabzı gerekmez.',
+  },
+  {
+    key: 'hrr', label: 'Karvonen (%HRR)', short: 'HRR',
+    hint: 'Dinlenme ile maksimum arasındaki rezervin yüzdesi. Dinlenme nabzı gerekir; bireysel farkı daha iyi yakalar.',
+  },
+];
+
+export const findZoneMethod = (key) => ZONE_METHODS.find(m => m.key === key) || ZONE_METHODS[0];
+
+/**
+ * Bir yüzdenin atım karşılığı.
+ *
+ * Karvonen seçiliyken dinlenme nabzı yoksa sessizce maks yöntemine düşülüyor:
+ * eksik veriyle yanlış bir sayı üretmektense bilinen yöntemi kullanmak doğru.
+ */
+export const bpmForPercent = (percent, { age, restingHr = 0, method = 'max' } = {}) => {
+  const max = estimateMaxHr(age);
+  if (!max) return null;
+  const dinlenme = parseNumber(restingHr);
+  if (method === 'hrr' && dinlenme > 0 && dinlenme < max) {
+    return Math.round(dinlenme + (max - dinlenme) * percent);
+  }
+  return Math.round(max * percent);
+};
+
+/** Seçili yöntemin gerçekten uygulanabilir olup olmadığı. */
+export const effectiveZoneMethod = ({ age, restingHr = 0, method = 'max' } = {}) => {
+  const max = estimateMaxHr(age);
+  const dinlenme = parseNumber(restingHr);
+  return (method === 'hrr' && max && dinlenme > 0 && dinlenme < max) ? 'hrr' : 'max';
+};
+
+/**
  * Yaşa göre tahmini maksimum nabız.
  *
  * Tanaka formülü (208 − 0.7 × yaş) kullanılıyor; klasik "220 − yaş" genç
@@ -68,23 +121,29 @@ export const estimateMaxHr = (age) => {
   return Math.round(208 - 0.7 * y);
 };
 
-/** Bölgenin nabız aralığı (atım/dk); yaş bilinmiyorsa null. */
-export const zoneRange = (zoneKey, age) => {
-  const max = estimateMaxHr(age);
+/**
+ * Bölgenin nabız aralığı (atım/dk); yaş bilinmiyorsa null.
+ *
+ * İkinci argüman geriye dönük uyum için hâlâ düz yaş kabul ediyor; nesne
+ * verilirse yöntem ve dinlenme nabzı da okunuyor.
+ */
+export const zoneRange = (zoneKey, ageOrOpts) => {
+  const opts = (ageOrOpts && typeof ageOrOpts === 'object') ? ageOrOpts : { age: ageOrOpts };
   const zone = findZone(zoneKey);
-  if (!max || !zone) return null;
-  return { min: Math.round(max * zone.min), max: Math.round(max * zone.max) };
+  if (!zone) return null;
+  const alt = bpmForPercent(zone.min, opts);
+  const ust = bpmForPercent(zone.max, opts);
+  return (alt && ust) ? { min: alt, max: ust } : null;
 };
 
 /** Ölçülen nabzın hangi bölgeye düştüğü. */
-export const zoneForHeartRate = (bpm, age) => {
-  const max = estimateMaxHr(age);
+export const zoneForHeartRate = (bpm, ageOrOpts) => {
+  const opts = (ageOrOpts && typeof ageOrOpts === 'object') ? ageOrOpts : { age: ageOrOpts };
   const hr = parseNumber(bpm);
-  if (!max || !(hr > 0)) return null;
-  const oran = hr / max;
-  // Üstten aşağı taranıyor: %92 hem z4 hem z5 aralığına yakın durabiliyor,
-  // yüksek olan kazanmalı.
-  return [...HR_ZONES].reverse().find(z => oran >= z.min) || HR_ZONES[0];
+  if (!(hr > 0) || !estimateMaxHr(opts.age)) return null;
+  // Üstten aşağı taranıyor: bir nabız hem z4 hem z5 sınırına yakın
+  // durabiliyor, yüksek olan kazanmalı.
+  return [...HR_ZONES].reverse().find(z => hr >= bpmForPercent(z.min, opts)) || HR_ZONES[0];
 };
 
 /**
@@ -115,8 +174,8 @@ const EFFORT_SHIFT = { fun: -1, easy: -1, moderate: 0, hard: 1, match: 1, custom
  *
  * @returns { zone, source: 'heartRate' | 'estimate' }
  */
-export const zoneForEntry = (entry = {}, { age = null } = {}) => {
-  const olculen = zoneForHeartRate(entry.avgHeartRate, age);
+export const zoneForEntry = (entry = {}, opts = {}) => {
+  const olculen = zoneForHeartRate(entry.avgHeartRate, opts);
   if (olculen) return { zone: olculen, source: 'heartRate' };
 
   const aktivite = findActivity(entry.type);
@@ -146,8 +205,8 @@ export const intensityClassOf = (zoneKey) => {
 };
 
 /** Kaydın dakikası, bölgesi ve sınıfıyla birlikte zenginleştirilmiş hali. */
-export const describeCardioEntry = (entry = {}, { age = null } = {}) => {
-  const { zone, source } = zoneForEntry(entry, { age });
+export const describeCardioEntry = (entry = {}, opts = {}) => {
+  const { zone, source } = zoneForEntry(entry, opts);
   const aktivite = findActivity(entry.type);
   const tempo = findEffort(entry.effort);
   return {
@@ -214,14 +273,14 @@ export const entryPace = (entry = {}) => {
  * karşılaştırılıyor — zone 2 koşusunun temposu interval seansıyla kıyaslanınca
  * "gerileme" gibi görünüyordu, oysa iki farklı iş.
  */
-export const paceTrend = (workouts = [], activityKey, { age = null, limit = 8 } = {}) => {
+export const paceTrend = (workouts = [], activityKey, { limit = 8, ...zoneOpts } = {}) => {
   const kayitlar = [];
   (workouts || []).forEach(w => {
     (w.cardio || []).forEach(entry => {
       if (entry?.type !== activityKey) return;
       const tempo = entryPace(entry);
       if (!tempo) return;
-      const { intensity } = describeCardioEntry(entry, { age });
+      const { intensity } = describeCardioEntry(entry, zoneOpts);
       kayitlar.push({ date: w.date, ...tempo, intensity: intensity.key });
     });
   });
@@ -247,4 +306,59 @@ export const paceTrend = (workouts = [], activityKey, { age = null, limit = 8 } 
     deltaMinutes: Math.round(fark * 100) / 100,
     latest: ayniSinif[0],
   };
+};
+
+/**
+ * Nabız tabanlı kalori tahmini (Keytel denklemi).
+ *
+ * MET tabanlı hesap aktivitenin TABLO değerini kullanıyor: aynı "45 dakika
+ * bisiklet" herkes için aynı kaloriyi veriyor. Ortalama nabız girildiyse daha
+ * iyisi mümkün — nabız, kişinin o seansta gerçekten ne kadar zorlandığının
+ * doğrudan ölçüsü.
+ *
+ * Keytel ve arkadaşlarının regresyonu yaş, kilo, cinsiyet ve ortalama nabızdan
+ * dakikalık enerji harcamasını tahmin ediyor. Sınırları var: düşük nabızlarda
+ * (dinlenmeye yakın) güvenilirliği düşüyor ve ağırlık antrenmanı gibi
+ * aralıklı işlerde nabız gecikmeli tepki verdiği için şişiyor. Bu yüzden
+ * yalnızca süreklilik gerektiren kardiyoda ve nabız makul bir aralıktaysa
+ * kullanılıyor; dışında MET hesabına dönülüyor.
+ */
+const HR_CALORIE_MIN_BPM = 90;
+const HR_CALORIE_MAX_BPM = 210;
+
+export const heartRateCalories = ({ avgHeartRate, minutes, weightKg, age, gender = 'male' } = {}) => {
+  const hr = parseNumber(avgHeartRate);
+  const dk = parseNumber(minutes);
+  const kg = parseNumber(weightKg);
+  const yas = parseNumber(age);
+  if (!(hr >= HR_CALORIE_MIN_BPM) || hr > HR_CALORIE_MAX_BPM) return null;
+  if (!(dk > 0) || !(kg > 0) || !(yas > 0)) return null;
+
+  const dakikalik = gender === 'female'
+    ? (-20.4022 + 0.4472 * hr - 0.1263 * kg + 0.074 * yas) / 4.184
+    : (-55.0969 + 0.6309 * hr + 0.1988 * kg + 0.2017 * yas) / 4.184;
+
+  // Negatif ya da absürt düşük çıkan tahminler kullanılmıyor: formül düşük
+  // nabızda eksiye düşebiliyor ve "0 kalori yaktın" demek yanlış olurdu.
+  if (!(dakikalik > 0.5)) return null;
+  return Math.round(dakikalik * dk);
+};
+
+/**
+ * Bir kaydın kalorisi ve hangi yöntemle bulunduğu.
+ *
+ * Yöntem arayüzde gösteriliyor: iki farklı sayı gören kullanıcı hangisinin
+ * neden farklı olduğunu sorabilmeli.
+ */
+export const cardioCalories = (entry = {}, { weightKg, age, gender = 'male', metCalories = null } = {}) => {
+  const nabiz = heartRateCalories({
+    avgHeartRate: entry.avgHeartRate,
+    minutes: entry.minutes,
+    weightKg,
+    age,
+    gender,
+  });
+  if (nabiz !== null) return { kcal: nabiz, source: 'heartRate' };
+  const met = parseNumber(metCalories);
+  return { kcal: Math.round(met), source: 'met' };
 };

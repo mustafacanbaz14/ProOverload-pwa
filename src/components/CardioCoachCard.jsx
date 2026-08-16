@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { HeartPulse, Target, AlertTriangle, Info, CheckCircle2, Activity } from 'lucide-react';
 import { CARDIO_GOAL_PRESETS, INTENSITY_ORDER } from '../utils/cardioGoals';
-import { HR_ZONES, zoneRange, estimateMaxHr } from '../utils/cardioZones';
+import { HR_ZONES, zoneRange, estimateMaxHr, effectiveZoneMethod, findZoneMethod } from '../utils/cardioZones';
 
 /**
  * Kardiyo koçu.
@@ -19,10 +19,13 @@ const SEVERITY = {
 
 const BAR = { low: 'bg-emerald-500', middle: 'bg-amber-500', high: 'bg-red-500' };
 
-const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = null, onOpenCardio }) => {
+const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = null,
+  restingHr = '', zoneMethod = 'max', onOpenCardio }) => {
   if (!report) return null;
 
   const maxHr = estimateMaxHr(age);
+  const zoneOpts = { age, restingHr, method: zoneMethod };
+  const gecerliYontem = findZoneMethod(effectiveZoneMethod(zoneOpts));
   const toplam = report.totalMinutes;
 
   return (
@@ -188,11 +191,12 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
         {maxHr ? (
           <>
             <p className="text-[9px] font-mono text-zinc-500 mb-1.5">
-              Tahmini maksimum nabız <strong className="text-zinc-300">{maxHr}</strong> (Tanaka: 208 − 0.7 × yaş)
+              Tahmini maksimum nabız <strong className="text-zinc-300">{maxHr}</strong> (Tanaka)
+              {' · '}<strong className="text-zinc-300">{gecerliYontem.short}</strong> yöntemi
             </p>
             <div className="grid grid-cols-5 gap-1">
               {HR_ZONES.map(z => {
-                const r = zoneRange(z.key, age);
+                const r = zoneRange(z.key, zoneOpts);
                 return (
                   <div key={z.key} title={z.purpose} className="bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 text-center">
                     <span className={`text-[9px] font-bold block ${z.color}`}>{z.label.replace('Zone ', 'Z')}</span>

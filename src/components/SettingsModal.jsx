@@ -474,13 +474,16 @@ const SettingsModal = memo(({
               <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
                 <span className="text-zinc-200 text-[11px] font-bold block mb-1">Ağırlık Alanının Anlamı</span>
                 <span className="text-zinc-500 text-[10px] font-mono block mb-2 leading-snug">
-                  Barfiks yaparken alana ne yazıyorsun?
+                  Barfiks, dip ve şınavda taşınan vücut ağırlığı yüke sayılıyor.
+                  Taban, O ANTRENMANDAKİ kilon: seans kaydedilirken dondurulan
+                  değer, yoksa o tarihe kadarki en son ölçüm. Bu ayar yalnızca
+                  ağırlık alanına NE YAZDIĞINI söylüyor.
                 </span>
                 <div className="grid grid-cols-3 gap-1.5">
                   {[
-                    { key: 'auto', label: 'Otomatik', hint: 'Set bazında tanı' },
-                    { key: 'added', label: 'Ek yük', hint: '0 yazıyorum' },
-                    { key: 'total', label: 'Toplam', hint: 'Kilomu yazıyorum' },
+                    { key: 'auto', label: 'Otomatik', hint: 'Karışıksa' },
+                    { key: 'added', label: 'Ek yük', hint: '+10 yazıyorum' },
+                    { key: 'total', label: 'Toplam', hint: '92 yazıyorum' },
                   ].map(o => {
                     const aktif = (settings.bodyweightEntry || 'auto') === o.key;
                     return (
@@ -495,6 +498,18 @@ const SettingsModal = memo(({
                     );
                   })}
                 </div>
+                {/* Somut örnek: seçilen ayarın ne anlama geldiğini anlatmanın
+                    en kısa yolu, aynı sayının iki ayarda ne ürettiğini
+                    göstermek. */}
+                <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-2">
+                  {(settings.bodyweightEntry || 'auto') === 'total'
+                    ? 'Örnek: 82 kg vücutla barfikste alana 92 yazarsan yük 92 kg sayılır — üstüne ekleme yapılmaz.'
+                    : (settings.bodyweightEntry || 'auto') === 'added'
+                      ? 'Örnek: 82 kg vücutla barfikste alana 10 yazarsan yük 92 kg olur. Ek yük yoksa 0 bırak; yük yine 82 kg sayılır.'
+                      : 'Örnek: 82 kg vücutla barfikste 10 yazarsan 92 kg, 92 yazarsan yine 92 kg sayılır — her set kendi biçiminden tanınır. Geçmişi karışık olanlar için doğru seçenek.'}
+                  {' '}Antrenman ekranında hareketin üstünde canlı olarak yazıyor.
+                </p>
+
                 {bodyweightAudit && (bodyweightAudit.total > 0 || bodyweightAudit.added > 0) && (
                   <div className="mt-2.5 pt-2.5 border-t border-zinc-800 space-y-2">
                     <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">

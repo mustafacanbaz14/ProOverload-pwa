@@ -73,6 +73,13 @@ export const DEFAULT_SETTINGS = {
   // Kardiyo hedefi: { preset, lowMinutes, highSessions }. Boş bırakılan
   // sayılar önayarın değerini kullanıyor.
   cardioGoal: { preset: 'off', lowMinutes: '', highSessions: '' },
+  // Nabız bölgesi yöntemi: 'max' (maksimumun yüzdesi) | 'hrr' (Karvonen).
+  // Karvonen dinlenme nabzı ister; yoksa sessizce 'max' kullanılır.
+  zoneMethod: 'max',
+  restingHr: '',
+  // Aktivite başına seans hedefi: { swim: { sets, setDistance, minutes, ... } }.
+  // Hedef koymak zorunlu değil; kardiyo kaydı ve kalori hesabı hedefsiz çalışır.
+  activityTargets: {},
   // Koç hafızası: ertelenen ve kapatılan madde anahtarları.
   coachMemory: { snoozed: {}, dismissed: [] },
   // Kadın profillerinde döngü takibinin takvim varsayımları. Günlük belirtiler
@@ -627,13 +634,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.3';
+export const APP_VERSION = '6.4';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.3',
+  title: 'ProOverload 6.4',
   date: '2026-08-16',
   items: [
+    {
+      title: 'Kardiyo & Aktivite Sekmesi',
+      desc: 'Kardiyo, analiz ekranındaki bir kartın içinde sıkışıyordu; ağırlık antrenmanının kendi ekranı varken kardiyonun olmaması, uygulamanın ona bir ek özellik gibi davrandığı anlamına geliyordu. Antrenman sekmesi ikiye ayrıldı: Ağırlık ve Kardiyo & Aktivite. Yeni sekmenin kendi üç bölümü var — Koç (hedef, şiddet dağılımı, bugün ne yapmalı), Hedefler (aktivite başına seans planı) ve Kayıtlar (tempo eğilimi, bölge, geçmiş).'
+    },
+    {
+      title: 'Aktivite Seans Hedefleri',
+      desc: 'Haftalık hedef "ne kadar" sorusunu yanıtlıyor ama seansın içini boş bırakıyordu: havuza giderken akılda "8 x 100 m, aralarda 30 saniye" gibi somut bir plan oluyor ve unutuluyor. Artık aktivite başına set sayısı, set mesafesi, toplam mesafe, süre ve dinlenme hedefi girilebiliyor. Hepsi isteğe bağlı — yüzmede set ve mesafe anlamlı, bisiklette yalnızca süre anlamlı olabilir; boş bırakılan alan hedef sayılmıyor. Set ve mesafe birlikte verilirse özet "8 x 100 m" olarak birleştiriliyor.'
+    },
+    {
+      title: 'Karvonen (%HRR) Yöntemi',
+      desc: 'Bölge sınırları tek yöntemle hesaplanıyordu: maksimum nabzın yüzdesi. Bu yöntem dinlenme nabzını yok sayıyor ve iyi antrenmanlı birinde zone 2 gereğinden düşük çıkıyor. Artık yöntem seçilebiliyor. Fark küçük değil: 30 yaşında, dinlenme nabzı 55 olan biri için zone 2 üst sınırı maks yöntemiyle 131, Karvonen ile 147. Karvonen seçili ama dinlenme nabzı girilmemişse sessizce maks yöntemine düşülüyor — eksik veriyle yanlış bir sayı üretmektense bilinen yöntemi kullanmak doğru — ve hangi yöntemin kullanıldığı arayüzde yazıyor.'
+    },
+    {
+      title: 'Hedefsiz Veri Girişi ve Nabızdan Kalori',
+      desc: 'Kardiyo kaydı, hedef koymayı gerektirmiyor: bölge, tempo ve kalori her koşulda hesaplanıyor. Ortalama nabız girilirse kalori artık MET tablosundan değil nabızdan hesaplanıyor (Keytel denklemi) — MET tabanlı hesap aynı "45 dakika bisiklet" için herkese aynı sayıyı veriyor, oysa nabız kişinin o seansta gerçekten ne kadar zorlandığının doğrudan ölçüsü. Düşük nabızlarda formül güvenilirliğini kaybettiği için orada MET hesabına dönülüyor ve hangi yöntemin kullanıldığı gösteriliyor.'
+    },
+    {
+      title: 'Ağırlık Alanı Artık Kendini Anlatıyor',
+      desc: 'Vücut ağırlıklı hareketlerde alanın anlamı bir ayardı ama sonucu hiçbir yerde görünmüyordu: kullanıcı barfikste 10 yazıyor, tonaj 92 kg üzerinden hesaplanıyor ve bu dönüşüm yazmıyordu. Sayının nereden geldiği görünmeyince ayarın doğru olup olmadığı da anlaşılmıyordu. Artık hareketin üstünde tabanın kendisi, nereden geldiği ve canlı toplam yazıyor: "Taban 82 kg (vücut ağırlığı, 82 kg seans kaydından) — alana yalnızca EK yükü yaz. Şu an: 82 + 10 = 92 kg." Ayarlar ekranında da seçilen moda göre somut bir örnek gösteriliyor.'
+    },
+    {
+      title: 'Geçmiş Artık Ölçüm Düzenlemesinden Etkilenmiyor',
+      desc: 'Vücut ağırlıklı hareketlerin yükü, o tarihe kadarki en son ölçümden hesaplanıyordu. Bu, geçmişi kırılgan yapıyordu: bir ölçümü silmek ya da düzeltmek yıllar önceki barfiks tonajını sessizce değiştiriyordu. Artık önce antrenmanın KENDİ kaydındaki kilo (seans kaydedilirken dondurulan değer) kullanılıyor, o yoksa en yakın ölçüme düşülüyor. Yani "o antrenmanda kaç kilodaysan" o baz alınıyor ve sonradan yapılan düzenlemeler geçmişi bozmuyor.'
+    },
+    {
+      title: 'Tempo ve Bölge Kayıt Listesinde',
+      desc: 'Kardiyo kayıtları artık bölge etiketi, tempo ve nabızla birlikte listeleniyor. Mesafeli aktivitelerde tempo eğilimi de çıkıyor — hızlanıyor, sabit ya da yavaşlıyor.'
+    },
     {
       title: 'Müzik Üstünde Duyulan Dinlenme Uyarısı',
       desc: 'Eski uyarı 880 Hz seviyesinde iki kısa bipti ve müzik çalarken pratikte kayboluyordu — tek frekanslı kısa bir sinüs, müziğin spektrumunun içinde eriyor. Üç şey değişti. Tını: tek sinüs yerine yükselen üç notalı bir dizi ve her notada bir üst harmonik; geniş spektrumlu ve yükselen bir ses çok daha zor gözden kaçıyor. Tekrar: dizi bir kez değil, seçilen şiddete göre iki ya da dört kez çalıyor. Ses: kazanç belirgin yükseltildi ve kırpılmayı önlemek için kompresör eklendi. Titreşim deseni de uzadı — tek kısa titreşim telefon cepteyken hissedilmiyordu. Ayarlardan Hafif / Belirgin / Israrcı seçiliyor ve dokununca örnek çalıyor. Sistem bildirimi de artık ekranda kalıcı.'

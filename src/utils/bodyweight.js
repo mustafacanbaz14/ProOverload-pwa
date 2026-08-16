@@ -148,3 +148,76 @@ export const bodyweightPortion = (exerciseName, { bodyWeightKg = 0, customExerci
     label: oran === 1 ? 'vücut ağırlığı' : `vücut ağırlığının %${Math.round(oran * 100)}'i`,
   };
 };
+
+/**
+ * Bir setin yükünün AÇIKLAMASI.
+ *
+ * "Ağırlık alanının anlamı" ayarı doğru çalışıyordu ama arayüzde görünmüyordu:
+ * kullanıcı barfikste 10 yazıyor, tonaj 92 kg üzerinden hesaplanıyor ve bu
+ * dönüşüm hiçbir yerde yazmıyordu. Sayının nereden geldiği görünmeyince ayarın
+ * doğru olup olmadığı da anlaşılmıyor.
+ *
+ * Bu fonksiyon aynı hesabı yapıp PARÇALARINI da döndürüyor; arayüz "82 + 10 =
+ * 92 kg" yazabiliyor.
+ *
+ * @returns { carried, added, total, style, factor, label, explain } | null
+ *   style: 'added' (alan ek yük) | 'total' (alan zaten toplam) | 'plain'
+ */
+export const describeSetLoad = (exerciseName, setWeight, {
+  bodyWeightKg = 0,
+  customExercises = [],
+  bodyweightEnabled = true,
+  entryStyle = 'auto',
+} = {}) => {
+  const alan = parseNumber(setWeight);
+  const oran = bodyweightFactorOf(exerciseName, customExercises);
+  const kilo = parseNumber(bodyWeightKg);
+
+  // Vücut ağırlıklı bir hareket değil ya da model kapalı: alan neyse o.
+  if (!bodyweightEnabled || oran === null || !(kilo > 0)) {
+    return { carried: 0, added: alan, total: alan, style: 'plain', factor: oran, label: '', explain: '' };
+  }
+
+  const tasinan = Math.round(kilo * oran * 10) / 10;
+  const yuzde = Math.round(oran * 100);
+  const label = oran === 1 ? 'vücut ağırlığı' : `vücut ağırlığının %${yuzde}'i`;
+
+  const toplamYazim = entryStyle === 'total'
+    || (entryStyle === 'auto' && looksLikeTotalEntry(alan, tasinan));
+
+  if (toplamYazim) {
+    return {
+      carried: tasinan, added: Math.max(0, Math.round((alan - tasinan) * 10) / 10),
+      total: alan, style: 'total', factor: oran, label,
+      explain: `Alandaki ${alan} kg toplam yük sayıldı; üstüne vücut ağırlığı eklenmedi.`,
+    };
+  }
+
+  const toplam = Math.round((tasinan + alan) * 10) / 10;
+  return {
+    carried: tasinan, added: alan, total: toplam, style: 'added', factor: oran, label,
+    explain: alan > 0
+      ? `${tasinan} kg ${label} + ${alan} kg ek yük = ${toplam} kg`
+      : `${tasinan} kg ${label} taşınıyor; ek yük yok.`,
+  };
+};
+
+/**
+ * Setin yükünü hesaplarken kullanılacak vücut ağırlığı ve nereden geldiği.
+ *
+ * Sıra önemli:
+ *  1. Antrenmanın KENDİ kaydı (`weightAtTime`) — seans kaydedilirken
+ *     dondurulmuş değer. Kullanıcı sonradan bir ölçümü silse ya da düzeltse
+ *     bile geçmiş seansın yükü değişmiyor.
+ *  2. O tarihe kadarki en son ölçüm.
+ *
+ * İkinci adım zaten vardı ama birincisi yoktu: ölçüm geçmişi düzenlendiğinde
+ * yıllar önceki barfiks tonajı sessizce değişiyordu.
+ */
+export const bodyweightBasisFor = (workout, fallbackKg = 0) => {
+  const kayitli = parseNumber(workout?.weightAtTime);
+  if (kayitli > 0) return { kg: kayitli, source: 'workout', label: 'seans kaydından' };
+  const yedek = parseNumber(fallbackKg);
+  if (yedek > 0) return { kg: yedek, source: 'metrics', label: 'en yakın ölçümden' };
+  return { kg: 0, source: 'none', label: 'ölçüm yok' };
+};

@@ -7,7 +7,7 @@ import { analyzeDayConflicts } from '../src/utils/interference.js';
 import { computeWeekPlan } from '../src/utils/weekPlan.js';
 import { findActivity } from '../src/utils/cardio.js';
 import { suggestRestSeconds } from '../src/utils/rest.js';
-import { effectiveLoad, bodyweightFactorOf } from '../src/utils/bodyweight.js';
+import { effectiveLoad, bodyweightFactorOf, describeSetLoad, bodyweightBasisFor } from '../src/utils/bodyweight.js';
 import { auditBodyweightEntries, normalizeBodyweightEntries } from '../src/utils/bodyweightAudit.js';
 import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
 import { buildSessionReport, buildPlanAdherence, snapshotTemplatePlan } from '../src/utils/sessionReport.js';
@@ -29,7 +29,9 @@ import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/u
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
 import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
-import { estimateMaxHr, zoneForEntry, intensityClassOf, HR_ZONES, entryPace, paceTrend, supportsDistance } from '../src/utils/cardioZones.js';
+import { estimateMaxHr, zoneForEntry, intensityClassOf, HR_ZONES, entryPace, paceTrend, supportsDistance,
+  zoneRange, zoneForHeartRate, effectiveZoneMethod, cardioCalories, heartRateCalories } from '../src/utils/cardioZones.js';
+import { setActivityTarget, emptyActivityTarget, describeTarget, compareToTarget } from '../src/utils/activityTargets.js';
 import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from '../src/utils/cardioGoals.js';
 import { findRestAlertIntensity } from '../src/lockScreen.js';
 import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem, emptyCoachMemory } from '../src/utils/coachMemory.js';
@@ -2421,6 +2423,130 @@ test('uyarı şiddeti tekrar ve ses seviyesini yükseltir', () => {
   assert.ok(belirgin.gain > hafif.gain);
   // Bilinmeyen anahtar varsayılana düşmeli, çökmemeli.
   assert.equal(findRestAlertIntensity('yok').key, 'strong');
+});
+
+
+
+/* --- Karvonen (%HRR) yöntemi --- */
+
+test('Karvonen sınırları maks yöntemine göre yukarı kayar', () => {
+  const maks = zoneRange('z2', { age: 30, method: 'max' });
+  const karvonen = zoneRange('z2', { age: 30, restingHr: 55, method: 'hrr' });
+  assert.ok(karvonen.min > maks.min);
+  assert.ok(karvonen.max > maks.max);
+  // Karvonen alt sınırı dinlenme nabzının üstünde olmalı.
+  assert.ok(karvonen.min > 55);
+});
+
+test('dinlenme nabzı yoksa Karvonen sessizce maks yöntemine düşer', () => {
+  assert.equal(effectiveZoneMethod({ age: 30, method: 'hrr' }), 'max');
+  assert.equal(effectiveZoneMethod({ age: 30, restingHr: 55, method: 'hrr' }), 'hrr');
+  // Dinlenme nabzı maksimumdan büyükse de geçersiz sayılmalı.
+  assert.equal(effectiveZoneMethod({ age: 30, restingHr: 250, method: 'hrr' }), 'max');
+  const a = zoneRange('z2', { age: 30, method: 'hrr' });
+  const b = zoneRange('z2', { age: 30, method: 'max' });
+  assert.deepEqual(a, b);
+});
+
+test('aynı nabız iki yöntemde farklı bölgeye düşebilir', () => {
+  assert.equal(zoneForHeartRate(140, { age: 30, method: 'max' }).key, 'z3');
+  assert.equal(zoneForHeartRate(140, { age: 30, restingHr: 55, method: 'hrr' }).key, 'z2');
+});
+
+/* --- Nabızdan kalori --- */
+
+test('nabız girilince kalori Keytel denkleminden hesaplanır', () => {
+  const r = cardioCalories({ avgHeartRate: 150, minutes: 45 },
+    { weightKg: 80, age: 30, metCalories: 400 });
+  assert.equal(r.source, 'heartRate');
+  assert.ok(r.kcal > 400);
+});
+
+test('nabız yoksa ya da güvenilmezse MET hesabına dönülür', () => {
+  assert.equal(cardioCalories({ minutes: 45 }, { weightKg: 80, age: 30, metCalories: 400 }).source, 'met');
+  // Dinlenmeye yakın nabızda formül güvenilmez; MET kullanılmalı.
+  assert.equal(cardioCalories({ avgHeartRate: 70, minutes: 45 },
+    { weightKg: 80, age: 30, metCalories: 400 }).source, 'met');
+  // Kilo ya da yaş yoksa da tahmin yapılmıyor.
+  assert.equal(heartRateCalories({ avgHeartRate: 150, minutes: 45, weightKg: 80 }), null);
+});
+
+/* --- Aktivite seans hedefleri --- */
+
+test('boş hedef kaydedilmez, dolu hedef kaydedilir', () => {
+  let t = setActivityTarget({}, 'swim', emptyActivityTarget());
+  assert.equal(t.swim, undefined);
+  t = setActivityTarget(t, 'swim', { sets: 8, setDistance: 100, minutes: 40 });
+  assert.ok(t.swim);
+  // Tamamen boşaltmak kaydı siler.
+  t = setActivityTarget(t, 'swim', emptyActivityTarget());
+  assert.equal(t.swim, undefined);
+});
+
+test('set ve mesafe birlikte tek ifadede birleşir', () => {
+  assert.equal(describeTarget({ sets: 8, setDistance: 100 }, 'swim'), '8 × 100 m');
+  assert.equal(describeTarget({ sets: 5 }, 'run'), '5 set');
+  // Yüzmede toplam mesafe metre olarak okunaklı.
+  assert.match(describeTarget({ distanceKm: 1.5 }, 'swim'), /1500 m toplam/);
+  assert.match(describeTarget({ distanceKm: 10 }, 'run'), /10 km/);
+});
+
+test('karşılaştırma yalnızca dolu hedef alanlarına bakar', () => {
+  const k = compareToTarget({ type: 'swim', minutes: 40, distanceKm: 0.8 },
+    { sets: 8, setDistance: 100, minutes: 40 });
+  const sure = k.rows.find(r => r.label === 'Süre');
+  assert.equal(sure.status, 'met');
+  // 8 × 100 = 800 m hedefi tam tutmuş.
+  const mesafe = k.rows.find(r => r.label === 'Toplam mesafe');
+  assert.equal(mesafe.status, 'met');
+  assert.equal(k.met, true);
+});
+
+test('hedefin altında kalmak eksik olarak işaretlenir ama tolerans vardır', () => {
+  // %5 tolerans: 29 dakika 30 dakikalık hedefte "met" sayılmalı.
+  assert.equal(compareToTarget({ minutes: 29 }, { minutes: 30 }).rows[0].status, 'met');
+  assert.equal(compareToTarget({ minutes: 20 }, { minutes: 30 }).rows[0].status, 'under');
+  // Hedef yoksa karşılaştırma da yok.
+  assert.equal(compareToTarget({ minutes: 30 }, emptyActivityTarget()), null);
+});
+
+/* --- Vücut ağırlığı alanının açıklaması --- */
+
+test('ek yük biçiminde taban ve toplam ayrı ayrı çıkar', () => {
+  const d = describeSetLoad('Pull-up', 10, { bodyWeightKg: 82, entryStyle: 'added' });
+  assert.equal(d.style, 'added');
+  assert.equal(d.carried, 82);
+  assert.equal(d.added, 10);
+  assert.equal(d.total, 92);
+  assert.match(d.explain, /82 kg vücut ağırlığı \+ 10 kg ek yük = 92 kg/);
+});
+
+test('kısmi vücut ağırlığı taşıyan harekette oran uygulanır', () => {
+  const d = describeSetLoad('Push-ups', 0, { bodyWeightKg: 82, entryStyle: 'added' });
+  assert.ok(d.carried > 0 && d.carried < 82);
+  assert.equal(d.added, 0);
+  assert.match(d.label, /%\d+/);
+});
+
+test('toplam yazım biçiminde vücut ağırlığı ikinci kez eklenmez', () => {
+  const d = describeSetLoad('Pull-up', 92, { bodyWeightKg: 82, entryStyle: 'auto' });
+  assert.equal(d.style, 'total');
+  assert.equal(d.total, 92);
+});
+
+test('vücut ağırlıklı olmayan harekette alan olduğu gibi kalır', () => {
+  const d = describeSetLoad('Barbell Bench Press', 100, { bodyWeightKg: 82 });
+  assert.equal(d.style, 'plain');
+  assert.equal(d.total, 100);
+  assert.equal(d.carried, 0);
+});
+
+test('taban önce seansın kendi kaydından okunur', () => {
+  // Ölçüm geçmişi sonradan düzenlense bile geçmiş seansın yükü değişmemeli.
+  assert.deepEqual(bodyweightBasisFor({ weightAtTime: 79 }, 82),
+    { kg: 79, source: 'workout', label: 'seans kaydından' });
+  assert.equal(bodyweightBasisFor({}, 82).source, 'metrics');
+  assert.equal(bodyweightBasisFor({}, 0).source, 'none');
 });
 
 
