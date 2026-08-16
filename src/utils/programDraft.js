@@ -23,8 +23,30 @@ export const addExercisesToDraftDay = (day, names = [], generateId, sets = 3) =>
   const existing = new Set(current.map(ex => ex.name));
   const additions = (names || [])
     .filter(name => typeof name === 'string' && name.trim() && !existing.has(name))
-    .map(name => ({ uid: generateId(), name, sets: Math.max(1, Math.min(12, Number(sets) || 3)) }));
+    .map(name => ({ uid: generateId(), name, sets: Math.max(1, Math.min(12, Number(sets) || 3)), superset: false }));
   return { ...day, exercises: [...current, ...additions] };
+};
+
+/**
+ * Bir hareketi SONRAKİ hareketle süperset yapar ya da bağı kaldırır.
+ *
+ * Bağ, hareketin üstünde `superset: true` bayrağı olarak duruyor ve "bir
+ * sonrakiyle birlikte" anlamına geliyor. Taslakta paylaşılan bir kimlik
+ * tutmak yerine bayrak kullanılmasının sebebi sıralama: hareketler yukarı
+ * aşağı taşınabiliyor ve paylaşılan kimlik taşıma sonrası birbirine komşu
+ * olmayan iki hareketi bağlı gösterebiliyordu. Bayrak her zaman komşuluğu
+ * anlatıyor, şablona çevrilirken gerçek kimliğe dönüşüyor.
+ *
+ * Son hareket bağlanamaz: bağlanacak bir sonraki yok.
+ */
+export const toggleDraftSuperset = (day, uid) => {
+  const liste = day?.exercises || [];
+  const i = liste.findIndex(ex => ex.uid === uid);
+  if (i < 0 || i === liste.length - 1) return day;
+  return {
+    ...day,
+    exercises: liste.map((ex, idx) => idx === i ? { ...ex, superset: !ex.superset } : ex),
+  };
 };
 
 export const replaceDraftExercise = (day, uid, name) => ({
@@ -73,9 +95,14 @@ export const instantiateDraftProgram = (programName, draftDays = [], generateId,
     id: generateId(),
     name: `${programName} — ${day.name}`,
     createdAt,
-    exercises: day.exercises.map(ex => ({
+    // Komşuluk bayrağı gerçek kimliğe çevriliyor: bayraklı hareket ve onu
+    // izleyen hareket aynı kimliği paylaşıyor. Zincirleme bağlar (a-b-c) tek
+    // grup oluyor; ActiveWorkoutView ikiden fazla üyeyi de doğru gösteriyor.
+    exercises: day.exercises.map((ex, i, liste) => ({
       name: ex.name,
-      supersetId: null,
+      supersetId: (ex.superset && liste[i + 1]) || (i > 0 && liste[i - 1]?.superset)
+        ? `ss-${day.uid || 'g'}-${(() => { let bas = i; while (bas > 0 && liste[bas - 1]?.superset) bas -= 1; return bas; })()}`
+        : null,
       sets: Array.from({ length: Math.max(1, Number(ex.sets) || 1) }, () => ({
         id: generateId(), weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal',
       })),

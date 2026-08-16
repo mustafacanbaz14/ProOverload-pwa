@@ -11,6 +11,7 @@ import { formatDay } from '../utils/dates';
 import { READINESS_FIELDS, READINESS_ZONES } from '../utils/readiness';
 import { suggestRestSeconds } from '../utils/rest';
 import { sessionAdvice } from '../utils/autoregulation';
+import { repRangeFor } from '../utils/exerciseTargets';
 
 const ActiveWorkoutView = memo(({
   activeWorkout,
@@ -179,7 +180,18 @@ const ActiveWorkoutView = memo(({
         {(activeWorkout.exercises || []).map((ex, exIndex) => {
           const recentData = getRecentExerciseData(ex.name);
           const { muscle, contributions } = detectMuscleGroup(ex.name, customExercises);
-          const target = recentData ? suggestNextTarget(recentData.sets, settings, muscle, {
+          // Hedef tekrar aralığı harekete özel; hem buradaki hedef hem aşağıdaki
+          // seans içi yük ayarı aynı yerden okuyor ki ikisi çelişmesin.
+          const repRange = repRangeFor(ex.name, {
+            overrides: settings.repRangeOverrides,
+            customExercises,
+            globalMin: settings.repRangeMin,
+            globalMax: settings.repRangeMax,
+          });
+          const target = recentData ? suggestNextTarget(recentData.sets, {
+            repRangeMin: repRange.min,
+            repRangeMax: repRange.max,
+          }, muscle, {
             history: recentData.history,
             readiness: activeWorkout.readiness,
             deload,
@@ -354,9 +366,12 @@ const ActiveWorkoutView = memo(({
               {/* Seans içi yük ayarı. Yorgunluk düşüşü yukarıda GÖSTERİLİYORDU
                   ama ne yapılacağını söylemiyordu; karar anı tam da burası. */}
               {(() => {
+                // Tekrar aralığı artık harekete özel: aynı 6-10 bandını hem
+                // ağır çömelişe hem yan omuz kaldırışına dayatmak, verilen
+                // tavsiyeyi ikincisinde yanlış yapıyordu.
                 const advice = sessionAdvice(ex.sets, {
-                  repRangeMin: settings.repRangeMin,
-                  repRangeMax: settings.repRangeMax,
+                  repRangeMin: repRange.min,
+                  repRangeMax: repRange.max,
                   isSmallMuscle: SMALL_MUSCLE_GROUPS.includes(muscle),
                 });
                 if (!advice) return null;

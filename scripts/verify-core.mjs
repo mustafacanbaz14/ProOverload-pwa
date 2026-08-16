@@ -29,6 +29,12 @@ import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/u
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
 import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
+import { painEntry, upsertPainEntry, buildPainReport, painCoachItem } from '../src/utils/painLog.js';
+import { buildStrengthBalance, strengthBalanceCoachItem } from '../src/utils/strengthBalance.js';
+import { buildConsistency, buildAdherence } from '../src/utils/consistency.js';
+import { auditWorkoutData, removeEmptyWorkouts } from '../src/utils/dataHealth.js';
+import { repRangeFor, setRepRangeOverride } from '../src/utils/exerciseTargets.js';
+import { toggleDraftSuperset } from '../src/utils/programDraft.js';
 import { mesocycleState, muscleTarget, weeklyTargets, targetInstructions, mesocycleCoachItem } from '../src/utils/mesocycle.js';
 import { lengthBias, auditExerciseSelection } from '../src/utils/selectionAudit.js';
 import {
@@ -1804,6 +1810,235 @@ test('program şablonlara ve haftalık plana çevrilir', () => {
     assert.ok(slot.id, 'slot kimliksiz');
     assert.ok(kimlikler.has(slot.templateId), 'slot var olmayan şablona işaret ediyor');
   });
+});
+
+
+
+/* --- Ağrı takibi --- */
+
+const agriKaydi = (date, region, severity, extra = {}) =>
+  painEntry({ date, region, severity, ...extra });
+
+test('aynı gün aynı bölgeye ikinci giriş satırı çoğaltmaz', () => {
+  let log = [];
+  log = upsertPainEntry(log, agriKaydi('2026-08-10', 'shoulder', 4));
+  log = upsertPainEntry(log, agriKaydi('2026-08-10', 'shoulder', 7));
+  log = upsertPainEntry(log, agriKaydi('2026-08-10', 'knee', 5));
+  assert.equal(log.length, 2);
+  // Sonuncusu kazanır: o günün nihai değerlendirmesi.
+  assert.equal(log.find(x => x.region === 'shoulder').severity, 7);
+});
+
+test('eşik altındaki ağrılar rapora girmez', () => {
+  const log = [agriKaydi('2026-08-14', 'knee', 2), agriKaydi('2026-08-15', 'knee', 1)];
+  const r = buildPainReport(log, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.hasData, false);
+});
+
+test('sürekli ağrı işaretlenir ve trend hesaplanır', () => {
+  const log = [
+    agriKaydi('2026-08-01', 'shoulder', 4),
+    agriKaydi('2026-08-06', 'shoulder', 6),
+    agriKaydi('2026-08-11', 'shoulder', 8),
+    agriKaydi('2026-08-15', 'shoulder', 8),
+  ];
+  const r = buildPainReport(log, { today: new Date('2026-08-16T12:00:00') });
+  const omuz = r.regions.find(x => x.region === 'shoulder');
+  assert.equal(omuz.persistent, true);
+  assert.equal(omuz.trend, 'worsening');
+  assert.equal(omuz.peak, 8);
+  assert.ok(painCoachItem(r));
+});
+
+test('ağrılı günlerdeki hareketler yalnızca tekrarlıyorsa listelenir', () => {
+  const log = [
+    agriKaydi('2026-08-05', 'elbow', 6),
+    agriKaydi('2026-08-12', 'elbow', 6),
+  ];
+  const w = [
+    { date: '2026-08-05', exercises: [{ name: 'Skull Crusher' }, { name: 'Leg Press' }] },
+    { date: '2026-08-12', exercises: [{ name: 'Skull Crusher' }] },
+  ];
+  const r = buildPainReport(log, { workouts: w, today: new Date('2026-08-16T12:00:00') });
+  const adlar = r.regions[0].suspects.map(x => x.name);
+  assert.ok(adlar.includes('Skull Crusher'));
+  // Tek ağrılı günde görülen hareket rastlantı sayılır.
+  assert.ok(!adlar.includes('Leg Press'));
+});
+
+/* --- Kuvvet dengesi --- */
+
+const kuvvetSeansi = (date, ad, kg, tekrar, adet = 3) => ({
+  date,
+  exercises: [{ name: ad, sets: Array.from({ length: adet }, () => ({ weight: String(kg), reps: String(tekrar), rir: 1, setType: 'normal' })) }],
+});
+
+test('iki tarafı da ölçülemeyen oran rapora girmez', () => {
+  const r = buildStrengthBalance([kuvvetSeansi('2026-08-10', 'Barbell Bench Press', 100, 5)],
+    { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.ratios.length, 0);
+  assert.ok(r.missing.some(m => m.key === 'pushPull'));
+});
+
+test('itiş çekişin çok önündeyse bant dışı bildirilir', () => {
+  const w = [
+    kuvvetSeansi('2026-08-10', 'Barbell Bench Press', 120, 5),
+    kuvvetSeansi('2026-08-11', 'Barbell Row', 60, 8),
+  ];
+  const r = buildStrengthBalance(w, { today: new Date('2026-08-16T12:00:00') });
+  const oran = r.ratios.find(x => x.key === 'pushPull');
+  assert.equal(oran.status, 'high');
+  assert.ok(oran.ratio > oran.max);
+  assert.ok(strengthBalanceCoachItem(r));
+});
+
+test('dengeli oran uyarı üretmez', () => {
+  const w = [
+    kuvvetSeansi('2026-08-10', 'Barbell Bench Press', 100, 5),
+    kuvvetSeansi('2026-08-11', 'Barbell Row', 90, 5),
+  ];
+  const r = buildStrengthBalance(w, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.ratios.find(x => x.key === 'pushPull').status, 'ok');
+  assert.equal(strengthBalanceCoachItem(r), null);
+});
+
+test('tek set oran kurmaya yetmez', () => {
+  const w = [
+    kuvvetSeansi('2026-08-10', 'Barbell Bench Press', 120, 5, 1),
+    kuvvetSeansi('2026-08-11', 'Barbell Row', 60, 8, 1),
+  ];
+  const r = buildStrengthBalance(w, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.ratios.length, 0);
+});
+
+/* --- Tutarlılık ve plan uyumu --- */
+
+const seans = (date) => ({ date, exercises: [{ sets: [{}, {}, {}] }] });
+
+test('seri hafta biriminde sayılır, içinde bulunulan hafta kırmaz', () => {
+  // 16 Ağustos 2026 pazar. Önceki üç hafta dolu, bu hafta boş.
+  const w = ['2026-07-28', '2026-08-04', '2026-08-11'].map(seans);
+  const c = buildConsistency(w, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(c.currentStreak, 3);
+  assert.ok(c.longestStreak >= 3);
+});
+
+test('ortalama gün, kayıt başlamadan önceki haftaları saymaz', () => {
+  // Beş haftalık geçmiş, her hafta iki gün. Pencere 12 hafta olsa da ortalama
+  // 2 çıkmalı; kullanıcının uygulamayı kullanmadığı haftalar devamsızlık değil.
+  const w = ['2026-07-14', '2026-07-16', '2026-07-21', '2026-07-23',
+    '2026-07-28', '2026-07-30', '2026-08-04', '2026-08-06'].map(seans);
+  const c = buildConsistency(w, { today: new Date('2026-08-16T12:00:00'), weeks: 12 });
+  assert.equal(c.averageDaysPerWeek, 2);
+});
+
+test('arada boş hafta seriyi kırar', () => {
+  const w = ['2026-07-21', '2026-08-04', '2026-08-11'].map(seans);
+  const c = buildConsistency(w, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(c.currentStreak, 2);
+});
+
+test('plan uyumu gün eşleşmesine değil hafta içi sayıya bakar', () => {
+  // Plan 3 gün; hafta içinde farklı günlerde 3 antrenman yapılmış.
+  const w = ['2026-08-04', '2026-08-06', '2026-08-08'].map(seans);
+  const a = buildAdherence(w, { trainingDays: 3 }, { today: new Date('2026-08-16T12:00:00'), weeks: 2 });
+  const hafta = a.weeks.find(x => !x.isCurrent);
+  assert.equal(hafta.done, 3);
+  assert.equal(hafta.rate, 1);
+});
+
+test('fazla antrenman uyumu yüzde yüzün üstüne çıkarmaz', () => {
+  const w = ['2026-08-03', '2026-08-04', '2026-08-05', '2026-08-06', '2026-08-07'].map(seans);
+  const a = buildAdherence(w, { trainingDays: 3 }, { today: new Date('2026-08-16T12:00:00'), weeks: 2 });
+  assert.equal(a.weeks.find(x => !x.isCurrent).rate, 1);
+});
+
+/* --- Veri sağlığı --- */
+
+test('aykırı ağırlık ve tekrar yakalanır', () => {
+  const w = [{
+    id: 'w1', date: '2026-08-10', name: 'Üst',
+    exercises: [{ name: 'Barbell Bench Press', sets: [{ weight: '1000', reps: '8', setType: 'normal' }] }],
+  }];
+  const r = auditWorkoutData(w);
+  assert.equal(r.criticalCount, 1);
+  assert.equal(r.findings[0].kind, 'weightOutlier');
+});
+
+test('yarım kalmış set bildirilir, temiz kayıt bildirilmez', () => {
+  const eksik = auditWorkoutData([{
+    id: 'w1', date: '2026-08-10',
+    exercises: [{ name: 'Leg Press', sets: [{ weight: '200', reps: '', setType: 'normal' }] }],
+  }]);
+  assert.ok(eksik.findings.some(f => f.kind === 'zeroReps'));
+
+  const temiz = auditWorkoutData([{
+    id: 'w2', date: '2026-08-11',
+    exercises: [{ name: 'Leg Press', sets: [{ weight: '200', reps: '10', setType: 'normal' }] }],
+  }]);
+  assert.equal(temiz.hasIssues, false);
+});
+
+test('boş kayıt silme idempotent', () => {
+  const w = [
+    { id: 'a', date: '2026-08-10', exercises: [] },
+    { id: 'b', date: '2026-08-11', exercises: [{ name: 'X', sets: [{ weight: '50', reps: '10' }] }] },
+  ];
+  const bir = removeEmptyWorkouts(w);
+  assert.equal(bir.removed, 1);
+  assert.equal(bir.workouts.length, 1);
+  const iki = removeEmptyWorkouts(bir.workouts);
+  assert.equal(iki.removed, 0);
+  assert.equal(iki.workouts.length, 1);
+});
+
+/* --- Hareket bazlı tekrar aralığı --- */
+
+test('tekrar aralığı özel -> kas -> genel sırasıyla düşer', () => {
+  const genel = { globalMin: 6, globalMax: 10 };
+  // Kas varsayılanı: yan omuz yüksek tekrar.
+  const yanOmuz = repRangeFor('Lateral Raise (Dumbbell)', genel);
+  assert.equal(yanOmuz.source, 'muscle');
+  assert.equal(yanOmuz.min, 12);
+  assert.equal(yanOmuz.max, 20);
+
+  // Kullanıcının yazdığı aralık kas varsayılanını geçer.
+  const ozel = repRangeFor('Lateral Raise (Dumbbell)', {
+    ...genel, overrides: { 'Lateral Raise (Dumbbell)': { min: 8, max: 12 } },
+  });
+  assert.equal(ozel.source, 'exercise');
+  assert.equal(ozel.min, 8);
+});
+
+test('geçersiz aralık kaydı silinir ve sıralama düzeltilir', () => {
+  let o = setRepRangeOverride({}, 'Barbell Back Squat', 12, 5);
+  // min > max verilirse max min'e çekilir, ters kayıt yazılmaz.
+  assert.ok(o['Barbell Back Squat'].max >= o['Barbell Back Squat'].min);
+  o = setRepRangeOverride(o, 'Barbell Back Squat', '', '');
+  assert.equal(o['Barbell Back Squat'], undefined);
+});
+
+/* --- Şablonda süperset --- */
+
+test('taslak süperset bayrağı şablonda paylaşılan kimliğe dönüşür', () => {
+  let gun = {
+    uid: 'g1', name: 'Üst', weekday: 'mon',
+    exercises: [
+      { uid: 'a', name: 'Barbell Bench Press', sets: 3 },
+      { uid: 'b', name: 'Barbell Row', sets: 3 },
+      { uid: 'c', name: 'Lateral Raise (Dumbbell)', sets: 3 },
+    ],
+  };
+  gun = toggleDraftSuperset(gun, 'a');
+  let n = 0;
+  const kurulum = instantiateDraftProgram('Test', [gun], () => `id-${n += 1}`);
+  const [x, y, z] = kurulum.templates[0].exercises;
+  assert.ok(x.supersetId);
+  assert.equal(x.supersetId, y.supersetId);
+  assert.equal(z.supersetId, null);
+
+  // Son hareket bağlanamaz: bağlanacak bir sonraki yok.
+  assert.equal(toggleDraftSuperset(gun, 'c').exercises[2].superset, undefined);
 });
 
 

@@ -2,7 +2,7 @@ import React, { memo } from 'react';
 import {
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
   Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
-  Layers3, Wand2, ShieldCheck,
+  Layers3, Wand2, Activity, Stethoscope, ShieldCheck,
 } from 'lucide-react';
 
 /**
@@ -42,6 +42,7 @@ const GROUPS = [
     items: [
       { key: 'coach', label: 'Koç Merkezi', hint: 'Haftalık karar, veri güveni ve protokol geçmişi', icon: ShieldCheck, color: 'text-emerald-400' },
       { key: 'sleep', label: 'Uyku Takibi', hint: 'Yatış/uyanış saati, 100 üzerinden puan', icon: Moon, color: 'text-purple-400' },
+      { key: 'pain', label: 'Ağrı Takibi', hint: 'Bölge bölge eklem ağrısı, trend ve hareket ilişkisi', icon: Activity, color: 'text-red-400' },
       { key: 'mind', label: 'Meditasyon & Esneme', hint: 'Günlük, haftalık, aylık log', icon: Brain, color: 'text-cyan-400' },
     ],
   },
@@ -51,6 +52,7 @@ const GROUPS = [
       { key: 'compare', label: 'Dönemsel Kıyaslama', hint: 'İki ölçümü yan yana karşılaştır', icon: ArrowRightLeft, color: 'text-cyan-400' },
       { key: 'guide', label: 'Ölçüm Rehberi', hint: 'Çevre ve kaliper ölçüm teknikleri', icon: Ruler, color: 'text-zinc-400' },
       { key: 'weeklyReview', label: 'Haftalık Gözden Geçirme', hint: 'Haftayı kapat, gelecek hafta için ayar al', icon: ClipboardCheck, color: 'text-emerald-400' },
+      { key: 'dataHealth', label: 'Veri Sağlığı', hint: 'Aykırı değer, yarım kalmış set ve kopya kayıt taraması', icon: Stethoscope, color: 'text-emerald-400' },
       { key: 'report', label: 'Gelişim Raporu', hint: 'Rekorlar ve dönem özeti', icon: Trophy, color: 'text-yellow-400' },
     ],
   },

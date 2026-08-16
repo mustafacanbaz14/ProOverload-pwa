@@ -57,6 +57,8 @@ const SettingsModal = memo(({
   bodyweightAudit = null,
   onNormalizeBodyweight,
   onExportCsv,
+  onToggleRestNotification,
+  notificationState = 'default',
 }) => {
   if (!isOpen) return null;
 
@@ -404,6 +406,17 @@ const SettingsModal = memo(({
               hint="Dinlenme bitince çift bip çalar."
               checked={settings.restAlert}
               onChange={(v) => set({ restAlert: v })}
+            />
+
+            {/* Ses ve titreşim telefon sessizdeyken ya da uygulama arka
+                plandayken yetmiyor; bildirim sistemin kendi kanalını kullanıyor. */}
+            <Toggle
+              label="Bitişte Bildirim"
+              hint={notificationState === 'denied'
+                ? 'Tarayıcı bildirimlere izin vermiyor. Site ayarlarından açman gerekiyor.'
+                : 'Telefon sessizdeyken veya uygulama arka plandayken de görünür. İzin ilk açılışta sorulur.'}
+              checked={Boolean(settings.restNotification)}
+              onChange={() => onToggleRestNotification?.()}
             />
 
             <Toggle

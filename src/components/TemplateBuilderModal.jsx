@@ -1,5 +1,5 @@
 import React, { useState, memo } from 'react';
-import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Flame, Copy, RefreshCw } from 'lucide-react';
+import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Flame, Copy, RefreshCw, Link2 } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { generateId } from '../utils/helpers';
@@ -7,7 +7,7 @@ import { estimateLiftingCalories } from '../utils/cardio';
 import { WEEKDAYS } from '../utils/weekPlan';
 import {
   addExercisesToDraftDay, duplicateDraftDay, nextUnusedWeekday,
-  replaceDraftExercise, suggestedWeekdays,
+  replaceDraftExercise, suggestedWeekdays, toggleDraftSuperset,
 } from '../utils/programDraft';
 import ExerciseLibraryModal from './ExerciseLibraryModal';
 import PlanningGuide from './PlanningGuide';
@@ -268,8 +268,12 @@ const TemplateBuilderModal = memo(({
           ) : day.exercises.map((ex, exIndex) => (
             <div key={ex.uid} className="bg-zinc-900 border border-zinc-800 rounded-xl p-3">
               <div className="flex justify-between items-center gap-2 mb-2">
-                <span className="text-[11px] font-bold text-zinc-200 truncate min-w-0">
-                  <span className="text-cyan-500 mr-1">{exIndex + 1}.</span>{ex.name}
+                <span className="text-[11px] font-bold text-zinc-200 truncate min-w-0 flex items-center">
+                  <span className="text-cyan-500 mr-1">{exIndex + 1}.</span>
+                  {(ex.superset || day.exercises[exIndex - 1]?.superset) && (
+                    <Link2 size={11} className="text-purple-400 mr-1 shrink-0" />
+                  )}
+                  <span className="truncate">{ex.name}</span>
                 </span>
                 <div className="flex items-center shrink-0">
                   <button
@@ -297,6 +301,19 @@ const TemplateBuilderModal = memo(({
                     className="text-zinc-600 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
                   >
                     <ArrowDown size={13} />
+                  </button>
+                  {/* Süperset şimdiye kadar yalnızca canlı antrenmanda
+                      kurulabiliyordu, yani her seans elle yeniden bağlanıyordu.
+                      Şablonda kurulunca seansa aynen taşınıyor. */}
+                  <button
+                    onClick={() => updateDay(toggleDraftSuperset(day, ex.uid))}
+                    disabled={exIndex === day.exercises.length - 1}
+                    title={ex.superset ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
+                    aria-label={ex.superset ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
+                    aria-pressed={Boolean(ex.superset)}
+                    className={`p-1.5 disabled:opacity-25 ${ex.superset ? 'text-purple-400' : 'text-zinc-600 active:text-purple-400'}`}
+                  >
+                    <Link2 size={13} />
                   </button>
                   <button
                     onClick={() => updateDay({ exercises: day.exercises.filter(e => e.uid !== ex.uid) })}

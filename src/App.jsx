@@ -4,11 +4,17 @@ import {
 } from 'lucide-react';
 import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
-  requestWakeLock, playRestAlert, vibrateAlert
+  requestWakeLock, playRestAlert, vibrateAlert,
+  showRestNotification, requestNotificationPermission, notificationPermission
 } from './lockScreen';
 
 import { DEFAULT_EXERCISES, MUSCLE_GROUPS, BODY_METRICS, getVolumeLandmarks, ACWR_MIN_DAYS, APP_VERSION } from './utils/constants';
 import { migrateCustomExercises } from './utils/migrations';
+import { painCoachItem, buildPainReport } from './utils/painLog';
+import { buildStrengthBalance, strengthBalanceCoachItem } from './utils/strengthBalance';
+import { buildConsistency, buildAdherence, consistencyCoachItem } from './utils/consistency';
+import { auditWorkoutData, removeEmptyWorkouts, dataHealthCoachItem } from './utils/dataHealth';
+import { repRangeFor, setRepRangeOverride } from './utils/exerciseTargets';
 import { computeAdaptiveTDEE } from './utils/tdee';
 import { totalCardioCalories, dayWorkoutCalories } from './utils/cardio';
 import { computeWeekPlan, findPlan } from './utils/weekPlan';
@@ -78,6 +84,8 @@ import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
 // Kullanıcı ilgili aracı açtığında ayrı parça indirilir ve değerlendirilir.
 const DeloadModal = lazy(() => import('./components/DeloadModal'));
 const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
+const PainLogModal = lazy(() => import('./components/PainLogModal'));
+const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
 const SessionReportModal = lazy(() => import('./components/SessionReportModal'));
@@ -174,6 +182,8 @@ export default function App() {
   const [isDeloadOpen, setIsDeloadOpen] = useState(false);
   const [isStarterOpen, setIsStarterOpen] = useState(false);
   const [isMesocycleOpen, setIsMesocycleOpen] = useState(false);
+  const [isPainOpen, setIsPainOpen] = useState(false);
+  const [isDataHealthOpen, setIsDataHealthOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
@@ -347,11 +357,14 @@ export default function App() {
         setRest(null);
         if (settings.restAlert) playRestAlert();
         vibrateAlert();
+        // Bildirim, ses ve titreşimin YERİNE değil yanına: telefon sessizdeyken
+        // ya da uygulama arka plandayken tek görünür uyarı bu.
+        if (settings.restNotification) showRestNotification();
       }
     };
     const interval = setInterval(tick, 500);
     return () => clearInterval(interval);
-  }, [rest, settings.restAlert]);
+  }, [rest, settings.restAlert, settings.restNotification]);
 
 
   // Antrenman işlemleri
@@ -575,6 +588,34 @@ export default function App() {
     setTemplates(prev => toggleTemplateFavorite(prev, template.id));
     showToast(template.favorite ? 'Şablon favorilerden çıkarıldı.' : 'Şablon favorilere eklendi.');
   }, [setTemplates, showToast]);
+
+  /** Veri sağlığı: içi boş antrenman kayıtlarını siler. */
+  const handleRemoveEmptyWorkouts = useCallback(() => {
+    const { workouts: next, removed } = removeEmptyWorkouts(workouts);
+    if (removed === 0) {
+      showToast('Silinecek boş kayıt bulunamadı.');
+      return;
+    }
+    setWorkouts(next);
+    showToast(`${removed} boş kayıt silindi.`);
+  }, [workouts, setWorkouts, showToast]);
+
+  /** Bildirim iznini kullanıcı eylemiyle ister; reddedilirse ayarı açmaz. */
+  const handleToggleRestNotification = useCallback(async () => {
+    if (settings.restNotification) {
+      setSettings(prev => ({ ...prev, restNotification: false }));
+      return;
+    }
+    const sonuc = await requestNotificationPermission();
+    if (sonuc === 'granted') {
+      setSettings(prev => ({ ...prev, restNotification: true }));
+      showToast('Dinlenme bildirimi açıldı.');
+    } else if (sonuc === 'unsupported') {
+      showToast('Bu tarayıcı bildirim desteklemiyor.', 'warning');
+    } else {
+      showToast('Bildirim izni verilmedi. Tarayıcı ayarlarından açabilirsin.', 'warning');
+    }
+  }, [settings.restNotification, setSettings, showToast]);
 
   const handleNormalizeBodyweight = useCallback(() => {
     const { workouts: next, changed } = normalizeBodyweightEntries(workouts, {
@@ -1023,7 +1064,18 @@ export default function App() {
       const secondsLeft = currentRest ? Math.max(0, Math.ceil((currentRest.endsAt - Date.now()) / 1000)) : 0;
 
       const { muscle } = active ? detectMuscleGroup(active.name, customExercises) : {};
-      const target = history ? suggestNextTarget(history.sets, settings, muscle, {
+      // Tekrar aralığı harekete özel; kilit ekranındaki hedef ile antrenman
+      // ekranındaki hedefin ayrışmaması için ikisi de aynı yerden okuyor.
+      const kilitAralik = repRangeFor(active?.name, {
+        overrides: settings.repRangeOverrides,
+        customExercises,
+        globalMin: settings.repRangeMin,
+        globalMax: settings.repRangeMax,
+      });
+      const target = history ? suggestNextTarget(history.sets, {
+        repRangeMin: kilitAralik.min,
+        repRangeMax: kilitAralik.max,
+      }, muscle, {
         history: history.history,
         readiness: workout.readiness,
       }) : null;
@@ -2398,6 +2450,29 @@ export default function App() {
     showToast(`Hareket ${newName} ile değiştirildi.`);
   }, [setActiveWorkout, showToast]);
 
+  // 6.1 raporları. Hepsi coachActions'tan önce hesaplanıyor çünkü koç satırı
+  // bunları tüketiyor; ayrıca modaller de aynı nesneleri kullanıyor ki iki
+  // yerde farklı sayı görünmesin.
+  const painReport = useMemo(
+    () => buildPainReport(settings.painLog || [], { workouts: sortedWorkouts }),
+    [settings.painLog, sortedWorkouts]);
+
+  const strengthBalance = useMemo(
+    () => buildStrengthBalance(sortedWorkouts, { resolveLoad: resolveSetLoad }),
+    [sortedWorkouts, resolveSetLoad]);
+
+  const consistencyReport = useMemo(
+    () => buildConsistency(sortedWorkouts),
+    [sortedWorkouts]);
+
+  const adherenceReport = useMemo(
+    () => buildAdherence(sortedWorkouts, weekPlanResult),
+    [sortedWorkouts, weekPlanResult]);
+
+  const dataHealthReport = useMemo(
+    () => auditWorkoutData(sortedWorkouts),
+    [sortedWorkouts]);
+
   const coachActions = useMemo(() => {
     const bugun = getLocalDateString();
     const sonOlcum = sortedMetrics[0]?.date;
@@ -2429,6 +2504,10 @@ export default function App() {
       frequencyItem: frequencyCoachItem(frequencyReport),
       mesocycleItem: mesocycleCoachItem(mesocycle, mesocycleInstructions),
       selectionItem: selectionCoachItem(selectionReport),
+      painItem: painCoachItem(painReport),
+      balanceItem: strengthBalanceCoachItem(strengthBalance),
+      consistencyItem: consistencyCoachItem(consistencyReport, adherenceReport),
+      dataHealthItem: dataHealthCoachItem(dataHealthReport),
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -2439,6 +2518,7 @@ export default function App() {
     settings.nutritionGoal, settings.proteinPerFfmBulk, settings.proteinPerFfmCut,
     settings.experienceLevel, dashboardStats, plateauInsights, deload, deloadSuggestion,
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
+    painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
   const needsBackup = useMemo(() => {
@@ -2555,6 +2635,8 @@ export default function App() {
                 plan: () => setIsWeekPlanOpen(true),
                 deload: () => setIsDeloadOpen(true),
                 mesocycle: () => setIsMesocycleOpen(true),
+                pain: () => setIsPainOpen(true),
+                dataHealth: () => setIsDataHealthOpen(true),
                 wizard: () => setIsWizardOpen(true),
                 coach: () => setIsCoachCenterOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
@@ -2689,6 +2771,9 @@ export default function App() {
                 hidden1RMExercises: settings.hidden1RMExercises,
                 onToggleHidden1RM: handleToggleHidden1RM,
                 nutritionHistory: sortedNutrition,
+                planResult: weekPlanResult,
+                resolveLoad: resolveSetLoad,
+                today: getLocalDateString(),
                 settings,
                 computedComp,
                 adaptiveTDEE,
@@ -2794,6 +2879,8 @@ export default function App() {
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
               mesocycle: () => setIsMesocycleOpen(true),
+              pain: () => setIsPainOpen(true),
+              dataHealth: () => setIsDataHealthOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
@@ -2827,6 +2914,8 @@ export default function App() {
           onOpenReleaseNotes={() => setIsReleaseNotesOpen(true)}
           bodyweightAudit={bodyweightAudit}
           onNormalizeBodyweight={handleNormalizeBodyweight}
+          onToggleRestNotification={handleToggleRestNotification}
+          notificationState={notificationPermission()}
           onExportCsv={handleExportCsv}
           profileGender={profileGender}
         />}
@@ -2960,6 +3049,16 @@ export default function App() {
           pinned={pinnedExerciseNames.has(profileExercise)}
           onTogglePinned={() => handleTogglePinnedExercise(profileExercise)}
           onEdit={() => { setProfileExercise(null); setEditorExercise(profileExercise); }}
+          repRange={repRangeFor(profileExercise, {
+            overrides: settings.repRangeOverrides,
+            customExercises,
+            globalMin: settings.repRangeMin,
+            globalMax: settings.repRangeMax,
+          })}
+          onChangeRepRange={(min, max) => setSettings(prev => ({
+            ...prev,
+            repRangeOverrides: setRepRangeOverride(prev.repRangeOverrides, profileExercise, min, max),
+          }))}
           onStart={() => {
             const name = profileExercise;
             setProfileExercise(null);
@@ -3041,6 +3140,23 @@ export default function App() {
           customExercises={customExercises}
           performedNames={performedNames}
           existingTemplateCount={templates.length}
+        />}
+
+        {isPainOpen && <PainLogModal
+          isOpen={isPainOpen}
+          onClose={() => setIsPainOpen(false)}
+          log={settings.painLog || []}
+          onChange={(next) => setSettings(prev => ({ ...prev, painLog: next }))}
+          workouts={sortedWorkouts}
+          exerciseNames={allExercisesNames}
+          today={getLocalDateString()}
+        />}
+
+        {isDataHealthOpen && <DataHealthModal
+          isOpen={isDataHealthOpen}
+          onClose={() => setIsDataHealthOpen(false)}
+          workouts={sortedWorkouts}
+          onRemoveEmpty={handleRemoveEmptyWorkouts}
         />}
 
         {/* HAZIR PROGRAMLAR */}
@@ -3146,6 +3262,8 @@ export default function App() {
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
               mesocycle: () => setIsMesocycleOpen(true),
+              pain: () => setIsPainOpen(true),
+              dataHealth: () => setIsDataHealthOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),

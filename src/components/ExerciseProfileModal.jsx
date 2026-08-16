@@ -1,7 +1,7 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   X, Trophy, Target, Calendar, Layers, TrendingUp, TrendingDown, Minus,
-  Pin, Play, Settings, Dumbbell, Bookmark,
+  Pin, Play, Settings, Dumbbell, Bookmark, Repeat2, RotateCcw,
 } from 'lucide-react';
 import TrendChart from './TrendChart';
 import { formatDay } from '../utils/dates';
@@ -12,6 +12,68 @@ const contributionTone = weight => weight === 1
     ? 'border-cyan-900/60 bg-cyan-950/25 text-cyan-300'
     : 'border-zinc-800 bg-zinc-950 text-zinc-500';
 
+/**
+ * Hedef tekrar aralığı düzenleyici.
+ *
+ * Ayrı bir bileşen ve dışarıdan `key` ile sıfırlanıyor. Alanları effect içinde
+ * senkronlamak React Compiler kurallarına aykırı (effect içinde setState
+ * zincirleme render tetikliyor); yeniden monte etmek aynı işi yan etkisiz
+ * yapıyor.
+ */
+const RepRangeEditor = memo(({ repRange, onChange }) => {
+  const [min, setMin] = useState(String(repRange.min));
+  const [max, setMax] = useState(String(repRange.max));
+
+  return (
+    <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5 space-y-2.5">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
+          <Repeat2 size={12} className="mr-1.5 text-cyan-400" /> Hedef Tekrar
+        </span>
+        <span className="text-[9px] font-mono text-zinc-600">
+          {repRange.source === 'exercise' ? 'bu harekete özel'
+            : repRange.source === 'muscle' ? `${repRange.muscle} varsayılanı` : 'genel ayar'}
+        </span>
+      </div>
+      <div className="flex items-center gap-2">
+        <input
+          type="number" inputMode="numeric" value={min}
+          onChange={(e) => setMin(e.target.value)}
+          onBlur={() => onChange(min, max)}
+          aria-label="Alt tekrar sınırı"
+          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-200 text-[12px] font-mono text-center outline-none focus:border-cyan-500"
+        />
+        <span className="text-zinc-600 text-[11px] font-mono">–</span>
+        <input
+          type="number" inputMode="numeric" value={max}
+          onChange={(e) => setMax(e.target.value)}
+          onBlur={() => onChange(min, max)}
+          aria-label="Üst tekrar sınırı"
+          className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-200 text-[12px] font-mono text-center outline-none focus:border-cyan-500"
+        />
+        {repRange.source === 'exercise' && (
+          <button
+            onClick={() => onChange('', '')}
+            title="Varsayılana dön"
+            aria-label="Tekrar aralığını varsayılana döndür"
+            className="w-10 h-10 rounded-xl border border-zinc-800 text-zinc-500 active:text-cyan-400 flex items-center justify-center shrink-0"
+          >
+            <RotateCcw size={14} />
+          </button>
+        )}
+      </div>
+      <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        Seans içi yük ayarı ve sıradaki set hedefi bu aralığı kullanıyor.
+        Yazmazsan kas grubunun varsayılanı geçerli — aynı 6-10 bandını hem ağır
+        çömelişe hem yan omuz kaldırışına dayatmak, tavsiyeyi ikincisinde
+        yanlış yapıyordu.
+      </p>
+    </section>
+  );
+});
+
+RepRangeEditor.displayName = 'RepRangeEditor';
+
 const ExerciseProfileModal = memo(({
   profile,
   setupNote = '',
@@ -20,6 +82,8 @@ const ExerciseProfileModal = memo(({
   onEdit,
   onStart,
   onClose,
+  repRange = null,
+  onChangeRepRange,
 }) => {
   if (!profile) return null;
   const trendIcon = profile.trend.direction === 'up'
@@ -121,6 +185,16 @@ const ExerciseProfileModal = memo(({
               ))}
             </div>
           </section>
+        )}
+
+        {/* Hedef tekrar aralığı. Genel ayar tek bir aralığı bütün hareketlere
+            dayatıyordu; buradan yazılan değer yalnızca bu harekete uygulanıyor. */}
+        {repRange && onChangeRepRange && (
+          <RepRangeEditor
+            key={`${profile.name}-${repRange.min}-${repRange.max}-${repRange.source}`}
+            repRange={repRange}
+            onChange={onChangeRepRange}
+          />
         )}
 
         {(setupNote || profile.templateNames.length > 0) && (

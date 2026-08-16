@@ -482,3 +482,55 @@ export const releaseWakeLock = async () => {
 };
 
 export const hasWakeLock = () => wakeLock !== null;
+
+// --- Dinlenme bitiş bildirimi ---
+//
+// Ses ve titreşim, telefon sessizdeyken ya da uygulama arka plandayken
+// yetmiyor: salonda ekran kapanıyor, sayaç bitiyor ve kimse fark etmiyor.
+// Bildirim, sistemin kendi kanalını kullandığı için ekran kapalıyken de
+// görünüyor.
+//
+// İzin İSTEĞE BAĞLI ve kullanıcı eylemiyle isteniyor; uygulama açılışında
+// izin kutusu çıkarmak hem rahatsız edici hem de tarayıcıların cezalandırdığı
+// bir davranış.
+
+export const isNotificationSupported = () =>
+  typeof window !== 'undefined' && 'Notification' in window;
+
+export const notificationPermission = () =>
+  (isNotificationSupported() ? Notification.permission : 'unsupported');
+
+/** İzin ister; sonucu ('granted' | 'denied' | 'unsupported') döndürür. */
+export const requestNotificationPermission = async () => {
+  if (!isNotificationSupported()) return 'unsupported';
+  if (Notification.permission !== 'default') return Notification.permission;
+  try {
+    return await Notification.requestPermission();
+  } catch {
+    return 'denied';
+  }
+};
+
+/**
+ * Dinlenme bittiğinde bildirim gösterir.
+ *
+ * Aynı `tag` kullanılıyor: arka arkaya biten sayaçlar bildirim yığmıyor,
+ * sonuncusu öncekinin yerine geçiyor.
+ */
+export const showRestNotification = (body = 'Dinlenme bitti — sıradaki sete geç.') => {
+  if (!isNotificationSupported() || Notification.permission !== 'granted') return false;
+  try {
+    const n = new Notification('ProOverload', {
+      body,
+      tag: 'po-rest',
+      renotify: true,
+      silent: false,
+    });
+    n.onclick = () => { try { window.focus(); n.close(); } catch { /* yoksay */ } };
+    // Bildirim ekranda takılı kalmasın; sayaç bilgisi kısa ömürlü.
+    setTimeout(() => { try { n.close(); } catch { /* yoksay */ } }, 20000);
+    return true;
+  } catch {
+    return false;
+  }
+};

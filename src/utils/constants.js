@@ -53,6 +53,16 @@ export const DEFAULT_SETTINGS = {
   // Hareket performans hedefleri: örn. Bench Press 150 kg × 1 tekrar.
   // Ölçüm hedefleri gibi ayarlarda tutulur; geçmiş antrenman kayıtları değişmez.
   strengthGoals: [],
+  // Eklem ağrısı günlüğü: { date, region, severity, note, exercise }.
+  // Ayrı bir depolama anahtarı yerine ayarlarda; strengthGoals gibi küçük ve
+  // yedeklemeye zaten dahil olan bir koleksiyon.
+  painLog: [],
+  // Hareket bazlı tekrar aralığı: { 'Barbell Bench Press': { min, max } }.
+  // Yazılmayan hareketler kas grubu varsayılanına, o da yoksa genel aralığa düşer.
+  repRangeOverrides: {},
+  // Dinlenme bitince sistem bildirimi. Varsayılan kapalı: izin isteği
+  // kullanıcı açıkça istediğinde sorulmalı.
+  restNotification: false,
   // Kadın profillerinde döngü takibinin takvim varsayımları. Günlük belirtiler
   // ayrı `cycle` localStorage anahtarında tutulur.
   cycleConfig: { cycleLength: 28, periodLength: 5, hormonalContraception: false },
@@ -605,13 +615,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.0';
+export const APP_VERSION = '6.1';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.0',
-  date: '2026-08-15',
+  title: 'ProOverload 6.1',
+  date: '2026-08-16',
   items: [
+    {
+      title: 'Ağrı Takibi',
+      desc: 'Hazır oluşluk formu seans başına tek bir eklem ağrısı puanı alıyordu ve o puan seansın hesabına girip kayboluyordu. Araçlar → Ağrı Takibi bölgeyi ve zamanı tutuyor: omuz, dirsek, bilek, bel, kalça, diz, ayak bileği, boyun. Üç kayıttan sonra bölge bazında trend (azalıyor / sabit / artıyor) ve ağrılı günlerde en sık yapılan hareketler görünüyor. Hareket listesi bir NEDEN iddiası değil, sadece birlikte görülme sayısı — hangi hareketi elemeyi deneyeceğinin başlangıç noktası.'
+    },
+    {
+      title: 'Kuvvet Dengesi',
+      desc: 'Hacim kas kas denetleniyordu, hareket seçimi profil olarak denetleniyordu; kuvvetin kaslar arasındaki DAĞILIMI denetlenmiyordu. Analiz ekranına dört oran geldi: yatay itiş/çekiş, çömeliş/kalça menteşesi, quadriceps/hamstring, dikey itiş/çekiş. Benchi 120\'ye çıkarken row\'u 70\'te kalan biri hacim tablosunda iki tarafı da yeşil görür ama omuz çevresindeki denge bozulmuştur. Oranlar tek bir doğru sayı değil bir BANT olarak veriliyor ve yalnızca bandın dışına çıkıldığında konuşuluyor; kol/bacak uzunluğu oranı kişiden kişiye kaydırıyor.'
+    },
+    {
+      title: 'Tutarlılık ve Plan Uyumu',
+      desc: 'En belirleyici değişken ölçülmüyordu: programa gerçekten uyulup uyulmadığı. Analiz ekranında 12 haftalık gün ızgarası, hafta bazında seri ve son dört haftanın plan uyumu var. İki soru ayrı tutuluyor çünkü biri iyiyken diğeri kötü olabiliyor: haftada altı gün planlayıp üç yapan biriyle üç planlayıp üçünü de yapan biri aynı seriyi görür ama aynı durumda değildir. Uyum gün gün eşleşmeye değil hafta içindeki sayıya bakıyor — pazartesi planlanan seansı salı yapmak program kaydırmaktır, uygulamamak değil.'
+    },
+    {
+      title: 'Veri Sağlığı Denetimi',
+      desc: 'Uygulamanın bütün hesapları (1RM, hacim, ACWR, adaptif TDEE, kuvvet dengesi) geçmiş kayıtlardan çıkıyor ve tek bir yanlış giriş — 100 yerine 1000 kg — hepsini birden sessizce bozuyor. Araçlar → Veri Sağlığı aykırı ağırlık ve tekrarları, yarım kalmış setleri (ağırlık var tekrar yok), boş antrenmanları ve aynı gün aynı adla kopyalanmış kayıtları buluyor. Yalnızca boş kayıtlar tek dokunuşla siliniyor; 600 kg\'lık bir set yanlış olabilir ama doğru da olabilir ve kullanıcının verisini tahminle değiştirmek bozuk veriden daha kötü.'
+    },
+    {
+      title: 'Hareket Bazlı Tekrar Aralığı',
+      desc: 'Tekrar aralığı tek bir genel ayardı ve bütün hareketlere aynı uygulanıyordu; seans içi yük ayarı lateral raise\'de "8 tekrar yaptın, ağırlığı artır" diyordu, oysa o hareket 15 tekrarda daha iyi çalışıyor. Artık üç katman var: hareket için yazdığın aralık, o yoksa kas grubunun varsayılanı (yan omuz 12-20, çömeliş 6-12, baldır 10-20), o da yoksa genel ayar. Kas grubu varsayılanları olmasaydı özelliğin faydası 250 hareketi tek tek ayarlamana bağlı kalırdı. Hareket profilinden değiştirilebiliyor.'
+    },
+    {
+      title: 'Şablonda Süperset',
+      desc: 'Süperset yalnızca canlı antrenmanda kurulabiliyordu, yani her seans elle yeniden bağlanıyordu. Program Oluştur ekranındaki zincir düğmesi hareketi bir sonrakiyle bağlıyor ve bağ şablondan seansa aynen taşınıyor. Bağ komşuluk olarak saklanıyor, paylaşılan kimlik olarak değil: hareketler yukarı aşağı taşınabildiği için paylaşılan kimlik, taşımadan sonra artık yan yana olmayan iki hareketi bağlı gösterebiliyordu.'
+    },
+    {
+      title: 'Dinlenme Bitince Bildirim',
+      desc: 'Ses ve titreşim telefon sessizdeyken ya da uygulama arka plandayken yetmiyordu: salonda ekran kapanıyor, sayaç bitiyor, kimse fark etmiyor. Ayarlardan açılan sistem bildirimi ekran kapalıyken de görünüyor. İzin uygulama açılışında değil, anahtarı açtığında isteniyor.'
+    },
     {
       title: 'Koç Merkezi',
       desc: 'Antrenman, uyku, hazır oluşluk, hacim ve enerji verileri tek merkezde açıklanabilir bir haftalık karara dönüşüyor.'

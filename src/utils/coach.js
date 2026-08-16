@@ -54,6 +54,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     acwr, daysSinceMetric = null, plateaus = [], frequencyItem = null,
     deload = null, deloadSuggestion = null, gender = 'male', cycle = null,
     mesocycleItem = null, selectionItem = null, coachProtocol = null,
+    painItem = null, balanceItem = null, consistencyItem = null, dataHealthItem = null,
   } = ctx;
 
   const items = [];
@@ -270,6 +271,44 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'selection', priority: 3, tone: TONES.info, action: 'plan',
       title: selectionItem.title,
       detail: selectionItem.detail,
+    });
+  }
+
+  // Eklem ağrısı 1. öncelik: bugünün seansında hareket seçimini değiştiren
+  // tek sinyal bu. Hacim ya da hedef tartışmasından önce gelir.
+  if (painItem) {
+    ekle({
+      key: 'pain', priority: 1, tone: TONES.warn, action: 'pain',
+      title: painItem.title,
+      detail: painItem.detail,
+    });
+  }
+
+  // Bozuk veri 2. öncelik: uygulamanın verdiği HER tavsiye bu kayıtlardan
+  // çıkıyor, düzeltilmeden diğer uyarılara güvenmenin anlamı yok.
+  if (dataHealthItem) {
+    ekle({
+      key: 'dataHealth', priority: 2, tone: TONES.warn, action: 'dataHealth',
+      title: dataHealthItem.title,
+      detail: dataHealthItem.detail,
+    });
+  }
+
+  if (consistencyItem) {
+    ekle({
+      key: 'consistency', priority: 2, tone: TONES.info, action: 'analysis',
+      title: consistencyItem.title,
+      detail: consistencyItem.detail,
+    });
+  }
+
+  // Kuvvet dengesi 3. öncelik: program düzenlenirken bakılacak bir şey,
+  // bugünkü seansı değiştirmiyor.
+  if (balanceItem) {
+    ekle({
+      key: 'balance', priority: 3, tone: TONES.info, action: 'analysis',
+      title: balanceItem.title,
+      detail: balanceItem.detail,
     });
   }
 
