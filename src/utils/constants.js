@@ -634,13 +634,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.4';
+export const APP_VERSION = '6.5';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.4',
+  title: 'ProOverload 6.5',
   date: '2026-08-16',
   items: [
+    {
+      title: 'Kuvvet Standartları',
+      desc: 'Uygulama kuvveti hep kendi geçmişine göre ölçüyordu: 1RM eğilimi, rekorlar, kuvvet dengesi. Doğru ama eksik bir çerçeve — "bench 100 kg" cümlesinin ne anlama geldiğini söylemiyor. 60 kiloluk biri için olağanüstü olan sayı, 110 kiloluk biri için başlangıç. Artık altı ana harekette vücut ağırlığının katı olarak nerede durduğun gösteriliyor: yeni başlayan, acemi, orta, ileri, elit. Kadın ve erkek için ayrı tablolar var; tek tablo kullanmak kadınlarda her hareketi olduğundan kötü gösteriyordu. Sonuç bir not değil bir konum — hangi bandın içindesin ve bir sonrakine kaç kilo kaldı.'
+    },
+    {
+      title: 'Şiddet (RIR) Dağılımı',
+      desc: 'Etkili set sayımı RIR 3 ve altını hacme katıyor, üstünü katmıyordu. Bu ikili ayrım hacim için yeterli ama antrenmanın karakterini göstermiyor: iki kişi de haftada 16 etkili set yapıyor olabilir, biri hepsini RIR 3\'te diğeri hepsini RIR 0\'da. Bunlar aynı program değil. Artık setler dört kovaya ayrılıyor ve iki uç da uyarı üretiyor — hep başarısızlığa gitmek toparlanmayı, hep RIR 4+ kalmak uyaranı bozuyor. RIR girilmemiş setler dağılıma katılmıyor: boş bir alanı bir kovaya koymak olmayan veriden sonuç üretmek olurdu.'
+    },
+    {
+      title: 'Hareket Rotasyonu',
+      desc: 'Duraklama hareket bazında zaten yakalanıyordu ama bir soru yanıtsızdı: bu hareketi ne kadar süredir yapıyorsun? İkisi aynı şey değil. Sekiz haftadır yapılan ve duraklamış bir hareket yorgunluk ya da beslenme sorunu olabilir; kırk haftadır yapılan ve duraklamış bir hareket muhtemelen verebileceği uyaranın sonuna gelmiştir. Öneri yalnızca iki koşul birlikte sağlanınca çıkıyor — hareket 16 haftadan eski VE ilerleme durmuş. Hareket değiştirmenin bedeli var (teknik oturana kadar birkaç seans, yük karşılaştırılabilirliğinin bozulması), o yüzden tek başına eskilik yeterli değil.'
+    },
+    {
+      title: 'Vücut Oranları',
+      desc: 'Her çevre ölçüsü tek tek izleniyordu: kol 38\'den 39\'a çıktı, bel 84\'te sabit. Estetik algı ise mutlak santimlerden değil oranlardan geliyor. Beş oran eklendi ve iki türü ayrı tutuluyor: estetik oranlar (omuz/bel, göğüs/bel, uyluk/bel) hedeflenebiliyor, çerçeve oranları (kol/bilek) ise hedef değil bağlam — bilek çevresi iskelet yapısının değişmeyen göstergesi olduğu için kolun kendi çerçevesine göre nerede olduğunu söylüyor. Eksik ölçüsü olan oran hiç hesaplanmıyor.'
+    },
+    {
+      title: 'Seans Isınma Rutini',
+      desc: 'Isınma vardı ama yalnızca tek hareket için: plaka hesaplayıcı çalışma ağırlığına göre piramit üretiyordu. Seansın kendisinin hazırlığı yoktu. Artık antrenman ekranında o seansın kaslarından türetilen bir rutin var — nabız, hareketlilik, aktivasyon. Bacak günüyle itiş gününün hazırlığı aynı değil. Statik esneme bilerek yok: ağır set öncesi uzun statik esneme kuvvet çıktısını geçici olarak düşürüyor. Toplam süre kısa tutuldu; on dakikayı geçen bir ısınma çoğu kişide yapılmıyor ve yapılmayan rutinin faydası sıfır.'
+    },
+    {
+      title: 'Deload Sonrası Dönüş Planı',
+      desc: 'Deload süre dolunca kendiliğinden kapanıyor ve o anda hiçbir şey söylenmiyordu. Kullanıcı iki hatadan birini yapıyordu: bir anda eski hacme dönmek (deloadun kazandırdığı tazelik ilk seansta harcanıyor) ya da boşaltmayı uzatmak (boşaltma fiilen bir hacim düşüşüne dönüşüyor). Artık iki haftalık kademeli plan gösteriliyor: ilk hafta yükü koruyup hacmi %80\'e çıkar, ikinci hafta tam hacme dön. Yük ilk haftada artırılmıyor — aynı ağırlığın ne kadar kolay geldiği, artışın ne olacağını da söylüyor. Plan yalnızca deload SÜRESİ DOLDUYSA çıkıyor; elle kapatıldıysa boşaltma yarıda kesilmiştir ve kademeli dönüş önermek yanlış olurdu.'
+    },
+    {
+      title: 'Antrenman Çevresi Beslenme',
+      desc: 'Günlük toplamlar izleniyordu ve bu hipertrofi için doğru öncelik — toplamlar zamanlamadan çok daha belirleyici. Ama toplam doğruyken bile bir boşluk kalıyordu: antrenmana aç girmek ya da günün proteininin tamamını akşam yemek, aynı toplamla daha kötü bir seans üretiyor. Koç artık seansın iki yanına bakıyor: planlı antrenman öncesi karbonhidrat düşükse, seans sonrası protein büyük ölçüde eksikse ya da protein az sayıda öğüne yığılmışsa uyarıyor. Bilerek mütevazı — "anabolik pencere" gibi dar zaman iddiaları literatürde büyük ölçüde geri çekildi.'
+    },
     {
       title: 'Kardiyo & Aktivite Sekmesi',
       desc: 'Kardiyo, analiz ekranındaki bir kartın içinde sıkışıyordu; ağırlık antrenmanının kendi ekranı varken kardiyonun olmaması, uygulamanın ona bir ek özellik gibi davrandığı anlamına geliyordu. Antrenman sekmesi ikiye ayrıldı: Ağırlık ve Kardiyo & Aktivite. Yeni sekmenin kendi üç bölümü var — Koç (hedef, şiddet dağılımı, bugün ne yapmalı), Hedefler (aktivite başına seans planı) ve Kayıtlar (tempo eğilimi, bölge, geçmiş).'

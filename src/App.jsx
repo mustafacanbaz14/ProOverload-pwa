@@ -23,6 +23,13 @@ import { buildRirCalibration, rirCoachItem } from './utils/rirCalibration';
 import { auditSessionQuality, sessionQualityCoachItem } from './utils/sessionQuality';
 import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from './utils/cardioGoals';
 import { bodyweightBasisFor, describeSetLoad } from './utils/bodyweight';
+import { buildStrengthStandards, strengthStandardCoachItem } from './utils/strengthStandards';
+import { buildEffortDistribution, effortCoachItem } from './utils/effortDistribution';
+import { buildRotationReport, rotationCoachItem } from './utils/exerciseRotation';
+import { buildBodyRatios, bodyRatioCoachItem } from './utils/bodyRatios';
+import { buildDeloadReturn, deloadReturnCoachItem } from './utils/deloadReturn';
+import { buildPeriNutrition, periNutritionCoachItem } from './utils/periNutrition';
+import { buildWarmupRoutine } from './utils/warmupRoutine';
 import { computeAdaptiveTDEE } from './utils/tdee';
 import { totalCardioCalories, dayWorkoutCalories } from './utils/cardio';
 import { computeWeekPlan, findPlan } from './utils/weekPlan';
@@ -2580,6 +2587,47 @@ export default function App() {
     }),
     [cardioReport, todayCoach, readiness]);
 
+  // 6.5 raporları.
+  const strengthStandards = useMemo(
+    () => buildStrengthStandards(sortedWorkouts, {
+      bodyWeightKg: latestWeight, gender: profileGender, resolveLoad: resolveSetLoad,
+    }),
+    [sortedWorkouts, latestWeight, profileGender, resolveSetLoad]);
+
+  const effortDistribution = useMemo(
+    () => buildEffortDistribution(sortedWorkouts, { customExercises }),
+    [sortedWorkouts, customExercises]);
+
+  const rotationReport = useMemo(
+    () => buildRotationReport(sortedWorkouts, { customExercises, resolveLoad: resolveSetLoad }),
+    [sortedWorkouts, customExercises, resolveSetLoad]);
+
+  const bodyRatios = useMemo(
+    () => buildBodyRatios(sortedMetrics[0] || currentMetricsForm, {
+      gender: profileGender, previous: sortedMetrics[1] || null,
+    }),
+    [sortedMetrics, currentMetricsForm, profileGender]);
+
+  // Deload dönüşü: boşaltma tamamlandıysa iki haftalık kademeli plan.
+  const deloadReturn = useMemo(
+    () => buildDeloadReturn(settings.deload, deload),
+    [settings.deload, deload]);
+
+  const periNutrition = useMemo(() => {
+    const bugun = getLocalDateString();
+    return buildPeriNutrition({
+      macros: todayCoach?._signals?.macros || {},
+      targetProtein: Math.round(parseNumber(computedComp?.ffm) * (settings.nutritionGoal === 'bulk'
+        ? (settings.proteinPerFfmBulk || 2.2)
+        : (settings.proteinPerFfmCut || 2.6))),
+      targetCalories: maintenanceCalories,
+      plannedToday: (todayCoach?._signals?.planDay?.workouts?.length || 0) > 0,
+      doneToday: workouts.some(w => w.date === bugun && (w.exercises || []).length > 0),
+      mealCount: (currentNutritionForm?.meals || []).filter(m => parseNumber(m.calories) > 0).length,
+    });
+  }, [todayCoach, computedComp, settings.nutritionGoal, settings.proteinPerFfmBulk,
+    settings.proteinPerFfmCut, maintenanceCalories, workouts, currentNutritionForm]);
+
   const coachActions = useMemo(() => {
     const bugun = getLocalDateString();
     const sonOlcum = sortedMetrics[0]?.date;
@@ -2621,6 +2669,12 @@ export default function App() {
       rirItem: rirCoachItem(rirCalibration),
       orderItem: sessionQualityCoachItem(lastSessionQuality),
       cardioItem: cardioCoachItem(cardioReport, cardioSuggestion),
+      standardsItem: strengthStandardCoachItem(strengthStandards),
+      effortItem: effortCoachItem(effortDistribution),
+      rotationItem: rotationCoachItem(rotationReport),
+      ratioItem: bodyRatioCoachItem(bodyRatios),
+      returnItem: deloadReturnCoachItem(deloadReturn),
+      periItem: periNutritionCoachItem(periNutrition),
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -2634,6 +2688,7 @@ export default function App() {
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
     cardioReport, cardioSuggestion,
+    strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
   // Koç hafızası: ertelenen/kapatılan maddeler ve çelişki çözümü. Ham liste
@@ -2926,6 +2981,9 @@ export default function App() {
                 isMeasurementGuideOpen,
                 setIsComparisonOpen,
                 latestMetrics: sortedMetrics[0] || null,
+                previousMetrics: sortedMetrics[1] || null,
+                bodyRatios,
+                gender: profileGender,
                 onDateChange: handleMetricsDateChange,
                 isExistingRecord: metricsHistory.some(m => m.date === currentMetricsForm.date),
                 settings,
@@ -2962,6 +3020,8 @@ export default function App() {
                 onChangeCardioGoal: (next) => setSettings(prev => ({ ...prev, cardioGoal: next })),
                 onOpenCardio: () => setIsCardioOpen(true),
                 age: profileAge,
+                bodyWeightKg: latestWeight,
+                gender: profileGender,
                 settings,
                 computedComp,
                 adaptiveTDEE,
@@ -3024,6 +3084,8 @@ export default function App() {
               resolveLoad={(name, weight) => resolveSetLoad(name, weight, activeWorkout)}
               bodyweightInfoFor={bodyweightContext}
               deload={deload}
+              deloadReturn={deloadReturn}
+              warmupRoutine={buildWarmupRoutine(activeWorkout.exercises, { customExercises })}
               onOpenCardio={() => setIsCardioOpen(true)}
               cardioKcal={totalCardioCalories(activeWorkout.cardio || [], latestWeight)}
               rest={rest}

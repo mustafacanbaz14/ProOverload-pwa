@@ -4,6 +4,8 @@ import TrendChart from './TrendChart';
 import ConsistencyCard from './ConsistencyCard';
 import SessionQualityCard from './SessionQualityCard';
 import CardioCoachCard from './CardioCoachCard';
+import StrengthStandardsCard from './StrengthStandardsCard';
+import TrainingQualityCard from './TrainingQualityCard';
 import StrengthBalanceCard from './StrengthBalanceCard';
 import { BODY_METRICS, MUSCLE_GROUPS, getVolumeLandmarks } from '../utils/constants';
 import { estimate1RM, isWorkingSet, isCompletedWorkingSet, parseNumber, detectMuscleGroup, foldForSearch } from '../utils/helpers';
@@ -39,6 +41,8 @@ const AnalyticsView = memo(({
   onChangeCardioGoal,
   onOpenCardio,
   age = null,
+  bodyWeightKg = 0,
+  gender = 'male',
   planResult = null,
   resolveLoad = null,
   today,
@@ -341,6 +345,13 @@ const AnalyticsView = memo(({
               kaslar arasında nasıl dağılmış". */}
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
           <SessionQualityCard workouts={workouts} customExercises={customExercises} />
+          <TrainingQualityCard workouts={workouts} customExercises={customExercises} resolveLoad={resolveLoad} />
+          <StrengthStandardsCard
+            workouts={workouts}
+            bodyWeightKg={bodyWeightKg}
+            gender={gender}
+            resolveLoad={resolveLoad}
+          />
           <CardioCoachCard
             report={cardioReport}
             suggestion={cardioSuggestion}

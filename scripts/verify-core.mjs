@@ -19,7 +19,7 @@ import { dayEnergyBreakdown, theoreticalWeek, estimateMacrosForTef, groupByWeek,
 import { calorieDashboard, deriveGoalSet } from '../src/utils/goals.js';
 import { mergeWellnessDay, computeSleepScore } from '../src/utils/wellness.js';
 import { migrateWeekPlans, removeTemplateFromPlans } from '../src/utils/planMigration.js';
-import { suggestNextTarget, mergeWorkout, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords } from '../src/utils/helpers.js';
+import { suggestNextTarget, estimate1RM, mergeWorkout, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords } from '../src/utils/helpers.js';
 import { dailyTotals, nutritionDayScore } from '../src/utils/nutritionStats.js';
 import {
   createDayTemplate, createMealTemplate, createRecipeTemplate,
@@ -29,6 +29,13 @@ import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/u
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
 import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
+import { buildStrengthStandards, strengthStandardCoachItem, STRENGTH_LEVELS } from '../src/utils/strengthStandards.js';
+import { buildEffortDistribution, effortCoachItem } from '../src/utils/effortDistribution.js';
+import { buildRotationReport, rotationCoachItem } from '../src/utils/exerciseRotation.js';
+import { buildBodyRatios, bodyRatioCoachItem } from '../src/utils/bodyRatios.js';
+import { buildWarmupRoutine } from '../src/utils/warmupRoutine.js';
+import { buildDeloadReturn, returnSets, deloadReturnCoachItem } from '../src/utils/deloadReturn.js';
+import { buildPeriNutrition, periNutritionCoachItem } from '../src/utils/periNutrition.js';
 import { estimateMaxHr, zoneForEntry, intensityClassOf, HR_ZONES, entryPace, paceTrend, supportsDistance,
   zoneRange, zoneForHeartRate, effectiveZoneMethod, cardioCalories, heartRateCalories } from '../src/utils/cardioZones.js';
 import { setActivityTarget, emptyActivityTarget, describeTarget, compareToTarget } from '../src/utils/activityTargets.js';
@@ -2547,6 +2554,276 @@ test('taban önce seansın kendi kaydından okunur', () => {
     { kg: 79, source: 'workout', label: 'seans kaydından' });
   assert.equal(bodyweightBasisFor({}, 82).source, 'metrics');
   assert.equal(bodyweightBasisFor({}, 0).source, 'none');
+});
+
+
+
+/* --- Kuvvet standartları --- */
+
+// RIR 0: tahmini 1RM tam olarak kaldırılan ağırlığa eşit olsun. RIR 1 verilseydi
+// formül yedek tekrarı da hesaba katıp oranı kaydırırdı.
+const stdSeans = (date, ad, kg, tekrar, adet = 3) => ({
+  date,
+  exercises: [{ name: ad, sets: Array.from({ length: adet }, () => ({ weight: String(kg), reps: String(tekrar), rir: 0, setType: 'normal' })) }],
+});
+
+test('standart vücut ağırlığının katı olarak okunur', () => {
+  const r = buildStrengthStandards([stdSeans('2026-08-10', 'Barbell Back Squat', 140, 1)],
+    { bodyWeightKg: 80, gender: 'male', today: new Date('2026-08-16T12:00:00') });
+  const squat = r.rows.find(x => x.key === 'squat');
+  assert.ok(squat);
+  // Beklenen oran formülden türetiliyor; burada 1RM formülünü ikinci kez
+  // yazmak, formül değiştiğinde sessizce yanlış kalan bir test üretirdi.
+  const beklenen = Math.round((estimate1RM(140, 1, 0) / 80) * 100) / 100;
+  assert.equal(squat.ratio, beklenen);
+  assert.equal(squat.level.key, 'intermediate');
+  assert.ok(squat.kgToNext > 0);
+  // Eşikler kilo cinsine çevriliyor: orta seviye 80 kg vücutta 1.75 x 80.
+  assert.equal(squat.thresholds[2], 140);
+});
+
+test('cinsiyete göre farklı tablo kullanılır', () => {
+  const w = [stdSeans('2026-08-10', 'Barbell Bench Press', 60, 1)];
+  const erkek = buildStrengthStandards(w, { bodyWeightKg: 60, gender: 'male', today: new Date('2026-08-16T12:00:00') });
+  const kadin = buildStrengthStandards(w, { bodyWeightKg: 60, gender: 'female', today: new Date('2026-08-16T12:00:00') });
+  const e = erkek.rows.find(x => x.key === 'bench');
+  const k = kadin.rows.find(x => x.key === 'bench');
+  // Aynı oran (1.0x), kadın tablosunda daha yüksek seviyeye denk geliyor.
+  assert.equal(e.ratio, k.ratio);
+  assert.ok(STRENGTH_LEVELS.findIndex(l => l.key === k.level.key)
+    > STRENGTH_LEVELS.findIndex(l => l.key === e.level.key));
+});
+
+test('vücut ağırlığı yoksa standart hesaplanmaz', () => {
+  const r = buildStrengthStandards([stdSeans('2026-08-10', 'Barbell Back Squat', 140, 1)], { bodyWeightKg: 0 });
+  assert.equal(r.missingWeight, true);
+  assert.equal(r.rows.length, 0);
+});
+
+test('yalnızca belirgin dengesizlikte koç satırı çıkar', () => {
+  const dengeli = buildStrengthStandards([
+    stdSeans('2026-08-10', 'Barbell Back Squat', 140, 1),
+    stdSeans('2026-08-11', 'Barbell Bench Press', 100, 1),
+  ], { bodyWeightKg: 80, today: new Date('2026-08-16T12:00:00') });
+  assert.equal(strengthStandardCoachItem(dengeli), null);
+
+  const dengesiz = buildStrengthStandards([
+    stdSeans('2026-08-10', 'Barbell Back Squat', 200, 1),
+    stdSeans('2026-08-11', 'Overhead Press (OHP)', 25, 1),
+  ], { bodyWeightKg: 80, today: new Date('2026-08-16T12:00:00') });
+  assert.ok(strengthStandardCoachItem(dengesiz));
+  // Eşiğin bile altında kalan hareket en zayıf olarak seçilmeli; hesaptan
+  // düşürülürse en dengesiz durum hiç görünmüyor.
+  assert.equal(dengesiz.overall.weakest.key, 'ohp');
+  assert.equal(dengesiz.overall.weakest.level, null);
+  assert.ok(dengesiz.overall.spread >= 2);
+});
+
+/* --- Şiddet dağılımı --- */
+
+const rirSet = (rir) => ({ weight: '100', reps: '8', rir, setType: 'normal' });
+const rirGun = (date, rirler) => ({
+  date, exercises: [{ name: 'Barbell Bench Press', sets: rirler.map(rirSet) }],
+});
+
+test('yetersiz set sayısında dağılım yorumlanmaz', () => {
+  const r = buildEffortDistribution([rirGun('2026-08-14', [2, 2, 2])],
+    { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.hasData, false);
+  assert.equal(r.findings.length, 0);
+});
+
+test('hep başarısızlığa giden dağılım uyarı üretir', () => {
+  const r = buildEffortDistribution([rirGun('2026-08-14', Array(20).fill(0))],
+    { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.hasData, true);
+  assert.ok(r.findings.some(f => f.key === 'tooHard'));
+  assert.ok(effortCoachItem(r));
+});
+
+test('hep RIR 4+ dağılımı da uyarı üretir', () => {
+  const r = buildEffortDistribution([rirGun('2026-08-14', Array(20).fill(5))],
+    { today: new Date('2026-08-16T12:00:00') });
+  assert.ok(r.findings.some(f => f.key === 'tooEasy'));
+});
+
+test('verimli bantta yoğunlaşan dağılım temiz çıkar', () => {
+  const r = buildEffortDistribution([rirGun('2026-08-14', Array(20).fill(2))],
+    { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.findings.length, 0);
+  assert.equal(effortCoachItem(r), null);
+});
+
+test('RIR girilmemiş setler dağılıma katılmaz', () => {
+  const w = [{
+    date: '2026-08-14',
+    exercises: [{ name: 'Barbell Bench Press', sets: Array(20).fill({ weight: '100', reps: '8', rir: '', setType: 'normal' }) }],
+  }];
+  const r = buildEffortDistribution(w, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.total, 0);
+  assert.equal(r.withoutRir, 20);
+});
+
+/* --- Hareket rotasyonu --- */
+
+const rotSeans = (date, kg) => ({
+  date, exercises: [{ name: 'Barbell Bench Press', sets: [{ weight: String(kg), reps: '5', rir: 1, setType: 'normal' }] }],
+});
+
+test('eski ve durmuş hareket rotasyon adayı olur', () => {
+  // 20 hafta önce başlamış, son seanslarda ilerleme yok.
+  const w = [];
+  for (let i = 0; i < 10; i += 1) {
+    const d = new Date('2026-08-14T12:00:00');
+    d.setDate(d.getDate() - i * 14);
+    w.push(rotSeans(d.toISOString().slice(0, 10), 100));
+  }
+  const r = buildRotationReport(w, { today: new Date('2026-08-16T12:00:00') });
+  const satir = r.rows.find(x => x.name === 'Barbell Bench Press');
+  assert.ok(satir.weeks >= 16);
+  assert.equal(satir.status, 'stalled');
+  assert.equal(satir.rotationCandidate, true);
+  assert.ok(rotationCoachItem(r));
+});
+
+test('ilerleyen hareket eski olsa da aday değil', () => {
+  const w = [];
+  for (let i = 0; i < 10; i += 1) {
+    const d = new Date('2026-08-14T12:00:00');
+    d.setDate(d.getDate() - i * 14);
+    // En yeni en ağır: seri yeniden eskiye kuruluyor.
+    w.push(rotSeans(d.toISOString().slice(0, 10), 130 - i * 3));
+  }
+  const r = buildRotationReport(w, { today: new Date('2026-08-16T12:00:00') });
+  const satir = r.rows.find(x => x.name === 'Barbell Bench Press');
+  assert.equal(satir.status, 'progressing');
+  assert.equal(satir.rotationCandidate, false);
+  assert.equal(rotationCoachItem(r), null);
+});
+
+test('yeni hareket durmuş olsa da aday değil', () => {
+  const w = ['2026-08-01', '2026-08-04', '2026-08-07', '2026-08-10', '2026-08-13', '2026-08-15']
+    .map(d => rotSeans(d, 100));
+  const r = buildRotationReport(w, { today: new Date('2026-08-16T12:00:00') });
+  const satir = r.rows.find(x => x.name === 'Barbell Bench Press');
+  assert.ok(satir.weeks < 16);
+  assert.equal(satir.rotationCandidate, false);
+});
+
+/* --- Vücut oranları --- */
+
+const olcum = (m) => ({ date: '2026-08-15', measurements: m });
+
+test('oran hesaplanır ve banda göre konumlanır', () => {
+  const r = buildBodyRatios(olcum({ shoulder: 126, waist: 84, chest: 108, arm: 40, wrist: 18, calf: 39, thigh: 62 }),
+    { gender: 'male' });
+  const omuzBel = r.rows.find(x => x.key === 'shoulderWaist');
+  assert.equal(omuzBel.ratio, 1.5);
+  assert.equal(omuzBel.status, 'inRange');
+  const kolBilek = r.rows.find(x => x.key === 'armWrist');
+  assert.equal(kolBilek.kind, 'frame');
+});
+
+test('eksik ölçüde oran üretilmez ve eksik bildirilir', () => {
+  const r = buildBodyRatios(olcum({ shoulder: 126 }), { gender: 'male' });
+  assert.equal(r.rows.length, 0);
+  assert.ok(r.missing.includes('waist'));
+});
+
+test('önceki ölçüme göre yön hesaplanır', () => {
+  const r = buildBodyRatios(
+    olcum({ shoulder: 128, waist: 82 }),
+    { gender: 'male', previous: olcum({ shoulder: 126, waist: 84 }) });
+  const omuzBel = r.rows.find(x => x.key === 'shoulderWaist');
+  assert.equal(omuzBel.direction, 'up');
+  assert.ok(omuzBel.delta > 0);
+});
+
+test('yalnızca estetik oranlarda bant altı koç satırı üretir', () => {
+  // Çerçeve oranı düşük ama estetik oranlar bantta: satır çıkmamalı.
+  const sadeceFrame = buildBodyRatios(olcum({ shoulder: 126, waist: 84, arm: 30, wrist: 18 }), { gender: 'male' });
+  assert.equal(bodyRatioCoachItem(sadeceFrame), null);
+
+  const estetikDusuk = buildBodyRatios(olcum({ shoulder: 105, waist: 90 }), { gender: 'male' });
+  assert.ok(bodyRatioCoachItem(estetikDusuk));
+});
+
+/* --- Isınma rutini --- */
+
+test('rutin seansın kaslarından türer', () => {
+  const bacak = buildWarmupRoutine([{ name: 'Barbell Back Squat', sets: 4 }]);
+  const itis = buildWarmupRoutine([{ name: 'Barbell Bench Press', sets: 4 }]);
+  assert.equal(bacak.hasData, true);
+  assert.ok(bacak.muscles.includes('Quadriceps'));
+  assert.ok(itis.muscles.includes('Göğüs'));
+  // İki farklı gün aynı rutini üretmemeli.
+  const metin = (r) => r.blocks.flatMap(b => b.items).join('|');
+  assert.notEqual(metin(bacak), metin(itis));
+});
+
+test('boş seansta rutin üretilmez', () => {
+  assert.equal(buildWarmupRoutine([]).hasData, false);
+  assert.equal(buildWarmupRoutine([{ name: 'Barbell Back Squat', sets: 0 }]).hasData, false);
+});
+
+/* --- Deload dönüşü --- */
+
+test('süre dolan deload iki haftalık dönüş planı üretir', () => {
+  const deload = { active: true, startDate: '2026-08-03', days: 7, preset: 'volume' };
+  const state = deloadState(deload, '2026-08-12');
+  assert.equal(state.expired, true);
+
+  const plan = buildDeloadReturn(deload, state, { today: new Date('2026-08-12T12:00:00') });
+  assert.equal(plan.active, true);
+  assert.equal(plan.step.key, 'week1');
+  assert.equal(returnSets(10, plan), 8);
+  assert.ok(deloadReturnCoachItem(plan));
+
+  // İkinci haftada tam hacme dönülüyor.
+  const ikinci = buildDeloadReturn(deload, state, { today: new Date('2026-08-19T12:00:00') });
+  assert.equal(ikinci.step.key, 'week2');
+  assert.equal(returnSets(10, ikinci), 10);
+});
+
+test('deload sürüyorsa ya da pencere geçtiyse plan çıkmaz', () => {
+  const deload = { active: true, startDate: '2026-08-03', days: 7, preset: 'volume' };
+  // Hâlâ deload içinde: expired değil.
+  const suruyor = deloadState(deload, '2026-08-06');
+  assert.equal(buildDeloadReturn(deload, suruyor, { today: new Date('2026-08-06T12:00:00') }).active, false);
+  // İki haftalık pencere geçti.
+  const state = deloadState(deload, '2026-09-05');
+  assert.equal(buildDeloadReturn(deload, state, { today: new Date('2026-09-05T12:00:00') }).active, false);
+});
+
+/* --- Antrenman çevresi beslenme --- */
+
+test('planlı seans öncesi düşük karbonhidrat uyarı üretir', () => {
+  const r = buildPeriNutrition({
+    macros: { carbs: 15, protein: 40, calories: 600 },
+    targetProtein: 160, targetCalories: 2800,
+    plannedToday: true, doneToday: false, hour: 14,
+  });
+  assert.ok(r.items.some(i => i.key === 'preCarb'));
+  assert.ok(periNutritionCoachItem(r));
+});
+
+test('antrenman sonrası protein açığı bildirilir', () => {
+  const r = buildPeriNutrition({
+    macros: { carbs: 200, protein: 50, calories: 1800 },
+    targetProtein: 160, targetCalories: 2800,
+    plannedToday: true, doneToday: true, hour: 19,
+  });
+  assert.ok(r.items.some(i => i.key === 'postProtein'));
+});
+
+test('hedefler tutuyorsa uyarı çıkmaz', () => {
+  const r = buildPeriNutrition({
+    macros: { carbs: 250, protein: 150, calories: 2700 },
+    targetProtein: 160, targetCalories: 2800,
+    plannedToday: true, doneToday: true, hour: 20, mealCount: 4,
+  });
+  assert.equal(r.hasData, false);
+  assert.equal(periNutritionCoachItem(r), null);
 });
 
 

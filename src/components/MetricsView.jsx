@@ -4,6 +4,7 @@ import { BODY_METRICS, FAT_METHOD_LABELS } from '../utils/constants';
 import { parseNumber, clampNumber, INPUT_LIMITS } from '../utils/helpers';
 import MeasurementGuide from './MeasurementGuide';
 import GoalsCard from './GoalsCard';
+import BodyRatiosCard from './BodyRatiosCard';
 import StrengthGoalsCard from './StrengthGoalsCard';
 import { computeBMI, BMI_STATUS_COLOR, goalEta } from '../utils/goals';
 import { formatDay } from '../utils/dates';
@@ -66,6 +67,8 @@ const MetricsView = memo(({
   isMeasurementGuideOpen,
   setIsComparisonOpen,
   latestMetrics,
+  previousMetrics = null,
+  gender = 'male',
   isExistingRecord,
   settings = {},
   setSettings,
@@ -386,6 +389,14 @@ const MetricsView = memo(({
 
       {/* Hedefler hesaplanan kompozisyonun hemen altında: karşılaştırılan
           değerler (yağ oranı, yağsız kütle, FFMI) tam üstte duruyor. */}
+      {/* Vücut oranları: tek tek çevre ölçüleri "kol 39 oldu" diyor, oranlar
+          görünümün nasıl değiştiğini söylüyor. */}
+      <BodyRatiosCard
+        metrics={latestMetrics || currentMetricsForm}
+        previous={previousMetrics}
+        gender={gender}
+      />
+
       <GoalsCard
         settings={settings}
         setSettings={setSettings}

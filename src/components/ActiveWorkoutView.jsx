@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown } from 'lucide-react';
+import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame } from 'lucide-react';
 import WorkoutTimer from './WorkoutTimer';
 import { FORM_RATINGS, SET_TYPES, SMALL_MUSCLE_GROUPS } from '../utils/constants';
 import {
@@ -14,6 +14,8 @@ import { sessionAdvice } from '../utils/autoregulation';
 import { repRangeFor } from '../utils/exerciseTargets';
 
 const ActiveWorkoutView = memo(({
+  deloadReturn = null,
+  warmupRoutine = null,
   activeWorkout,
   setActiveWorkout,
   setIsEndWorkoutModalOpen,
@@ -159,6 +161,55 @@ const ActiveWorkoutView = memo(({
               </span>
             </div>
           </div>
+        )}
+
+        {/* Deload dönüşü: boşaltma bitince hiçbir şey söylenmiyordu ve
+            kullanıcı ya bir anda eski hacme dönüyor ya da düşük hacimde
+            kalıyordu. İkisi de deloadun amacını boşa çıkarıyor. */}
+        {deloadReturn?.active && (
+          <div className="bg-cyan-950/20 border border-cyan-900/50 rounded-xl px-3 py-2.5 flex items-start gap-2.5">
+            <TrendingUp size={15} className="text-cyan-400 shrink-0 mt-0.5" />
+            <div className="min-w-0">
+              <span className="text-[10px] font-bold text-cyan-300 block">
+                Deload dönüşü · {deloadReturn.step.label}
+              </span>
+              <span className="text-[9px] font-mono text-cyan-200/80 block leading-relaxed">
+                {deloadReturn.step.detail}
+              </span>
+            </div>
+          </div>
+        )}
+
+        {/* Seans ısınması. Hareket bazlı ısınma piramidinden AYRI: piramit ilk
+            ağır hareket için, bu rutin seansın tamamı için ve ondan önce. */}
+        {warmupRoutine?.hasData && (
+          <details className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden">
+            <summary className="px-3 py-2.5 flex items-center gap-2 cursor-pointer list-none">
+              <Flame size={13} className="text-orange-400 shrink-0" />
+              <span className="text-[10px] font-bold text-zinc-200">
+                Isınma rutini · ~{warmupRoutine.minutes} dk
+              </span>
+              <span className="text-[9px] font-mono text-zinc-600 ml-auto">
+                {warmupRoutine.muscles.slice(0, 3).join(', ')}
+              </span>
+            </summary>
+            <div className="px-3 pb-3 space-y-2.5 border-t border-zinc-800 pt-2.5">
+              {warmupRoutine.blocks.map(b => (
+                <div key={b.key}>
+                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                    {b.label} · {b.minutes} dk
+                  </span>
+                  <ul className="space-y-0.5">
+                    {b.items.map(item => (
+                      <li key={item} className="text-[9px] font-mono text-zinc-500 leading-relaxed">• {item}</li>
+                    ))}
+                  </ul>
+                  {b.note && <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-1">{b.note}</p>}
+                </div>
+              ))}
+              <p className="text-[8px] font-mono text-zinc-600 leading-relaxed">{warmupRoutine.note}</p>
+            </div>
+          </details>
         )}
 
         {(activeWorkout.exercises || []).length === 0 && (

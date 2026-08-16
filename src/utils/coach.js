@@ -57,6 +57,8 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     painItem = null, balanceItem = null, consistencyItem = null, dataHealthItem = null,
     projectionItem = null, prItem = null, rirItem = null, orderItem = null,
     cardioItem = null,
+    standardsItem = null, effortItem = null, rotationItem = null,
+    ratioItem = null, returnItem = null, periItem = null,
   } = ctx;
 
   const items = [];
@@ -365,6 +367,62 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: cardioItem.key || 'cardio', priority: 2, tone: TONES.info, action: 'cardio',
       title: cardioItem.title,
       detail: cardioItem.detail,
+    });
+  }
+
+  // Deload dönüşü 1. öncelik: bugünün seansının hacmini doğrudan belirliyor
+  // ve pencere kısa (iki hafta), kaçırılırsa geri gelmiyor.
+  if (returnItem) {
+    ekle({
+      key: 'deload-return', priority: 1, tone: TONES.info, action: 'workout',
+      title: returnItem.title,
+      detail: returnItem.detail,
+    });
+  }
+
+  // Antrenman çevresi beslenme 2. öncelik: bugünü değiştiriyor ama seansın
+  // kendisini değil, çevresini.
+  if (periItem) {
+    ekle({
+      key: 'peri-nutrition', priority: 2, tone: TONES.warn, action: 'nutrition',
+      title: periItem.title,
+      detail: periItem.detail,
+    });
+  }
+
+  // Şiddet dağılımı 2. öncelik: bu haftanın setlerini nasıl yapacağını
+  // değiştiriyor.
+  if (effortItem) {
+    ekle({
+      key: 'effort', priority: 2, tone: TONES.warn, action: 'analysis',
+      title: effortItem.title,
+      detail: effortItem.detail,
+    });
+  }
+
+  // Rotasyon ve standartlar 3. öncelik: program düzenlenirken bakılacak,
+  // bugünü değiştirmeyen bilgiler.
+  if (rotationItem) {
+    ekle({
+      key: 'rotation', priority: 3, tone: TONES.info, action: 'analysis',
+      title: rotationItem.title,
+      detail: rotationItem.detail,
+    });
+  }
+
+  if (standardsItem) {
+    ekle({
+      key: 'standards', priority: 3, tone: TONES.info, action: 'analysis',
+      title: standardsItem.title,
+      detail: standardsItem.detail,
+    });
+  }
+
+  if (ratioItem) {
+    ekle({
+      key: 'ratio', priority: 3, tone: TONES.info, action: 'metrics',
+      title: ratioItem.title,
+      detail: ratioItem.detail,
     });
   }
 

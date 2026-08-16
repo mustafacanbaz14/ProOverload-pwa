@@ -66,13 +66,20 @@ export const restoreCoachItem = (memory, key = null) => {
 export const CONFLICT_RULES = [
   {
     winner: 'deload-running',
-    losers: ['volume-low', 'mesocycle', 'pr-watch', 'no-week', 'cardio-todo'],
+    losers: ['volume-low', 'mesocycle', 'pr-watch', 'no-week', 'cardio-todo', 'rotation', 'standards'],
     reason: 'Deload haftasındasın; hacim ve rekor tavsiyeleri bu hafta geçerli değil.',
   },
   {
     winner: 'deload',
     losers: ['volume-low', 'mesocycle', 'pr-watch'],
     reason: 'Önce deload kararı; hacim eklemek toparlanma borcunu büyütür.',
+  },
+  {
+    // Deload dönüşü sürerken hacim ve rotasyon tavsiyeleri erken: dönüş planı
+    // zaten hacmi kademeli geri getiriyor.
+    winner: 'deload-return',
+    losers: ['volume-low', 'mesocycle', 'rotation', 'effort'],
+    reason: 'Deload dönüşü sürüyor; hacim ve hareket değişikliği kararları dönüş tamamlanınca anlamlı.',
   },
   {
     winner: 'pain',
