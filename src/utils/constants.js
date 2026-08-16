@@ -63,6 +63,12 @@ export const DEFAULT_SETTINGS = {
   // Dinlenme bitince sistem bildirimi. Varsayılan kapalı: izin isteği
   // kullanıcı açıkça istediğinde sorulmalı.
   restNotification: false,
+  // Müzik önceliği. Açıkken kilit ekranı kartı hiç başlatılmıyor; kart
+  // duyulmaz bir ses döngüsüyle var olduğu ve cihazda tek bir "Şu An Çalınan"
+  // oturumu olabildiği için ikisi aynı anda yaşayamıyor.
+  musicPriority: false,
+  // Koç hafızası: ertelenen ve kapatılan madde anahtarları.
+  coachMemory: { snoozed: {}, dismissed: [] },
   // Kadın profillerinde döngü takibinin takvim varsayımları. Günlük belirtiler
   // ayrı `cycle` localStorage anahtarında tutulur.
   cycleConfig: { cycleLength: 28, periodLength: 5, hormonalContraception: false },
@@ -615,13 +621,45 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.1';
+export const APP_VERSION = '6.2';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.1',
+  title: 'ProOverload 6.2',
   date: '2026-08-16',
   items: [
+    {
+      title: 'Müzik Çakışması Düzeltildi',
+      desc: 'Antrenman sırasında müzik dinlerken uygulamayı açınca müzik susuyordu; müziği başlatınca da kilit ekranındaki antrenman kartı kayboluyordu. Sebep şu: kart, duyulmaz bir ses döngüsü çalarak var oluyor ve bir cihazda aynı anda yalnızca TEK bir "Şu An Çalınan" oturumu olabiliyor. İkisini birden çalıştırmak mümkün değil — bu tekniğin sınırı, düzeltilebilecek bir hata değil. Düzeltilen şey davranış: uygulama artık müziğe DİRENMİYOR. Müzik odağı aldığında kart sessizce kapanıyor, kendiliğinden geri gelip müziği tekrar kesmeye çalışmıyor ve ne olduğu bir bildirimle açıklanıyor. Kartı hiç istemiyorsan Ayarlar → Müzik Önceliği ile tamamen kapatabilirsin; o zaman müziğin hiçbir noktada kesilmez.'
+    },
+    {
+      title: 'Koç: Erteleme ve Kapatma',
+      desc: 'Aynı madde, okuyup bilinçli olarak görmezden gelmiş olsan bile her gün aynı yerde duruyordu — ve hep aynı şeyi söyleyen bir uyarı, bir süre sonra hiçbir şey söylemeyen bir uyarıya dönüşüyor. Artık her maddenin altında Ertele (bir hafta) ve Bir daha gösterme var. Gizlenen madde sayısı kartta görünür kalıyor ve tek dokunuşla hepsi geri açılabiliyor.'
+    },
+    {
+      title: 'Koç: Çelişki Çözümü',
+      desc: 'Maddeler birbirinden habersiz üretiliyordu ve aynı anda zıt şeyler söyleyebiliyorlardı: "deload zamanı geldi" ile "bu kaslara set ekle" yan yana durunca hangisinin yapılacağı belirsiz kalıyor, koçun tamamına olan güven düşüyordu. Artık üst öncelikli bir kararla çelişen maddeler susturuluyor — deload haftasında hacim ve rekor tavsiyeleri, eklem ağrısı varken rekor denemesi, plan uyumu düşükken program büyütme. Susturma sessiz değil: kaç maddenin neden susturulduğu kartta yazıyor.'
+    },
+    {
+      title: 'Hafta Sonu Projeksiyonu',
+      desc: 'Koç haftanın ortasında "şu kaslar koruma eşiğinin altında" diyordu ve bu çoğu zaman yanlış alarmdı: çarşamba günü bacak hacminin düşük olması normal, çünkü bacak günü cuma. Uyarı kalan planlı günleri hesaba katmıyordu. Artık doğru soru soruluyor: hafta bu planla biterse nerede kapanır? Üç sonuç var ve üçü farklı şey söylüyor — kalan günler eşiği kapatıyorsa koç susuyor, kapatmıyorsa kaç set eksik kaldığı yazıyor, planlı günler bittiyse bunun artık bir karar olduğu söyleniyor.'
+    },
+    {
+      title: 'Rekor Eşiği',
+      desc: 'Rekor ancak kırıldıktan sonra kutlanıyordu; oysa asıl işe yaradığı an öncesi. Bugün çalışacağın hareketlerden biri rekoruna yakınsa koç somut hedef veriyor: "122.5 kg ile 5 tekrar yaparsan geçersin, 125 kg ile 4 tekrar da yeter." Hedef tahmini 1RM üzerinden hesaplanıyor ama sana ağırlık ve tekrar olarak söyleniyor — "1RM\'ini 2 kg artır" salonda uygulanabilir bir cümle değil. Vücut ağırlıklı hareketlerde taşınan yük de hesaba katılıyor.'
+    },
+    {
+      title: 'RIR Kalibrasyonu',
+      desc: 'Uygulamanın en çok güvendiği alan RIR: etkili set sayımı, tahmini 1RM ve seans içi yük ayarı hep buna dayanıyor. Ama RIR ölçülen değil BİLDİRİLEN bir sayı ve yedek tekrarları fazla tahmin etmek çok yaygın. Doğrudan ölçmek mümkün değil — kimse her seti başarısızlığa taşımıyor — ama dolaylı bir kanıt var: aynı ağırlıkta ardışık setler. "RIR 3" deyip ikinci sette tekrarlar çöküyorsa yedek yoktu. Analiz ekranında bu eğilim, hangi hareketlerde daha bozuk olduğuyla birlikte gösteriliyor.'
+    },
+    {
+      title: 'Hareket Sırası Denetimi',
+      desc: 'En çok yük kaldıran bileşke hareket seansın sonuna kalırsa hem risk artıyor hem uyaran düşüyor: yorgunken kaldırılan 100 kg, dinçken kaldırılan 100 kg ile aynı şey değil. Son seansta bir bileşke birden fazla izolasyondan sonra yapıldıysa uyarı çıkıyor. Ölçüt hareketin adı değil, kaç kası birden yüklediği — uygulamanın kendi kas eşleme tablosundan geliyor.'
+    },
+    {
+      title: 'Süre Verimliliği',
+      desc: 'Aynı 20 set 50 dakikada da 110 dakikada da yapılabilir ve ikisi farklı seanslardır. Set başına dakika bunu tek sayıyla gösteriyor: çok yüksekse dinlenmeler dağılmış, çok düşükse dinlenme yetersiz kalıp sonraki setlerin tekrarları düşüyor demek. Hacim aynı görünürken uyaranın değiştiği yer burası.'
+    },
     {
       title: 'Ağrı Takibi',
       desc: 'Hazır oluşluk formu seans başına tek bir eklem ağrısı puanı alıyordu ve o puan seansın hesabına girip kayboluyordu. Araçlar → Ağrı Takibi bölgeyi ve zamanı tutuyor: omuz, dirsek, bilek, bel, kalça, diz, ayak bileği, boyun. Üç kayıttan sonra bölge bazında trend (azalıyor / sabit / artıyor) ve ağrılı günlerde en sık yapılan hareketler görünüyor. Hareket listesi bir NEDEN iddiası değil, sadece birlikte görülme sayısı — hangi hareketi elemeyi deneyeceğinin başlangıç noktası.'

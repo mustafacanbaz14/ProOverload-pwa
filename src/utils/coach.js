@@ -55,6 +55,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     deload = null, deloadSuggestion = null, gender = 'male', cycle = null,
     mesocycleItem = null, selectionItem = null, coachProtocol = null,
     painItem = null, balanceItem = null, consistencyItem = null, dataHealthItem = null,
+    projectionItem = null, prItem = null, rirItem = null, orderItem = null,
   } = ctx;
 
   const items = [];
@@ -156,6 +157,9 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
   // Hafta ilerledikçe MEV altındaki kaslar için uyarı sertleşir: pazartesi
   // "eksik" demek anlamsız, perşembeden sonra gerçekten sorun.
   const gun = haftaninGunu(now);
+  // Projeksiyon hesaplanabildiyse (aktif haftalık program var) eski hacim
+  // uyarısı tamamen susuyor — ikisi aynı şeyi farklı doğrulukla söylüyor.
+  const projectionSilent = ctx.projectionAvailable === true;
   // Hafta hiç başlamadıysa "16 kas eksik" demek bilgi değil gürültü; o durum
   // ayrı ve tek bir maddeyle söyleniyor.
   const haftaBasladi = MUSCLE_GROUPS.some(m => parseNumber(muscleVolume[m]) > 0);
@@ -165,7 +169,17 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       title: 'Bu hafta henüz antrenman yok',
       detail: `Haftanın ${gun}. günündesin ve kayıtlı set yok. Kalan günlerde tam programı sığdırmak yerine en çok geride kalan iki bölgeye kısa birer seans koymak daha gerçekçi.`,
     });
-  } else if (gun >= 4) {
+  } else if (projectionItem) {
+    // Projeksiyon varsa hacim uyarısını O veriyor. Eski uyarı yalnızca "şu an"
+    // eksik olana bakıyordu ve kalan planlı günleri saymıyordu: çarşamba günü
+    // bacak hacminin düşük olması normalken alarm üretiyordu. Projeksiyon
+    // sessizse gerçekten yapılacak bir şey yok demektir.
+    ekle({
+      key: 'volume', priority: 2, tone: TONES.warn, action: 'plan',
+      title: projectionItem.title,
+      detail: projectionItem.detail,
+    });
+  } else if (gun >= 4 && !projectionSilent) {
     const eksik = MUSCLE_GROUPS.filter(m => {
       const vol = parseNumber(muscleVolume[m]);
       return vol > 0 && vol < getVolumeLandmarks(m, experienceLevel).mev;
@@ -309,6 +323,36 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'balance', priority: 3, tone: TONES.info, action: 'analysis',
       title: balanceItem.title,
       detail: balanceItem.detail,
+    });
+  }
+
+  // Rekor eşiği 2. öncelik: bugünün seansında somut bir hedef veriyor ama
+  // kaçırılırsa bir şey kaybedilmiyor.
+  if (prItem) {
+    ekle({
+      key: 'pr-watch', priority: 2, tone: TONES.good, action: 'workout',
+      title: prItem.title,
+      detail: prItem.detail,
+    });
+  }
+
+  // Hareket sırası: bugünün seansını değiştirir ama sağlık/toparlanma
+  // sinyallerinin arkasında kalmalı.
+  if (orderItem) {
+    ekle({
+      key: 'order', priority: 2, tone: TONES.info, action: 'plan',
+      title: orderItem.title,
+      detail: orderItem.detail,
+    });
+  }
+
+  // RIR kalibrasyonu 3. öncelik: bugünü değil, girdiğin verinin anlamını
+  // düzelten bir bilgi.
+  if (rirItem) {
+    ekle({
+      key: 'rir', priority: 3, tone: TONES.info, action: 'analysis',
+      title: rirItem.title,
+      detail: rirItem.detail,
     });
   }
 

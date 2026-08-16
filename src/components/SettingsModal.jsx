@@ -408,6 +408,17 @@ const SettingsModal = memo(({
               onChange={(v) => set({ restAlert: v })}
             />
 
+            {/* Kilit ekranı kartı duyulmaz bir ses döngüsüyle var oluyor ve
+                cihazda aynı anda tek bir "Şu An Çalınan" oturumu olabiliyor.
+                Bu yüzden kart ile müzik aynı anda yaşayamıyor — tekniğin
+                sınırı, düzeltilebilecek bir hata değil. Seçim kullanıcıda. */}
+            <Toggle
+              label="Müzik Önceliği"
+              hint="Açıkken kilit ekranı antrenman kartı hiç başlatılmaz ve müziğin kesilmez. Kapalıyken kart çalışır; müzik başlatırsan kart sessizce kapanır ve seans bitene kadar geri gelmez."
+              checked={Boolean(settings.musicPriority)}
+              onChange={(v) => set({ musicPriority: v })}
+            />
+
             {/* Ses ve titreşim telefon sessizdeyken ya da uygulama arka
                 plandayken yetmiyor; bildirim sistemin kendi kanalını kullanıyor. */}
             <Toggle

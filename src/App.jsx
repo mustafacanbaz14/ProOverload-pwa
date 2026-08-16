@@ -15,6 +15,11 @@ import { buildStrengthBalance, strengthBalanceCoachItem } from './utils/strength
 import { buildConsistency, buildAdherence, consistencyCoachItem } from './utils/consistency';
 import { auditWorkoutData, removeEmptyWorkouts, dataHealthCoachItem } from './utils/dataHealth';
 import { repRangeFor, setRepRangeOverride } from './utils/exerciseTargets';
+import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem } from './utils/coachMemory';
+import { buildWeekProjection, projectionCoachItem } from './utils/weekProjection';
+import { buildPrWatch, prWatchCoachItem } from './utils/prWatch';
+import { buildRirCalibration, rirCoachItem } from './utils/rirCalibration';
+import { auditSessionQuality, sessionQualityCoachItem } from './utils/sessionQuality';
 import { computeAdaptiveTDEE } from './utils/tdee';
 import { totalCardioCalories, dayWorkoutCalories } from './utils/cardio';
 import { computeWeekPlan, findPlan } from './utils/weekPlan';
@@ -736,11 +741,16 @@ export default function App() {
 
     // Her çalışma seti, hareketin katkı tablosundaki ağırlıkla ilgili kaslara yazılır:
     // birincil kas 1, belirgin yardımcılar 0.5, hafif katkılar 0.25 set sayılır.
+    // Bu hafta DOĞRUDAN çalışılan kaslar. Hacim tablosu dolaylı katkıyı da
+    // sayıyor; projeksiyon ise bir kasın programda olup olmadığını sorarken
+    // yalnızca birincil hedefe bakmalı.
+    const trainedMusclesThisWeek = new Set();
     thisWeekWorkouts.forEach(w => {
       (w.exercises || []).forEach(ex => {
-        const { contributions } = detectMuscleGroup(ex.name, customExercises);
+        const { contributions, muscle: birincil } = detectMuscleGroup(ex.name, customExercises);
         const count = (ex.sets || []).filter(isCompletedWorkingSet).length;
         if (count === 0) return;
+        if (birincil) trainedMusclesThisWeek.add(birincil);
 
         Object.entries(contributions || {}).forEach(([muscle, weight]) => {
           if (muscleVolume[muscle] !== undefined) {
@@ -851,6 +861,7 @@ export default function App() {
       thisWeekSessions,
       thisWeekEffectiveSets,
       muscleVolume,
+      trainedMusclesThisWeek: [...trainedMusclesThisWeek],
       isDeloadNeeded,
       acwr,
       hasEnoughData,
@@ -1199,9 +1210,15 @@ export default function App() {
       setIsExerciseModalOpen(true);
     }
 
-    if (settings.lockScreenActivity) {
+    // Müzik önceliği açıkken kart hiç başlatılmıyor: başlatmak, kullanıcının
+    // dinlediği müziği kesmek demek ve bunu sessizce yapmak yanlış olurdu.
+    if (settings.lockScreenActivity && !settings.musicPriority) {
       try {
         startLockScreenActivity({
+          onYield: () => {
+            setLockScreenOn(false);
+            showToast('Müzik başladı, kilit ekranı kartı kapandı. Cihazda aynı anda tek medya kartı olabiliyor; kartı hep kapalı tutmak için Ayarlar → Müzik Önceliği.', 'warning', { duration: 7000 });
+          },
           onPause: () => setActiveWorkout(p => p ? { ...p, timer: { ...p.timer, status: 'paused' } } : p),
           onResume: () => setActiveWorkout(p => p ? { ...p, timer: { ...p.timer, status: 'running', startTime: Date.now() } } : p)
         }).then(ok => setLockScreenOn(!!ok)).catch(() => setLockScreenOn(false));
@@ -2473,6 +2490,38 @@ export default function App() {
     () => auditWorkoutData(sortedWorkouts),
     [sortedWorkouts]);
 
+  // 6.2 raporları.
+  const weekProjection = useMemo(() => buildWeekProjection(
+    dashboardStats.muscleVolume,
+    weekPlanResult,
+    templates,
+    {
+      // Bugün zaten çalışıldıysa planlanan hacim bir kez daha sayılmamalı;
+      // aksi halde projeksiyon aynı seansı iki kere ekliyor.
+      includeToday: workouts.filter(w => w.date === getLocalDateString()).length === 0,
+      experienceLevel: settings.experienceLevel,
+      customExercises,
+      trainedMuscles: dashboardStats.trainedMusclesThisWeek || [],
+    }),
+  [dashboardStats.muscleVolume, dashboardStats.trainedMusclesThisWeek, weekPlanResult, templates, workouts, settings.experienceLevel, customExercises]);
+
+  // Rekor eşiği yalnızca BUGÜN gündemde olan hareketler için: tüm kütüphaneyi
+  // taramak her gün bir "rekora yakınsın" listesi üretir ve anlamını yitirir.
+  const prWatch = useMemo(() => {
+    const bugunku = activeWorkout?.exercises?.map(e => e.name)
+      || todayCoach?._signals?.planDay?.workouts?.flatMap(w => (w.template?.exercises || []).map(e => e.name))
+      || [];
+    return buildPrWatch(bugunku, sortedWorkouts, { resolveLoad: resolveSetLoad });
+  }, [activeWorkout, todayCoach, sortedWorkouts, resolveSetLoad]);
+
+  const rirCalibration = useMemo(() => buildRirCalibration(sortedWorkouts), [sortedWorkouts]);
+
+  const lastSessionQuality = useMemo(() => {
+    const son = sortedWorkouts[0];
+    if (!son) return null;
+    return auditSessionQuality(son.exercises, { customExercises, durationMinutes: son.duration });
+  }, [sortedWorkouts, customExercises]);
+
   const coachActions = useMemo(() => {
     const bugun = getLocalDateString();
     const sonOlcum = sortedMetrics[0]?.date;
@@ -2508,6 +2557,11 @@ export default function App() {
       balanceItem: strengthBalanceCoachItem(strengthBalance),
       consistencyItem: consistencyCoachItem(consistencyReport, adherenceReport),
       dataHealthItem: dataHealthCoachItem(dataHealthReport),
+      projectionAvailable: weekProjection.hasData,
+      projectionItem: projectionCoachItem(weekProjection),
+      prItem: prWatchCoachItem(prWatch),
+      rirItem: rirCoachItem(rirCalibration),
+      orderItem: sessionQualityCoachItem(lastSessionQuality),
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -2519,7 +2573,29 @@ export default function App() {
     settings.experienceLevel, dashboardStats, plateauInsights, deload, deloadSuggestion,
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
+    weekProjection, prWatch, rirCalibration, lastSessionQuality,
     profileGender, todayCycleSummary, activeCoachProtocol]);
+
+  // Koç hafızası: ertelenen/kapatılan maddeler ve çelişki çözümü. Ham liste
+  // yerine bu sonuç gösteriliyor.
+  const coachView = useMemo(
+    () => applyCoachMemory(coachActions, settings.coachMemory, getLocalDateString()),
+    [coachActions, settings.coachMemory]);
+
+  const handleSnoozeCoach = useCallback((key) => {
+    setSettings(prev => ({ ...prev, coachMemory: snoozeCoachItem(prev.coachMemory, key) }));
+    showToast('Bir hafta ertelendi.');
+  }, [setSettings, showToast]);
+
+  const handleDismissCoach = useCallback((key) => {
+    setSettings(prev => ({ ...prev, coachMemory: dismissCoachItem(prev.coachMemory, key) }));
+    showToast('Bu madde bir daha gösterilmeyecek.');
+  }, [setSettings, showToast]);
+
+  const handleRestoreCoach = useCallback(() => {
+    setSettings(prev => ({ ...prev, coachMemory: restoreCoachItem(prev.coachMemory) }));
+    showToast('Gizlenen koç maddeleri geri açıldı.');
+  }, [setSettings, showToast]);
 
   const needsBackup = useMemo(() => {
     if (!lastBackupDate) return true;
@@ -2622,9 +2698,14 @@ export default function App() {
               readiness={readiness}
               personalVolume={personalVolume}
               todayCoach={todayCoach}
-              coachActions={coachActions}
+              coachActions={coachView.items}
               // Her koç maddesi doğrudan ilgili ekranı açar; kullanıcı uyarıyı
               // okuyup nereye gideceğini ayrıca aramasın.
+              onSnoozeCoach={handleSnoozeCoach}
+              onDismissCoach={handleDismissCoach}
+              onRestoreCoach={handleRestoreCoach}
+              coachHiddenCount={coachView.hiddenCount}
+              coachConflictCount={coachView.conflictCount}
               onCoachAction={(hedef) => ({
                 workout: () => handleStartRequest(todayCoach?.workoutTemplate || null),
                 cardio: () => setIsCardioOpen(true),

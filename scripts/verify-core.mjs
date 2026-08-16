@@ -29,6 +29,11 @@ import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../src/u
 import { resolvePlannedCardioMinutes, isActiveRecoveryCardioDay, isActiveRecoveryEntry, cardioEntryCalories, workoutCalories, dayWorkoutCalories } from '../src/utils/cardio.js';
 import { groupIntoWeeks, groupWeeksIntoMonths } from '../src/utils/dates.js';
 import { deloadState } from '../src/utils/deload.js';
+import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem, emptyCoachMemory } from '../src/utils/coachMemory.js';
+import { buildWeekProjection, projectionCoachItem } from '../src/utils/weekProjection.js';
+import { buildPrWatch, prWatchCoachItem, repsNeededFor } from '../src/utils/prWatch.js';
+import { buildRirCalibration, rirCoachItem } from '../src/utils/rirCalibration.js';
+import { auditSessionQuality, sessionQualityCoachItem } from '../src/utils/sessionQuality.js';
 import { painEntry, upsertPainEntry, buildPainReport, painCoachItem } from '../src/utils/painLog.js';
 import { buildStrengthBalance, strengthBalanceCoachItem } from '../src/utils/strengthBalance.js';
 import { buildConsistency, buildAdherence } from '../src/utils/consistency.js';
@@ -2039,6 +2044,236 @@ test('taslak süperset bayrağı şablonda paylaşılan kimliğe dönüşür', (
 
   // Son hareket bağlanamaz: bağlanacak bir sonraki yok.
   assert.equal(toggleDraftSuperset(gun, 'c').exercises[2].superset, undefined);
+});
+
+
+
+/* --- Koç hafızası --- */
+
+const kocMadde = (key, priority = 2) => ({ key, priority, title: key, detail: '' });
+
+test('ertelenen madde süresi dolana kadar gizlenir', () => {
+  const m = snoozeCoachItem(emptyCoachMemory(), 'sleep', '2026-08-10');
+  const icinde = applyCoachMemory([kocMadde('sleep')], m, '2026-08-14');
+  assert.equal(icinde.items.length, 0);
+  assert.equal(icinde.suppressed[0].hiddenBy, 'snoozed');
+  // Süre dolunca geri geliyor.
+  const sonra = applyCoachMemory([kocMadde('sleep')], m, '2026-08-18');
+  assert.equal(sonra.items.length, 1);
+});
+
+test('kapatılan madde geri açılana kadar gizli kalır', () => {
+  let m = dismissCoachItem(emptyCoachMemory(), 'metric');
+  assert.equal(applyCoachMemory([kocMadde('metric')], m, '2027-01-01').items.length, 0);
+  m = restoreCoachItem(m, 'metric');
+  assert.equal(applyCoachMemory([kocMadde('metric')], m, '2027-01-01').items.length, 1);
+});
+
+test('deload görünürken hacim ve rekor maddeleri susturulur', () => {
+  const r = applyCoachMemory(
+    [kocMadde('deload-running'), kocMadde('volume-low'), kocMadde('pr-watch'), kocMadde('sleep')],
+    emptyCoachMemory(), '2026-08-16');
+  const kalan = r.items.map(i => i.key);
+  assert.ok(kalan.includes('deload-running'));
+  assert.ok(kalan.includes('sleep'));
+  assert.ok(!kalan.includes('volume-low'));
+  assert.ok(!kalan.includes('pr-watch'));
+  assert.equal(r.conflictCount, 2);
+  // Susturma sebebi taşınmalı; sessiz eleme kullanıcıya kayıp gibi görünürdü.
+  assert.ok(r.suppressed.every(x => x.hiddenReason));
+});
+
+test('kazanan madde yoksa çelişki kuralı çalışmaz', () => {
+  const r = applyCoachMemory([kocMadde('volume-low'), kocMadde('pr-watch')], emptyCoachMemory(), '2026-08-16');
+  assert.equal(r.items.length, 2);
+  assert.equal(r.conflictCount, 0);
+});
+
+/* --- Hafta sonu projeksiyonu --- */
+
+const sablon = (id, ad, sets) => ({
+  id, name: ad,
+  exercises: [{ name: ad, sets: Array.from({ length: sets }, () => ({ setType: 'normal' })) }],
+});
+
+const planSonuc = (gunler) => ({
+  days: ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'].map(key => ({
+    key,
+    workouts: gunler[key] ? [{ template: gunler[key] }] : [],
+  })),
+});
+
+test('kalan planlı günler eşiği kapatıyorsa uyarı çıkmaz', () => {
+  const bacak = sablon('t1', 'Barbell Back Squat', 10);
+  // Çarşamba: bacak henüz çalışılmadı ama cuma planlı.
+  const p = buildWeekProjection({}, planSonuc({ fri: bacak }), [bacak], {
+    today: new Date('2026-08-12T12:00:00'),
+  });
+  const quad = p.rows.find(r => r.muscle === 'Quadriceps');
+  assert.equal(quad.planned, 10);
+  assert.equal(quad.status, 'onTrack');
+  assert.equal(projectionCoachItem(p), null);
+});
+
+test('programın hiç çalıştırmadığı kas risk sayılmaz', () => {
+  // Program sadece bacak çalıştırıyor; göğüs bir hafta sapması değil, program
+  // tercihi. Bu ayrım olmadan projeksiyon her hafta on dört kası birden
+  // "risk altında" diye bildiriyordu.
+  const bacak = sablon('t9', 'Barbell Back Squat', 10);
+  const p = buildWeekProjection({}, planSonuc({ fri: bacak }), [bacak], {
+    today: new Date('2026-08-12T12:00:00'),
+  });
+  assert.equal(p.rows.find(r => r.muscle === 'Göğüs').status, 'untrained');
+  assert.equal(p.atRisk.length, 0);
+  assert.equal(projectionCoachItem(p), null);
+});
+
+test('kalan günlerle bile kapanmıyorsa risk bildirilir', () => {
+  const az = sablon('t2', 'Barbell Back Squat', 2);
+  const p = buildWeekProjection({}, planSonuc({ fri: az }), [az], {
+    today: new Date('2026-08-12T12:00:00'),
+  });
+  const quad = p.rows.find(r => r.muscle === 'Quadriceps');
+  assert.equal(quad.status, 'atRisk');
+  assert.ok(quad.gap > 0);
+  assert.match(projectionCoachItem(p).title, /eşiğin altında kalıyor/);
+});
+
+test('planlı gün kalmadıysa kaçırılmış sayılır', () => {
+  const az = sablon('t3', 'Barbell Back Squat', 2);
+  // Pazar: cuma geçti, kalan planlı gün yok.
+  const p = buildWeekProjection({ Quadriceps: 2 }, planSonuc({ fri: az }), [az], {
+    today: new Date('2026-08-16T12:00:00'),
+    // Plan bitti ama kas bu hafta gerçekten çalışıldı; programın parçası.
+    trainedMuscles: ['Quadriceps'],
+  });
+  assert.equal(p.remainingDays, 0);
+  assert.ok(p.missed.some(r => r.muscle === 'Quadriceps'));
+  assert.match(projectionCoachItem(p).title, /Planlı günler bitti/);
+});
+
+/* --- Rekor eşiği --- */
+
+const prSeans = (date, ad, kg, tekrar) => ({
+  date, exercises: [{ name: ad, sets: [{ weight: String(kg), reps: String(tekrar), rir: 1, setType: 'normal' }] }],
+});
+
+test('gereken tekrar Epley tersinden hesaplanır', () => {
+  // 100 kg, hedef e1RM 120 -> 30*(1.2-1) = 6 tekrar.
+  assert.equal(repsNeededFor(120, 100), 6);
+  // Ağırlık hedefin üstündeyse tek tekrar yeter.
+  assert.equal(repsNeededFor(100, 120), 1);
+});
+
+test('rekora yakın hareket somut hedefle bildirilir', () => {
+  const w = [
+    prSeans('2026-08-01', 'Barbell Bench Press', 120, 5),
+    prSeans('2026-08-14', 'Barbell Bench Press', 120, 4),
+  ];
+  const r = buildPrWatch(['Barbell Bench Press'], w, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.hasData, true);
+  const t = r.targets[0];
+  assert.ok(t.closeness >= 92);
+  assert.ok(t.options.length > 0);
+  assert.ok(t.options[0].reps >= 5);
+  assert.match(prWatchCoachItem(r).detail, /tekrar yaparsan geçersin/);
+});
+
+test('rekordan uzak hareket gösterilmez', () => {
+  const w = [
+    prSeans('2026-08-01', 'Barbell Bench Press', 140, 5),
+    prSeans('2026-08-14', 'Barbell Bench Press', 90, 5),
+  ];
+  const r = buildPrWatch(['Barbell Bench Press'], w, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.hasData, false);
+});
+
+/* --- RIR kalibrasyonu --- */
+
+const rirSeans = (ciftler) => ({
+  date: '2026-08-10',
+  exercises: ciftler.map((c, i) => ({
+    name: `Hareket ${i}`,
+    sets: [
+      { weight: '100', reps: String(c.ilk), rir: c.rir, setType: 'normal' },
+      { weight: '100', reps: String(c.ikinci), rir: 1, setType: 'normal' },
+    ],
+  })),
+});
+
+test('yetersiz çiftte kalibrasyon hesaplanmaz', () => {
+  const r = buildRirCalibration([rirSeans([{ ilk: 10, ikinci: 9, rir: 3 }])]);
+  assert.equal(r.hasData, false);
+  assert.equal(r.verdict, 'unknown');
+});
+
+test('sert tekrar kaybı yedeğin abartıldığını gösterir', () => {
+  // RIR 3 bildirilmiş ama ikinci sette 4 tekrar kaybı var: beklenen 1.
+  const ciftler = Array.from({ length: 10 }, () => ({ ilk: 10, ikinci: 6, rir: 3 }));
+  const r = buildRirCalibration([rirSeans(ciftler)]);
+  assert.equal(r.hasData, true);
+  assert.equal(r.verdict, 'overestimating');
+  assert.ok(r.bias > 0);
+  assert.ok(rirCoachItem(r));
+});
+
+test('beklenen düşüşe uyan setler tutarlı sayılır', () => {
+  const ciftler = Array.from({ length: 10 }, () => ({ ilk: 10, ikinci: 9, rir: 3 }));
+  const r = buildRirCalibration([rirSeans(ciftler)]);
+  assert.equal(r.verdict, 'calibrated');
+  assert.equal(rirCoachItem(r), null);
+});
+
+test('farklı ağırlıklı ardışık setler kalibrasyona girmez', () => {
+  const w = [{
+    date: '2026-08-10',
+    exercises: [{
+      name: 'Barbell Bench Press',
+      sets: Array.from({ length: 20 }, (_, i) => ({
+        weight: String(100 + i), reps: '8', rir: 3, setType: 'normal',
+      })),
+    }],
+  }];
+  assert.equal(buildRirCalibration(w).hasData, false);
+});
+
+/* --- Seans kalitesi --- */
+
+const kaliteHareket = (ad, sets) => ({
+  name: ad, sets: Array.from({ length: sets }, () => ({ setType: 'normal', reps: '8', weight: '50' })),
+});
+
+test('bileşke izolasyonlardan sonra geliyorsa sıra uyarısı çıkar', () => {
+  const r = auditSessionQuality([
+    kaliteHareket('Lateral Raise (Dumbbell)', 3),
+    kaliteHareket('Leg Extension', 3),
+    kaliteHareket('Cable Crunch', 3),
+    kaliteHareket('Barbell Back Squat', 4),
+  ]);
+  const bulgu = r.findings.find(f => f.exercise === 'Barbell Back Squat');
+  assert.ok(bulgu);
+  assert.equal(bulgu.severity, 'medium');
+  assert.ok(sessionQualityCoachItem(r));
+});
+
+test('doğru sıralanmış seans uyarı üretmez', () => {
+  const r = auditSessionQuality([
+    kaliteHareket('Barbell Back Squat', 4),
+    kaliteHareket('Romanian Deadlift (RDL)', 3),
+    kaliteHareket('Leg Extension', 3),
+    kaliteHareket('Lateral Raise (Dumbbell)', 3),
+  ]);
+  assert.equal(r.clean, true);
+  assert.equal(sessionQualityCoachItem(r), null);
+});
+
+test('süre verimliliği set başına dakikadan okunur', () => {
+  const hareketler = [kaliteHareket('Barbell Back Squat', 10)];
+  assert.equal(auditSessionQuality(hareketler, { durationMinutes: 30 }).efficiency.pace, 'ok');
+  assert.equal(auditSessionQuality(hareketler, { durationMinutes: 90 }).efficiency.pace, 'slow');
+  assert.equal(auditSessionQuality(hareketler, { durationMinutes: 12 }).efficiency.pace, 'fast');
+  // Süre yoksa verimlilik hesaplanmıyor; uydurmak yerine susuyor.
+  assert.equal(auditSessionQuality(hareketler).efficiency, null);
 });
 
 

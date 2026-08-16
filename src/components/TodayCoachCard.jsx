@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { CalendarCheck, Moon, BrainCircuit, Flame, Dumbbell, HeartPulse, ChevronRight, ChevronDown } from 'lucide-react';
+import { CalendarCheck, Moon, BrainCircuit, Flame, Dumbbell, HeartPulse, ChevronRight, ChevronDown, Clock3, BellOff } from 'lucide-react';
 
 const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
   <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 min-w-0">
@@ -10,7 +10,8 @@ const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
   </div>
 );
 
-const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEnergy, onOpenWellness, onOpenCardio }) => {
+const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEnergy, onOpenWellness, onOpenCardio,
+  onSnooze, onDismiss, onRestoreCoach, hiddenCount = 0, conflictCount = 0 }) => {
   const [showAll, setShowAll] = useState(false);
   if (!data) return null;
   const planned = Boolean(data.workoutTemplate);
@@ -78,8 +79,44 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                   )}
                 </div>
                 <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">{item.detail}</p>
+                {/* Erteleme ve kapatma: aynı maddeyi her gün aynı yerde görmek
+                    bir süre sonra kartın tamamını görünmez yapıyordu. */}
+                {(onSnooze || onDismiss) && (
+                  <div className="flex gap-3 mt-1.5">
+                    {onSnooze && (
+                      <button
+                        onClick={() => onSnooze(item.key)}
+                        className="text-[9px] font-mono text-zinc-500 active:text-zinc-200 flex items-center gap-1"
+                      >
+                        <Clock3 size={9} /> Ertele
+                      </button>
+                    )}
+                    {onDismiss && (
+                      <button
+                        onClick={() => onDismiss(item.key)}
+                        className="text-[9px] font-mono text-zinc-500 active:text-zinc-200 flex items-center gap-1"
+                      >
+                        <BellOff size={9} /> Bir daha gösterme
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             ))}
+            {/* Gizlenenler görünür kalıyor: eleme sessiz olsaydı kullanıcı
+                tavsiyenin kaybolduğunu sanardı. Çelişki yüzünden susulan
+                maddeler ayrı sayılıyor çünkü onları kullanıcı kapatmadı. */}
+            {hiddenCount > 0 && (
+              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                {conflictCount > 0 && `${conflictCount} madde bu haftaki kararla çeliştiği için susturuldu. `}
+                {hiddenCount - conflictCount > 0 && `${hiddenCount - conflictCount} madde ertelendi ya da kapatıldı. `}
+                {onRestoreCoach && (
+                  <button onClick={() => onRestoreCoach()} className="text-cyan-500 active:text-cyan-300 underline">
+                    Hepsini geri aç
+                  </button>
+                )}
+              </p>
+            )}
             {actions.length > 2 && (
               <button
                 onClick={() => setShowAll(v => !v)}

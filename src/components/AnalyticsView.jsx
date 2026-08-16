@@ -2,6 +2,7 @@ import React, { memo, useState, useMemo } from 'react';
 import { Search, Eye, EyeOff, BrainCircuit, TrendingDown, Utensils } from 'lucide-react';
 import TrendChart from './TrendChart';
 import ConsistencyCard from './ConsistencyCard';
+import SessionQualityCard from './SessionQualityCard';
 import StrengthBalanceCard from './StrengthBalanceCard';
 import { BODY_METRICS, MUSCLE_GROUPS, getVolumeLandmarks } from '../utils/constants';
 import { estimate1RM, isWorkingSet, isCompletedWorkingSet, parseNumber, detectMuscleGroup, foldForSearch } from '../utils/helpers';
@@ -332,6 +333,7 @@ const AnalyticsView = memo(({
               soru. Biri "programı gerçekten uyguluyor muyum", diğeri "kuvvet
               kaslar arasında nasıl dağılmış". */}
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
+          <SessionQualityCard workouts={workouts} customExercises={customExercises} />
           <StrengthBalanceCard workouts={workouts} resolveLoad={resolveLoad} />
 
           {/* Sıklık: hacim tek başına 16 seti tek güne yığmakla ikiye bölmeyi

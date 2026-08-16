@@ -20,6 +20,14 @@ let audioEl = null;
 let audioSrcUrl = null;
 let artworkUrl = null;
 let isActive = false;
+// Kartı biz mi durdurduk yoksa başka bir uygulama mı ses odağını aldı?
+// `pause` olayı iki durumda da geliyor; ayırt etmek için kendi duraklatmamızı
+// işaretliyoruz.
+let stoppingOurselves = false;
+// Müzik yüzünden teslim edildi mi. Teslimden sonra kart YENİDEN BAŞLATILMIYOR;
+// başlatmak müziği tekrar kesmek demek olurdu.
+let yielded = false;
+let onYieldCallback = null;
 // Kapak görseli asenkron üretildiği için art arda gelen güncellemeler yarışabilir.
 // Bu sayaç, geç tamamlanan eski bir çağrının yeni veriyi ezmesini engeller.
 let updateSequence = 0;
@@ -258,11 +266,27 @@ const drawArtwork = ({
 export const isLockScreenSupported = () =>
   typeof navigator !== 'undefined' && 'mediaSession' in navigator;
 
+/** Kart müzik yüzünden teslim edildi mi. */
+export const isLockScreenYielded = () => yielded;
+
+/** Kart şu anda çalışıyor mu. */
+export const isLockScreenRunning = () => isActive;
+
 /**
  * Kilit ekranı kartını başlatır. iOS ses çalmayı kullanıcı hareketine bağladığı
  * için bu fonksiyon mutlaka bir tıklama/dokunma akışı içinden çağrılmalıdır.
+ *
+ * MÜZİKLE ÇAKIŞMA. Kart, duyulmaz bir ses döngüsü çalarak var oluyor ve bir
+ * cihazda aynı anda tek bir "Şu An Çalınan" oturumu olabiliyor. Bu yüzden kart
+ * ile kullanıcının müziği aynı anda yaşayamıyor: kart başlarsa müzik susuyor,
+ * müzik başlarsa işletim sistemi bizim sesimizi duraklatıp kartı düşürüyor.
+ * Bu, tekniğin kendisinden gelen bir sınır, düzeltilebilecek bir hata değil.
+ *
+ * Düzeltilebilecek olan DAVRANIŞ: eskiden çakışma sessizce oluyordu ve
+ * uygulama direniyordu. Artık müzik odağı aldığında kart teslim ediliyor,
+ * kendiliğinden geri gelmeye çalışmıyor ve durum `onYield` ile bildiriliyor.
  */
-export const startLockScreenActivity = async ({ onPause, onResume } = {}) => {
+export const startLockScreenActivity = async ({ onPause, onResume, onYield } = {}) => {
   if (!isLockScreenSupported()) return false;
 
   try {
@@ -273,8 +297,23 @@ export const startLockScreenActivity = async ({ onPause, onResume } = {}) => {
       audioEl.volume = 1;      // kaynak zaten duyulmaz seviyede
       audioEl.preload = 'auto';
       audioEl.setAttribute('playsinline', '');
+
+      // Ses odağını başka bir uygulama aldığında tarayıcı bu olayı gönderiyor.
+      // Direnmek (yeniden play çağırmak) müziği tekrar keserdi; teslim ediyoruz.
+      audioEl.addEventListener('pause', () => {
+        if (stoppingOurselves || !isActive) return;
+        isActive = false;
+        yielded = true;
+        try {
+          navigator.mediaSession.metadata = null;
+          navigator.mediaSession.playbackState = 'none';
+        } catch { /* yoksay */ }
+        try { onYieldCallback?.(); } catch { /* yoksay */ }
+      });
     }
 
+    onYieldCallback = onYield || null;
+    yielded = false;
     await audioEl.play();
     isActive = true;
 
@@ -396,11 +435,16 @@ export const updateLockScreenActivity = async ({
 
 export const stopLockScreenActivity = () => {
   isActive = false;
+  yielded = false;
+  onYieldCallback = null;
   updateSequence++; // uçuşta olan güncellemeleri geçersiz kıl
 
   if (audioEl) {
+    // Kendi duraklatmamız teslim sayılmamalı; dinleyici bu bayrağa bakıyor.
+    stoppingOurselves = true;
     audioEl.pause();
     audioEl.currentTime = 0;
+    stoppingOurselves = false;
   }
 
   if (isLockScreenSupported()) {
