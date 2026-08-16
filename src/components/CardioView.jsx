@@ -1,11 +1,11 @@
 import React, { useState, useMemo, memo } from 'react';
 import {
-  HeartPulse, Plus, Target, Timer, Ruler, ChevronDown, Trash2, Activity, Gauge,
+  HeartPulse, Plus, Target, Timer, Ruler, ChevronDown, Trash2, Activity, Gauge, Trophy,
 } from 'lucide-react';
 import CardioCoachCard from './CardioCoachCard';
 import { CARDIO_ACTIVITIES, CARDIO_SECTIONS, findActivity } from '../utils/cardio';
 import {
-  supportsDistance, entryPace, paceTrend, describeCardioEntry, ZONE_METHODS, effectiveZoneMethod,
+  supportsDistance, entryPace, paceTrend, describeCardioEntry, ZONE_METHODS, effectiveZoneMethod, MAX_HR_TEST_HINT,
 } from '../utils/cardioZones';
 import {
   TARGET_FIELDS, emptyActivityTarget, setActivityTarget,
@@ -39,6 +39,10 @@ const CardioView = memo(({
   age = null,
   restingHr = '',
   zoneMethod = 'max',
+  maxHrManual = '',
+  restingHrReport = null,
+  onLogRestingHr,
+  cardioRecords = null,
   onChangeZoneSettings,
   activityTargets = {},
   onChangeActivityTargets,
@@ -47,8 +51,9 @@ const CardioView = memo(({
   const [tab, setTab] = useState('coach');
   const [openTarget, setOpenTarget] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const [restingDraft, setRestingDraft] = useState('');
 
-  const zoneOpts = { age, restingHr, method: zoneMethod };
+  const zoneOpts = { age, restingHr, method: zoneMethod, maxHrManual };
   const gecerliYontem = effectiveZoneMethod(zoneOpts);
 
   const hedefli = useMemo(
@@ -130,6 +135,7 @@ const CardioView = memo(({
               age={age}
               restingHr={restingHr}
               zoneMethod={zoneMethod}
+              maxHrManual={maxHrManual}
               onOpenCardio={onOpenCardio}
             />
 
@@ -160,6 +166,20 @@ const CardioView = memo(({
                   })}
                 </div>
                 <label className="block">
+                  <span className="text-[9px] font-mono text-zinc-500 block mb-1">
+                    Maksimum nabız (elle) — boşsa yaştan tahmin edilir
+                  </span>
+                  <input
+                    type="number" inputMode="numeric" min="120" max="230"
+                    value={maxHrManual}
+                    onChange={(e) => onChangeZoneSettings?.({ maxHrManual: e.target.value })}
+                    placeholder="örn. 194"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-200 text-[12px] font-mono text-center outline-none focus:border-red-500"
+                  />
+                  <span className="text-[9px] font-mono text-zinc-600 leading-relaxed block mt-1">{MAX_HR_TEST_HINT}</span>
+                </label>
+
+                <label className="block">
                   <span className="text-[9px] font-mono text-zinc-500 block mb-1">Dinlenme nabzı (Karvonen için gerekli)</span>
                   <input
                     type="number" inputMode="numeric" min="30" max="120"
@@ -175,6 +195,70 @@ const CardioView = memo(({
                     : zoneMethodOptions.find(m => m.key === gecerliYontem)?.hint}
                   {' '}Dinlenme nabzı sabah yataktan kalkmadan ölçülür.
                 </p>
+              </div>
+            </div>
+            {/* Dinlenme nabzı takibi: uygulamanın toparlanma sinyalleri hep
+                bildirilen ya da türetilen verilerdi; bu ÖLÇÜLEN bir sayı. */}
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
+                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
+                  <HeartPulse size={12} className="mr-1.5 text-red-400" /> Sabah Dinlenme Nabzı
+                </h4>
+                {restingHrReport?.hasData && (
+                  <span className="text-[9px] font-mono text-zinc-600">{restingHrReport.entries.length} ölçüm</span>
+                )}
+              </div>
+              <div className="p-3 space-y-2.5">
+                {restingHrReport?.hasData ? (
+                  <>
+                    <div className="flex justify-between items-baseline gap-2">
+                      <span className="text-[10px] font-bold text-zinc-300">
+                        Son ölçüm <span className="text-zinc-600 font-mono">{restingHrReport.latest.label}</span>
+                      </span>
+                      <span className="text-[11px] font-mono">
+                        <strong className={restingHrReport.status === 'sustainedHigh' || restingHrReport.status === 'high'
+                          ? 'text-amber-400' : restingHrReport.status === 'low' ? 'text-emerald-400' : 'text-zinc-100'}>
+                          {restingHrReport.latest.bpm}
+                        </strong>
+                        {restingHrReport.baseline !== null && (
+                          <span className="text-zinc-600"> · taban {restingHrReport.baseline}
+                            {restingHrReport.delta !== null && ` (${restingHrReport.delta > 0 ? '+' : ''}${restingHrReport.delta})`}
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    {restingHrReport.baseline === null && (
+                      <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                        Taban çizgisi için en az {restingHrReport.needed} ölçüm gerekiyor
+                        ({restingHrReport.baselineCount} var). Taban kurulmadan tek bir
+                        yüksek değer yorumlanmıyor — kahve, geç yemek ya da kötü uyku
+                        da aynı sayıyı üretir.
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                    Sabah yataktan kalkmadan ölçülen nabız, toparlanma borcunun en
+                    erken göstergelerinden biri. Birkaç gün girince taban çizgisi
+                    kurulur ve sapmalar yorumlanmaya başlar.
+                  </p>
+                )}
+                <div className="flex gap-2">
+                  <input
+                    type="number" inputMode="numeric" min="25" max="140"
+                    value={restingDraft}
+                    onChange={(e) => setRestingDraft(e.target.value)}
+                    placeholder="bugünkü ölçüm"
+                    aria-label="Bugünkü dinlenme nabzı"
+                    className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-200 text-[12px] font-mono text-center outline-none focus:border-red-500"
+                  />
+                  <button
+                    onClick={() => { if (restingDraft) { onLogRestingHr?.(restingDraft); setRestingDraft(''); } }}
+                    className="px-4 rounded-xl bg-red-600 active:bg-red-700 text-white text-[10px] font-bold uppercase tracking-wider"
+                  >
+                    Kaydet
+                  </button>
+                </div>
               </div>
             </div>
           </>
@@ -280,6 +364,37 @@ const CardioView = memo(({
                     Karşılaştırma yalnızca aynı aktivite ve aynı şiddet sınıfı içinde
                     yapılıyor; zone 2 koşusunun temposunu interval seansıyla
                     kıyaslamak gerileme gibi görünürdü.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {cardioRecords?.hasData && (
+              <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
+                  <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
+                    <Trophy size={12} className="mr-1.5 text-amber-400" /> Kardiyo Rekorları
+                  </h4>
+                  <span className="text-[9px] font-mono text-zinc-600">{cardioRecords.records.length}</span>
+                </div>
+                <div className="divide-y divide-zinc-800/70">
+                  {cardioRecords.records.map(r => (
+                    <div key={`${r.family}-${r.distance}`} className="px-4 py-2 flex justify-between items-baseline gap-2">
+                      <span className="text-[11px] font-bold text-zinc-200 truncate min-w-0">
+                        {r.label}
+                        <span className="text-[9px] font-mono text-zinc-600 ml-1.5">{r.activityInfo?.label}</span>
+                      </span>
+                      <span className="text-[10px] font-mono shrink-0">
+                        <strong className="text-amber-400">{r.timeLabel}</strong>
+                        <span className="text-zinc-600"> · {r.paceLabel} · {formatDay(r.date, 'short')}</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-4 py-2 bg-zinc-950/60">
+                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                    Rekor yalnızca TAM eşleşen mesafede sayılıyor; 1200 m'lik bir
+                    yüzmeden 1000 m rekoru türetmek tempoyu sabit varsaymak olurdu.
                   </p>
                 </div>
               </div>

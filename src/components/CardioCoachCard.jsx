@@ -1,7 +1,7 @@
 import React, { memo } from 'react';
 import { HeartPulse, Target, AlertTriangle, Info, CheckCircle2, Activity } from 'lucide-react';
 import { CARDIO_GOAL_PRESETS, INTENSITY_ORDER } from '../utils/cardioGoals';
-import { HR_ZONES, zoneRange, estimateMaxHr, effectiveZoneMethod, findZoneMethod } from '../utils/cardioZones';
+import { HR_ZONES, zoneRange, resolveMaxHr, effectiveZoneMethod, findZoneMethod } from '../utils/cardioZones';
 
 /**
  * Kardiyo koçu.
@@ -20,11 +20,12 @@ const SEVERITY = {
 const BAR = { low: 'bg-emerald-500', middle: 'bg-amber-500', high: 'bg-red-500' };
 
 const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = null,
-  restingHr = '', zoneMethod = 'max', onOpenCardio }) => {
+  restingHr = '', zoneMethod = 'max', maxHrManual = '', onOpenCardio }) => {
   if (!report) return null;
 
-  const maxHr = estimateMaxHr(age);
-  const zoneOpts = { age, restingHr, method: zoneMethod };
+  const zoneOpts = { age, restingHr, method: zoneMethod, maxHrManual };
+  const maxBilgi = resolveMaxHr(zoneOpts);
+  const maxHr = maxBilgi.bpm;
   const gecerliYontem = findZoneMethod(effectiveZoneMethod(zoneOpts));
   const toplam = report.totalMinutes;
 
@@ -191,7 +192,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
         {maxHr ? (
           <>
             <p className="text-[9px] font-mono text-zinc-500 mb-1.5">
-              Tahmini maksimum nabız <strong className="text-zinc-300">{maxHr}</strong> (Tanaka)
+              Maksimum nabız <strong className="text-zinc-300">{maxHr}</strong> ({maxBilgi.source === 'manual' ? 'elle girildi' : 'Tanaka tahmini'})
               {' · '}<strong className="text-zinc-300">{gecerliYontem.short}</strong> yöntemi
             </p>
             <div className="grid grid-cols-5 gap-1">

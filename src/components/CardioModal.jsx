@@ -8,6 +8,8 @@ import {
 import { clampNumber, INPUT_LIMITS, foldForSearch, getLocalDateString } from '../utils/helpers';
 import { formatDay } from '../utils/dates';
 import { supportsDistance, entryPace, zoneForEntry } from '../utils/cardioZones';
+import { supportsSetLog, entryFromSets, emptyCardioSet } from '../utils/cardioSets';
+import CardioSetEditor from './CardioSetEditor';
 
 const QUICK_MINUTES = [15, 20, 30, 45, 60];
 
@@ -19,7 +21,8 @@ const QUICK_MINUTES = [15, 20, 30, 45, 60];
  */
 const CardioModal = memo(({
   isOpen, onClose, onSave, weightKg, entriesFor, onDelete, planned = [],
-  initialDate, editingEntry = null, age = null,
+  initialDate, editingEntry = null, age = null, zoneOpts = {},
+  poolLength = '25', onChangePool,
 }) => {
   const [type, setType] = useState(editingEntry?.type || 'zone2');
   const [minutes, setMinutes] = useState(editingEntry?.minutes || 30);
@@ -31,6 +34,8 @@ const CardioModal = memo(({
   // da boks için "kaç km" hem doldurulmaz hem anlamsız bir sayı üretir.
   const [distanceKm, setDistanceKm] = useState(editingEntry?.distanceKm ?? '');
   const [avgHeartRate, setAvgHeartRate] = useState(editingEntry?.avgHeartRate ?? '');
+  // Set defteri: yüzme ve interval gibi işlerde seansın yapısını tutuyor.
+  const [sets, setSets] = useState(() => (Array.isArray(editingEntry?.sets) ? editingEntry.sets : []));
   const [showActivities, setShowActivities] = useState(false);
   const [activityQuery, setActivityQuery] = useState('');
   // Ekran kapanmadan kaç aktivite eklendiği — geri bildirim için.
@@ -69,15 +74,22 @@ const CardioModal = memo(({
     type, minutes, effort, customEffortMultiplier, plannedEffort: plan.effort, plannedMinutes: plan.minutes,
   }, weightKg) : null;
 
-  const kaydet = () => onSave({
+  const kaydet = () => {
+    // Defter doldurulduysa süre ve mesafe ORADAN çıkıyor; ikisini elle
+    // yazdırmak, iki sayının sessizce ayrışmasına açık kapı bırakıyordu.
+    const defter = entryFromSets(sets, type, { poolLength: Number(poolLength) || 25 });
+    return onSave({
     ...(editingEntry?.id ? { id: editingEntry.id } : {}),
-    type, minutes: Number(minutes), effort,
+    type, minutes: defter ? defter.minutes : Number(minutes), effort,
     ...(effort === 'custom' ? { customEffortMultiplier: Number(customEffortMultiplier) || 1.0 } : {}),
     date, note: note.trim(),
-    ...(Number(distanceKm) > 0 ? { distanceKm: Number(distanceKm) } : {}),
+    ...(defter?.distanceKm ? { distanceKm: defter.distanceKm }
+      : Number(distanceKm) > 0 ? { distanceKm: Number(distanceKm) } : {}),
     ...(Number(avgHeartRate) > 0 ? { avgHeartRate: Number(avgHeartRate) } : {}),
+    ...(defter ? { sets: defter.sets, setSummary: defter.setSummary } : {}),
     ...(plan ? { plannedEffort: plan.effort, plannedMinutes: plan.minutes } : {}),
-  });
+    });
+  };
 
   // O günün kayıtları — tarih penceresinin içinden değişebildiği için üst
   // bileşenden sabit liste değil, tarihe göre sorgulanabilir bir fonksiyon geliyor.
@@ -236,6 +248,27 @@ const CardioModal = memo(({
           </div>
         </div>
 
+        {/* Set defteri: yüzme, interval koşu ve kürek gibi işler set
+            yapısında yapılıyor ve tek satırlık kayıt o yapıyı kaybediyordu. */}
+        {supportsSetLog(type) && (
+          sets.length > 0 ? (
+            <CardioSetEditor
+              activityKey={type}
+              rows={sets}
+              onChange={setSets}
+              poolLength={poolLength}
+              onChangePool={onChangePool}
+            />
+          ) : (
+            <button
+              onClick={() => setSets([emptyCardioSet(type)])}
+              className="w-full rounded-2xl border border-dashed border-cyan-900/50 bg-zinc-900 py-2.5 text-[10px] font-bold text-cyan-400 active:text-cyan-200"
+            >
+              + Set defteri aç ({type === 'swim' ? 'stil, mesafe, süre' : 'mesafe, süre, dinlenme'})
+            </button>
+          )
+        )}
+
         {/* Mesafe ve nabız. İkisi de isteğe bağlı: mesafe tempoyu, nabız ise
             bölgeyi TAHMİN yerine ÖLÇÜM haline getiriyor. */}
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
@@ -268,7 +301,7 @@ const CardioModal = memo(({
           </div>
           {(() => {
             const tempo = entryPace({ type, minutes, distanceKm });
-            const { zone, source } = zoneForEntry({ type, effort, avgHeartRate }, { age });
+            const { zone, source } = zoneForEntry({ type, effort, avgHeartRate }, { age, ...zoneOpts });
             return (
               <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
                 {tempo && <>Tempo <strong className="text-cyan-400">{tempo.label}</strong> · {tempo.speedKmh} km/s · </>}

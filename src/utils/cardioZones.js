@@ -90,8 +90,8 @@ export const findZoneMethod = (key) => ZONE_METHODS.find(m => m.key === key) || 
  * Karvonen seçiliyken dinlenme nabzı yoksa sessizce maks yöntemine düşülüyor:
  * eksik veriyle yanlış bir sayı üretmektense bilinen yöntemi kullanmak doğru.
  */
-export const bpmForPercent = (percent, { age, restingHr = 0, method = 'max' } = {}) => {
-  const max = estimateMaxHr(age);
+export const bpmForPercent = (percent, { age, restingHr = 0, method = 'max', maxHrManual = '' } = {}) => {
+  const max = resolveMaxHr({ age, maxHrManual }).bpm;
   if (!max) return null;
   const dinlenme = parseNumber(restingHr);
   if (method === 'hrr' && dinlenme > 0 && dinlenme < max) {
@@ -101,8 +101,8 @@ export const bpmForPercent = (percent, { age, restingHr = 0, method = 'max' } = 
 };
 
 /** Seçili yöntemin gerçekten uygulanabilir olup olmadığı. */
-export const effectiveZoneMethod = ({ age, restingHr = 0, method = 'max' } = {}) => {
-  const max = estimateMaxHr(age);
+export const effectiveZoneMethod = ({ age, restingHr = 0, method = 'max', maxHrManual = '' } = {}) => {
+  const max = resolveMaxHr({ age, maxHrManual }).bpm;
   const dinlenme = parseNumber(restingHr);
   return (method === 'hrr' && max && dinlenme > 0 && dinlenme < max) ? 'hrr' : 'max';
 };
@@ -120,6 +120,36 @@ export const estimateMaxHr = (age) => {
   if (!(y > 0)) return null;
   return Math.round(208 - 0.7 * y);
 };
+
+/**
+ * Kullanılacak maksimum nabız: elle girilen değer varsa O, yoksa tahmin.
+ *
+ * Tanaka formülü bir POPÜLASYON ortalaması ve kişiler arası sapma ±10-12
+ * atım. Saha testiyle (ya da yarış sırasında görülen tepe nabızla) kendi
+ * maksimumunu bilen biri için tahmini dayatmak, bütün bölge sınırlarını
+ * sistematik olarak kaydırıyordu. Elle girilen değer her zaman kazanıyor.
+ *
+ * @returns { bpm, source: 'manual' | 'estimate' | 'none' }
+ */
+export const resolveMaxHr = ({ age = null, maxHrManual = '' } = {}) => {
+  const elle = parseNumber(maxHrManual);
+  // Üst sınır insani bir aralıkta tutuluyor; 300 gibi bir yazım hatası bütün
+  // bölgeleri anlamsız yapardı.
+  if (elle >= 120 && elle <= 230) return { bpm: Math.round(elle), source: 'manual' };
+  const tahmin = estimateMaxHr(age);
+  return tahmin ? { bpm: tahmin, source: 'estimate' } : { bpm: null, source: 'none' };
+};
+
+/**
+ * Saha testinden maksimum nabız tahmini.
+ *
+ * Ölçmenin en yaygın pratik yolu: iyi ısındıktan sonra 3-5 dakikalık tam
+ * çabayla çıkılan bir tırmanış/koşu ve o sırada görülen tepe nabız. Bu, tek
+ * seferde ölçülen değer olduğu için formülden belirgin daha iyi ama tam
+ * maksimumun biraz altında kalabiliyor — bu yüzden görülen tepe değerin
+ * kendisi öneriliyor, üstüne pay eklenmiyor.
+ */
+export const MAX_HR_TEST_HINT = 'İyi ısındıktan sonra 3-5 dakika tam çabayla çık (yokuş, bant eğimi ya da bisiklet), son 30 saniyede hızlan ve o sırada gördüğün tepe nabzı yaz. Formül bir popülasyon ortalaması; kendi ölçümün her zaman daha doğru.';
 
 /**
  * Bölgenin nabız aralığı (atım/dk); yaş bilinmiyorsa null.
@@ -140,7 +170,7 @@ export const zoneRange = (zoneKey, ageOrOpts) => {
 export const zoneForHeartRate = (bpm, ageOrOpts) => {
   const opts = (ageOrOpts && typeof ageOrOpts === 'object') ? ageOrOpts : { age: ageOrOpts };
   const hr = parseNumber(bpm);
-  if (!(hr > 0) || !estimateMaxHr(opts.age)) return null;
+  if (!(hr > 0) || !resolveMaxHr(opts).bpm) return null;
   // Üstten aşağı taranıyor: bir nabız hem z4 hem z5 sınırına yakın
   // durabiliyor, yüksek olan kazanmalı.
   return [...HR_ZONES].reverse().find(z => hr >= bpmForPercent(z.min, opts)) || HR_ZONES[0];

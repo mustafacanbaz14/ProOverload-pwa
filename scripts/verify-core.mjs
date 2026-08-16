@@ -37,9 +37,12 @@ import { buildWarmupRoutine } from '../src/utils/warmupRoutine.js';
 import { buildDeloadReturn, returnSets, deloadReturnCoachItem } from '../src/utils/deloadReturn.js';
 import { buildPeriNutrition, periNutritionCoachItem } from '../src/utils/periNutrition.js';
 import { estimateMaxHr, zoneForEntry, intensityClassOf, HR_ZONES, entryPace, paceTrend, supportsDistance,
-  zoneRange, zoneForHeartRate, effectiveZoneMethod, cardioCalories, heartRateCalories } from '../src/utils/cardioZones.js';
+  zoneRange, zoneForHeartRate, effectiveZoneMethod, cardioCalories, heartRateCalories, resolveMaxHr } from '../src/utils/cardioZones.js';
 import { setActivityTarget, emptyActivityTarget, describeTarget, compareToTarget } from '../src/utils/activityTargets.js';
 import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from '../src/utils/cardioGoals.js';
+import { summarizeSets, entryFromSets } from '../src/utils/cardioSets.js';
+import { buildRestingHrReport, upsertRestingHr, restingHrCoachItem } from '../src/utils/restingHrLog.js';
+import { buildCardioRecords } from '../src/utils/cardioRecords.js';
 import { findRestAlertIntensity } from '../src/lockScreen.js';
 import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem, emptyCoachMemory } from '../src/utils/coachMemory.js';
 import { buildWeekProjection, projectionCoachItem } from '../src/utils/weekProjection.js';
@@ -2824,6 +2827,187 @@ test('hedefler tutuyorsa uyarı çıkmaz', () => {
   });
   assert.equal(r.hasData, false);
   assert.equal(periNutritionCoachItem(r), null);
+});
+
+
+
+/* --- Yüzme set defteri --- */
+
+const yuzmeDefter = [
+  { reps: 1, distance: 200, stroke: 'free', kind: 'warmup', seconds: 240 },
+  { reps: 8, distance: 100, stroke: 'free', kind: 'work', seconds: 95, restSeconds: 20, strokeCount: 76 },
+  { reps: 4, distance: 50, stroke: 'fly', kind: 'work', seconds: 48, restSeconds: 30 },
+  { reps: 1, distance: 100, stroke: 'back', kind: 'cooldown', seconds: 150 },
+];
+
+test('set defteri toplam mesafe ve süreyi çıkarır', () => {
+  const o = summarizeSets(yuzmeDefter, 'swim');
+  // 200 + 800 + 200 + 100
+  assert.equal(o.totalDistance, 1300);
+  assert.ok(o.totalMinutes > 0);
+  const kayit = entryFromSets(yuzmeDefter, 'swim');
+  assert.equal(kayit.distanceKm, 1.3);
+  assert.equal(kayit.minutes, o.totalMinutes);
+});
+
+test('tempo yalnızca ana setlerden hesaplanır', () => {
+  const o = summarizeSets(yuzmeDefter, 'swim');
+  // Ana setler: 800 m serbest (95 sn/100 m) + 200 m kelebek (96 sn/100 m).
+  // Isınma ve soğuma dahil edilseydi ortalama belirgin yavaşlardı.
+  assert.ok(o.avgPace >= 94 && o.avgPace <= 97);
+  const isinmaDahil = (240 + 760 + 192 + 150) / 1300 * 100;
+  assert.ok(o.avgPace < isinmaDahil);
+});
+
+test('stil dağılımı mesafeye göre çıkar', () => {
+  const o = summarizeSets(yuzmeDefter, 'swim');
+  const serbest = o.byStroke.find(x => x.stroke.key === 'free');
+  assert.equal(serbest.distance, 1000);
+  assert.equal(serbest.share, 77);
+  assert.ok(o.byStroke.some(x => x.stroke.key === 'fly'));
+});
+
+test('SWOLF havuz uzunluğuna göre hesaplanır', () => {
+  const rows = [{ reps: 8, distance: 100, stroke: 'free', kind: 'work', seconds: 95, strokeCount: 76 }];
+  // 25 m havuz: 100 m = 4 uzunluk -> 95/4 + 76/4 = 42.75 -> 43
+  assert.equal(summarizeSets(rows, 'swim', { poolLength: 25 }).avgSwolf, 43);
+  // 50 m havuzda uzunluk sayısı yarıya iner, SWOLF iki katına çıkar.
+  assert.equal(summarizeSets(rows, 'swim', { poolLength: 50 }).avgSwolf, 86);
+  // Kulaç girilmemişse hesaplanmıyor; uydurma bir sayı üretmiyor.
+  assert.equal(summarizeSets([{ reps: 8, distance: 100, kind: 'work', seconds: 95 }], 'swim').avgSwolf, null);
+});
+
+test('kelebek ağırlıklı seans MET çarpanını yükseltir', () => {
+  const serbest = summarizeSets([{ reps: 10, distance: 100, stroke: 'free', kind: 'work', seconds: 95 }], 'swim');
+  const kelebek = summarizeSets([{ reps: 10, distance: 100, stroke: 'fly', kind: 'work', seconds: 95 }], 'swim');
+  assert.ok(kelebek.metMultiplier > serbest.metMultiplier);
+});
+
+test('interval defteri km başına tempo verir', () => {
+  const o = summarizeSets([{ reps: 6, distance: 400, kind: 'work', seconds: 85, restSeconds: 90 }], 'interval');
+  // 85 sn / 400 m -> 212.5 sn/km
+  assert.ok(Math.abs(o.avgPace - 212.5) < 1);
+  assert.equal(o.byStroke.length, 0);
+});
+
+test('boş defter kayıt üretmez', () => {
+  assert.equal(entryFromSets([], 'swim'), null);
+  assert.equal(summarizeSets([{ reps: 1, distance: 0, seconds: 0 }], 'swim').hasData, false);
+});
+
+/* --- Elle maksimum nabız --- */
+
+test('elle girilen maksimum nabız tahmini ezer', () => {
+  assert.deepEqual(resolveMaxHr({ age: 30, maxHrManual: 196 }), { bpm: 196, source: 'manual' });
+  assert.equal(resolveMaxHr({ age: 30 }).source, 'estimate');
+  // Sınır dışı değerler yok sayılıyor: 400 gibi bir yazım hatası bütün
+  // bölgeleri anlamsız yapardı.
+  assert.equal(resolveMaxHr({ age: 30, maxHrManual: 400 }).source, 'estimate');
+  assert.equal(resolveMaxHr({ age: 30, maxHrManual: 50 }).source, 'estimate');
+  assert.equal(resolveMaxHr({}).bpm, null);
+});
+
+test('elle maksimum bölge sınırlarını kaydırır', () => {
+  const tahmin = zoneRange('z2', { age: 30 });
+  const elle = zoneRange('z2', { age: 30, maxHrManual: 196 });
+  assert.ok(elle.min > tahmin.min && elle.max > tahmin.max);
+  // Karvonen ile birlikte de çalışmalı.
+  const karvonen = zoneRange('z2', { age: 30, maxHrManual: 196, restingHr: 55, method: 'hrr' });
+  assert.ok(karvonen.min > elle.min);
+});
+
+/* --- Dinlenme nabzı takibi --- */
+
+const rhrGun = (offset, bpm) => {
+  const d = new Date('2026-08-16T12:00:00');
+  d.setDate(d.getDate() - offset);
+  return { date: d.toISOString().slice(0, 10), bpm };
+};
+
+test('taban çizgisi için yeterli ölçüm gerekiyor', () => {
+  const r = buildRestingHrReport([rhrGun(0, 60), rhrGun(1, 58)], { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.hasData, true);
+  assert.equal(r.baseline, null);
+  assert.equal(restingHrCoachItem(r), null);
+});
+
+test('sürdürülen yükseklik uyarı üretir', () => {
+  const log = [];
+  for (let i = 3; i < 15; i += 1) log.push(rhrGun(i, 55));
+  log.push(rhrGun(2, 62), rhrGun(1, 63), rhrGun(0, 64));
+  const r = buildRestingHrReport(log, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.status, 'sustainedHigh');
+  assert.ok(r.streak >= 3);
+  assert.match(restingHrCoachItem(r).title, /yüksek/);
+});
+
+test('tabanın altına inen nabız fırsat olarak bildirilir', () => {
+  const log = [];
+  for (let i = 1; i < 15; i += 1) log.push(rhrGun(i, 60));
+  log.push(rhrGun(0, 52));
+  const r = buildRestingHrReport(log, { today: new Date('2026-08-16T12:00:00') });
+  assert.equal(r.status, 'low');
+  assert.match(restingHrCoachItem(r).title, /tabanın altında/);
+});
+
+test('taban son ölçümü dışarıda bırakır', () => {
+  const log = [];
+  for (let i = 1; i < 10; i += 1) log.push(rhrGun(i, 60));
+  log.push(rhrGun(0, 90));
+  const r = buildRestingHrReport(log, { today: new Date('2026-08-16T12:00:00') });
+  // Taban 60 olmalı; son ölçüm dahil edilseydi 63 çıkardı ve sapma küçülürdü.
+  assert.equal(r.baseline, 60);
+  assert.equal(r.delta, 30);
+});
+
+test('aynı güne ikinci giriş öncekini değiştirir', () => {
+  let log = upsertRestingHr([], '2026-08-16', 58);
+  log = upsertRestingHr(log, '2026-08-16', 61);
+  assert.equal(log.length, 1);
+  assert.equal(log[0].bpm, 61);
+  // Saçma değerler kaydedilmiyor.
+  assert.equal(upsertRestingHr(log, '2026-08-15', 5).length, 1);
+});
+
+/* --- Kardiyo rekorları --- */
+
+test('set defterinden mesafe rekorları çıkar', () => {
+  const w = [{
+    date: '2026-08-10',
+    cardio: [{ type: 'swim', minutes: 30, sets: [
+      { reps: 4, distance: 100, stroke: 'free', kind: 'work', seconds: 95 },
+      { reps: 1, distance: 400, stroke: 'free', kind: 'work', seconds: 380 },
+    ] }],
+  }];
+  const r = buildCardioRecords(w);
+  const yuz = r.records.find(x => x.distance === 100);
+  assert.ok(yuz);
+  assert.equal(yuz.seconds, 95);
+  assert.ok(r.records.some(x => x.distance === 400));
+});
+
+test('daha hızlı süre rekoru geçer', () => {
+  const seans = (date, saniye) => ({
+    date, cardio: [{ type: 'swim', minutes: 20, sets: [{ reps: 1, distance: 100, stroke: 'free', kind: 'work', seconds: saniye }] }],
+  });
+  const r = buildCardioRecords([seans('2026-08-01', 95), seans('2026-08-10', 88)]);
+  assert.equal(r.records.find(x => x.distance === 100).seconds, 88);
+});
+
+test('tam eşleşmeyen mesafe rekor sayılmaz', () => {
+  const w = [{ date: '2026-08-10', cardio: [{ type: 'swim', minutes: 25, distanceKm: 1.2 }] }];
+  assert.equal(buildCardioRecords(w).hasData, false);
+  // Tam eşleşen mesafe sayılıyor.
+  const tam = [{ date: '2026-08-10', cardio: [{ type: 'swim', minutes: 25, distanceKm: 1.5 }] }];
+  assert.ok(buildCardioRecords(tam).records.some(x => x.distance === 1500));
+});
+
+test('ısınma setleri rekor üretmez', () => {
+  const w = [{
+    date: '2026-08-10',
+    cardio: [{ type: 'swim', minutes: 20, sets: [{ reps: 1, distance: 100, stroke: 'free', kind: 'warmup', seconds: 80 }] }],
+  }];
+  assert.equal(buildCardioRecords(w).hasData, false);
 });
 
 

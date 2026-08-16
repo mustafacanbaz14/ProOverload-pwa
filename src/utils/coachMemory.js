@@ -104,6 +104,13 @@ export const CONFLICT_RULES = [
     reason: 'Hazır oluşluk üst üste düşük; bugün maksimal deneme ya da hacim artışı işe yaramaz.',
   },
   {
+    // Dinlenme nabzı sürdürülen biçimde yüksekken hacim artışı ve rekor
+    // denemesi, ölçülen bir toparlanma açığının üstüne yük koymak olur.
+    winner: 'resting-hr',
+    losers: ['pr-watch', 'volume-low', 'mesocycle', 'cardio-todo'],
+    reason: 'Dinlenme nabzı tabanın üstünde; ölçülen toparlanma açığının üstüne hacim eklemek yanlış bahis.',
+  },
+  {
     winner: 'sleep',
     losers: ['pr-watch'],
     reason: 'Uyku puanı düşükken maksimal güç ölçülebilir biçimde geriliyor.',

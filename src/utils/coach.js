@@ -58,7 +58,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     projectionItem = null, prItem = null, rirItem = null, orderItem = null,
     cardioItem = null,
     standardsItem = null, effortItem = null, rotationItem = null,
-    ratioItem = null, returnItem = null, periItem = null,
+    ratioItem = null, returnItem = null, periItem = null, restingHrItem = null,
   } = ctx;
 
   const items = [];
@@ -94,6 +94,18 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'readiness-low', priority: 1, tone: TONES.warn, action: 'workout',
       title: 'Üst üste düşük hazır oluşluk',
       detail: `Son üç seansın ortalaması ${readiness.ortalama}/100. Hacim tavanı aşılmasa bile toparlanamıyorsun — bu hafta set sayısını %30 düşür, ağırlığı koru.`,
+    });
+  }
+
+  // Dinlenme nabzı 1. öncelik: ölçülen (bildirilen değil) bir toparlanma
+  // sinyali ve sürdürülen yükseklik bugünün kararını değiştiriyor.
+  if (restingHrItem) {
+    ekle({
+      key: 'resting-hr', priority: 1,
+      tone: restingHrItem.key === 'resting-hr' && /yüksek/.test(restingHrItem.title) ? TONES.warn : TONES.good,
+      action: 'cardio',
+      title: restingHrItem.title,
+      detail: restingHrItem.detail,
     });
   }
 

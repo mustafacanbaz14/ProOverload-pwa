@@ -77,6 +77,14 @@ export const DEFAULT_SETTINGS = {
   // Karvonen dinlenme nabzı ister; yoksa sessizce 'max' kullanılır.
   zoneMethod: 'max',
   restingHr: '',
+  // Elle girilen maksimum nabız. Doluysa Tanaka tahmininin yerine geçiyor:
+  // formül bir popülasyon ortalaması, saha testi kişinin kendi değeri.
+  maxHrManual: '',
+  // Havuz uzunluğu (m). SWOLF bir havuz uzunluğu için tanımlı.
+  poolLength: '25',
+  // Sabah dinlenme nabzı günlüğü: [{ date, bpm }]. Tek bir ayar değeri
+  // yerine seri tutuluyor çünkü asıl bilgi tabandan sapmada.
+  restingHrLog: [],
   // Aktivite başına seans hedefi: { swim: { sets, setDistance, minutes, ... } }.
   // Hedef koymak zorunlu değil; kardiyo kaydı ve kalori hesabı hedefsiz çalışır.
   activityTargets: {},
@@ -634,13 +642,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.5';
+export const APP_VERSION = '6.6';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.5',
+  title: 'ProOverload 6.6',
   date: '2026-08-16',
   items: [
+    {
+      title: 'Yüzme Set Defteri',
+      desc: 'Kardiyo kaydı tek satırdı: aktivite, süre, tempo. Yürüyüş için yeterli ama "45 dakika yüzme" cümlesi 8 x 100 m serbest ile 1500 m düz yüzmeyi aynı kefeye koyuyor. Artık set defteri var: her satırda tekrar, mesafe, stil ve süre. Sekiz stil seçilebiliyor — serbest, sırtüstü, kurbağalama, kelebek, karışık, teknik, ayak, kol — ve her birinin kendi MET çarpanı var; kelebek ağırlıklı bir seans aynı süredeki teknik çalışmasından belirgin daha pahalı. Satır başına tekrar tutuluyor: sekiz ayrı satır açmak hem yazmayı hem okumayı zorlaştırıyordu. Defter doldurulduğunda süre ve mesafe ORADAN çıkıyor, elle yazılmıyor — iki sayının sessizce ayrışmasına açık kapı bırakmamak için.'
+    },
+    {
+      title: 'SWOLF ve Stil Dağılımı',
+      desc: 'Kulaç sayısı girilirse SWOLF hesaplanıyor: bir havuz uzunluğunun süresi ile o uzunlukta atılan kulaç sayısının toplamı. Yüzmede verimliliğin standart ölçüsü — aynı tempoyu daha az kulaçla tutmak teknik gelişimi gösteriyor. Havuz uzunluğu (25 / 50 m) seçilebiliyor çünkü SWOLF bir uzunluk için tanımlı; ilk yazımda set mesafesi üzerinden hesaplanıyordu ve 100 m lik bir sette 133 gibi anlamsız bir sayı üretiyordu. Seans özetinde stil dağılımı da çıkıyor: hangi stilde kaç metre ve toplamın yüzde kaçı.'
+    },
+    {
+      title: 'İnterval ve Kürek Set Defteri',
+      desc: 'Aynı defter koşu intervalinde, kürekte ve bisiklette de açılıyor. Yüzmede "stil" ne ise burada "tip" o: ana set, ısınma, soğuma, toparlanma. Ayrım tempoyu doğru hesaplamak için şart — ısınma ve soğuma ortalamaya katılırsa her seansta tempo olduğundan yavaş görünüyor ve gelişim takibi bozuluyor.'
+    },
+    {
+      title: 'Elle Maksimum Nabız',
+      desc: 'Bölge sınırları Tanaka formülünden hesaplanıyordu ve o bir POPÜLASYON ortalaması; kişiler arası sapma 10-12 atım. Saha testiyle kendi maksimumunu bilen biri için tahmini dayatmak bütün bölgeleri sistematik olarak kaydırıyordu. Artık elle girilebiliyor ve girilen değer her zaman kazanıyor; hangi kaynağın kullanıldığı ekranda yazıyor. 120-230 dışındaki değerler kabul edilmiyor — 400 gibi bir yazım hatası bütün bölgeleri anlamsız yapardı. Ölçme yöntemi de anlatılıyor: iyi ısındıktan sonra 3-5 dakika tam çabayla çıkış ve o sırada görülen tepe nabız.'
+    },
+    {
+      title: 'Sabah Dinlenme Nabzı Takibi',
+      desc: 'Dinlenme nabzı tek bir ayar değeriydi ve yalnızca Karvonen hesabında kullanılıyordu. Asıl değeri zaman içindeki değişiminde: sabah nabzının kendi tabanının üstüne çıkması, toparlanma borcunun en erken göstergelerinden biri. Uygulamanın diğer toparlanma sinyalleri (uyku, hazır oluşluk, ACWR) hep bildirilen ya da türetilen verilerdi; bu ÖLÇÜLEN bir sayı. Taban 28 günün ortalaması ve son ölçümü dışarıda bırakıyor — bugünün değerini kendi ortalamasının içine katmak sapmayı küçültürdü. Tek bir yüksek gün yorumlanmıyor; koç ancak üst üste üç gün yüksekse konuşuyor.'
+    },
+    {
+      title: 'Kardiyo Rekorları',
+      desc: 'Ağırlık tarafında rekorlar hem izleniyor hem kutlanıyordu; kardiyoda hiçbir karşılığı yoktu. Artık mesafe başına en iyi süreler tutuluyor: yüzmede 50-1500 m, koşuda 400 m-10 km, kürekte 500-5000 m, bisiklette 5-40 km. İki kaynaktan okunuyor — set defteri satırları ve tek satırlık kayıtlar. Rekor yalnızca TAM eşleşen mesafede sayılıyor; 1200 m lik bir yüzmeden 1000 m rekoru türetmek tempoyu sabit varsaymak olurdu ve o varsayım çoğu zaman yanlış.'
+    },
+    {
+      title: 'Stil Bazlı Tempo Eğilimi',
+      desc: 'Tempo karşılaştırması yalnızca aynı stil ve aynı set tipi içinde yapılıyor. Kelebek temposunu serbest temposuyla kıyaslamak gerileme gibi görünürdü; ısınma setini ana setle kıyaslamak da öyle.'
+    },
     {
       title: 'Kuvvet Standartları',
       desc: 'Uygulama kuvveti hep kendi geçmişine göre ölçüyordu: 1RM eğilimi, rekorlar, kuvvet dengesi. Doğru ama eksik bir çerçeve — "bench 100 kg" cümlesinin ne anlama geldiğini söylemiyor. 60 kiloluk biri için olağanüstü olan sayı, 110 kiloluk biri için başlangıç. Artık altı ana harekette vücut ağırlığının katı olarak nerede durduğun gösteriliyor: yeni başlayan, acemi, orta, ileri, elit. Kadın ve erkek için ayrı tablolar var; tek tablo kullanmak kadınlarda her hareketi olduğundan kötü gösteriyordu. Sonuç bir not değil bir konum — hangi bandın içindesin ve bir sonrakine kaç kilo kaldı.'

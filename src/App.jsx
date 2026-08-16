@@ -22,6 +22,8 @@ import { buildPrWatch, prWatchCoachItem } from './utils/prWatch';
 import { buildRirCalibration, rirCoachItem } from './utils/rirCalibration';
 import { auditSessionQuality, sessionQualityCoachItem } from './utils/sessionQuality';
 import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from './utils/cardioGoals';
+import { buildRestingHrReport, upsertRestingHr, restingHrCoachItem } from './utils/restingHrLog';
+import { buildCardioRecords } from './utils/cardioRecords';
 import { bodyweightBasisFor, describeSetLoad } from './utils/bodyweight';
 import { buildStrengthStandards, strengthStandardCoachItem } from './utils/strengthStandards';
 import { buildEffortDistribution, effortCoachItem } from './utils/effortDistribution';
@@ -2571,14 +2573,47 @@ export default function App() {
   // tahmin ediliyor.
   const profileAge = parseNumber(currentMetricsForm?.age) || null;
 
+  // Bölge hesabının bütün girdileri tek nesnede: yöntem, dinlenme nabzı ve
+  // elle girilen maksimum. Ayrı ayrı geçirilirken bir çağrı eksik kalıyor ve
+  // aynı kayıt iki ekranda farklı bölge gösterebiliyordu.
+  const zoneOpts = useMemo(() => ({
+    age: profileAge,
+    restingHr: settings.restingHr,
+    method: settings.zoneMethod,
+    maxHrManual: settings.maxHrManual,
+  }), [profileAge, settings.restingHr, settings.zoneMethod, settings.maxHrManual]);
+
   const cardioReport = useMemo(
     () => buildCardioReport(sortedWorkouts, settings.cardioGoal, {
-      age: profileAge,
-      restingHr: settings.restingHr,
-      method: settings.zoneMethod,
+      ...zoneOpts,
       planResult: weekPlanResult,
     }),
-    [sortedWorkouts, settings.cardioGoal, profileAge, settings.restingHr, settings.zoneMethod, weekPlanResult]);
+    [sortedWorkouts, settings.cardioGoal, zoneOpts, weekPlanResult]);
+
+  const restingHrReport = useMemo(
+    () => buildRestingHrReport(settings.restingHrLog),
+    [settings.restingHrLog]);
+
+  const cardioRecords = useMemo(
+    () => buildCardioRecords(sortedWorkouts, { poolLength: Number(settings.poolLength) || 25 }),
+    [sortedWorkouts, settings.poolLength]);
+
+  /**
+   * Sabah dinlenme nabzı kaydı.
+   *
+   * Karvonen hesabındaki tek değer de güncelleniyor: kullanıcı iki ayrı yerde
+   * aynı sayıyı girmek zorunda kalmasın.
+   */
+  const handleLogRestingHr = useCallback((bpm, date = getLocalDateString()) => {
+    const deger = parseNumber(bpm);
+    if (!(deger > 0)) return;
+    setSettings(prev => ({
+      ...prev,
+      restingHrLog: upsertRestingHr(prev.restingHrLog, date, deger),
+      restingHr: String(Math.round(deger)),
+    }));
+    showToast('Dinlenme nabzı kaydedildi.');
+  }, [setSettings, showToast]);
 
   const cardioSuggestion = useMemo(
     () => cardioSuggestionForToday(cardioReport, {
@@ -2669,6 +2704,7 @@ export default function App() {
       rirItem: rirCoachItem(rirCalibration),
       orderItem: sessionQualityCoachItem(lastSessionQuality),
       cardioItem: cardioCoachItem(cardioReport, cardioSuggestion),
+      restingHrItem: restingHrCoachItem(restingHrReport),
       standardsItem: strengthStandardCoachItem(strengthStandards),
       effortItem: effortCoachItem(effortDistribution),
       rotationItem: rotationCoachItem(rotationReport),
@@ -2687,7 +2723,7 @@ export default function App() {
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
-    cardioReport, cardioSuggestion,
+    cardioReport, cardioSuggestion, restingHrReport,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
@@ -2885,6 +2921,11 @@ export default function App() {
                       age={profileAge}
                       restingHr={settings.restingHr}
                       zoneMethod={settings.zoneMethod}
+                      maxHrManual={settings.maxHrManual}
+                      restingHrReport={restingHrReport}
+                      onLogRestingHr={handleLogRestingHr}
+                      cardioRecords={cardioRecords}
+                      poolLength={settings.poolLength}
                       onChangeZoneSettings={(patch) => setSettings(prev => ({ ...prev, ...patch }))}
                       activityTargets={settings.activityTargets}
                       onChangeActivityTargets={(next) => setSettings(prev => ({ ...prev, activityTargets: next }))}
@@ -3551,6 +3592,9 @@ export default function App() {
           onDelete={handleDeleteCardio}
           weightKg={latestWeight}
           age={profileAge}
+          zoneOpts={zoneOpts}
+          poolLength={settings.poolLength}
+          onChangePool={(v) => setSettings(prev => ({ ...prev, poolLength: v }))}
           // Tek bir kaydı düzenlerken liste gizlenir; onun dışında (bugün ya da
           // geçmiş bir gün) o güne eklenenler görünür kalır, çünkü aynı güne
           // arka arkaya birkaç aktivite eklenebiliyor.
