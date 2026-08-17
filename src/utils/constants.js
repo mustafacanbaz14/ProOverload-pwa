@@ -644,13 +644,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.7';
+export const APP_VERSION = '6.8';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.7',
-  date: '2026-08-16',
+  title: 'ProOverload 6.8',
+  date: '2026-08-17',
   items: [
+    {
+      title: 'Şablonda Süperset Artık Bozulmuyor',
+      desc: 'Gerçek bir hataydı: süperset bağı şablon düzenleyicide "bir sonrakiyle birlikte" bayrağı olarak tutuluyordu ama şablonun kendisi paylaşılan bir kimlik bekliyordu ve kaydetme adımı bu alanı tümden düşürüyordu. Sonuç olarak var olan bir şablonu düzenleyip kaydetmek bütün süpersetleri sessizce siliyor, düzenleme kipinde yeni süperset kurmak da hiç işe yaramıyordu. Artık dönüşüm iki yönlü çalışıyor: şablonu düzenlemeye açarken bağlar geri okunuyor, kaydederken gerçek kimliğe çevriliyor. Zincirleme bağlar (üç hareket arka arkaya) tek grup oluyor. Hareket taşındığında bağ koparılıyor — bağ komşuluk demek, hareket eski eşinden ayrıldığında bağın anlamı kalmıyor.'
+    },
+    {
+      title: 'Hareket Birleştirme ve Geçmiş Aktarma',
+      desc: 'Uygulamanın erken sürümlerinde kütüphanede olmayan bir hareketi elle eklediysen ve o hareket sonradan kütüphaneye girdiyse, ortada aynı işi anlatan iki ad kalıyordu: rekorlar ikiye bölünüyor, hacim eğrisi kopuk görünüyor, listede iki kopya duruyordu. Artık birleştirilebiliyorlar. Hangi adın kalacağını sen seçiyorsun ve birleştirme ONAYDAN ÖNCE ne olacağını gösteriyor: kaç seans, kaç set, hangi şablonlar, kaç kuvvet hedefi. Ad sekiz ayrı yerde geçiyor (geçmiş, devam eden seans, şablonlar, hareket tanımları, görünürlük listeleri, kuvvet hedefleri, tekrar aralıkları, ağrı günlüğü) ve hepsi birden güncelleniyor — biri atlanırsa birleştirdiğin hareketi bir yerlerde hâlâ ayrı görürsün, bu da hiç birleştirmemekten kötüdür. İşlem geri alınabilir. Aynı adın iki yazımı otomatik bulunuyor; adları gerçekten farklı olanları elle seçiyorsun, çünkü benzer adlar bazen gerçekten farklı hareketlerdir ve birleştirme geçmişi değiştirir.'
+    },
+    {
+      title: 'Hareket Değiştirme Dört Yerde',
+      desc: 'Beğenmediğin bir hareketi çıkarıp yenisini eklemek sırayı, set sayısını ve süperset bağını bozuyordu. Artık YERİNDE değiştiriliyor: hazır programı kurmadan önce ("Değiştirerek kur" ile programı taslak olarak açıp düzenleyebiliyorsun), şablon önizlemesinde tek dokunuşla, canlı seans sırasında ve şablon düzenleyicide. Her dört yerde de aynı kası çalıştıran alternatifler kas katkı profiline göre en üstte öneriliyor — kütüphanede iki yüzden fazla hareket var ve "aynı işi gören başka ne var" sorusunu elle aratmak, değiştirme özelliğini pratikte kullanılmaz yapıyordu. Şablonda değiştirirken setlerin ağırlık ve tekrar değerleri sıfırlanıyor: başka bir hareketin yükünü yeni harekete taşımak yanlış bir başlangıç değeri önermek olurdu.'
+    },
+    {
+      title: 'En Üste ve En Alta Taşıma',
+      desc: 'Hareket sıralaması yalnızca tek adım yukarı ve aşağı yapılabiliyordu; sekiz hareketlik bir günde son hareketi başa almak yedi dokunuş demekti. Artık iki ayrı düğme var. Uzun basış yerine ayrı düğme tercih edildi çünkü dokunmatikte uzun basış keşfedilmiyor.'
+    },
+    {
+      title: 'Günler Arası Hareket Taşıma',
+      desc: 'Program yazarken en sık yapılan düzeltme "bu hareket yanlış günde" oluyordu ve tek yolu silip öbür günde yeniden eklemekti; set sayısı da kayboluyordu. Artık hareket doğrudan başka güne taşınabiliyor ya da kopyalanabiliyor — kopyalama ayrı bir kip, çünkü aynı bileşke hareketi iki güne koymak meşru bir tercih. Hedef günde aynı hareket zaten varsa işlem yapılmıyor: aynı günde iki kez aynı hareket, hacim hesabında sessizce iki kat sayılırdı.'
+    },
+    {
+      title: 'Program Yazarken Haftalık Hacim',
+      desc: 'Şablon oluşturucu yalnızca AÇIK OLAN GÜNÜN hacmini gösteriyordu. Oysa MEV/MAV/MRV kararları haftalık: gün gün bakarak program yazan biri, her günü makul görünen ama haftalık toplamı koruma eşiğinin altında kalan bir program üretebiliyordu. Artık bütün günlerin toplamı anlık görünüyor; koruma eşiğinin altındaki ve tavanın üstündeki kaslar ayrıca yazılıyor. Gösterilen değer ÜST SINIR: şablonda henüz RIR yok, bütün setler etkili varsayılıyor.'
+    },
+    {
+      title: 'Program Taslağında Hareket Seçimi Denetimi',
+      desc: 'Aynı 16 set iki farklı hareket seçimiyle çok farklı sonuç verir: tek bir hareketten gelen 16 set ya da kasın hiç gerilmediği 16 set, hacim tablosunda kusursuz görünürken uyaranın bir kısmını harcar. Seçim denetimi şimdiye kadar yalnızca kurulmuş programa bakıyordu; artık taslak yazılırken de çalışıyor. Üç şeye bakıyor: hacmin tamamı tepe kasılma hareketlerinden mi geliyor, tek harekete mi bağımlı, yoksa kas hiçbir harekette hedef değil de yalnızca yan katkı olarak mı sayılıyor.'
+    },
     {
       title: 'Ağrı Koruması',
       desc: 'Ağrı günlüğü 6.1 den beri var ama hareket listesiyle hiçbir bağlantısı yoktu: omzun iki haftadır ağrırken uygulama bench press satırını hiçbir şey olmamış gibi açıyordu. Artık sekiz vücut bölgesi hareket adlarıyla eşleşiyor ve yalnızca SÜRÜYOR ya da ŞİDDETLİ işaretlenmiş ağrılar sete girmeden hemen önce uyarı veriyor: hangi bölge, bu hareket o bölgeyi neden yüklüyor ve aynı kası çalıştırmaya devam eden daha az zorlayıcı seçenekler. Hareket ENGELLENMİYOR — karar senin, uygulamanın işi kararı görünür kılmak. Eşik bilerek yüksek tutuldu: her küçük sızıda uyarı çıkarsa uyarılar okunmaz olur.'

@@ -1,13 +1,16 @@
-import React, { useState, memo } from 'react';
-import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, Flame, Copy, RefreshCw, Link2 } from 'lucide-react';
+import React, { useState, useMemo, memo } from 'react';
+import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Flame, Copy, RefreshCw, Link2, MoveRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { generateId } from '../utils/helpers';
+import { suggestSubstitutes } from '../utils/substitution';
 import { estimateLiftingCalories } from '../utils/cardio';
 import { WEEKDAYS } from '../utils/weekPlan';
 import {
   addExercisesToDraftDay, duplicateDraftDay, nextUnusedWeekday,
   replaceDraftExercise, suggestedWeekdays, toggleDraftSuperset,
+  draftFlagsFromSupersetIds, moveDraftExerciseToEdge, moveDraftExerciseToDay,
+  draftWeeklyVolume,
 } from '../utils/programDraft';
 import ExerciseLibraryModal from './ExerciseLibraryModal';
 import PlanningGuide from './PlanningGuide';
@@ -45,12 +48,15 @@ const TemplateBuilderModal = memo(({
       uid: generateId(),
       name: editing.name,
       weekday: 'mon',
-      exercises: (editing.exercises || []).map(ex => ({
+      // Süperset bağları şablondan GERİ OKUNUYOR. Bu yapılmadığı sürece var
+      // olan bir şablonu düzenlemeye açmak bağları sessizce düşürüyordu.
+      exercises: (editing.exercises || []).map((ex, i, liste) => ({
         // Aynı hareket bir güne iki kez eklenebiliyor; listeyi index yerine
         // kalıcı bir kimlikle keylemek silme sonrası karışmayı önler.
         uid: generateId(),
         name: ex.name,
         sets: Math.max(1, (ex.sets || []).length),
+        superset: draftFlagsFromSupersetIds(liste)[i],
       })),
     }]
     : initialDraft?.days?.length
@@ -69,6 +75,25 @@ const TemplateBuilderModal = memo(({
   const [defaultSets, setDefaultSets] = useState(3);
   const [createWeekPlan, setCreateWeekPlan] = useState(!editing);
   const [removeArmed, setRemoveArmed] = useState(false);
+  // Açık olan "başka güne taşı" menüsünün hareketi.
+  const [moveTarget, setMoveTarget] = useState(null);
+
+  // Haftalık toplam: gün gün bakarak program yazan biri, her günü makul görünen
+  // ama haftalık toplamı MEV altında kalan bir program üretebiliyordu. Hook
+  // erken dönüşün üstünde duruyor — çağrı sırası her render'da aynı olmalı.
+  const weekly = useMemo(
+    () => draftWeeklyVolume(days, { customExercises, experienceLevel }),
+    [days, customExercises, experienceLevel]);
+
+  // Değiştirme kipinde alternatifler: aynı katkı profiline en yakın hareketler.
+  const replaceSuggestions = useMemo(() => {
+    if (pickerMode?.type !== 'replace') return [];
+    const hedef = (days[activeDay]?.exercises || []).find(ex => ex.uid === pickerMode.uid);
+    if (!hedef) return [];
+    return suggestSubstitutes(hedef.name, libraryProps.allExerciseNames || [], {
+      customExercises, limit: 6,
+    }).map(o => ({ name: o.name, reason: `%${Math.round(o.similarity * 100)} örtüşme · ${o.equipment?.label || ''}` }));
+  }, [pickerMode, days, activeDay, libraryProps.allExerciseNames, customExercises]);
 
   if (!isOpen) return null;
 
@@ -95,6 +120,13 @@ const TemplateBuilderModal = memo(({
     const list = [...day.exercises];
     [list[index], list[to]] = [list[to], list[index]];
     updateDay({ exercises: list });
+  };
+  const moveToEdge = (uid, edge) => updateDay(moveDraftExerciseToEdge(day, uid, edge));
+  const moveToDay = (uid, toIndex, copy) => {
+    const next = moveDraftExerciseToDay(days, activeDay, uid, toIndex, { copy, generateId });
+    if (next === days) return;
+    setDays(next);
+    setMoveTarget(null);
   };
   const setExerciseSets = (uid, n) => updateDay({
     exercises: day.exercises.map(ex => ex.uid === uid ? { ...ex, sets: Math.max(1, Math.min(12, n)) } : ex)
@@ -253,6 +285,77 @@ const TemplateBuilderModal = memo(({
           </div>
         </div>
 
+        {/* Haftalık hacim. Şablon oluşturucu şimdiye kadar yalnızca AÇIK OLAN
+            GÜNÜN hacmini gösteriyordu; oysa MEV/MAV/MRV kararları haftalık.
+            Gösterilen değer ÜST SINIR: şablonda RIR yok, bütün setler etkili
+            varsayılıyor. */}
+        {!editing && weekly.hasData && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+            <div className="px-3 py-2 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
+              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+                Haftalık Toplam
+              </span>
+              <span className="text-[9px] font-mono text-zinc-500">
+                {weekly.totalSets} set · {days.filter(d => d.exercises.length > 0).length} gün
+              </span>
+            </div>
+
+            <div className="px-3 py-2 flex flex-wrap gap-1.5">
+              {weekly.statuses.slice(0, 10).map(st => (
+                <span
+                  key={st.muscle}
+                  title={`${st.muscle}: ${st.volume} set (MEV ${st.mev} · MAV ${st.mav} · MRV ${st.mrv})`}
+                  className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                    st.status === 'below' ? 'border-amber-900/60 bg-amber-950/20 text-amber-300'
+                      : st.status === 'over' ? 'border-red-900/60 bg-red-950/20 text-red-300'
+                        : st.status === 'high' ? 'border-cyan-900/60 bg-cyan-950/20 text-cyan-300'
+                          : 'border-emerald-900/60 bg-emerald-950/20 text-emerald-300'}`}
+                >
+                  {st.muscle} {st.volume}
+                </span>
+              ))}
+            </div>
+
+            {(weekly.below.length > 0 || weekly.over.length > 0) ? (
+              <div className="px-3 pb-2 space-y-1">
+                {weekly.below.length > 0 && (
+                  <p className="text-[9px] font-mono text-amber-300/80 leading-relaxed">
+                    <AlertTriangle size={9} className="inline mr-1" />
+                    Koruma eşiğinin altında: {weekly.below.map(s => `${s.muscle} ${s.volume}/${s.mev}`).join(' · ')}
+                  </p>
+                )}
+                {weekly.over.length > 0 && (
+                  <p className="text-[9px] font-mono text-red-300/80 leading-relaxed">
+                    <AlertTriangle size={9} className="inline mr-1" />
+                    Tavanın üstünde: {weekly.over.map(s => `${s.muscle} ${s.volume}/${s.mrv}`).join(' · ')}
+                  </p>
+                )}
+              </div>
+            ) : (
+              <p className="px-3 pb-2 text-[9px] font-mono text-emerald-300/70">
+                <CheckCircle2 size={9} className="inline mr-1" />
+                Bütün kaslar koruma eşiği ile tavan arasında.
+              </p>
+            )}
+
+            {/* Seçim denetimi: hacim doğru olduğunda bile geçerli bulgular.
+                Aynı 16 set iki farklı hareket seçimiyle farklı sonuç verir. */}
+            {weekly.audit.findings.length > 0 && (
+              <div className="px-3 py-2 border-t border-zinc-800 bg-zinc-950/40 space-y-1.5">
+                <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block">
+                  Hareket seçimi
+                </span>
+                {weekly.audit.findings.slice(0, 3).map(f => (
+                  <div key={`${f.muscle}-${f.issues[0]?.key}`} className="text-[9px] font-mono leading-relaxed">
+                    <strong className="text-zinc-300">{f.muscle}:</strong>{' '}
+                    <span className="text-zinc-500">{f.issues[0]?.detail}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <TemplateAssistantCard
           exercises={dayExercises}
           customExercises={customExercises}
@@ -284,6 +387,18 @@ const TemplateBuilderModal = memo(({
                   >
                     <RefreshCw size={13} />
                   </button>
+                  {/* Tek tek taşımak sekiz hareketlik bir günde yedi dokunuş
+                      demekti; uzun basış yerine ayrı düğme, çünkü uzun basış
+                      dokunmatikte keşfedilmiyor. */}
+                  <button
+                    onClick={() => moveToEdge(ex.uid, 'top')}
+                    disabled={exIndex === 0}
+                    title="En üste taşı"
+                    aria-label="Hareketi en üste taşı"
+                    className="text-zinc-600 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
+                  >
+                    <ChevronsUp size={13} />
+                  </button>
                   <button
                     onClick={() => moveExercise(exIndex, -1)}
                     disabled={exIndex === 0}
@@ -302,6 +417,27 @@ const TemplateBuilderModal = memo(({
                   >
                     <ArrowDown size={13} />
                   </button>
+                  <button
+                    onClick={() => moveToEdge(ex.uid, 'bottom')}
+                    disabled={exIndex === day.exercises.length - 1}
+                    title="En alta taşı"
+                    aria-label="Hareketi en alta taşı"
+                    className="text-zinc-600 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
+                  >
+                    <ChevronsDown size={13} />
+                  </button>
+                  {/* Güne taşıma yalnızca çok günlü programda anlamlı. */}
+                  {!editing && days.length > 1 && (
+                    <button
+                      onClick={() => setMoveTarget(moveTarget === ex.uid ? null : ex.uid)}
+                      title="Başka güne taşı"
+                      aria-label={`${ex.name} hareketini başka güne taşı`}
+                      aria-expanded={moveTarget === ex.uid}
+                      className={`p-1.5 ${moveTarget === ex.uid ? 'text-amber-400' : 'text-zinc-600 active:text-amber-400'}`}
+                    >
+                      <MoveRight size={13} />
+                    </button>
+                  )}
                   {/* Süperset şimdiye kadar yalnızca canlı antrenmanda
                       kurulabiliyordu, yani her seans elle yeniden bağlanıyordu.
                       Şablonda kurulunca seansa aynen taşınıyor. */}
@@ -324,6 +460,36 @@ const TemplateBuilderModal = memo(({
                   </button>
                 </div>
               </div>
+              {moveTarget === ex.uid && (
+                <div className="mb-2 rounded-lg border border-amber-900/50 bg-amber-950/15 p-2 space-y-1.5">
+                  <span className="text-[9px] font-mono text-amber-300/80 block">
+                    Hangi güne? Taşımak bu günden çıkarır, kopyalamak iki günde de bırakır.
+                  </span>
+                  <div className="flex flex-wrap gap-1">
+                    {days.map((hedef, hi) => hi !== activeDay && (
+                      <span key={hedef.uid} className="flex rounded-lg overflow-hidden border border-zinc-800">
+                        <button
+                          onClick={() => moveToDay(ex.uid, hi, false)}
+                          disabled={(hedef.exercises || []).some(x => x.name === ex.name)}
+                          className="bg-zinc-900 px-2 py-1 text-[9px] font-bold text-zinc-300 active:bg-zinc-800 disabled:opacity-30"
+                        >
+                          {hedef.name}
+                        </button>
+                        <button
+                          onClick={() => moveToDay(ex.uid, hi, true)}
+                          disabled={(hedef.exercises || []).some(x => x.name === ex.name)}
+                          title={`${hedef.name} gününe kopyala`}
+                          aria-label={`${hedef.name} gününe kopyala`}
+                          className="bg-zinc-950 px-1.5 py-1 text-zinc-500 active:text-cyan-400 disabled:opacity-30 border-l border-zinc-800"
+                        >
+                          <Copy size={10} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <span className="text-[10px] font-mono text-zinc-500">Set sayısı</span>
                 <div className="flex items-center gap-2">
@@ -429,6 +595,7 @@ const TemplateBuilderModal = memo(({
         onClose={() => { setPickerMode(null); setSelectedExercises(new Set()); }}
         selectMode
         multiSelect={pickerMode?.type === 'add'}
+        suggestions={replaceSuggestions}
         selectedNames={selectedExercises}
         disabledNames={pickerMode?.type === 'add'
           ? new Set(day.exercises.map(ex => ex.name))

@@ -40,6 +40,11 @@ const ExerciseLibraryModal = memo(({
   disabledNames = new Set(),
   onToggleSelect,
   onConfirmSelection,
+  // Değiştirme kipinde en üstte gösterilen alternatifler. Kütüphanede 200'den
+  // fazla hareket var; "aynı işi gören başka ne var" sorusunun cevabını elle
+  // aratmak, değiştirme özelliğini pratikte kullanılmaz yapıyordu.
+  suggestions = [],
+  suggestionsLabel = 'Aynı kası çalıştıran alternatifler',
 }) => {
   const [query, setQuery] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('Tümü');
@@ -100,6 +105,27 @@ const ExerciseLibraryModal = memo(({
             </button>
           ))}
         </div>
+
+        {suggestions.length > 0 && (
+          <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-2 space-y-1.5">
+            <span className="text-[9px] font-mono text-emerald-400/80 uppercase tracking-widest block">
+              {suggestionsLabel}
+            </span>
+            <div className="flex flex-wrap gap-1">
+              {suggestions.map(oneri => (
+                <button
+                  key={oneri.name}
+                  onClick={() => onSelect?.(oneri.name)}
+                  disabled={disabledNames.has(oneri.name)}
+                  title={oneri.reason || undefined}
+                  className="bg-zinc-900 border border-emerald-900/50 text-emerald-300 px-2 py-1 rounded-lg text-[9px] font-bold active:bg-emerald-950/40 disabled:opacity-30"
+                >
+                  {oneri.name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center justify-between gap-2">
           <div className="flex gap-1.5 min-w-0 overflow-x-auto hide-scrollbar">

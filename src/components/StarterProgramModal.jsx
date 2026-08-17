@@ -1,5 +1,5 @@
 import React, { useState, memo } from 'react';
-import { X, Sparkles, CalendarRange, Layers, ChevronDown, Check } from 'lucide-react';
+import { X, Sparkles, CalendarRange, Layers, ChevronDown, Check, Pencil } from 'lucide-react';
 import { STARTER_PROGRAMS } from '../utils/starterPrograms';
 import { WEEKDAYS } from '../utils/weekPlan';
 
@@ -10,7 +10,7 @@ import { WEEKDAYS } from '../utils/weekPlan';
  * gün. Buradan seçilen program şablonlara ve haftalık plana dönüşüyor; sonrası
  * normal şablon, istenildiği gibi düzenleniyor.
  */
-const StarterProgramModal = memo(({ isOpen, onClose, onInstall, existingTemplateCount = 0 }) => {
+const StarterProgramModal = memo(({ isOpen, onClose, onInstall, onCustomize, existingTemplateCount = 0 }) => {
   const [open, setOpen] = useState(null);
 
   if (!isOpen) return null;
@@ -102,6 +102,18 @@ const StarterProgramModal = memo(({ isOpen, onClose, onInstall, existingTemplate
                   >
                     <Check size={15} /> Bu programı kur
                   </button>
+                  {/* Kurmadan önce düzenleme: ekipmanı olmayan ya da bir
+                      hareketi yapamayan kullanıcı önce kurup sonra gün gün
+                      düzeltmek zorundaydı ve çoğu kişi bunu yapmadan programı
+                      eksik uyguluyordu. */}
+                  {onCustomize && (
+                    <button
+                      onClick={() => { onCustomize(p.key); onClose(); }}
+                      className="w-full mt-2 bg-zinc-900 border border-zinc-700 active:bg-zinc-800 text-zinc-300 font-bold py-2.5 rounded-xl uppercase text-[10px] tracking-wider flex items-center justify-center gap-2 transition-colors"
+                    >
+                      <Pencil size={13} /> Değiştirerek kur
+                    </button>
+                  )}
                 </div>
               )}
             </div>

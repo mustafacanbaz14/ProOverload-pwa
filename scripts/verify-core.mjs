@@ -2,6 +2,12 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
+import { findMergeCandidates, previewExerciseMerge, applyExerciseMerge, exerciseFootprint } from '../src/utils/exerciseMerge.js';
+import {
+  draftSupersetIds, draftFlagsFromSupersetIds, moveDraftExerciseToEdge,
+  moveDraftExerciseToDay, draftWeeklyVolume, draftFromStarterProgram,
+} from '../src/utils/programDraft.js';
+import { findStarterProgram } from '../src/utils/starterPrograms.js';
 import { regionsLoadedBy, activePainRegions, painWarningFor, scanSessionForPain } from '../src/utils/painGuard.js';
 import { buildSessionPace, compareSessions, findComparableSessions } from '../src/utils/sessionPace.js';
 import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, templatesForActivity, applyCardioTemplate, describeCardioTemplate } from '../src/utils/cardioTemplates.js';
@@ -3216,6 +3222,221 @@ test('kardiyo CSV her seti ayrı satıra yazıyor', () => {
   // Defteri olmayan kayıt da tek satır olarak çıkıyor.
   const duz = cardioToCsv([{ date: '2026-08-16', cardio: [{ type: 'run', minutes: 40 }] }]).trim().split('\n');
   assert.equal(duz.length, 2);
+});
+
+
+// ---------------------------------------------------------------- 6.8
+
+test('süperset bayrağı kimliğe ve geri çevriliyor', () => {
+  const liste = [
+    { name: 'A', superset: true }, { name: 'B', superset: false },
+    { name: 'C', superset: false },
+  ];
+  const kimlikler = draftSupersetIds(liste, 'g');
+  assert.equal(kimlikler[0], kimlikler[1]);
+  assert.ok(kimlikler[0]);
+  assert.equal(kimlikler[2], null);
+
+  // Ters yön: şablondan taslağa.
+  const sablon = kimlikler.map((id, i) => ({ name: liste[i].name, supersetId: id }));
+  assert.deepEqual(draftFlagsFromSupersetIds(sablon), [true, false, false]);
+});
+
+test('zincirleme süperset tek grup oluyor', () => {
+  const liste = [
+    { name: 'A', superset: true }, { name: 'B', superset: true },
+    { name: 'C', superset: false }, { name: 'D', superset: false },
+  ];
+  const k = draftSupersetIds(liste, 'g');
+  assert.equal(k[0], k[1]);
+  assert.equal(k[1], k[2]);
+  assert.equal(k[3], null);
+});
+
+test('bitişik olmayan aynı kimlik bağ sayılmıyor', () => {
+  // Şablonda araya başka hareket girmişse bağ anlamını yitirmiş demektir.
+  const sablon = [
+    { name: 'A', supersetId: 'x' }, { name: 'B', supersetId: null }, { name: 'C', supersetId: 'x' },
+  ];
+  assert.deepEqual(draftFlagsFromSupersetIds(sablon), [false, false, false]);
+});
+
+test('kenara taşıma süperset bağını koparıyor', () => {
+  const gun = { exercises: [
+    { uid: '1', name: 'A', superset: true }, { uid: '2', name: 'B', superset: false },
+    { uid: '3', name: 'C', superset: false },
+  ] };
+  const ust = moveDraftExerciseToEdge(gun, '3', 'top');
+  assert.deepEqual(ust.exercises.map(e => e.uid), ['3', '1', '2']);
+  // Taşınan hareket bağsız, listenin sonu da bağsız.
+  assert.equal(ust.exercises[0].superset, false);
+  assert.equal(ust.exercises[2].superset, false);
+
+  // A en alta gidince eski eşiyle bağı kalkıyor.
+  const alt = moveDraftExerciseToEdge(gun, '1', 'bottom');
+  assert.deepEqual(alt.exercises.map(e => e.uid), ['2', '3', '1']);
+  assert.ok(alt.exercises.every(e => e.superset === false));
+
+  // Zaten kenardaysa değişiklik yok.
+  assert.equal(moveDraftExerciseToEdge(gun, '1', 'top'), gun);
+});
+
+test('güne taşıma ve kopyalama', () => {
+  const gunler = [
+    { uid: 'd1', name: 'Push', exercises: [{ uid: '1', name: 'Bench', sets: 4 }, { uid: '2', name: 'Fly', sets: 3 }] },
+    { uid: 'd2', name: 'Pull', exercises: [] },
+  ];
+  const tasindi = moveDraftExerciseToDay(gunler, 0, '2', 1, { generateId: () => 'yeni' });
+  assert.equal(tasindi[0].exercises.length, 1);
+  assert.equal(tasindi[1].exercises[0].name, 'Fly');
+  assert.equal(tasindi[1].exercises[0].sets, 3);
+
+  const kopyalandi = moveDraftExerciseToDay(gunler, 0, '2', 1, { copy: true, generateId: () => 'yeni' });
+  assert.equal(kopyalandi[0].exercises.length, 2);
+  assert.equal(kopyalandi[1].exercises.length, 1);
+
+  // Hedefte aynı hareket varsa işlem yapılmıyor: hacimde iki kat sayılırdı.
+  const dolu = [gunler[0], { uid: 'd2', name: 'Pull', exercises: [{ uid: '9', name: 'Fly', sets: 2 }] }];
+  assert.equal(moveDraftExerciseToDay(dolu, 0, '2', 1, { generateId: () => 'x' }), dolu);
+});
+
+test('taslak haftalık hacmi bütün günleri topluyor', () => {
+  const gunler = [
+    { name: 'A', exercises: [{ name: 'Barbell Bench Press', sets: 4 }] },
+    { name: 'B', exercises: [{ name: 'Barbell Bench Press', sets: 4 }] },
+  ];
+  const h = draftWeeklyVolume(gunler);
+  assert.equal(h.totalSets, 8);
+  const gogus = h.statuses.find(s => s.muscle === 'Göğüs');
+  assert.equal(gogus.volume, 8);
+  // Tek günde 4 set MEV'in altında görünürken haftalık toplam 8'e çıkıyor.
+  assert.equal(draftWeeklyVolume([gunler[0]]).statuses.find(s => s.muscle === 'Göğüs').volume, 4);
+  assert.ok(Array.isArray(h.audit.findings));
+});
+
+test('hazır program taslağa çevriliyor', () => {
+  let n = 0;
+  const draft = draftFromStarterProgram(findStarterProgram('fullbody3'), () => `id${++n}`);
+  assert.ok(draft.days.length >= 2);
+  assert.ok(draft.days[0].exercises.length > 0);
+  // Taslak hareketleri bayrak taşıyor ve düzenlenebilir set sayısı sayı.
+  assert.equal(typeof draft.days[0].exercises[0].sets, 'number');
+  assert.equal(draft.days[0].exercises[0].superset, false);
+  assert.equal(draftFromStarterProgram(null, () => 'x'), null);
+});
+
+test('taslaktan şablona süperset kimliği yazılıyor', () => {
+  let n = 0;
+  const { templates } = instantiateDraftProgram('Test', [{
+    uid: 'd1', name: 'Push', weekday: 'mon',
+    exercises: [
+      { uid: '1', name: 'Bench', sets: 3, superset: true },
+      { uid: '2', name: 'Fly', sets: 3, superset: false },
+    ],
+  }], () => `id${++n}`);
+  assert.equal(templates.length, 1);
+  assert.ok(templates[0].exercises[0].supersetId);
+  assert.equal(templates[0].exercises[0].supersetId, templates[0].exercises[1].supersetId);
+});
+
+test('birleştirme geçmişi kazanan ada taşıyor', () => {
+  const workouts = [
+    { id: 'a', date: '2026-01-10', exercises: [{ name: 'Kablo Yan Kaldırış', sets: [{ reps: 12 }, { reps: 12 }] }] },
+    { id: 'b', date: '2026-02-10', exercises: [{ name: 'Cable Lateral Raise', sets: [{ reps: 15 }] }] },
+  ];
+  const templates = [{ id: 't', name: 'Omuz', exercises: [{ name: 'Kablo Yan Kaldırış', sets: [{}] }] }];
+  const customExercises = [{ name: 'Kablo Yan Kaldırış', muscle: 'Yan Omuz' }];
+  const settings = {
+    strengthGoals: [{ exercise: 'Kablo Yan Kaldırış', weight: 20 }],
+    repRangeOverrides: { 'Kablo Yan Kaldırış': { min: 12, max: 20 } },
+    painLog: [{ region: 'shoulder', exercise: 'Kablo Yan Kaldırış', severity: 5, date: '2026-02-01' }],
+    hiddenExercises: ['Kablo Yan Kaldırış'],
+  };
+
+  const on = previewExerciseMerge('Kablo Yan Kaldırış', 'Cable Lateral Raise', { workouts, templates, settings });
+  assert.equal(on.sessions, 1);
+  assert.equal(on.sets, 2);
+  assert.equal(on.templates, 1);
+  assert.equal(on.strengthGoals, 1);
+  assert.equal(on.spellingOnly, false);
+  assert.equal(on.totalSessionsAfter, 2);
+
+  const r = applyExerciseMerge('Kablo Yan Kaldırış', 'Cable Lateral Raise', {
+    workouts, templates, customExercises, settings,
+  });
+  assert.equal(r.workouts[0].exercises[0].name, 'Cable Lateral Raise');
+  assert.equal(r.templates[0].exercises[0].name, 'Cable Lateral Raise');
+  assert.equal(r.customExercises.length, 0);
+  assert.equal(r.settings.strengthGoals[0].exercise, 'Cable Lateral Raise');
+  assert.deepEqual(Object.keys(r.settings.repRangeOverrides), ['Cable Lateral Raise']);
+  assert.equal(r.settings.painLog[0].exercise, 'Cable Lateral Raise');
+  assert.deepEqual(r.settings.hiddenExercises, ['Cable Lateral Raise']);
+});
+
+test('birleştirme kaynak veriyi değiştirmiyor', () => {
+  const workouts = [{ id: 'a', date: '2026-01-10', exercises: [
+    { name: 'Cable Lateral Raise', sets: [{ reps: 15 }] },
+    { name: 'cable lateral raise', sets: [{ reps: 12 }] },
+  ] }];
+  const kopya = JSON.stringify(workouts);
+  const r = applyExerciseMerge('cable lateral raise', 'Cable Lateral Raise', { workouts });
+  assert.equal(JSON.stringify(workouts), kopya);
+  // Aynı seanstaki iki satır tek satırda toplanıyor.
+  assert.equal(r.workouts[0].exercises.length, 1);
+  assert.equal(r.workouts[0].exercises[0].sets.length, 2);
+});
+
+test('yazım birleştirmesi kazananın kayıtlarını saymıyor', () => {
+  const workouts = [
+    { id: 'a', date: '2026-01-10', exercises: [{ name: 'cable lateral raise', sets: [{ reps: 12 }] }] },
+    { id: 'b', date: '2026-02-10', exercises: [{ name: 'Cable Lateral Raise', sets: [{ reps: 15 }] }] },
+  ];
+  const on = previewExerciseMerge('cable lateral raise', 'Cable Lateral Raise', { workouts });
+  assert.equal(on.spellingOnly, true);
+  // Yalnızca küçük harfli yazımın kaydı sayılıyor, kazananınki değil.
+  assert.equal(on.sessions, 1);
+  assert.equal(on.sets, 1);
+});
+
+test('birleştirme aynı adı ve boş adı reddediyor', () => {
+  assert.equal(previewExerciseMerge('A', 'A', {}), null);
+  assert.equal(applyExerciseMerge('', 'A', {}), null);
+  assert.equal(applyExerciseMerge('A', '', {}), null);
+});
+
+test('temiz kurulumda birleştirme adayı çıkmıyor', () => {
+  // Kütüphanenin kendi içinde kopya yok; aday üreten şey kullanıcının adları.
+  assert.deepEqual(findMergeCandidates([], []), []);
+});
+
+test('yazım kopyası kesin aday, parantezli varyant olası aday', () => {
+  const workouts = [
+    { id: 'a', date: '2026-01-10', exercises: [{ name: 'cable lateral raise', sets: [{ reps: 12 }] }] },
+    { id: 'b', date: '2026-03-10', exercises: [{ name: 'Cable Lateral Raise', sets: [{ reps: 15 }, { reps: 15 }] }] },
+  ];
+  const adaylar = findMergeCandidates([{ name: 'Romanian Deadlift' }], workouts);
+
+  const kesin = adaylar.find(a => a.certain);
+  assert.ok(kesin);
+  // Daha çok kullanılan yazım kazanan öneriliyor.
+  assert.equal(kesin.suggestedWinner, 'Cable Lateral Raise');
+
+  const olasi = adaylar.find(a => !a.certain);
+  assert.ok(olasi);
+  assert.ok(olasi.variants.some(v => v.name === 'Romanian Deadlift (RDL)'));
+  // Kütüphanedeki birebir yazım kazanan öneriliyor.
+  assert.equal(olasi.suggestedWinner, 'Romanian Deadlift (RDL)');
+});
+
+test('ayak izi birebir yazımla sayılabiliyor', () => {
+  const w = [
+    { id: 'a', date: '2026-01-10', exercises: [{ name: 'Squat', sets: [{ reps: 5 }] }] },
+    { id: 'b', date: '2026-02-10', exercises: [{ name: 'squat', sets: [{ reps: 5 }, { reps: 5 }] }] },
+  ];
+  // Varsayılan: katlanmış eşleşme, iki yazım da sayılıyor.
+  assert.equal(exerciseFootprint('Squat', w).sessions, 2);
+  // Birebir eşleşme: yalnızca kendi yazımı.
+  assert.equal(exerciseFootprint('Squat', w, (n) => n === 'Squat').sets, 1);
 });
 
 

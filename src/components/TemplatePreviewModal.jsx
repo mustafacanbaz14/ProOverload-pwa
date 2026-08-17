@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star } from 'lucide-react';
+import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star, RefreshCw } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { isWorkingSet } from '../utils/helpers';
@@ -20,6 +20,10 @@ const TemplatePreviewModal = memo(({
   onEdit,
   onDelete,
   onToggleFavorite,
+  // Şablonu düzenleyiciye götürmeden hareketi değiştirmek için. Tek bir
+  // hareketi beğenmeyip programı olduğu gibi kullanmak isteyen kişi için
+  // düzenleyiciyi açıp kaydetmek gereksiz uzun bir yoldu.
+  onReplaceExercise,
 }) => {
   if (!isOpen || !template) return null;
 
@@ -131,8 +135,20 @@ const TemplatePreviewModal = memo(({
                       {ex.supersetId && <Link2 size={11} className="mr-1.5 text-purple-400 shrink-0" />}
                       <span className="truncate">{ex.name}</span>
                     </span>
-                    <span className="text-[10px] font-mono text-zinc-500 shrink-0">
-                      {sets.length} set{topSet?.weight ? ` · ${topSet.weight}kg` : ''}
+                    <span className="flex items-center gap-1.5 shrink-0">
+                      <span className="text-[10px] font-mono text-zinc-500">
+                        {sets.length} set{topSet?.weight ? ` · ${topSet.weight}kg` : ''}
+                      </span>
+                      {onReplaceExercise && (
+                        <button
+                          onClick={() => onReplaceExercise(template, ex.name)}
+                          title="Hareketi değiştir"
+                          aria-label={`${ex.name} hareketini değiştir`}
+                          className="text-zinc-600 active:text-emerald-400 p-0.5"
+                        >
+                          <RefreshCw size={12} />
+                        </button>
+                      )}
                     </span>
                   </div>
                 );

@@ -78,7 +78,8 @@ import { templateToExercises, workoutToTemplate, suggestTemplateName } from './u
 import {
   duplicateTemplate, markTemplateUsed, toggleTemplateFavorite,
 } from './utils/templateLibrary';
-import { draftFromGeneratedProgram, instantiateDraftProgram } from './utils/programDraft';
+import { draftFromGeneratedProgram, draftFromStarterProgram, instantiateDraftProgram, draftSupersetIds } from './utils/programDraft';
+import { findMergeCandidates, previewExerciseMerge, applyExerciseMerge } from './utils/exerciseMerge';
 
 import {
   generateId, getLocalDateString, getMondayOfCurrentWeek, detectMuscleGroup,
@@ -107,6 +108,7 @@ const DeloadModal = lazy(() => import('./components/DeloadModal'));
 const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
 const PainLogModal = lazy(() => import('./components/PainLogModal'));
 const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
+const ExerciseMergeModal = lazy(() => import('./components/ExerciseMergeModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const CardioView = lazy(() => import('./components/CardioView'));
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
@@ -210,6 +212,7 @@ export default function App() {
   const [isMesocycleOpen, setIsMesocycleOpen] = useState(false);
   const [isPainOpen, setIsPainOpen] = useState(false);
   const [isDataHealthOpen, setIsDataHealthOpen] = useState(false);
+  const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
@@ -1670,21 +1673,96 @@ export default function App() {
     setTemplates(prev => prev.map(t => {
       if (t.id !== templateId) return t;
       const oldByName = new Map((t.exercises || []).map(ex => [ex.name, ex.sets || []]));
+      // Süperset bağları taslakta komşuluk bayrağı olarak duruyor; şablona
+      // yazılırken gerçek kimliğe çevriliyor. 6.8'e kadar bu adım yoktu ve
+      // şablonu düzenleyip kaydetmek bütün süpersetleri sessizce siliyordu.
+      const supersetIds = draftSupersetIds(exercises, templateId);
       return {
         ...t,
         name: name || t.name,
-        exercises: exercises.map(ex => {
+        exercises: exercises.map((ex, i) => {
           const old = oldByName.get(ex.name) || [];
           return {
             name: ex.name,
-            sets: Array.from({ length: ex.sets }, (_, i) => old[i]
-              ? { ...old[i], id: old[i].id || generateId() }
+            supersetId: supersetIds[i],
+            sets: Array.from({ length: ex.sets }, (_, i2) => old[i2]
+              ? { ...old[i2], id: old[i2].id || generateId() }
               : { id: generateId(), weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal' }),
           };
         }),
       };
     }));
     showToast('Şablon güncellendi.');
+  }, [setTemplates, showToast]);
+
+  // --- Hareket birleştirme -------------------------------------------------
+  // Elle eklenen hareket ile kütüphaneye sonradan giren aynı hareket iki ayrı
+  // kayıt olarak yaşıyordu: rekorlar bölünüyor, hacim eğrisi kopuyordu.
+  const mergeCandidates = useMemo(
+    () => findMergeCandidates(customExercises, sortedWorkouts),
+    [customExercises, sortedWorkouts]);
+
+  const mergePreviewFor = useCallback((loser, winner) => previewExerciseMerge(loser, winner, {
+    workouts: sortedWorkouts, templates, settings, activeWorkout,
+  }), [sortedWorkouts, templates, settings, activeWorkout]);
+
+  const handleMergeExercises = useCallback((loser, winner) => {
+    const sonuc = applyExerciseMerge(loser, winner, {
+      workouts, templates, customExercises, settings, activeWorkout,
+    });
+    if (!sonuc) return;
+
+    // Geri alma için YALNIZCA değişen koleksiyonların eski hali saklanıyor;
+    // dokunulmamış bir koleksiyonu geri yazmak, birleştirmeden sonra yapılmış
+    // başka bir değişikliği ezerdi.
+    const oncekiler = {
+      workouts: sonuc.workouts ? workouts : null,
+      templates: sonuc.templates ? templates : null,
+      customExercises: sonuc.customExercises ? customExercises : null,
+      settings: sonuc.settings ? settings : null,
+      activeWorkout: sonuc.activeWorkout ? activeWorkout : null,
+    };
+
+    if (sonuc.workouts) setWorkouts(sonuc.workouts);
+    if (sonuc.templates) setTemplates(sonuc.templates);
+    if (sonuc.customExercises) setCustomExercises(sonuc.customExercises);
+    if (sonuc.settings) setSettings(sonuc.settings);
+    if (sonuc.activeWorkout) setActiveWorkout(sonuc.activeWorkout);
+
+    showUndoToast(`"${loser}" → "${winner}" birleştirildi.`, () => {
+      if (oncekiler.workouts) setWorkouts(oncekiler.workouts);
+      if (oncekiler.templates) setTemplates(oncekiler.templates);
+      if (oncekiler.customExercises) setCustomExercises(oncekiler.customExercises);
+      if (oncekiler.settings) setSettings(oncekiler.settings);
+      if (oncekiler.activeWorkout) setActiveWorkout(oncekiler.activeWorkout);
+    });
+  }, [workouts, templates, customExercises, settings, activeWorkout,
+    setWorkouts, setTemplates, setCustomExercises, setSettings, setActiveWorkout, showUndoToast]);
+
+  /**
+   * Şablondaki bir hareketi YERİNDE değiştirir.
+   *
+   * Sırası, set sayısı ve süperset bağı korunuyor — çıkarıp yeniden eklemek
+   * üçünü de bozuyordu. Setlerin ağırlık ve tekrar değerleri SIFIRLANIYOR:
+   * başka bir hareketin yükünü yeni harekete taşımak, bir sonraki seansta
+   * yanlış bir başlangıç değeri önermek olurdu.
+   */
+  const handleReplaceTemplateExercise = useCallback((templateId, oldName, newName) => {
+    if (!templateId || !oldName || !newName || oldName === newName) return;
+    setTemplates(prev => prev.map(t => {
+      if (t.id !== templateId) return t;
+      return {
+        ...t,
+        exercises: (t.exercises || []).map(ex => (ex.name !== oldName ? ex : {
+          ...ex,
+          name: newName,
+          sets: (ex.sets || []).map(set => ({
+            ...set, id: set.id || generateId(), weight: '', reps: '',
+          })),
+        })),
+      };
+    }));
+    showToast(`${oldName} → ${newName}`);
   }, [setTemplates, showToast]);
 
   const handleSaveProgram = useCallback((programName, days, { createWeekPlan = true } = {}) => {
@@ -2924,6 +3002,7 @@ export default function App() {
                 mesocycle: () => setIsMesocycleOpen(true),
                 pain: () => setIsPainOpen(true),
                 dataHealth: () => setIsDataHealthOpen(true),
+                mergeExercises: () => setIsMergeOpen(true),
                 wizard: () => setIsWizardOpen(true),
                 coach: () => setIsCoachCenterOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
@@ -3235,6 +3314,7 @@ export default function App() {
               mesocycle: () => setIsMesocycleOpen(true),
               pain: () => setIsPainOpen(true),
               dataHealth: () => setIsDataHealthOpen(true),
+              mergeExercises: () => setIsMergeOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
@@ -3364,6 +3444,7 @@ export default function App() {
             handleToggleTemplateFavorite(t);
             setPreviewTemplate(prev => prev ? { ...prev, favorite: !prev.favorite } : prev);
           }}
+          onReplaceExercise={(t, name) => setSubstituteFor({ name, templateId: t.id })}
         />}
 
         {/* EXERCISE MAPPING EDITOR */}
@@ -3507,6 +3588,15 @@ export default function App() {
           today={getLocalDateString()}
         />}
 
+        {isMergeOpen && <ExerciseMergeModal
+          isOpen={isMergeOpen}
+          onClose={() => setIsMergeOpen(false)}
+          candidates={mergeCandidates}
+          allNames={allExercisesNames}
+          previewFor={mergePreviewFor}
+          onMerge={handleMergeExercises}
+        />}
+
         {isDataHealthOpen && <DataHealthModal
           isOpen={isDataHealthOpen}
           onClose={() => setIsDataHealthOpen(false)}
@@ -3519,6 +3609,12 @@ export default function App() {
           isOpen={isStarterOpen}
           onClose={() => setIsStarterOpen(false)}
           onInstall={handleInstallStarter}
+          onCustomize={(key) => {
+            const draft = draftFromStarterProgram(findStarterProgram(key), generateId);
+            if (!draft) return;
+            setBuilderDraft({ ...draft, key: generateId() });
+            setIsBuilderOpen(true);
+          }}
           existingTemplateCount={templates.length}
         />
 
@@ -3585,7 +3681,20 @@ export default function App() {
           customExercises={customExercises}
           performedNames={performedNames}
           onPick={(name) => {
+            // Aynı ekran iki yerden açılıyor: canlı seansta hareket kimliğiyle,
+            // şablon önizlemesinde şablon kimliğiyle.
             if (substituteFor?.exerciseId) handleSubstituteExercise(substituteFor.exerciseId, name);
+            else if (substituteFor?.templateId) {
+              handleReplaceTemplateExercise(substituteFor.templateId, substituteFor.name, name);
+              setPreviewTemplate(prev => (prev && prev.id === substituteFor.templateId
+                ? {
+                  ...prev,
+                  exercises: (prev.exercises || []).map(ex => (ex.name !== substituteFor.name ? ex : {
+                    ...ex, name, sets: (ex.sets || []).map(set => ({ ...set, weight: '', reps: '' })),
+                  })),
+                }
+                : prev));
+            }
           }}
         />}
 
@@ -3626,6 +3735,7 @@ export default function App() {
               mesocycle: () => setIsMesocycleOpen(true),
               pain: () => setIsPainOpen(true),
               dataHealth: () => setIsDataHealthOpen(true),
+              mergeExercises: () => setIsMergeOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
