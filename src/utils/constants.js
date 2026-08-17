@@ -644,13 +644,45 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.8';
+export const APP_VERSION = '6.9';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.8',
+  title: 'ProOverload 6.9',
   date: '2026-08-17',
   items: [
+    {
+      title: 'İki Yeni Üç Günlük Düzen',
+      desc: 'Üç günde iki seçenek vardı: tam vücut ya da itiş+bacak / çekiş+bacak / tam vücut. İkisi de eklendi. İTİŞ+BACAK / ÇEKİŞ+BACAK / İTİŞ+ÇEKİŞ bacak hacmini ilk iki güne bölüp üçüncü günü tamamen üst vücuda ayırıyor; tam vücut varyantından farkı, üçüncü gün bacak görmediği için ilk iki günün bacak yorgunluğunun toparlanacak zaman bulması, buna karşılık üst vücudun haftada üç kez uyarılması. PUSH / PULL / LEGS 3 GÜN ise klasik üçlü bölme. Dürüst olmak gerekirse hipertrofi için üç günde yapılabilecek en iyi seçim değil — her kas haftada yalnızca bir kez uyarılıyor, aynı üç günde tam vücut ya da hibrit düzen iki üç kez uyarır — ama bölgeye tam odaklanmayı sevenler için artık var ve gerekçesi ekranda yazıyor.'
+    },
+    {
+      title: 'Sihirbaz: Seansa Ayırabildiğin Süre',
+      desc: 'Sihirbaz herkese aynı 30 setlik seans tavanını uyguluyordu. Oysa tavanı pratikte süre belirliyor: 45 dakikası olan biri için 30 set üretmek programı ilk haftadan uygulanamaz yapıyor, kullanıcı da ya seansı yarıda bırakıyor ya da dinlenmeleri kısıp bütün setleri bozuyor. Artık 45 / 60 / 75 / 90 dakika seçiliyor ve tavan buna göre (15 / 20 / 25 / 30 set) ayarlanıyor. Seçtiğin süre seçtiğin bölmeye sığmıyorsa üretici bunu saklamıyor: en yüklü günün kaç set olduğunu, neden kısamadığını (kısmak kasları koruma eşiğinin altına düşürüyor) ve aynı hacim için kaç gün gerektiğini söylüyor.'
+    },
+    {
+      title: 'Sihirbaz: Antrenman Günlerini Kendin Seç',
+      desc: 'Bölmeler hazır bir takvimle geliyordu — Pazartesi / Çarşamba / Cuma gibi — ve bu, hafta sonu çalışan biri için sabit bir yanlış varsayımdı. Artık hangi günler gelebileceğini seçiyorsun; bölmenin gün sırası korunuyor çünkü o sıra toparlanma açısından anlamlı. Seçtiğin günler arka arkaya gelip aynı kasları yüklüyorsa uyarı çıkıyor ve hangi kasların çakıştığı yazıyor. Uyarı ENGEL DEĞİL: bazen tek seçenek arka arkaya iki gündür ve o da hiç çalışmamaktan iyidir.'
+    },
+    {
+      title: 'Sihirbaz: Hareket Sabitleme ve Yeniden Üretme',
+      desc: 'Üretilen programı beğenmediğinde tek seçenek kurup elle düzeltmekti. Artık beğendiğin hareketleri kilitleyip gerisini yeniden ürettirebiliyorsun. Yeniden üretim rastgele değil: aday listesi bir kademe kaydırılıyor, yani aynı varyant numarası her zaman aynı programı veriyor ve ileri geri gezinebiliyorsun. Kilitli hareketler yalnızca korunmuyor, set kısma fazlarından da muaf tutuluyor — sabitlediğin hareket yakınsama sırasında sessizce küçültülmemeli.'
+    },
+    {
+      title: 'Sihirbaz: Tek Hareketi Değiştirme',
+      desc: 'Kontrol adımında herhangi bir hareketin yanındaki değiştir düğmesi, aynı kas katkı profiline en yakın alternatifleri getiriyor. Seçtiğin hareket otomatik olarak kilitleniyor, çünkü bilerek seçtiğin bir hareketi bir sonraki üretimde kaybetmek anlamsız olurdu.'
+    },
+    {
+      title: 'Sihirbaz: Yapamadığın Hareketleri Dışla',
+      desc: 'Ekipman profili kaba bir süzgeç: salonda barbell var ama omzun izin vermiyorsa bench press havuzda kalmaya devam ediyor ve üretilen programı her seferinde elle düzeltmek gerekiyordu. Artık dışlama listesi var ve dışlanan hareket aday havuzundan tamamen çıkıyor — "önerilmesin" değil, "hiç seçilmesin". Ağrı günlüğün sürüyor işaretli bölgeler içeriyorsa o bölgeleri yükleyen hareketler hazır aday olarak sunuluyor; dışlama kararı yine senin. Bir kasın bütün adayları çıkarsa üretici o kası atlıyor ve raporda hacmi eksik gösteriyor — sessizce yasaklı hareketi seçmektense eksiği söylemek doğru.'
+    },
+    {
+      title: 'Sihirbaz: Kurmadan Önce Mevcut Programınla Karşılaştır',
+      desc: 'Sihirbaz üretilen programın raporunu gösteriyordu ama tek başına. Oysa zaten bir programı olan biri için asıl soru "bu program iyi mi" değil, "buna geçersem ne değişir". Artık aktif planınla yan yana: gün sayısı, haftalık set ve kas kas hacim farkı. Koruma eşiğinin altına düşen ya da tavanı aşan kaslar ayrıca uyarı olarak, eşiğin altından kurtulanlar da ayrıca çıkıyor. İki taraf da aynı katkı modelinden geçiyor, yani gördüğün fark yöntem farkı değil program farkı.'
+    },
+    {
+      title: 'Sihirbaz: Düzen Kartlarında Ölçülen Sayılar',
+      desc: 'Düzen seçerken kartlar yalnızca açıklama gösteriyordu; hangi bölmenin kaç set ürettiğini görmek için sonuna kadar gitmek gerekiyordu. Artık seçili kartın altında haftalık set, en yüklü günün set sayısı ve koruma eşiğinin altında kalan kas sayısı anında görünüyor — bölmeler arasında gidip gelerek karşılaştırmak mümkün.'
+    },
     {
       title: 'Şablonda Süperset Artık Bozulmuyor',
       desc: 'Gerçek bir hataydı: süperset bağı şablon düzenleyicide "bir sonrakiyle birlikte" bayrağı olarak tutuluyordu ama şablonun kendisi paylaşılan bir kimlik bekliyordu ve kaydetme adımı bu alanı tümden düşürüyordu. Sonuç olarak var olan bir şablonu düzenleyip kaydetmek bütün süpersetleri sessizce siliyor, düzenleme kipinde yeni süperset kurmak da hiç işe yaramıyordu. Artık dönüşüm iki yönlü çalışıyor: şablonu düzenlemeye açarken bağlar geri okunuyor, kaydederken gerçek kimliğe çevriliyor. Zincirleme bağlar (üç hareket arka arkaya) tek grup oluyor. Hareket taşındığında bağ koparılıyor — bağ komşuluk demek, hareket eski eşinden ayrıldığında bağın anlamı kalmıyor.'

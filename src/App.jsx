@@ -24,7 +24,7 @@ import { auditSessionQuality, sessionQualityCoachItem } from './utils/sessionQua
 import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from './utils/cardioGoals';
 import { buildRestingHrReport, upsertRestingHr, restingHrCoachItem } from './utils/restingHrLog';
 import { buildCardioRecords } from './utils/cardioRecords';
-import { activePainRegions, scanSessionForPain, painGuardCoachItem, painWarningFor } from './utils/painGuard';
+import { activePainRegions, scanSessionForPain, painGuardCoachItem, painWarningFor, exercisesLoadingPain } from './utils/painGuard';
 import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
 import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, applyCardioTemplate } from './utils/cardioTemplates';
 import { cardioToCsv } from './utils/csvExport';
@@ -593,8 +593,8 @@ export default function App() {
   }, [setSettings, setTemplates, showToast]);
 
   /** Sihirbazın ürettiği programı şablonlara ve haftalık plana yazar. */
-  const handleInstallGenerated = useCallback((built) => {
-    const kurulum = instantiateProgram(built, generateId);
+  const handleInstallGenerated = useCallback((built, { schedule = null } = {}) => {
+    const kurulum = instantiateProgram(built, generateId, { schedule });
     if (!kurulum) return;
 
     setTemplates(prev => [...prev, ...kurulum.templates]);
@@ -2791,6 +2791,11 @@ export default function App() {
     return scanSessionForPain(hareketler, painRegions, { customExercises });
   }, [activeWorkout, todayCoach, painRegions, customExercises]);
 
+  // Sihirbazın dışlama adımına öneri: ağrılı bölgeyi yükleyen hareketler.
+  const painExclusionSuggestions = useMemo(
+    () => exercisesLoadingPain(painRegions, allExercisesNames),
+    [painRegions, allExercisesNames]);
+
   const painWarningForExercise = useCallback(
     (name) => painWarningFor(name, painRegions, { customExercises }),
     [painRegions, customExercises]);
@@ -3576,6 +3581,10 @@ export default function App() {
           customExercises={customExercises}
           performedNames={performedNames}
           existingTemplateCount={templates.length}
+          allExerciseNames={allExercisesNames}
+          activePlan={activePlan}
+          templates={templates}
+          painExclusions={painExclusionSuggestions}
         />}
 
         {isPainOpen && <PainLogModal

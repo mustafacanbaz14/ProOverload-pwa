@@ -2,6 +2,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
+import {
+  SESSION_LENGTHS, findSessionLength, scheduleFromWeekdays, auditSchedule,
+} from '../src/utils/programBuilder.js';
+import { compareWithActivePlan, activePlanSummary } from '../src/utils/programCompare.js';
+import { exercisesLoadingPain } from '../src/utils/painGuard.js';
 import { findMergeCandidates, previewExerciseMerge, applyExerciseMerge, exerciseFootprint } from '../src/utils/exerciseMerge.js';
 import {
   draftSupersetIds, draftFlagsFromSupersetIds, moveDraftExerciseToEdge,
@@ -3437,6 +3442,214 @@ test('ayak izi birebir yazımla sayılabiliyor', () => {
   assert.equal(exerciseFootprint('Squat', w).sessions, 2);
   // Birebir eşleşme: yalnızca kendi yazımı.
   assert.equal(exerciseFootprint('Squat', w, (n) => n === 'Squat').sets, 1);
+});
+
+
+// ---------------------------------------------------------------- 6.9
+
+test('istenen üç günlük düzenler var ve doğru kasları eşliyor', () => {
+  const secenekler = getSplitOptions(3);
+  const kimlikler = secenekler.map(x => x.id);
+  assert.ok(kimlikler.includes('push-pull-upper-3'));
+  assert.ok(kimlikler.includes('ppl-3'));
+
+  const hibrit = secenekler.find(x => x.id === 'push-pull-upper-3');
+  assert.equal(hibrit.days.length, 3);
+  // 1. gün itiş + ön bacak, 2. gün çekiş + arka bacak, 3. gün yalnızca üst.
+  assert.ok(hibrit.days[0].groups.includes('Göğüs') && hibrit.days[0].groups.includes('Quadriceps'));
+  assert.ok(hibrit.days[1].groups.includes('Kanat') && hibrit.days[1].groups.includes('Hamstring'));
+  assert.ok(hibrit.days[2].groups.includes('Göğüs') && hibrit.days[2].groups.includes('Kanat'));
+  // Üçüncü gün bacak GÖRMÜYOR: ilk iki günün bacak yorgunluğu toparlansın.
+  assert.equal(hibrit.days[2].groups.includes('Quadriceps'), false);
+  assert.equal(hibrit.days[2].groups.includes('Hamstring'), false);
+
+  const ppl = secenekler.find(x => x.id === 'ppl-3');
+  assert.equal(ppl.days.map(d => d.name).join(','), 'İtiş,Çekiş,Bacak');
+  assert.equal(ppl.days[0].groups.includes('Kanat'), false);
+});
+
+test('yeni düzenler gerçekten program üretiyor', () => {
+  ['push-pull-upper-3', 'ppl-3'].forEach(id => {
+    const b = buildProgram({ daysPerWeek: 3, splitId: id });
+    assert.equal(b.split.id, id);
+    assert.equal(b.days.length, 3);
+    assert.ok(b.totalSets > 30, `${id} hacmi düşük: ${b.totalSets}`);
+    b.days.forEach(g => assert.ok(g.exercises.length > 0, `${id}/${g.name} boş`));
+  });
+});
+
+test('seans süresi set tavanını belirliyor', () => {
+  assert.equal(findSessionLength('short').cap, 15);
+  assert.equal(findSessionLength('extended').cap, 30);
+  // Bilinmeyen anahtar en uzun süreye düşüyor (eski davranış korunuyor).
+  assert.equal(findSessionLength('yok').cap, 30);
+  assert.equal(SESSION_LENGTHS.length, 4);
+
+  const kisa = buildProgram({ daysPerWeek: 5, sessionLength: 'short' });
+  const uzun = buildProgram({ daysPerWeek: 5, sessionLength: 'extended' });
+  assert.equal(kisa.sessionCap, 15);
+  assert.equal(uzun.sessionCap, 30);
+  // Kısa süre gerçekten daha az set üretiyor.
+  assert.ok(kisa.totalSets < uzun.totalSets, `${kisa.totalSets} < ${uzun.totalSets}`);
+});
+
+test('süre bölmeye sığmıyorsa çelişki adıyla söyleniyor', () => {
+  const b = buildProgram({ daysPerWeek: 3, sessionLength: 'short' });
+  assert.equal(b.sessionFit.ok, false);
+  assert.ok(b.sessionFit.worstDay > b.sessionFit.cap);
+  // Çıkış yolu öneriliyor: aynı hacim için daha çok gün.
+  assert.ok(b.sessionFit.suggestion > 3);
+  assert.ok(b.sessionFit.detail.includes('tavan'));
+
+  const rahat = buildProgram({ daysPerWeek: 5, sessionLength: 'extended' });
+  assert.equal(rahat.sessionFit.ok, true);
+  assert.equal(rahat.sessionFit.suggestion, null);
+});
+
+test('dışlanan hareket hiç seçilmiyor', () => {
+  const yasak = ['Barbell Back Squat', 'Barbell Bench Press', 'Leg Press'];
+  const b = buildProgram({ daysPerWeek: 4, excludedExercises: yasak });
+  const secilenler = b.days.flatMap(d => d.exercises.map(e => e.name));
+  yasak.forEach(ad => assert.equal(secilenler.includes(ad), false, `${ad} seçilmiş`));
+});
+
+test('kilitli hareket korunuyor ve kısılmıyor', () => {
+  const kilit = { 'Üst A': ['Machine Chest Press', 'Lat Pulldown'] };
+  const b = buildProgram({ daysPerWeek: 4, lockedExercises: kilit });
+  const ustA = b.days.find(d => d.name === 'Üst A');
+  kilit['Üst A'].forEach(ad => {
+    const ex = ustA.exercises.find(e => e.name === ad);
+    assert.ok(ex, `${ad} kaybolmuş`);
+    assert.equal(ex.locked, true);
+    // Yakınsama kilitli hareketten set kısmıyor.
+    assert.ok(ex.sets >= 3, `${ad} kısılmış: ${ex.sets}`);
+  });
+});
+
+test('dışlanan hareket kilitli olsa bile yerleşmiyor', () => {
+  const b = buildProgram({
+    daysPerWeek: 4,
+    lockedExercises: { 'Üst A': ['Barbell Bench Press'] },
+    excludedExercises: ['Barbell Bench Press'],
+  });
+  const secilenler = b.days.flatMap(d => d.exercises.map(e => e.name));
+  assert.equal(secilenler.includes('Barbell Bench Press'), false);
+});
+
+test('varyant farklı ama tekrarlanabilir program üretiyor', () => {
+  const adlar = (v) => buildProgram({ daysPerWeek: 4, variant: v })
+    .days.flatMap(d => d.exercises.map(e => e.name));
+  const v0 = adlar(0);
+  const v1 = adlar(1);
+  assert.notDeepEqual(v0, v1);
+  // Aynı varyant her zaman aynı programı veriyor: ileri geri gezinilebilsin.
+  assert.deepEqual(v0, adlar(0));
+  assert.deepEqual(v1, adlar(1));
+});
+
+test('seçilen günler bölmenin gün sırasını koruyor', () => {
+  const split = findSplitPreset('push-pull-upper-3', 3);
+  assert.deepEqual(scheduleFromWeekdays(split, ['tue', 'thu', 'sat']), { tue: 0, thu: 1, sat: 2 });
+  // Seçim sırası değil HAFTA sırası geçerli: cumartesi önce yazılsa da son gün.
+  assert.deepEqual(scheduleFromWeekdays(split, ['sat', 'tue', 'thu']), { tue: 0, thu: 1, sat: 2 });
+  // Gün sayısı tutmuyorsa hazır takvime düşüyor.
+  assert.deepEqual(scheduleFromWeekdays(split, ['mon', 'tue']), split.schedule);
+});
+
+test('arka arkaya günlerde ortak kas uyarı üretiyor', () => {
+  const split = findSplitPreset('push-pull-upper-3', 3);
+  const ayrik = auditSchedule(split, scheduleFromWeekdays(split, ['mon', 'wed', 'fri']));
+  assert.equal(ayrik.ok, true);
+  assert.equal(ayrik.assigned, 3);
+
+  const bitisik = auditSchedule(split, scheduleFromWeekdays(split, ['mon', 'tue', 'wed']));
+  assert.equal(bitisik.ok, false);
+  assert.ok(bitisik.conflicts.length > 0);
+  assert.ok(bitisik.conflicts[0].shared.length > 0);
+});
+
+test('hafta sonu ile pazartesi de komşu sayılıyor', () => {
+  // Pazar + Pazartesi arka arkaya; hafta sınırında kesilmemeli.
+  const split = findSplitPreset('upper-lower-4', 4);
+  const d = auditSchedule(split, { sun: 0, mon: 1, wed: 2, fri: 3 });
+  // Üst A (pazar) ile Alt A (pazartesi) ortak kas yüklemiyor.
+  assert.equal(d.ok, true);
+  const ayni = auditSchedule(split, { sun: 0, mon: 2, wed: 1, fri: 3 });
+  // Üst A (pazar) ile Üst B (pazartesi): ortak var.
+  assert.equal(ayni.ok, false);
+});
+
+test('aktif plan özeti şablonları ve günleri sayıyor', () => {
+  const templates = [
+    { id: 't1', name: 'Üst', exercises: [{ name: 'Barbell Bench Press', sets: [{}, {}, {}] }] },
+    { id: 't2', name: 'Alt', exercises: [{ name: 'Barbell Back Squat', sets: [{}, {}] }] },
+  ];
+  const plan = {
+    name: 'Eski',
+    days: {
+      mon: [{ type: 'workout', templateId: 't1' }],
+      thu: [{ type: 'workout', templateId: 't2' }],
+      // Silinmiş şablona işaret eden slot: gün sayılıyor, şablon sayılmıyor.
+      sat: [{ type: 'workout', templateId: 'yok' }],
+      tue: [], wed: [], fri: [], sun: [],
+    },
+  };
+  const ozet = activePlanSummary(plan, templates);
+  assert.equal(ozet.daysPerWeek, 3);
+  assert.equal(ozet.templates.length, 2);
+  assert.equal(ozet.brokenSlots, 1);
+  assert.equal(activePlanSummary(null, templates), null);
+});
+
+test('program karşılaştırması kas kas farkı veriyor', () => {
+  const built = buildProgram({ daysPerWeek: 5 });
+  const templates = [{
+    id: 't1', name: 'Tek Gün',
+    exercises: [{ name: 'Barbell Bench Press', sets: [{}, {}, {}] }],
+  }];
+  const plan = {
+    name: 'Eski',
+    days: { mon: [{ type: 'workout', templateId: 't1' }], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] },
+  };
+  const k = compareWithActivePlan(built, plan, templates);
+  assert.equal(k.currentDays, 1);
+  assert.equal(k.nextDays, 5);
+  assert.equal(k.currentSets, 3);
+  assert.equal(k.nextSets, built.totalSets);
+  // Göğüs iki tarafta da var: fark hesaplanmış olmalı.
+  const gogus = k.rows.find(r => r.muscle === 'Göğüs');
+  assert.equal(gogus.current, 3);
+  assert.ok(gogus.delta > 0);
+  // Eşiğin altından kurtulan kaslar ayrıca listeleniyor.
+  assert.ok(k.rescued.length > 0);
+
+  // Aktif plan yoksa karşılaştırma da yok.
+  assert.equal(compareWithActivePlan(built, null, []), null);
+});
+
+test('ağrı bölgesini yükleyen hareketler dışlama adayı olarak çıkıyor', () => {
+  const aktif = activePainRegions([
+    { region: 'shoulder', severity: 8, date: '2026-08-16' },
+  ], { today: new Date('2026-08-17') });
+  const adaylar = exercisesLoadingPain(aktif, DEFAULT_EXERCISES, { limit: 20 });
+  assert.ok(adaylar.length > 0);
+  assert.ok(adaylar.some(a => /bench press|overhead press/i.test(a)));
+  // Ağrı yoksa öneri de yok.
+  assert.deepEqual(exercisesLoadingPain([], DEFAULT_EXERCISES), []);
+});
+
+test('kurulumda seçilen takvim kullanılıyor', () => {
+  let n = 0;
+  const built = buildProgram({ daysPerWeek: 3, splitId: 'push-pull-upper-3' });
+  const takvim = { tue: 0, thu: 1, sat: 2 };
+  const { plan } = instantiateProgram(built, () => `id${++n}`, { schedule: takvim });
+  assert.equal(plan.days.tue.length, 1);
+  assert.equal(plan.days.sat.length, 1);
+  assert.equal(plan.days.mon.length, 0);
+
+  // Takvim verilmezse bölmenin hazır takvimi.
+  const { plan: varsayilan } = instantiateProgram(built, () => `v${++n}`);
+  assert.equal(varsayilan.days.mon.length, 1);
 });
 
 

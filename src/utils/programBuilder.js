@@ -122,6 +122,32 @@ export const SPLIT_PRESETS = [
     schedule: { mon: 0, wed: 1, fri: 2 },
   },
   {
+    id: 'push-pull-upper-3', daysPerWeek: 3,
+    name: 'İtiş+Bacak / Çekiş+Bacak / İtiş+Çekiş',
+    summary: 'Bacağı üst vücuda dağıt, üçüncü gün tüm üstü topla',
+    tags: ['Hibrit', 'Bacak 2×'],
+    rationale: 'Bacak hacmini iki güne bölüp üçüncü günü tamamen üst vücuda ayırır. Tam vücut varyantından farkı şu: üçüncü gün bacak görmediği için ilk iki günün bacak yorgunluğu toparlanacak zaman buluyor, buna karşılık üst vücut haftada üç kez uyarılıyor. Bacaktan çok üst vücut gelişimi isteyen ve haftada üç gün gelebilen için.',
+    days: [
+      { name: 'İtiş + Ön Bacak', groups: [...PUSH, ...QUAD_LEGS] },
+      { name: 'Çekiş + Arka Bacak', groups: [...PULL, ...POSTERIOR_LEGS] },
+      { name: 'İtiş + Çekiş', groups: [...UPPER, ...CORE] },
+    ],
+    schedule: { mon: 0, wed: 1, fri: 2 },
+  },
+  {
+    id: 'ppl-3', daysPerWeek: 3,
+    name: 'Push / Pull / Legs 3 Gün',
+    summary: 'Klasik üçlü bölme, her bölge haftada 1×',
+    tags: ['Klasik', 'Uzun seans'],
+    rationale: 'En bilinen üçlü bölme. Sıklık düşük — her kas haftada yalnızca bir kez uyarılıyor — ve bu, hipertrofi için üç günde yapılabilecek en iyi seçim değil; aynı üç günde tam vücut ya da hibrit düzen her kası iki üç kez uyarır. Yine de bölgeye tam odaklanmayı sevenler ve seans başına uzun süre ayırabilenler için duruyor.',
+    days: [
+      { name: 'İtiş', groups: [...PUSH] },
+      { name: 'Çekiş', groups: [...PULL] },
+      { name: 'Bacak', groups: [...LEGS, ...CORE] },
+    ],
+    schedule: { mon: 0, wed: 1, fri: 2 },
+  },
+  {
     id: 'upper-lower-4', daysPerWeek: 4, recommended: true,
     name: 'Üst / Alt 4 Gün',
     summary: 'İki üst ve iki alt vücut günü',
@@ -350,7 +376,13 @@ const POOL = {
   },
   'Kalça': {
     anchor: ['Hip Thrust', 'Machine Hip Thrust', 'Barbell Glute Bridge', 'Single Leg Hip Thrust'],
-    stretch: ['Sumo Deadlift', 'Bulgarian Split Squat', 'Cable Pull Through'],
+    // 'Cable Pull Through' bu listedeydi ama lengthBias onu 'mid' sayıyor;
+    // yani havuz "gerilme adayı var" derken denetim "gerilmede yükleme yok"
+    // diyordu. Kalça iki güne düşen bölmelerde ikinci aday hatayı örtüyordu,
+    // tek güne düşen bölmelerde (ppl-3, push-pull-upper-3) ortaya çıktı.
+    // Yerine gerçekten uzun boyda yükleyen ve ekipman gerektirmeyen
+    // varyantlar kondu — makine ve ev profillerinde de aday kalsın diye.
+    stretch: ['Sumo Deadlift', 'Bulgarian Split Squat', 'Deficit Reverse Lunge', 'Front Foot Elevated Split Squat'],
     extra: ['Cable Glute Kickback', 'Hip Abduction Machine', 'Seated Hip Abduction'],
   },
   'Baldır': {
@@ -392,13 +424,29 @@ const uygunMu = (name, profile) => {
   return !eq || profile.allows(eq.key);
 };
 
-/** Rol için profile uyan, henüz kullanılmamış ilk aday. */
-const adaySec = (muscle, role, profile, kullanilan, tercihEdilen = new Set()) => {
+/**
+ * Rol için profile uyan, henüz kullanılmamış ilk aday.
+ *
+ * Yasaklı hareketler havuzdan tamamen çıkıyor. Bu, bir kası adaysız
+ * bırakabilir; üretici o durumda o kası atlıyor ve rapor hacmi eksik
+ * gösteriyor — sessizce yasaklı hareketi seçmektense eksiği söylemek doğru.
+ */
+const adaySec = (muscle, role, profile, kullanilan, tercihEdilen = new Set(), yasakli = new Set(), variant = 0) => {
   const liste = POOL[muscle]?.[role] || [];
   const uygun = liste
-    .filter(ad => uygunMu(ad, profile))
+    .filter(ad => uygunMu(ad, profile) && !yasakli.has(ad))
     .sort((a, b) => Number(tercihEdilen.has(b)) - Number(tercihEdilen.has(a)));
-  return uygun.find(ad => !kullanilan.has(ad)) || uygun[0] || null;
+  if (uygun.length === 0) return null;
+
+  // Varyant, aday listesini kaydırıyor. "Yeniden üret" düğmesinin bir işe
+  // yaraması için gerekli: üretici tamamen belirli olduğundan, girdiler
+  // değişmeden yeniden çağırmak birebir aynı programı verirdi. Kaydırma
+  // rastgele değil — aynı varyant numarası her zaman aynı programı üretiyor,
+  // yani kullanıcı ileri geri gezinebiliyor.
+  const kaydirilmis = variant > 0
+    ? uygun.map((_, i) => uygun[(i + variant) % uygun.length])
+    : uygun;
+  return kaydirilmis.find(ad => !kullanilan.has(ad)) || kaydirilmis[0];
 };
 
 /* ------------------------------------------------------------- yakınsama */
@@ -408,11 +456,32 @@ const adaySec = (muscle, role, profile, kullanilan, tercihEdilen = new Set()) =>
 const MIN_SETS_PER_DAY = 2;
 // Tek harekette bundan fazla set verimli değil; fazlası ikinci harekete gider.
 const MAX_SETS_PER_EXERCISE = 5;
-// Seans başına set tavanı. Bunun üstünde son hareketler yorgun yapılıyor ve
-// eklenen set uyaran değil yorgunluk getiriyor. İki günlük bölmede haftalık
-// hacmi asıl sınırlayan kısıt bu: iki seans on iki kasa koruma eşiği kadar
-// hacim veremiyor ve rapor bunu MEV altı olarak dürüstçe söylüyor.
-const MAX_SETS_PER_SESSION = 30;
+/**
+ * Seans başına set tavanı, seans süresi hedefinden geliyor.
+ *
+ * Tavanın üstünde son hareketler yorgun yapılıyor ve eklenen set uyaran değil
+ * yorgunluk getiriyor. Az günlü bölmelerde haftalık hacmi asıl sınırlayan
+ * kısıt bu: iki seans on iki kasa koruma eşiği kadar hacim veremiyor ve rapor
+ * bunu MEV altı olarak dürüstçe söylüyor.
+ *
+ * Sihirbaz 6.9'a kadar herkese aynı 30 setlik tavanı uyguluyordu. Ama tavan
+ * pratikte SÜREYLE belirleniyor: 45 dakikası olan biri için 30 set üretmek,
+ * programı ilk haftadan uygulanamaz yapıyor ve kullanıcı ya seansı yarıda
+ * bırakıyor ya da dinlenmeleri kısıp bütün setleri bozuyor.
+ *
+ * Set başına süre, ısınma ve dinlenme dahil ortalama ~3 dakika. Bu, uygulamanın
+ * kendi `estimateDuration` modeliyle aynı büyüklük sırasında; burada tek bir
+ * katsayı kullanılıyor çünkü hareket listesi henüz yok.
+ */
+export const SESSION_LENGTHS = [
+  { key: 'short', minutes: 45, label: '45 dk', cap: 15, hint: 'Kısa ve yoğun; hacim güne yayılmalı' },
+  { key: 'medium', minutes: 60, label: '60 dk', cap: 20, hint: 'Çoğu kişi için gerçekçi orta yol' },
+  { key: 'long', minutes: 75, label: '75 dk', cap: 25, hint: 'Bölünmüş düzenlerde rahat çalışır' },
+  { key: 'extended', minutes: 90, label: '90 dk', cap: 30, hint: 'Uzun seans; düşük sıklıklı bölmeler için' },
+];
+
+export const findSessionLength = (key) =>
+  SESSION_LENGTHS.find(x => x.key === key) || SESSION_LENGTHS[3];
 // Faz başına tur sınırı; sonsuz döngüye karşı. Fazlar tek yönlü olduğu için
 // normal çalışmada çok daha önce sonlanıyorlar.
 const MAX_PASSES = 60;
@@ -444,11 +513,23 @@ export const buildProgram = ({
   priority = [],
   preferredExercises = [],
   customExercises = [],
+  // Yapılamayan hareketler (ağrı, ekipman, tercih). Aday havuzundan tamamen
+  // çıkarılıyor — "önerilmesin" değil, "hiç seçilmesin".
+  excludedExercises = [],
+  // Kullanıcının beğenip sabitlediği hareketler: { 'Gün Adı': ['Hareket', ...] }.
+  // Yeniden üretimde bunlar korunuyor, gerisi baştan seçiliyor.
+  lockedExercises = {},
+  sessionLength = 'extended',
+  // Aday listesini kaydıran sayaç: aynı kurallarla farklı ama eşdeğer bir
+  // seçim üretmek için. Aynı sayı her zaman aynı programı verir.
+  variant = 0,
 } = {}) => {
   const split = findSplitPreset(splitId, daysPerWeek);
   const profile = findEquipmentProfile(equipment);
   const oncelik = new Set((priority || []).filter(Boolean));
   const tercihEdilen = new Set(preferredExercises || []);
+  const yasakli = new Set((excludedExercises || []).filter(Boolean));
+  const seansTavani = findSessionLength(sessionLength).cap;
 
   const landmarks = Object.fromEntries(
     MUSCLE_GROUPS.map(m => [m, getVolumeLandmarks(m, experienceLevel)]));
@@ -472,6 +553,19 @@ export const buildProgram = ({
   const kullanilan = new Set();
   const gunler = split.days.map(gun => ({ name: gun.name, groups: gun.groups, exercises: [] }));
 
+  // Kilitli hareketler ÖNCE yerleşiyor: yeniden üretimde kullanıcının beğendiği
+  // seçim korunmalı ve yakınsama onların üstüne çalışmalı. Kilitli hareket
+  // `kullanilan` kümesine de giriyor ki üretici aynı hareketi ikinci kez
+  // seçip yanına koymasın.
+  gunler.forEach(gun => {
+    (lockedExercises?.[gun.name] || []).forEach(ad => {
+      if (!ad || yasakli.has(ad)) return;
+      const { muscle } = detectMuscleGroup(ad, customExercises);
+      gun.exercises.push({ name: ad, sets: MIN_SETS_PER_DAY + 1, muscle, locked: true });
+      kullanilan.add(ad);
+    });
+  });
+
   DIRECT_MUSCLES.forEach(kas => {
     const gunIndexleri = gunler
       .map((g, i) => (g.groups.includes(kas) ? i : -1))
@@ -484,8 +578,8 @@ export const buildProgram = ({
       // Gerilmede yükleyen hareket ÖNCE seçiliyor: 3.9 denetiminin aradığı şey
       // bu ve her kasta bir tane olduğundan emin olmanın en kolay yolu, onu
       // isteğe bağlı değil zorunlu kılmak.
-      const gerilme = adaySec(kas, 'stretch', profile, kullanilan, tercihEdilen);
-      const ana = adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen);
+      const gerilme = adaySec(kas, 'stretch', profile, kullanilan, tercihEdilen, yasakli, variant);
+      const ana = adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen, yasakli, variant);
       const secilen = [];
 
       if (gunBasi <= MAX_SETS_PER_EXERCISE && (ana || gerilme)) {
@@ -537,7 +631,7 @@ export const buildProgram = ({
   const birSetKis = (kas, olculen) => {
     const kendi = gunler
       .flatMap((g, i) => g.exercises.map(e => ({ ...e, gun: i })))
-      .filter(e => e.muscle === kas && e.sets > MIN_SETS_PER_DAY)
+      .filter(e => e.muscle === kas && e.sets > MIN_SETS_PER_DAY && !e.locked)
       .sort((a, b) => b.sets - a.sets);
     if (kendi.length > 0) {
       gunler[kendi[0].gun].exercises.find(e => e.name === kendi[0].name).sets -= 1;
@@ -549,7 +643,7 @@ export const buildProgram = ({
     const disKaynak = gunler
       .flatMap((g, i) => g.exercises.map(e => ({ ...e, gun: i })))
       .filter(e => {
-        if (e.sets <= MIN_SETS_PER_DAY) return false;
+        if (e.sets <= MIN_SETS_PER_DAY || e.locked) return false;
         const { contributions } = detectMuscleGroup(e.name, customExercises);
         if (!(parseNumber(contributions?.[kas]) > 0)) return false;
         return kismaGuvenli(e, olculen);
@@ -649,7 +743,7 @@ export const buildProgram = ({
       const olculen = hacimHesapla(gunler, customExercises);
       const dolu = gunler
         .map((g, idx) => ({ idx, yuk: g.exercises.reduce((t, e) => t + e.sets, 0) }))
-        .filter(g => g.yuk > MAX_SETS_PER_SESSION)
+        .filter(g => g.yuk > seansTavani)
         .sort((a, b) => b.yuk - a.yuk)[0];
       if (!dolu) return;
       pas += 1;
@@ -657,7 +751,10 @@ export const buildProgram = ({
       // Öncelikli kaslar en sona bırakılıyor: kullanıcı bir kası özellikle
       // seçtiyse, seansı kısaltmanın bedelini ilk ödeyecek yer orası olmamalı.
       const aday = gunler[dolu.idx].exercises
-        .filter(e => e.sets > MIN_SETS_PER_DAY && kismaGuvenli(e, olculen))
+        // Kilitli hareket seans tavanı için de kısılmıyor: kullanıcı onu
+        // bilerek sabitledi. Kısacak başka yer yoksa gün tavanın üstünde
+        // kalıyor ve sessionFit bunu dürüstçe raporluyor.
+        .filter(e => e.sets > MIN_SETS_PER_DAY && !e.locked && kismaGuvenli(e, olculen))
         .sort((a, b) => (oncelik.has(a.muscle) - oncelik.has(b.muscle)) || b.sets - a.sets)[0];
       if (!aday) return;
       aday.sets -= 1;
@@ -709,14 +806,39 @@ export const buildProgram = ({
     report,
     passes: pas,
     totalSets: gunler.reduce((t, g) => t + g.exercises.reduce((s, e) => s + e.sets, 0), 0),
-    sessionCap: MAX_SETS_PER_SESSION,
+    sessionCap: seansTavani,
+    sessionLength: findSessionLength(sessionLength),
+    // Süre hedefi seçilen bölmeye sığıyor mu.
+    //
+    // Tavan aşıldığında üretici setleri kısmayı DENİYOR ama koruma eşiğinin
+    // altına düşürmeden kısacak yer bulamayabiliyor: üç günde on iki kasa MEV
+    // vermekle seansı 15 sette tutmak aynı anda mümkün değil. Bu durumda
+    // sessizce birinden vazgeçmek yerine çelişki adıyla söyleniyor ve çıkış
+    // yolu öneriliyor — çünkü tek gerçek çözüm günü artırmak.
+    sessionFit: (() => {
+      const yukler = gunler.map(g => g.exercises.reduce((t, e) => t + e.sets, 0));
+      const enYuklu = Math.max(0, ...yukler);
+      if (enYuklu <= seansTavani) {
+        return { ok: true, worstDay: enYuklu, cap: seansTavani, suggestion: null };
+      }
+      const gerekenGun = Math.min(6, Math.ceil((yukler.reduce((t, n) => t + n, 0)) / seansTavani));
+      return {
+        ok: false,
+        worstDay: enYuklu,
+        cap: seansTavani,
+        // Aynı hacmi süre hedefine sığdırmak için gereken en az gün sayısı.
+        suggestion: gerekenGun > daysPerWeek ? gerekenGun : null,
+        detail: `En yüklü gün ${enYuklu} set; ${findSessionLength(sessionLength).label} hedefinde tavan ${seansTavani}. `
+          + 'Setleri kısmak kasları koruma eşiğinin altına düşüreceği için üretici kısmadı.',
+      };
+    })(),
     // Seans tavanını aşan günler. İki günlük bölmede bu kaçınılmaz olabiliyor:
     // on iki kasa koruma eşiği kadar hacim vermekle seansı makul tutmak aynı
     // anda mümkün değil. Üretici sessizce birini seçmek yerine ikisini de
     // raporluyor; hangisinden vazgeçileceği kullanıcının kararı.
     overloadedDays: gunler
       .map(g => ({ name: g.name, sets: g.exercises.reduce((s, e) => s + e.sets, 0) }))
-      .filter(g => g.sets > MAX_SETS_PER_SESSION),
+      .filter(g => g.sets > seansTavani),
     belowMev: report.filter(r => r.belowMev).map(r => r.muscle),
     aboveMrv: report.filter(r => r.aboveMrv).map(r => r.muscle),
     // Gerilmede yükleyen hareketi olmayan kaslar: 3.9 denetiminin sorduğu soru,
@@ -740,9 +862,11 @@ export const buildProgram = ({
  * Hazır programlarla aynı sözleşme (instantiateStarterProgram): setler boş
  * ağırlıkla açılıyor, şablon adlarının önüne program adı geliyor.
  */
-export const instantiateProgram = (built, generateId, { name } = {}) => {
+export const instantiateProgram = (built, generateId, { name, schedule = null } = {}) => {
   if (!built) return null;
   const programAdi = name || built.split.name;
+  // Kullanıcının seçtiği günler varsa onlar, yoksa bölmenin hazır takvimi.
+  const takvim = schedule && Object.keys(schedule).length > 0 ? schedule : built.split.schedule;
 
   const templates = built.days.map(gun => ({
     id: generateId(),
@@ -758,13 +882,67 @@ export const instantiateProgram = (built, generateId, { name } = {}) => {
   }));
 
   const days = { mon: [], tue: [], wed: [], thu: [], fri: [], sat: [], sun: [] };
-  Object.entries(built.split.schedule).forEach(([gunKey, index]) => {
+  Object.entries(takvim).forEach(([gunKey, index]) => {
     const template = templates[index];
     if (!template) return;
     days[gunKey] = [{ id: generateId(), type: 'workout', templateId: template.id, time: '' }];
   });
 
   return { templates, plan: { id: generateId(), name: programAdi, days } };
+};
+
+const HAFTA = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun'];
+
+/**
+ * Seçilen haftanın günlerini bölmenin günlerine sırayla dağıtır.
+ *
+ * Bölme hazır bir takvimle geliyor (Pzt/Çar/Cum gibi) ama bu herkese uymuyor:
+ * hafta sonu çalışan biri için Pazartesi sabit bir varsayım. Kullanıcı kendi
+ * günlerini seçtiğinde sıra korunuyor — bölmenin 1. günü seçilen ilk güne,
+ * 2. günü ikinciye gidiyor; bölmedeki gün sırası toparlanma açısından anlamlı
+ * olduğu için karıştırılmıyor.
+ */
+export const scheduleFromWeekdays = (split, weekdays = []) => {
+  const secili = HAFTA.filter(k => (weekdays || []).includes(k));
+  if (secili.length !== (split?.days?.length || 0)) return split?.schedule || {};
+  return Object.fromEntries(secili.map((key, i) => [key, i]));
+};
+
+/**
+ * Takvim denetimi: arka arkaya gelen günler aynı kasları mı çalıştırıyor.
+ *
+ * Aynı kas grubunu iki gün üst üste yüklemek toparlanmayı kesiyor; bölmelerin
+ * hazır takvimleri buna dikkat ediyor ama kullanıcı günleri kendi seçince
+ * dikkat eden kimse kalmıyordu. Uyarı ENGEL DEĞİL: bazen tek seçenek arka
+ * arkaya iki gündür ve o da hiç çalışmamaktan iyidir.
+ */
+export const auditSchedule = (split, schedule = {}) => {
+  const sirali = HAFTA.map((key, i) => ({ key, i, dayIndex: schedule[key] }))
+    .filter(x => x.dayIndex !== undefined);
+  const catismalar = [];
+
+  sirali.forEach((bugun, idx) => {
+    const yarin = sirali[idx + 1];
+    // Haftanın sonuyla başı da komşu: Pazar + Pazartesi arka arkaya.
+    const komsu = yarin && yarin.i === bugun.i + 1
+      ? yarin
+      : (idx === sirali.length - 1 && sirali[0].i === 0 && bugun.i === 6 ? sirali[0] : null);
+    if (!komsu) return;
+
+    const a = split.days[bugun.dayIndex];
+    const b = split.days[komsu.dayIndex];
+    if (!a || !b) return;
+    const ortak = (a.groups || []).filter(g => (b.groups || []).includes(g));
+    if (ortak.length === 0) return;
+    catismalar.push({ from: bugun.key, to: komsu.key, dayA: a.name, dayB: b.name, shared: ortak });
+  });
+
+  return {
+    ok: catismalar.length === 0,
+    conflicts: catismalar,
+    // Kaç gün seçilmiş — bölmenin gün sayısıyla eşleşmiyorsa takvim eksik.
+    assigned: sirali.length,
+  };
 };
 
 /** Sihirbazda öncelik seçilebilecek kaslar. */

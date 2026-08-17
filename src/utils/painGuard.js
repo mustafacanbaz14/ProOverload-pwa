@@ -143,6 +143,23 @@ export const painWarningFor = (exerciseName, activeRegions = [], { customExercis
 };
 
 /**
+ * Ağrılı bölgeleri yükleyen hareketlerin listesi.
+ *
+ * Program sihirbazının dışlama adımı için: kullanıcı "yapamadığım hareketler"
+ * bölümünü boş bir arama kutusuyla değil, ağrı günlüğünün zaten bildiği
+ * adaylarla karşılıyor. Öneri, seçim değil — dışlamaya kullanıcı karar veriyor.
+ *
+ * Liste kısa tutuluyor: yirmi hareketlik bir öneri yığını okunmaz.
+ */
+export const exercisesLoadingPain = (activeRegions = [], allNames = [], { limit = 12 } = {}) => {
+  if (activeRegions.length === 0) return [];
+  const anahtarlar = activeRegions.map(r => r.key);
+  return (allNames || [])
+    .filter(ad => regionsLoadedBy(ad, anahtarlar).length > 0)
+    .slice(0, limit);
+};
+
+/**
  * Bir seansın tamamı için ağrı taraması.
  *
  * Seans başlamadan önce "bugünkü programda üç hareket omzunu yüklüyor"
