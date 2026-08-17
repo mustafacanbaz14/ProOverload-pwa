@@ -1,10 +1,11 @@
 import React, { memo, useState } from 'react';
 import {
   X, Trophy, Target, Calendar, Layers, TrendingUp, TrendingDown, Minus,
-  Pin, Play, Settings, Dumbbell, Bookmark, Repeat2, RotateCcw,
+  Pin, Play, Settings, Dumbbell, Bookmark, Repeat2, RotateCcw, AlertTriangle,
 } from 'lucide-react';
 import TrendChart from './TrendChart';
 import { formatDay } from '../utils/dates';
+import { PROGRESSION_RULES } from '../utils/progression';
 
 const contributionTone = weight => weight === 1
   ? 'border-emerald-800/60 bg-emerald-950/30 text-emerald-300'
@@ -84,6 +85,10 @@ const ExerciseProfileModal = memo(({
   onClose,
   repRange = null,
   onChangeRepRange,
+  progressionRule = null,
+  onChangeProgression,
+  repRecords = null,
+  plateau = null,
 }) => {
   if (!profile) return null;
   const trendIcon = profile.trend.direction === 'up'
@@ -195,6 +200,96 @@ const ExerciseProfileModal = memo(({
             repRange={repRange}
             onChange={onChangeRepRange}
           />
+        )}
+
+        {/* İlerleme kuralı. Uygulama tek bir sabit algoritma uyguluyordu ve o
+            algoritma her hareket için doğru değil: bench ile yan kaldırış aynı
+            kuralla ilerletilemez. */}
+        {progressionRule && onChangeProgression && (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5 space-y-2">
+            <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
+              <TrendingUp size={11} className="text-emerald-400" /> İlerleme Kuralı
+            </span>
+            <div className="grid grid-cols-4 gap-1.5">
+              {Object.values(PROGRESSION_RULES).map(k => {
+                const secili = progressionRule.key === k.key;
+                return (
+                  <button
+                    key={k.key}
+                    onClick={() => onChangeProgression(k.key)}
+                    aria-pressed={secili}
+                    title={k.hint}
+                    className={`rounded-xl py-2 border text-[9px] font-bold transition-colors ${secili ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                  >
+                    {k.short}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+              {progressionRule.detail}
+            </p>
+          </section>
+        )}
+
+        {/* Tekrar bandı rekorları: tek bir tahmini 1RM yerine gerçekten
+            yapılmış setler. */}
+        {repRecords?.hasData && (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+            <div className="px-3.5 py-2 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
+              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+                Tekrar Rekorları
+              </span>
+              {repRecords.strongestBand && (
+                <span className="text-[9px] font-mono text-amber-400">
+                  en güçlü: {repRecords.strongestBand.bandLabel}
+                </span>
+              )}
+            </div>
+            <div className="divide-y divide-zinc-800/70">
+              {repRecords.rows.map(r => (
+                <div key={r.band} className="px-3.5 py-1.5 flex justify-between items-center gap-2">
+                  <span className="text-[10px] font-bold text-zinc-300 shrink-0 w-12">{r.bandLabel}</span>
+                  <span className="text-[9px] font-mono text-zinc-600 truncate min-w-0 flex-1">{r.hint}</span>
+                  <span className="text-[10px] font-mono shrink-0 text-right">
+                    <strong className="text-zinc-100">{r.weight} kg × {r.reps}</strong>
+                    <span className="text-zinc-600 block text-[9px]">
+                      {formatDay(r.date, 'short')}{r.e1rm ? ` · ~${r.e1rm} kg 1RM` : ''}
+                    </span>
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+              Hepsi gerçekten yapılmış setler. 15 toplam tekrarın üstünde 1RM
+              tahmini gösterilmiyor: formül o bölgede güvenilir değil.
+            </p>
+          </section>
+        )}
+
+        {/* Durgunluk: hareket haftalardır ilerlemiyorsa yapılacak şey daha çok
+            denemek değil değiştirmek. */}
+        {plateau && (plateau.status === 'stalling' || plateau.status === 'regressing') && (
+          <section className={`rounded-2xl border p-3.5 space-y-2 ${plateau.status === 'regressing' ? 'border-red-900/50 bg-red-950/15' : 'border-amber-900/50 bg-amber-950/15'}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${plateau.status === 'regressing' ? 'text-red-300' : 'text-amber-300'}`}>
+              <AlertTriangle size={11} />
+              {plateau.status === 'regressing'
+                ? `En iyinin %${plateau.dropPercent} altında`
+                : `${plateau.sessionsSinceBest} seanstır ilerlemiyor`}
+            </span>
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+              En iyi tahmini 1RM {plateau.best.e1rm} kg ({formatDay(plateau.best.date, 'short')}),
+              son seans {plateau.latest.e1rm} kg. Toplam {plateau.sessions} seans ölçüldü.
+            </p>
+            <div className="space-y-1.5">
+              {plateau.advice.map(o => (
+                <div key={o.key} className="rounded-lg bg-zinc-950/60 border border-zinc-800 p-2">
+                  <strong className="text-[9px] text-zinc-200 block">{o.title}</strong>
+                  <span className="text-[9px] font-mono text-zinc-500 leading-relaxed">{o.detail}</span>
+                </div>
+              ))}
+            </div>
+          </section>
         )}
 
         {(setupNote || profile.templateNames.length > 0) && (

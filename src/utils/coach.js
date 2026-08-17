@@ -60,6 +60,10 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     standardsItem = null, effortItem = null, rotationItem = null,
     ratioItem = null, returnItem = null, periItem = null, restingHrItem = null,
     painGuardItem = null,
+    plateauItem = null,
+    restQualityItem = null,
+    timeOfDayItem = null,
+    techniqueItem = null,
   } = ctx;
 
   const items = [];
@@ -84,6 +88,44 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'pain-guard', priority: 1, tone: TONES.warn, action: 'workout',
       title: painGuardItem.title,
       detail: painGuardItem.detail,
+    });
+  }
+
+  // Durgunluk 2. öncelik: haftalardır ilerlemeyen bir harekette yapılacak şey
+  // daha çok denemek değil değiştirmek, ve bu karar seans planından önce
+  // verilmeli.
+  if (plateauItem) {
+    ekle({
+      key: 'plateau', priority: 2, tone: plateauItem.tone === 'warn' ? TONES.warn : TONES.info, action: 'progress',
+      title: plateauItem.title,
+      detail: plateauItem.detail,
+    });
+  }
+
+  // Teknik aşırı kullanımı: hacmin yerini almaya başladıysa toparlanmayı yiyor.
+  if (techniqueItem) {
+    ekle({
+      key: 'technique-overuse', priority: 3, tone: TONES.warn, action: 'progress',
+      title: techniqueItem.title,
+      detail: techniqueItem.detail,
+    });
+  }
+
+  // Dinlenme kalitesi ve günün saati: ikisi de "aynı emekle daha iyi sonuç"
+  // maddeleri, o yüzden düşük öncelikli — acil bir şey söylemiyorlar.
+  if (restQualityItem) {
+    ekle({
+      key: 'rest-quality', priority: 6, tone: TONES.info, action: 'progress',
+      title: restQualityItem.title,
+      detail: restQualityItem.detail,
+    });
+  }
+
+  if (timeOfDayItem) {
+    ekle({
+      key: 'time-of-day', priority: 7, tone: TONES.info, action: 'progress',
+      title: timeOfDayItem.title,
+      detail: timeOfDayItem.detail,
     });
   }
 

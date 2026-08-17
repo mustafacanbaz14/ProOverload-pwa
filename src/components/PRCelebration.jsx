@@ -55,11 +55,20 @@ const PRCelebration = memo(({ record, onDone }) => {
         style={{ animation: 'pr-pop .35s cubic-bezier(.2,1.4,.5,1) forwards' }}
       >
         <Trophy size={22} className="text-yellow-400 mx-auto mb-1.5" />
-        <span className="text-[12px] font-bold text-yellow-400 uppercase tracking-widest block">Yeni Rekor</span>
+        <span className="text-[12px] font-bold text-yellow-400 uppercase tracking-widest block">
+          {/* Bant rekoru genel 1RM rekorundan çok daha sık geliyor; ikisini
+              ayırmak "her seans rekor kırdım" hissini gerçek tutuyor. */}
+          {record.band ? `${record.band} Tekrar Rekoru` : 'Yeni Rekor'}
+        </span>
         <span className="text-[11px] font-mono text-zinc-300 block mt-1">{record.name}</span>
         <span className="text-[13px] font-mono font-bold text-zinc-100 block mt-0.5">
           {record.weight} kg × {record.reps}
         </span>
+        {record.previous && (
+          <span className="text-[9px] font-mono text-zinc-500 block mt-1">
+            önceki: {record.previous.weight} kg × {record.previous.reps}
+          </span>
+        )}
       </div>
     </div>
   );

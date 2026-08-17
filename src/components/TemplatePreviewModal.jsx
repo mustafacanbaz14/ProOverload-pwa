@@ -24,6 +24,7 @@ const TemplatePreviewModal = memo(({
   // hareketi beğenmeyip programı olduğu gibi kullanmak isteyen kişi için
   // düzenleyiciyi açıp kaydetmek gereksiz uzun bir yoldu.
   onReplaceExercise,
+  nextTargets = null,
 }) => {
   if (!isOpen || !template) return null;
 
@@ -121,6 +122,51 @@ const TemplatePreviewModal = memo(({
               </div>
             )}
           </div>
+
+          {/* Bir sonraki seans hedefleri. Hedefler tek tek hareket ekranında
+              görünüyordu; seansa başlamadan önce "bugün ne yapacağım"
+              sorusunun toplu cevabı yoktu ve kullanıcı salonda hareket hareket
+              geçmişe bakıyordu. */}
+          {nextTargets && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="px-3.5 py-2 border-b border-zinc-800 bg-zinc-900/60 flex justify-between items-baseline">
+                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+                  Bugünkü Hedefler
+                </h4>
+                <span className="text-[9px] font-mono text-zinc-600">
+                  {nextTargets.loadIncreases > 0 ? `${nextTargets.loadIncreases} harekette ağırlık artıyor` : 'ağırlık artışı yok'}
+                </span>
+              </div>
+              <div className="divide-y divide-zinc-800/70">
+                {nextTargets.rows.map(r => (
+                  <div key={r.name} className="px-3.5 py-1.5 flex justify-between items-center gap-2">
+                    <span className="text-[10px] text-zinc-300 truncate min-w-0 flex-1">{r.name}</span>
+                    {r.firstTime ? (
+                      <span className="text-[9px] font-mono text-cyan-400 shrink-0">ilk kez</span>
+                    ) : r.target ? (
+                      <span className="text-[10px] font-mono shrink-0 text-right">
+                        <strong className={r.target.strategy === 'load' ? 'text-emerald-300'
+                          : r.target.strategy === 'reset' ? 'text-amber-300' : 'text-zinc-200'}>
+                          {r.target.weight} kg × {r.target.reps}
+                        </strong>
+                        {r.lastBest && (
+                          <span className="text-zinc-600 block text-[9px]">
+                            geçen: {r.lastBest.weight} × {r.lastBest.reps}
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="text-[9px] font-mono text-zinc-600 shrink-0">veri yok</span>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-900/40">
+                Hedefler her hareketin kendi ilerleme kuralından çıkıyor; kuralı
+                hareketin profil ekranından değiştirebilirsin.
+              </p>
+            </div>
+          )}
 
           {/* Hareket listesi */}
           <div>

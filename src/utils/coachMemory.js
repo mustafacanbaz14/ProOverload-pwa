@@ -94,6 +94,21 @@ export const CONFLICT_RULES = [
     reason: 'Bugünkü programda ağrılı bölgeyi yükleyen hareketler var; önce onların kararı verilmeli.',
   },
   {
+    // Durgunluk varken rekor denemek ve hacim eklemek, tıkanmanın sebebini
+    // büyütme ihtimali taşıyor: ikisi de yorgunluk ekliyor. Önce durgunluğun
+    // kararı verilmeli.
+    winner: 'plateau',
+    losers: ['pr-watch', 'volume-low'],
+    reason: 'Bir hareket haftalardır ilerlemiyor; hacim eklemeden ve rekor denemeden önce sebebine bakmak gerekiyor.',
+  },
+  {
+    // Yoğunluk teknikleri zaten fazlayken bir de hacim eklemek toparlanmayı
+    // iki yönden birden zorluyor.
+    winner: 'technique-overuse',
+    losers: ['volume-low'],
+    reason: 'Yoğunluk teknikleri zaten fazla; hacim eklemeden önce teknik oranını düşürmek gerekiyor.',
+  },
+  {
     winner: 'joint',
     losers: ['pr-watch'],
     reason: 'Son seansta eklem ağrısı yüksekti; bugün rekor denemesi sırası değil.',

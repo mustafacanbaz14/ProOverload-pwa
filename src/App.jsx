@@ -25,6 +25,12 @@ import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from './
 import { buildRestingHrReport, upsertRestingHr, restingHrCoachItem } from './utils/restingHrLog';
 import { buildCardioRecords } from './utils/cardioRecords';
 import { activePainRegions, scanSessionForPain, painGuardCoachItem, painWarningFor, exercisesLoadingPain } from './utils/painGuard';
+import { progressionFor, setProgressionRule, buildNextSessionTargets, PROGRESSION_RULES } from './utils/progression';
+import { scanPlateaus, plateauCoachItem } from './utils/plateau';
+import { repRecordsFor, isRepRecord } from './utils/repRecords';
+import { buildRestReport, restCoachItem } from './utils/restQuality';
+import { buildTimeOfDayReport, timeOfDayCoachItem } from './utils/timeOfDay';
+import { buildTechniqueReport, techniqueCoachItem } from './utils/setTechniques';
 import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
 import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, applyCardioTemplate } from './utils/cardioTemplates';
 import { cardioToCsv } from './utils/csvExport';
@@ -400,8 +406,17 @@ export default function App() {
   // Antrenman işlemleri
   // `reason` akıllı öneriden gelir: sayacın neden 210 sn değil de 75 sn
   // olduğunu göstermek, öneriyi "keyfi sayı" olmaktan çıkarıyor.
+  // Dinlenmenin BAŞLADIĞI an. Bir sonraki set eklendiğinde aradan geçen süre
+  // o setin `restBefore` alanına yazılıyor: uygulama dinlenme süresi öneriyor
+  // ve kronometre çalıştırıyordu ama gerçekte ne kadar beklendiğini hiç
+  // kaydetmiyordu, dolayısıyla "acele ettiğim için mi tekrar düşüyor"
+  // sorusunun cevabı yoktu. Ref kullanılıyor çünkü bu değer render'ı
+  // etkilemiyor; state olsaydı her sayaç tikinde yeniden çizim olurdu.
+  const restStartedAtRef = useRef(null);
+
   const startRest = useCallback((seconds, reason = null) => {
     const total = Math.max(1, Math.round(seconds));
+    restStartedAtRef.current = Date.now();
     setRest({ endsAt: Date.now() + total * 1000, total, reason });
     setRestSecondsLeft(total);
   }, []);
@@ -748,6 +763,11 @@ export default function App() {
   // için ref kullanılır, yoksa bağımlılık zinciri her tuşta yeniden kurulurdu.
   const personalRecordsRef = useRef(personalRecords);
   useEffect(() => { personalRecordsRef.current = personalRecords; }, [personalRecords]);
+  // Tekrar bandı rekorları geçmişin tamamına bakıyor. Ref kullanılıyor ki
+  // updateSet her kayıt değişiminde yeniden kurulmasın — set girerken her tuş
+  // vuruşunda yeni bir işlev üretmek gereksiz render'a mal olurdu.
+  const workoutsRef = useRef(sortedWorkouts);
+  useEffect(() => { workoutsRef.current = sortedWorkouts; }, [sortedWorkouts]);
 
   // Gerçek (adaptif) TDEE: ölçülen kilo değişimi + kaydedilen alım.
   // Formül BMR yalnızca bir tahmindir; bu hesap gerçek harcamayı doğrudan ölçer.
@@ -1020,9 +1040,19 @@ export default function App() {
       ...prev, activeExerciseId: exerciseId, exercises: (prev?.exercises || []).map(ex => {
         if (ex.id === exerciseId) {
           const lastSet = ex.sets[ex.sets.length - 1] || { weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal' };
-          const newSet = settings.autoCopyLastSet
+          const taban = settings.autoCopyLastSet
             ? { ...lastSet, id: generateId() }
             : { id: generateId(), weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal' };
+          // Kronometre çalıştıysa gerçek bekleme süresi bu sete yazılıyor.
+          // Kopyalanan setten miras kalan eski değer her durumda siliniyor:
+          // önceki setin dinlenmesini yenisine taşımak uydurma veri olurdu.
+          const gecen = restStartedAtRef.current
+            ? Math.round((Date.now() - restStartedAtRef.current) / 1000)
+            : 0;
+          const newSet = gecen > 0
+            ? { ...taban, restBefore: gecen }
+            : (() => { const { restBefore: _eski, ...temiz } = taban; return temiz; })();
+          restStartedAtRef.current = null;
           return { ...ex, sets: [...ex.sets, newSet] };
         }
         return ex;
@@ -1045,6 +1075,21 @@ export default function App() {
           const eski = personalRecordsRef.current?.get(ex.name);
           if (tahmin > 0 && (!eski || tahmin > eski.e1rm + 0.5)) {
             setPrCelebration({ name: ex.name, weight: kg, reps: tekrar });
+          } else {
+            // Genel 1RM rekoru değilse tekrar BANDI rekoru olabilir: "on
+            // tekrarda en iyim" de bir rekor ve çok daha sık geliyor, yani
+            // çok daha sık motive ediyor. Yalnızca biri gösteriliyor —
+            // ikisini üst üste bindirmek kutlamayı gürültüye çevirirdi.
+            const bant = isRepRecord(ex.name, yeni, workoutsRef.current, {
+              resolveLoad: resolveSetLoad,
+              excludeWorkoutId: activeWorkoutRef.current?.id,
+            });
+            if (bant && !bant.first) {
+              setPrCelebration({
+                name: ex.name, weight: kg, reps: tekrar,
+                band: bant.bandLabel, previous: bant.previous,
+              });
+            }
           }
         }
       }
@@ -1265,6 +1310,10 @@ export default function App() {
       activeExerciseId: initialExercises[0]?.id || null,
       readiness: readinessSnapshot,
       timer: { status: 'running', startTime: Date.now(), accumulatedSeconds: 0 },
+      // Seansın başlangıç saati kalıcı olarak saklanıyor: `timer` kaydederken
+      // sıfırlandığı için saat bilgisi kayboluyordu ve günün saati ile
+      // performans ilişkisi hiç kurulamıyordu.
+      startedAt: new Date().toISOString(),
       rating: 4,
       notes: ''
     };
@@ -2791,6 +2840,51 @@ export default function App() {
     return scanSessionForPain(hareketler, painRegions, { customExercises });
   }, [activeWorkout, todayCoach, painRegions, customExercises]);
 
+  // --- 7.0 raporları --------------------------------------------------
+  // Hepsi sortedWorkouts üzerinden; hiçbiri yeni depolama anahtarı açmıyor.
+  const plateauReport = useMemo(
+    () => scanPlateaus(sortedWorkouts, { resolveLoad: resolveSetLoad, customExercises }),
+    [sortedWorkouts, resolveSetLoad, customExercises]);
+
+  const restReport = useMemo(
+    () => buildRestReport(sortedWorkouts, { customExercises }),
+    [sortedWorkouts, customExercises]);
+
+  const timeOfDayReport = useMemo(
+    () => buildTimeOfDayReport(sortedWorkouts, { resolveLoad: resolveSetLoad }),
+    [sortedWorkouts, resolveSetLoad]);
+
+  const techniqueReport = useMemo(
+    () => buildTechniqueReport(sortedWorkouts),
+    [sortedWorkouts]);
+
+  /** Hareketin tekrar bandı rekorları — profil ekranı için. */
+  const repRecordsForExercise = useCallback(
+    (name) => repRecordsFor(name, sortedWorkouts, { resolveLoad: resolveSetLoad }),
+    [sortedWorkouts, resolveSetLoad]);
+
+  const handleSetProgressionRule = useCallback((exerciseName, key) => {
+    setSettings(prev => ({
+      ...prev,
+      progressionRules: setProgressionRule(prev.progressionRules, exerciseName, key),
+    }));
+    showToast(`${exerciseName}: ${PROGRESSION_RULES[key]?.label || 'Çift İlerleme'}`);
+  }, [setSettings, showToast]);
+
+  /** Seansa başlamadan önce şablonun tamamı için hedef kartı. */
+  const nextSessionTargetsFor = useCallback((template) => buildNextSessionTargets(template, sortedWorkouts, {
+    repRangeFor: (ad) => repRangeFor(ad, {
+      overrides: settings.repRangeOverrides,
+      customExercises,
+      fallback: { min: settings.repRangeMin, max: settings.repRangeMax },
+    }),
+    resolveLoad: resolveSetLoad,
+    overrides: settings.progressionRules,
+    customExercises,
+    muscleOf: (ad, liste) => detectMuscleGroup(ad, liste).muscle,
+  }), [sortedWorkouts, settings.repRangeOverrides, settings.repRangeMin, settings.repRangeMax,
+    settings.progressionRules, resolveSetLoad, customExercises]);
+
   // Sihirbazın dışlama adımına öneri: ağrılı bölgeyi yükleyen hareketler.
   const painExclusionSuggestions = useMemo(
     () => exercisesLoadingPain(painRegions, allExercisesNames),
@@ -2843,6 +2937,10 @@ export default function App() {
       cardioItem: cardioCoachItem(cardioReport, cardioSuggestion),
       restingHrItem: restingHrCoachItem(restingHrReport),
       painGuardItem: painGuardCoachItem(painScan, painRegions),
+      plateauItem: plateauCoachItem(plateauReport),
+      restQualityItem: restCoachItem(restReport),
+      timeOfDayItem: timeOfDayCoachItem(timeOfDayReport),
+      techniqueItem: techniqueCoachItem(techniqueReport),
       standardsItem: strengthStandardCoachItem(strengthStandards),
       effortItem: effortCoachItem(effortDistribution),
       rotationItem: rotationCoachItem(rotationReport),
@@ -2862,6 +2960,7 @@ export default function App() {
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
     cardioReport, cardioSuggestion, restingHrReport, painScan, painRegions,
+    plateauReport, restReport, timeOfDayReport, techniqueReport,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
@@ -3450,6 +3549,7 @@ export default function App() {
             setPreviewTemplate(prev => prev ? { ...prev, favorite: !prev.favorite } : prev);
           }}
           onReplaceExercise={(t, name) => setSubstituteFor({ name, templateId: t.id })}
+          nextTargets={nextSessionTargetsFor(previewTemplate)}
         />}
 
         {/* EXERCISE MAPPING EDITOR */}
@@ -3500,6 +3600,10 @@ export default function App() {
             ...prev,
             repRangeOverrides: setRepRangeOverride(prev.repRangeOverrides, profileExercise, min, max),
           }))}
+          progressionRule={progressionFor(profileExercise, settings.progressionRules)}
+          onChangeProgression={(key) => handleSetProgressionRule(profileExercise, key)}
+          repRecords={repRecordsForExercise(profileExercise)}
+          plateau={plateauReport.items.find(x => x.name === profileExercise) || null}
           onStart={() => {
             const name = profileExercise;
             setProfileExercise(null);

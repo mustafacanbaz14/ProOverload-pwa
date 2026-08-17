@@ -3,6 +3,14 @@ import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import {
+  nextTargetByRule, setProgressionRule, progressionFor, buildNextSessionTargets, PROGRESSION_RULES,
+} from '../src/utils/progression.js';
+import { assessExercise, scanPlateaus, plateauCoachItem, exerciseTrend } from '../src/utils/plateau.js';
+import { repRecordsFor, isRepRecord, REP_BANDS } from '../src/utils/repRecords.js';
+import { buildRestReport, restCoachItem } from '../src/utils/restQuality.js';
+import { buildTimeOfDayReport, timeOfDayCoachItem, slotForHour } from '../src/utils/timeOfDay.js';
+import { buildTechniqueReport, techniqueCoachItem, techniqueInfo } from '../src/utils/setTechniques.js';
+import {
   SESSION_LENGTHS, findSessionLength, scheduleFromWeekdays, auditSchedule,
 } from '../src/utils/programBuilder.js';
 import { compareWithActivePlan, activePlanSummary } from '../src/utils/programCompare.js';
@@ -3650,6 +3658,276 @@ test('kurulumda seçilen takvim kullanılıyor', () => {
   // Takvim verilmezse bölmenin hazır takvimi.
   const { plan: varsayilan } = instantiateProgram(built, () => `v${++n}`);
   assert.equal(varsayilan.days.mon.length, 1);
+});
+
+
+// ---------------------------------------------------------------- 7.0
+
+const normalSet = (weight, reps, rir = 1) => ({ weight, reps, rir, setType: 'normal' });
+
+test('çift ilerleme yalnızca BÜTÜN setler üst uca ulaşınca yük artırır', () => {
+  const hepsiUstte = [normalSet(80, 10), normalSet(80, 10)];
+  const a = nextTargetByRule(hepsiUstte, { repRangeMin: 6, repRangeMax: 10, rule: 'double' });
+  assert.equal(a.strategy, 'load');
+  assert.equal(a.weight, 82.5);
+  assert.equal(a.reps, 6);
+
+  // 12-8 ortalaması 10 çıkıyor ama ikinci set üst uca ulaşmamış: yük artmamalı.
+  const karisik = [normalSet(80, 12), normalSet(80, 8)];
+  const b = nextTargetByRule(karisik, { repRangeMin: 6, repRangeMax: 10, rule: 'double' });
+  assert.equal(b.strategy, 'reps');
+  assert.equal(b.weight, 80);
+});
+
+test('çift ilerleme tükenişte aralığın altına düşünce yükü geri çeker', () => {
+  const c = nextTargetByRule([normalSet(100, 4, 0)], { repRangeMin: 6, repRangeMax: 10, rule: 'double' });
+  assert.equal(c.strategy, 'reset');
+  assert.ok(c.weight < 100);
+});
+
+test('doğrusal kural alt hedefi tutturunca artırır', () => {
+  const a = nextTargetByRule([normalSet(80, 6)], { repRangeMin: 6, repRangeMax: 10, rule: 'linear' });
+  assert.equal(a.strategy, 'load');
+  const b = nextTargetByRule([normalSet(80, 4)], { repRangeMin: 6, repRangeMax: 10, rule: 'linear' });
+  assert.equal(b.strategy, 'hold');
+  assert.equal(b.weight, 80);
+});
+
+test('RIR kuralı bir tam tekrardan küçük sapmayı yok sayar', () => {
+  // RIR 2 hedefte: değişiklik yok.
+  const tam = nextTargetByRule([normalSet(80, 8, 2)], { rule: 'rir', targetRir: 2 });
+  assert.equal(tam.strategy, 'hold');
+  // Yarım tekrarlık sapma da gürültü: RIR tahmini o hassasiyette değil.
+  const yarim = nextTargetByRule([normalSet(80, 8, 2.5)], { rule: 'rir', targetRir: 2 });
+  assert.equal(yarim.strategy, 'hold');
+  // Bir tam tekrar fazla yedek: yük artar.
+  const fazla = nextTargetByRule([normalSet(80, 8, 3)], { rule: 'rir', targetRir: 2 });
+  assert.equal(fazla.strategy, 'load');
+  // Bir tam tekrar eksik: yük düşer.
+  const eksik = nextTargetByRule([normalSet(80, 8, 1)], { rule: 'rir', targetRir: 2 });
+  assert.equal(eksik.strategy, 'reset');
+});
+
+test('sabit kural ağırlık önermez', () => {
+  const r = nextTargetByRule([normalSet(80, 10)], { rule: 'fixed' });
+  assert.equal(r.strategy, 'fixed');
+  assert.equal(r.weight, 80);
+});
+
+test('küçük kas grubunda artış adımı daha küçük', () => {
+  const buyuk = nextTargetByRule([normalSet(80, 10)], { repRangeMax: 10, rule: 'double', muscle: 'Göğüs' });
+  const kucuk = nextTargetByRule([normalSet(80, 10)], { repRangeMax: 10, rule: 'double', muscle: 'Yan Omuz' });
+  assert.equal(buyuk.weight, 82.5);
+  assert.equal(kucuk.weight, 81.25);
+});
+
+test('ilerleme kuralı kaydediliyor, varsayılan yazılmıyor', () => {
+  let o = {};
+  o = setProgressionRule(o, 'Bench', 'linear');
+  assert.deepEqual(o, { Bench: 'linear' });
+  assert.equal(progressionFor('Bench', o).key, 'linear');
+  // Varsayılana dönüş kaydı siliyor: her harekete satır yazmak ayarları şişirirdi.
+  o = setProgressionRule(o, 'Bench', 'double');
+  assert.deepEqual(o, {});
+  assert.equal(progressionFor('Bench', o).key, 'double');
+  // Tanınmayan anahtar yok sayılıyor.
+  assert.deepEqual(setProgressionRule({}, 'X', 'uyduruk'), {});
+  assert.equal(Object.keys(PROGRESSION_RULES).length, 4);
+});
+
+test('sonraki seans hedef kartı ilk kez yapılanı ayırıyor', () => {
+  const sablon = { name: 'Push', exercises: [{ name: 'Bench' }, { name: 'Yeni' }] };
+  const gecmis = [{ id: 'w', date: '2026-08-10', exercises: [{ name: 'Bench', sets: [normalSet(80, 10), normalSet(80, 10)] }] }];
+  const k = buildNextSessionTargets(sablon, gecmis, { repRangeFor: () => ({ min: 6, max: 10 }) });
+  assert.equal(k.rows.length, 2);
+  assert.equal(k.rows[0].target.strategy, 'load');
+  assert.equal(k.rows[1].firstTime, true);
+  assert.equal(k.loadIncreases, 1);
+  assert.equal(k.firstTimers, 1);
+  assert.equal(buildNextSessionTargets(null, gecmis), null);
+});
+
+const seansMk = (date, weight, reps) => ({
+  id: date, date, exercises: [{ name: 'Bench', sets: [normalSet(weight, reps)] }],
+});
+
+test('durgunluk üç seanstır ilerlemeyeni yakalıyor', () => {
+  const w = [
+    seansMk('2026-06-01', 80, 8), seansMk('2026-06-08', 82.5, 8), seansMk('2026-06-15', 85, 8),
+    seansMk('2026-06-22', 85, 7), seansMk('2026-06-29', 85, 7), seansMk('2026-07-06', 85, 7),
+  ];
+  const a = assessExercise('Bench', w);
+  assert.equal(a.status, 'stalling');
+  assert.equal(a.sessionsSinceBest, 3);
+  assert.equal(a.sessions, 6);
+  // Öneriler en ucuz müdahaleden başlıyor; hareket değiştirmek en sonda.
+  assert.deepEqual(a.status === 'stalling' ? ['deload', 'reprange', 'variation'] : [],
+    scanPlateaus(w).items[0].advice.map(x => x.key));
+});
+
+test('gerileme durgunluktan ayrı işaretleniyor', () => {
+  const w = [
+    seansMk('2026-06-01', 80, 8), seansMk('2026-06-08', 90, 8), seansMk('2026-06-15', 100, 8),
+    seansMk('2026-06-22', 100, 8), seansMk('2026-06-29', 80, 6),
+  ];
+  const a = assessExercise('Bench', w);
+  assert.equal(a.status, 'regressing');
+  assert.ok(a.dropPercent > 5);
+  // Gerilemede ilk öneri toparlanma: sebep çoğunlukla program değil.
+  assert.equal(scanPlateaus(w).items[0].advice[0].key, 'recovery');
+});
+
+test('az veri durgunluk sayılmıyor', () => {
+  const w = [seansMk('2026-06-01', 80, 8), seansMk('2026-06-08', 80, 8)];
+  assert.equal(assessExercise('Bench', w).status, 'insufficient');
+  assert.equal(scanPlateaus(w).hasData, false);
+  assert.equal(plateauCoachItem(scanPlateaus(w)), null);
+  // Eğilim serisi yeniden eskiye sıralı.
+  const seri = exerciseTrend('Bench', w);
+  assert.equal(seri[0].date, '2026-06-08');
+});
+
+test('tekrar rekorları banda göre ayrılıyor', () => {
+  const w = [
+    seansMk('2026-06-01', 100, 3), seansMk('2026-06-08', 80, 10),
+    seansMk('2026-06-15', 85, 10), seansMk('2026-06-22', 60, 20),
+  ];
+  const r = repRecordsFor('Bench', w);
+  assert.equal(r.rows.length, 3);
+  assert.equal(r.rows.find(x => x.band === '3').weight, 100);
+  // Aynı bantta daha ağır olan kazanıyor.
+  assert.equal(r.rows.find(x => x.band === '9').weight, 85);
+  // 15 toplam tekrarın üstünde 1RM tahmini yok: formül orada güvenilir değil.
+  assert.equal(r.rows.find(x => x.band === '13').e1rm, null);
+  assert.equal(r.strongestBand.band, '9');
+  assert.equal(REP_BANDS.length, 6);
+});
+
+test('yalnızca yüksek tekrar varsa en güçlü bant boş kalıyor', () => {
+  const r = repRecordsFor('Bench', [seansMk('2026-06-22', 60, 20)]);
+  assert.equal(r.hasData, true);
+  assert.equal(r.strongestBand, null);
+});
+
+test('bant rekoru tespiti önceki en iyiyle kıyaslıyor', () => {
+  const w = [seansMk('2026-06-15', 85, 10)];
+  assert.ok(isRepRecord('Bench', normalSet(90, 10), w));
+  assert.equal(isRepRecord('Bench', normalSet(80, 10), w), null);
+  // Aynı ağırlıkta daha çok tekrar da rekor.
+  assert.ok(isRepRecord('Bench', normalSet(85, 11), w));
+  // Isınma seti rekor sayılmıyor.
+  assert.equal(isRepRecord('Bench', { weight: 200, reps: 10, rir: 0, setType: 'warmup' }, w), null);
+  // Bantta hiç kayıt yoksa "ilk" işaretleniyor.
+  assert.equal(isRepRecord('Bench', normalSet(120, 2), w).first, true);
+});
+
+test('dinlenme raporu tekrar maliyetini aynı ağırlıkta ölçüyor', () => {
+  const seans = (d, satirlar) => ({
+    id: d, date: d,
+    exercises: [{ name: 'Barbell Bench Press', sets: [
+      normalSet(80, 10),
+      ...satirlar.map(x => ({ ...normalSet(80, x.reps), restBefore: x.rest })),
+    ] }],
+  });
+  const w = [
+    seans('2026-08-01', [{ rest: 60, reps: 7 }, { rest: 60, reps: 6 }]),
+    seans('2026-08-05', [{ rest: 180, reps: 10 }, { rest: 180, reps: 9 }]),
+    seans('2026-08-09', [{ rest: 55, reps: 7 }, { rest: 200, reps: 10 }]),
+  ];
+  const r = buildRestReport(w);
+  assert.equal(r.hasData, true);
+  assert.equal(r.samples, 6);
+  assert.ok(r.repCost.difference > 0, 'kısa dinlenme daha çok tekrar kaybettirmeli');
+  assert.ok(restCoachItem(r).title.includes('tekrar'));
+});
+
+test('dinlenme raporu veri yoksa ve fark küçükse susuyor', () => {
+  assert.equal(buildRestReport([]).hasData, false);
+  // Kısa dinlenme tekrar kaybettirmiyorsa koç konuşmuyor: kısa dinlenmek
+  // tek başına kusur değil.
+  const esit = {
+    hasData: true, shortShare: 50, repCost: { difference: 0.2, shortDrop: 1, adequateDrop: 0.8 },
+  };
+  assert.equal(restCoachItem(esit), null);
+});
+
+test('saat dilimi eşleştirmesi gece yarısını aşıyor', () => {
+  assert.equal(slotForHour(7).key, 'earlyMorning');
+  assert.equal(slotForHour(19).key, 'evening');
+  // Gece dilimi 21'den 05'e kadar; saat 2 de o dilime düşüyor.
+  assert.equal(slotForHour(2).key, 'night');
+  assert.equal(slotForHour(22).key, 'night');
+  assert.equal(slotForHour('yok'), null);
+});
+
+test('saat analizi hareketi kendi ortalamasına göre normalleştiriyor', () => {
+  const mk = (tarih, saat, kg) => ({
+    id: tarih + saat, date: tarih,
+    startedAt: `${tarih}T${String(saat).padStart(2, '0')}:00:00`,
+    exercises: [{ name: 'Squat', sets: [normalSet(kg, 5)] }],
+  });
+  const w = [
+    mk('2026-07-01', 7, 100), mk('2026-07-03', 7, 100), mk('2026-07-05', 7, 102.5),
+    mk('2026-07-08', 19, 112.5), mk('2026-07-10', 19, 115), mk('2026-07-12', 19, 115),
+  ];
+  const r = buildTimeOfDayReport(w);
+  assert.equal(r.hasData, true);
+  assert.equal(r.best.key, 'evening');
+  assert.equal(r.worst.key, 'earlyMorning');
+  assert.ok(r.meaningful);
+  assert.ok(timeOfDayCoachItem(r).title.includes('Akşam'));
+
+  // Saati olmayan kayıtlar değerlendirilmiyor: eski geçmişte startedAt yok.
+  const saatsiz = w.map(x => ({ ...x, startedAt: undefined }));
+  assert.equal(buildTimeOfDayReport(saatsiz).hasData, false);
+});
+
+test('küçük saat farkı gürültü sayılıyor', () => {
+  const mk = (tarih, saat, kg) => ({
+    id: tarih + saat, date: tarih,
+    startedAt: `${tarih}T${String(saat).padStart(2, '0')}:00:00`,
+    exercises: [{ name: 'Squat', sets: [normalSet(kg, 5)] }],
+  });
+  const w = [
+    mk('2026-07-01', 7, 100), mk('2026-07-03', 7, 100), mk('2026-07-05', 7, 100.5),
+    mk('2026-07-08', 19, 101), mk('2026-07-10', 19, 100), mk('2026-07-12', 19, 101),
+  ];
+  const r = buildTimeOfDayReport(w);
+  assert.equal(r.meaningful, false);
+  assert.equal(timeOfDayCoachItem(r), null);
+});
+
+test('yoğunluk tekniği oranı denetleniyor', () => {
+  const seans = (d, tipler) => ({
+    id: d, date: d,
+    exercises: [{ name: 'Fly', sets: tipler.map(t => ({ ...normalSet(50, 10), setType: t })) }],
+  });
+  const normal = [seans('2026-08-01', Array(12).fill('normal')), seans('2026-08-05', Array(12).fill('normal'))];
+  const nr = buildTechniqueReport(normal);
+  assert.equal(nr.share, 0);
+  assert.equal(nr.overused, false);
+  assert.equal(techniqueCoachItem(nr), null);
+
+  const asiri = [
+    seans('2026-08-01', [...Array(6).fill('normal'), ...Array(6).fill('drop')]),
+    seans('2026-08-05', [...Array(6).fill('normal'), ...Array(6).fill('failure')]),
+  ];
+  const ar = buildTechniqueReport(asiri);
+  assert.equal(ar.share, 50);
+  assert.equal(ar.overused, true);
+  assert.ok(techniqueCoachItem(ar).title.includes('%50'));
+
+  // Az veriyle karar verilmiyor.
+  assert.equal(buildTechniqueReport([seans('2026-08-01', ['drop'])]).hasData, false);
+});
+
+test('teknik rehberi hacim sayımını açıklıyor', () => {
+  // Isınma hacme hiç sayılmıyor, drop tek set sayılıyor.
+  assert.ok(techniqueInfo('warmup').volume.includes('HİÇ'));
+  assert.ok(techniqueInfo('drop').volume.includes('TEK set'));
+  assert.ok(techniqueInfo('rest_pause').caution);
+  // Tanınmayan anahtar normale düşüyor.
+  assert.equal(techniqueInfo('uyduruk').key, 'normal');
 });
 
 

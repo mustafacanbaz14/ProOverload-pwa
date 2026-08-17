@@ -60,6 +60,10 @@ export const DEFAULT_SETTINGS = {
   // Hareket bazlı tekrar aralığı: { 'Barbell Bench Press': { min, max } }.
   // Yazılmayan hareketler kas grubu varsayılanına, o da yoksa genel aralığa düşer.
   repRangeOverrides: {},
+  // Hareket bazlı ilerleme kuralı: { 'Barbell Bench Press': 'linear' }.
+  // Yazılmayan hareketler çift ilerleme kullanıyor; varsayılanı da yazmak
+  // ayarları her hareket için bir satırla şişirirdi.
+  progressionRules: {},
   // Dinlenme bitince sistem bildirimi. Varsayılan kapalı: izin isteği
   // kullanıcı açıkça istediğinde sorulmalı.
   restNotification: false,
@@ -644,13 +648,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.9';
+export const APP_VERSION = '7.0';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.9',
+  title: 'ProOverload 7.0',
   date: '2026-08-17',
   items: [
+    {
+      title: 'Hareket Başına İlerleme Kuralı',
+      desc: 'Uygulama tek bir sabit ilerleme algoritması uyguluyordu ve o algoritma her hareket için doğru değil: bench press ile yan kaldırış aynı kuralla ilerletilemez, birinde makul olan sıçrama diğerinde iki haftalık kazancı bir anda istemek demek. Artık her hareketin kendi kuralı var. ÇİFT İLERLEME (varsayılan) tekrarı aralığın üst ucuna kadar çıkarır, BÜTÜN setler üst uca ulaştığında ağırlığı artırır — ortalamaya bakmıyor, çünkü 12-8-8 ortalaması 9 çıkıp "aralıktasın" derken ilk set dışında hedef tutturulmamış oluyordu. DOĞRUSAL her başarılı seansta artırır. RIR TABANLI yedek tekrar hedefine göre ayarlar; bir tam tekrardan küçük sapmaları yok sayar çünkü RIR tahmini o hassasiyette değil. SABİT hiç öneri vermez, teknik ve rehabilitasyon çalışmaları için. Kural, hareketin profil ekranından seçiliyor.'
+    },
+    {
+      title: 'Bugünkü Hedefler Kartı',
+      desc: 'Hedefler tek tek hareket ekranında görünüyordu; seansa başlamadan önce "bugün ne yapacağım" sorusunun toplu cevabı yoktu ve salonda hareket hareket geçmişe bakmak gerekiyordu. Artık şablon önizlemesinde bütün hareketlerin hedefi bir arada: hangi ağırlık, kaç tekrar, geçen sefer ne yapılmıştı ve kaç harekette ağırlık artıyor. Her satır o hareketin kendi ilerleme kuralından çıkıyor.'
+    },
+    {
+      title: 'Durgunluk Tespiti ve Çıkış Yolu',
+      desc: 'Uygulama tek tek seansları değerlendiriyordu — bu seans geçen seferden iyi miydi, rekor kırıldı mı. Ama hipertrofide asıl karar daha yavaş bir ölçekte veriliyor: bir hareket haftalardır ilerlemiyorsa yapılacak şey daha çok denemek değil DEĞİŞTİRMEK. Artık her hareket taranıyor ve üç seanstır en iyisini geçemeyen ya da en iyisinin %5 altına düşen hareketler işaretleniyor. Ölçüt tahmini 1RM eğilimi: tonaj set sayısıyla oynayınca yanıltıyor, tekrar ağırlık değişince kıyaslanamıyor, ikisini tek sayıda birleştiren bu. Çıkış önerileri en ucuz müdahaleden başlıyor: bir hafta yükü geri çek, tekrar aralığını değiştir, varyanta geç. Hareketi tamamen bırakmak en sona bırakıldı çünkü yeni harekette teknik öğrenme süresi var ve o süre boyunca sayılar zaten düşük görünür.'
+    },
+    {
+      title: 'Tekrar Bazlı Rekorlar',
+      desc: 'Hareket başına TEK bir rekor tutuluyordu: en yüksek tahmini 1RM. Bu gerçekte yapılmış hiçbir seti göstermiyor, bir formülün çıktısı. "Beş tekrarda en iyim neydi" diye sorulduğunda cevap yoktu. Artık altı tekrar bandının (1-2, 3-5, 6-8, 9-12, 13-20, 21+) her birinin kendi rekoru var ve hepsi gerçekten yapılmış setler. En güçlü olduğun bant da işaretleniyor — kuvvet çalışanla hacim çalışanı ayırıyor. On beş toplam tekrarın üstünde 1RM tahmini gösterilmiyor: formül o bölgede güvenilir değil ve uydurma bir sayı üretmektense boş bırakmak doğru. Seans sırasında bant rekoru kırınca da kutlama çıkıyor; genel 1RM rekorundan çok daha sık geldiği için çok daha sık motive ediyor.'
+    },
+    {
+      title: 'Gerçek Dinlenme Süresi',
+      desc: 'Uygulama dinlenme süresi öneriyor ve kronometre çalıştırıyordu ama gerçekte ne kadar dinlenildiğini hiç kaydetmiyordu. Dolayısıyla en sık sorulan sorulardan birinin cevabı yoktu: "setler arası acele ettiğim için mi tekrar düşüyor, yoksa gerçekten yorgun muyum". Artık her set kendinden önceki bekleme süresini taşıyor. Rapor iki şey ölçüyor: gerçekte ne kadar dinlenildiği ve kısa dinlenmenin tekrar maliyeti. Maliyet yalnızca AYNI AĞIRLIKTAKİ ardışık setlerde hesaplanıyor — yük değişince tekrar farkı dinlenmeden değil ağırlıktan gelir ve karşılaştırma anlamsızlaşır. Koç yalnızca kayıp set başına bir tekrarı geçtiğinde konuşuyor; kısa dinlenmek tek başına bir kusur değil, metabolik çalışma bilerek de yapılabilir.'
+    },
+    {
+      title: 'Antrenman Saati ve Performans',
+      desc: 'Seansın ne zaman yapıldığı kaydediliyor ama hiç kullanılmıyordu. Oysa günün saati performansı ölçülebilir biçimde etkiliyor ve bu etki kişiye özel — genel bir "öğleden sonra çalış" tavsiyesi kimseye bir şey söylemez, kendi kaydından çıkan cevap söyler. Altı saat dilimi karşılaştırılıyor. Ölçüt seans ortalaması DEĞİL: sabah bench, akşam bacak yapan biri için o karşılaştırma anlamsız olurdu. Bunun yerine her hareket kendi ortalamasına göre normalleştiriliyor — "bu hareketi bu saatte yaptığında kendi ortalamandan yüzde kaç iyisin". Üç puandan küçük farklar gürültü sayılıp söylenmiyor.'
+    },
+    {
+      title: 'Yoğunluk Teknikleri Rehberi ve Denetimi',
+      desc: 'Drop set, rest-pause ve tükeniş set tipleri vardı ama yalnızca birer etiketti: rozet görünüyor, dinlenme kısalıyor, hepsi bu. Nasıl uygulanacağı, ne sıklıkta kullanılacağı ve hacme nasıl sayıldığı hiçbir yerde yazmıyordu. Artık her tekniğin ne zaman, nasıl ve hangi uyarıyla kullanılacağı yazılı — ve hacim sayımının gerekçesi de: bir drop set üç düşüşten oluşsa bile TEK uyaran, üç set saymak haftalık hacmi şişirip tavan hesabını bozardı. Ayrıca oran denetleniyor: çalışma setlerinin beşte birinden fazlası yoğunluk tekniğiyse koç uyarıyor, çünkü bu teknikler set başına uyaranı artırırken yorgunluk maliyetini çok daha hızlı artırıyor ve bir sonraki setin, bir sonraki seansın ve haftalık toplam hacmin altını oyuyorlar.'
+    },
     {
       title: 'İki Yeni Üç Günlük Düzen',
       desc: 'Üç günde iki seçenek vardı: tam vücut ya da itiş+bacak / çekiş+bacak / tam vücut. İkisi de eklendi. İTİŞ+BACAK / ÇEKİŞ+BACAK / İTİŞ+ÇEKİŞ bacak hacmini ilk iki güne bölüp üçüncü günü tamamen üst vücuda ayırıyor; tam vücut varyantından farkı, üçüncü gün bacak görmediği için ilk iki günün bacak yorgunluğunun toparlanacak zaman bulması, buna karşılık üst vücudun haftada üç kez uyarılması. PUSH / PULL / LEGS 3 GÜN ise klasik üçlü bölme. Dürüst olmak gerekirse hipertrofi için üç günde yapılabilecek en iyi seçim değil — her kas haftada yalnızca bir kez uyarılıyor, aynı üç günde tam vücut ya da hibrit düzen iki üç kez uyarır — ama bölgeye tam odaklanmayı sevenler için artık var ve gerekçesi ekranda yazıyor.'

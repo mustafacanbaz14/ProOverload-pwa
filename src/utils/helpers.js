@@ -206,6 +206,10 @@ const mergeSet = (set) => ({
   tempo: set?.tempo || '',
   formRating: set?.formRating ?? 8,
   setType: SET_TYPE_KEYS.includes(set?.setType) ? set.setType : 'normal',
+  // Bu setten ÖNCE ne kadar dinlenildiği (saniye). Uygulama dinlenme süresi
+  // öneriyor ve kronometre çalıştırıyordu ama gerçekte ne kadar beklendiğini
+  // kaydetmiyordu; "acele ettiğim için mi tekrar düşüyor" sorusu cevapsızdı.
+  ...(parseNumber(set?.restBefore) > 0 ? { restBefore: Math.round(parseNumber(set.restBefore)) } : {}),
 });
 
 const mergeExercise = (ex) => ({
