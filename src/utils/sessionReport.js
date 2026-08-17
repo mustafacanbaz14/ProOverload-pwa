@@ -198,6 +198,10 @@ export const buildSessionReport = (workout, history = [], {
   return {
     date: workout.date,
     name: workout.name,
+    // Şablon kimliği raporda tutuluyor ki seans sonu ekranı aynı şablonun bir
+    // önceki seansını bulup kıyaslayabilsin.
+    workoutId: workout.id || null,
+    sourceTemplateId: workout.sourceTemplateId || null,
     duration: parseNumber(workout.duration),
     tonnage: satirlar.reduce((s, r) => s + r.tonnage, 0),
     effectiveSets: calcEffectiveSets(workout.exercises),

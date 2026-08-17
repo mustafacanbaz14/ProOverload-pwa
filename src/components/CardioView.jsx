@@ -1,6 +1,6 @@
 import React, { useState, useMemo, memo } from 'react';
 import {
-  HeartPulse, Plus, Target, Timer, Ruler, ChevronDown, Trash2, Activity, Gauge, Trophy,
+  HeartPulse, Plus, Target, Timer, Ruler, ChevronDown, Trash2, Activity, Gauge, Trophy, Bookmark, Play,
 } from 'lucide-react';
 import CardioCoachCard from './CardioCoachCard';
 import { CARDIO_ACTIVITIES, CARDIO_SECTIONS, findActivity } from '../utils/cardio';
@@ -11,6 +11,7 @@ import {
   TARGET_FIELDS, emptyActivityTarget, setActivityTarget,
   targetedActivities, describeTarget,
 } from '../utils/activityTargets';
+import { describeCardioTemplate, templatesForActivity } from '../utils/cardioTemplates';
 import { formatDay, formatDayRelative } from '../utils/dates';
 
 /**
@@ -43,6 +44,11 @@ const CardioView = memo(({
   restingHrReport = null,
   onLogRestingHr,
   cardioRecords = null,
+  poolLength = 25,
+  cardioTemplates = [],
+  onApplyCardioTemplate,
+  onDeleteCardioTemplate,
+  onSaveCardioTemplate,
   onChangeZoneSettings,
   activityTargets = {},
   onChangeActivityTargets,
@@ -59,6 +65,13 @@ const CardioView = memo(({
   const hedefli = useMemo(
     () => targetedActivities(activityTargets, workouts),
     [activityTargets, workouts]);
+
+  // Şablonlar en çok kullanılan üstte; listenin başı en olası seçim olsun.
+  const siraliSablonlar = useMemo(
+    () => templatesForActivity(cardioTemplates).map(t => ({
+      ...t, info: describeCardioTemplate(t, { poolLength }),
+    })),
+    [cardioTemplates, poolLength]);
 
   // Son kayıtlar: bölge, tempo ve kalori ile birlikte.
   const sonKayitlar = useMemo(() => {
@@ -369,6 +382,55 @@ const CardioView = memo(({
               </div>
             )}
 
+            {/* Kardiyo şablonları. Yüzmede 8 × 100 m serbest gibi bir set
+                defterini her seferinde elle kurmak, defteri hiç kullanmamanın
+                en kısa yoluydu. Şablon yalnızca PLAN alanlarını taşıyor;
+                ölçülen değerler (kulaç, gerçek süre) sıfırlanıyor. */}
+            {siraliSablonlar.length > 0 && (
+              <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
+                  <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
+                    <Bookmark size={12} className="mr-1.5 text-cyan-400" /> Seans Şablonları
+                  </h4>
+                  <span className="text-[9px] font-mono text-zinc-600">{siraliSablonlar.length}</span>
+                </div>
+                <div className="divide-y divide-zinc-800/70">
+                  {siraliSablonlar.map(t => (
+                    <div key={t.id} className="px-4 py-2.5 flex items-center gap-2">
+                      <div className="min-w-0 flex-1">
+                        <span className="text-[11px] font-bold text-zinc-200 block truncate">{t.name}</span>
+                        <span className="text-[9px] font-mono text-zinc-500">
+                          {t.info.activity?.label}
+                          {t.info.summaryLabel ? ` · ${t.info.summaryLabel}` : ''}
+                          {t.useCount > 0 ? ` · ${t.useCount}× kullanıldı` : ''}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => onApplyCardioTemplate?.(t)}
+                        className="bg-cyan-950/40 border border-cyan-900/60 text-cyan-300 px-2.5 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider active:bg-cyan-900/40 shrink-0 flex items-center gap-1"
+                      >
+                        <Play size={9} /> Yükle
+                      </button>
+                      <button
+                        onClick={() => onDeleteCardioTemplate?.(t.id)}
+                        className="text-zinc-600 active:text-red-400 p-1.5 shrink-0"
+                        aria-label={`${t.name} şablonunu sil`}
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="px-4 py-2 bg-zinc-950/60">
+                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                    Şablon plandaki mesafe, stil, set tipi ve dinlenmeyi taşır;
+                    ölçtüğün süreyi ve kulaç sayısını taşımaz — onlar o seansa
+                    ait. Geçmiş kayıtlardaki "Şablon yap" düğmesiyle çoğaltılır.
+                  </p>
+                </div>
+              </div>
+            )}
+
             {cardioRecords?.hasData && (
               <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
@@ -429,6 +491,17 @@ const CardioView = memo(({
                       <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${k.zone.color} border-zinc-800 bg-zinc-950`}>
                         {k.zone.label.replace('Zone ', 'Z')}
                       </span>
+                      {/* Şablon yalnızca set defteri olan kayıttan çıkar;
+                          defteri olmayan kayıtta taşınacak bir yapı yok. */}
+                      {onSaveCardioTemplate && k.sets?.length > 0 && (
+                        <button
+                          onClick={() => onSaveCardioTemplate(k, `${k.activity?.label || k.type} · ${k.sets.length} set`)}
+                          aria-label="Şablon yap"
+                          className="text-zinc-700 active:text-cyan-400 p-1 shrink-0"
+                        >
+                          <Bookmark size={12} />
+                        </button>
+                      )}
                       {onDeleteEntry && (
                         <button
                           onClick={() => onDeleteEntry(k)}

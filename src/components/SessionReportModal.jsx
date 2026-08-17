@@ -9,7 +9,7 @@ import { formatDay } from '../utils/dates';
  * miydim" sorusu ancak analiz sekmesine gidilirse cevaplanıyordu. Geri bildirim
  * döngüsünün kapanacağı yer seansın hemen sonrası.
  */
-const SessionReportModal = memo(({ report, onClose }) => {
+const SessionReportModal = memo(({ report, onClose, comparison = null }) => {
   if (!report) return null;
 
   const rozet = (row) => {
@@ -64,6 +64,59 @@ const SessionReportModal = memo(({ report, onClose }) => {
               </div>
             ))}
           </div>
+
+          {/* Aynı şablonun bir önceki seansıyla karşılaştırma. Rapor bugünü
+              tek başına anlatıyordu; ilerleme ancak iki seans yan yana
+              konunca görünür. Karşılaştırma HAREKET bazında, çünkü toplam
+              tonaj hareket değiştirince yanıltıyor. */}
+          {comparison?.hasData && (
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3.5 space-y-2.5">
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  Geçen Sefere Göre
+                </span>
+                <span className="text-[9px] font-mono text-zinc-600">
+                  {formatDay(comparison.previousDate, 'short')}
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-2">
+                <strong className={`text-lg font-mono ${comparison.tonnage.delta > 0 ? 'text-emerald-300' : comparison.tonnage.delta < 0 ? 'text-red-300' : 'text-zinc-300'}`}>
+                  {comparison.tonnage.delta > 0 ? '+' : ''}{comparison.tonnage.delta} kg
+                </strong>
+                <span className="text-[9px] font-mono text-zinc-500">
+                  tonaj · {comparison.improved} hareket arttı, {comparison.declined} azaldı
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                {comparison.rows.slice(0, 6).map(r => (
+                  <div key={r.name} className="flex items-center gap-2 bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-1.5">
+                    {r.status === 'new'
+                      ? <Sparkles size={10} className="text-cyan-400 shrink-0" />
+                      : r.status === 'dropped'
+                        ? <Minus size={10} className="text-zinc-600 shrink-0" />
+                        : r.tonnageDelta > 0
+                          ? <TrendingUp size={10} className="text-emerald-400 shrink-0" />
+                          : r.tonnageDelta < 0
+                            ? <TrendingDown size={10} className="text-red-400 shrink-0" />
+                            : <Minus size={10} className="text-zinc-500 shrink-0" />}
+                    <span className="text-[10px] text-zinc-300 truncate flex-1">{r.name}</span>
+                    <span className="text-[9px] font-mono text-zinc-500 shrink-0">
+                      {r.status === 'new' ? 'yeni'
+                        : r.status === 'dropped' ? 'yapılmadı'
+                          : `${r.tonnageDelta > 0 ? '+' : ''}${r.tonnageDelta} kg${r.weightDelta !== 0 ? ` · ${r.weightDelta > 0 ? '+' : ''}${r.weightDelta} kg yük` : ''}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              {comparison.rows.length > 6 && (
+                <p className="text-[9px] font-mono text-zinc-600">
+                  +{comparison.rows.length - 6} hareket daha
+                </p>
+              )}
+            </div>
+          )}
 
           {report.adaptation && (
             <div className={`rounded-2xl border p-3.5 ${report.adaptation.mode === 'recovery' ? 'border-red-900/50 bg-red-950/15' : 'border-amber-900/50 bg-amber-950/15'}`}>

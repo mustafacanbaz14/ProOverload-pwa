@@ -143,6 +143,7 @@ const SettingsModal = memo(({
                     { key: 'workouts', label: 'Setler' },
                     { key: 'metrics', label: 'Ölçüm' },
                     { key: 'nutrition', label: 'Besin' },
+                    { key: 'cardio', label: 'Kardiyo' },
                   ].map(o => (
                     <button
                       key={o.key}

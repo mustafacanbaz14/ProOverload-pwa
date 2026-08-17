@@ -52,7 +52,7 @@ const WeeklyReviewModal = memo(({
   // İçinde bulunulan haftadan ileriye gidilemez: henüz veri yok.
   const ileriKapali = weekStart >= weekBounds(dayKey(new Date())).startKey;
 
-  const { training, volume, recovery, energy } = review;
+  const { training, volume, recovery, energy, cardio } = review;
 
   return (
     <div className="fixed inset-0 bg-zinc-950 z-[94] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
@@ -109,6 +109,33 @@ const WeeklyReviewModal = memo(({
             label="hazır oluş"
           />
         </div>
+
+        {/* Kardiyo haftalık özette hiç görünmüyordu; hafta değerlendirilirken
+            bacak toparlanmasından en çok çalan iş görünmez kalıyordu. */}
+        {cardio?.sessions > 0 && (
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 space-y-1.5">
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Kardiyo</span>
+              <strong className="text-[10px] font-mono text-cyan-300">
+                {cardio.sessions} seans · {cardio.minutes} dk
+                {cardio.distanceKm > 0 ? ` · ${cardio.distanceKm} km` : ''}
+              </strong>
+            </div>
+            <div className="flex h-1.5 rounded-full overflow-hidden bg-zinc-900">
+              {[
+                { k: 'low', v: cardio.byIntensity.low, c: 'bg-emerald-500' },
+                { k: 'middle', v: cardio.byIntensity.middle, c: 'bg-amber-500' },
+                { k: 'high', v: cardio.byIntensity.high, c: 'bg-red-500' },
+              ].map(x => (
+                <div key={x.k} className={x.c} style={{ width: `${cardio.minutes > 0 ? (x.v / cardio.minutes) * 100 : 0}%` }} />
+              ))}
+            </div>
+            <span className="text-[9px] font-mono text-zinc-600">
+              {cardio.byIntensity.low} dk düşük · {cardio.byIntensity.middle} dk orta · {cardio.byIntensity.high} dk yüksek
+              {cardio.previousMinutes > 0 ? ` (geçen hafta ${cardio.previousMinutes} dk)` : ''}
+            </span>
+          </div>
+        )}
 
         {training.adaptedSessions > 0 && (
           <div className="rounded-xl border border-amber-900/40 bg-amber-950/15 px-3 py-2 flex items-center justify-between gap-2">

@@ -1,5 +1,7 @@
 import { parseNumber } from './number.js';
 import { isWorkingSet, isWarmupSet, detectMuscleGroup, estimate1RM } from './helpers.js';
+import { findActivity, findEffort } from './cardio.js';
+import { summarizeSets } from './cardioSets.js';
 
 /**
  * CSV dışa aktarma.
@@ -83,6 +85,64 @@ export const workoutsToCsv = (workouts = [], {
     });
 
   // BOM: Excel UTF-8'i ancak bu işaretle tanıyor, yoksa Türkçe karakterler bozuk açılıyor.
+  return `\ufeff${[row(basliklar), ...satirlar].join('\r\n')}\r\n`;
+};
+
+/**
+ * Kardiyo kayıtlarını CSV'ye çevirir — satır başına bir SET, defteri yoksa
+ * bir kayıt.
+ *
+ * Set defteri (6.6) seansın yapısını tutuyor ama dışa aktarımda hiç yoktu:
+ * yüzme seansı elektronik tabloya "45 dakika yüzme" olarak düşüyordu ve
+ * stil/mesafe/tempo kayboluyordu. Defter varsa satırları açılıyor, yoksa tek
+ * satır yazılıyor; ikisi de aynı sütun düzenini kullanıyor ki dosya tek bir
+ * tablo olarak açılabilsin.
+ */
+export const cardioToCsv = (workouts = [], { poolLength = 25 } = {}) => {
+  const basliklar = [
+    'Tarih', 'Aktivite', 'Tempo', 'Set No', 'Tekrar', 'Mesafe (m)', 'Stil',
+    'Set Tipi', 'Sure (sn)', 'Dinlenme (sn)', 'Tempo (sn/birim)', 'SWOLF',
+    'Toplam Dakika', 'Ort. Nabiz', 'Not',
+  ];
+  const num = (n) => (Number.isFinite(n) ? String(Math.round(n * 100) / 100).replace('.', ',') : '');
+
+  const satirlar = [];
+  [...(workouts || [])]
+    .sort((a, b) => new Date(a.date) - new Date(b.date))
+    .forEach(workout => {
+      (workout.cardio || []).forEach(entry => {
+        const aktivite = findActivity(entry?.type);
+        const tempo = findEffort(entry?.effort);
+        const ortak = [workout.date, aktivite?.label || entry?.type || '', tempo?.label || ''];
+
+        const defter = summarizeSets(entry?.sets, entry?.type, { poolLength });
+        if (defter.hasData) {
+          defter.sets.forEach((r, i) => {
+            satirlar.push(row([
+              ...ortak, i + 1, r.reps, r.distance,
+              r.stroke ? r.stroke.label : '', r.kind ? r.kind.label : '',
+              r.seconds || '', r.restSeconds || '',
+              r.paceSeconds ? num(r.paceSeconds) : '', r.swolf || '',
+              // Toplam dakika yalnızca ilk satıra yazılıyor; her satıra
+              // yazmak elektronik tabloda toplanınca seansı kat kat sayardı.
+              i === 0 ? Math.round(defter.totalSeconds / 60) : '',
+              i === 0 ? (parseNumber(entry.avgHeartRate) || '') : '',
+              i === 0 ? (entry.note || '') : '',
+            ]));
+          });
+          return;
+        }
+
+        satirlar.push(row([
+          ...ortak, '', '', entry?.distanceKm ? Math.round(entry.distanceKm * 1000) : '',
+          '', '', '', '', '', '',
+          Math.round(parseNumber(entry?.minutes)) || '',
+          parseNumber(entry?.avgHeartRate) || '',
+          entry?.note || '',
+        ]));
+      });
+    });
+
   return `\ufeff${[row(basliklar), ...satirlar].join('\r\n')}\r\n`;
 };
 

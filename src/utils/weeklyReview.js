@@ -2,6 +2,7 @@ import { parseNumber } from './number.js';
 import { MUSCLE_GROUPS, getVolumeLandmarks, volumeStatusOf } from './constants.js';
 import { detectMuscleGroup, isCompletedWorkingSet, calcTonnage, calcEffectiveSets } from './helpers.js';
 import { weekBounds, dayKey, formatRange } from './dates.js';
+import { describeCardioEntry } from './cardioZones.js';
 import { computeSleepScore } from './wellness.js';
 
 /**
@@ -43,6 +44,7 @@ export const buildWeeklyReview = ({
   wellness = [],
   energyWeeks = [],
   nutritionGoal = 'bulk',
+  zoneOpts = {},
   today = new Date(),
 } = {}) => {
   const basKey = weekStart || lastCompletedWeekStart(today);
@@ -70,7 +72,7 @@ export const buildWeeklyReview = ({
         out[kas] = Math.round(((out[kas] || 0) + sets * agirlik) * 4) / 4;
       });
     }));
-    return out;
+  return out;
   };
 
   const muscleVolume = hacimHesapla(agirlikSeanslari);
@@ -116,6 +118,22 @@ export const buildWeeklyReview = ({
   /* --- enerji --- */
   const enerji = energyWeeks.find(w => w.weekStart === startKey) || null;
 
+  // Kardiyo bu haftaya kadar gözden geçirmede hiç yoktu: hafta özeti yalnızca
+  // ağırlık antrenmanını anlatıyordu ve kardiyo hedefi olan biri için özetin
+  // yarısı eksikti.
+  const kardiyoKayitlari = haftaninSeanslari.flatMap(w =>
+    (w.cardio || [])
+      .filter(e => Number(e?.minutes) > 0)
+      .map(e => ({ ...describeCardioEntry(e, zoneOpts), date: w.date })));
+  const oncekiKardiyo = workouts
+    .filter(w => withinWeek(w.date, oncekiSinir.startKey, oncekiSinir.endKey))
+    .flatMap(w => (w.cardio || []).filter(e => Number(e?.minutes) > 0));
+
+  const kardiyoDakika = { low: 0, middle: 0, high: 0 };
+  kardiyoKayitlari.forEach(k => { kardiyoDakika[k.intensity.key] += k.minutes; });
+  const kardiyoToplam = kardiyoDakika.low + kardiyoDakika.middle + kardiyoDakika.high;
+  const kardiyoMesafe = kardiyoKayitlari.reduce((t, k) => t + (Number(k.distanceKm) || 0), 0);
+
   const ozet = {
     range: formatRange(startKey, endKey),
     startKey,
@@ -139,8 +157,16 @@ export const buildWeeklyReview = ({
       readiness: hazirOrt,
       readinessEntries: hazirSkorlar.length,
     },
+    cardio: {
+      sessions: kardiyoKayitlari.length,
+      minutes: kardiyoToplam,
+      byIntensity: kardiyoDakika,
+      distanceKm: Math.round(kardiyoMesafe * 100) / 100,
+      previousMinutes: oncekiKardiyo.reduce((t, e) => t + (Number(e.minutes) || 0), 0),
+      highSessions: kardiyoKayitlari.filter(k => k.intensity.key === 'high' && k.minutes >= 8).length,
+    },
     energy: enerji,
-    hasData: agirlikSeanslari.length > 0 || geceler.length > 0 || Boolean(enerji),
+    hasData: agirlikSeanslari.length > 0 || geceler.length > 0 || Boolean(enerji) || kardiyoKayitlari.length > 0,
   };
 
   return { ...ozet, adjustments: ayarlar(ozet, nutritionGoal) };
@@ -156,7 +182,7 @@ export const buildWeeklyReview = ({
  */
 const ayarlar = (ozet, nutritionGoal) => {
   const out = [];
-  const { training, volume, recovery, energy } = ozet;
+  const { training, volume, recovery, energy, cardio } = ozet;
 
   if (!ozet.hasData) {
     return [{
@@ -244,6 +270,28 @@ const ayarlar = (ozet, nutritionGoal) => {
       title: `Bu hafta ${recovery.nights} gece uyku kaydı var`,
       detail: 'Uyku ortalaması dört geceden az kayıtla güvenilir değil; toparlanma önerileri de bu yüzden zayıf kalıyor.',
     });
+  }
+
+  // Kardiyo hafta özetine 6.7'de eklendi; ayar listesinde de olmalı. Yalnızca
+  // belirgin bir değişim varsa konuşuyor — her hafta "kardiyo yaptın" demek
+  // bilgi değil gürültü.
+  if (cardio && cardio.minutes > 0) {
+    const fark = cardio.minutes - cardio.previousMinutes;
+    if (Math.abs(fark) >= 30) {
+      out.push({
+        key: 'cardio-shift', tone: fark > 0 ? 'info' : 'warn',
+        title: `Kardiyo ${fark > 0 ? 'arttı' : 'azaldı'}: ${cardio.minutes} dk (geçen hafta ${cardio.previousMinutes})`,
+        detail: fark > 0
+          ? `${cardio.byIntensity.low} dk düşük, ${cardio.byIntensity.middle} dk orta, ${cardio.byIntensity.high} dk yüksek şiddet. Artış düşük şiddetteyse ağırlık antrenmanına dokunmaz; yüksek şiddetteyse bacak toparlanmasından çalar.`
+          : 'Kardiyo hacmi belirgin düştü. Bilinçliyse sorun yok; değilse haftalık hedefi gözden geçir.',
+      });
+    } else if (cardio.highSessions >= 3) {
+      out.push({
+        key: 'cardio-high', tone: 'warn',
+        title: `${cardio.highSessions} yüksek şiddet kardiyo seansı`,
+        detail: 'Zone 4-5 çalışma bacak toparlanmasından en çok çalan kardiyo türü. Hipertrofi önceliğindeysen haftada bir iki seansla sınırlamak, ağırlık hacmini korumanın en ucuz yolu.',
+      });
+    }
   }
 
   return out;

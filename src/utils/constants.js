@@ -85,6 +85,8 @@ export const DEFAULT_SETTINGS = {
   // Sabah dinlenme nabzı günlüğü: [{ date, bpm }]. Tek bir ayar değeri
   // yerine seri tutuluyor çünkü asıl bilgi tabandan sapmada.
   restingHrLog: [],
+  // Kardiyo seans şablonları: set defterinin yapısını saklıyor.
+  cardioTemplates: [],
   // Aktivite başına seans hedefi: { swim: { sets, setDistance, minutes, ... } }.
   // Hedef koymak zorunlu değil; kardiyo kaydı ve kalori hesabı hedefsiz çalışır.
   activityTargets: {},
@@ -642,13 +644,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '6.6';
+export const APP_VERSION = '6.7';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 6.6',
+  title: 'ProOverload 6.7',
   date: '2026-08-16',
   items: [
+    {
+      title: 'Ağrı Koruması',
+      desc: 'Ağrı günlüğü 6.1 den beri var ama hareket listesiyle hiçbir bağlantısı yoktu: omzun iki haftadır ağrırken uygulama bench press satırını hiçbir şey olmamış gibi açıyordu. Artık sekiz vücut bölgesi hareket adlarıyla eşleşiyor ve yalnızca SÜRÜYOR ya da ŞİDDETLİ işaretlenmiş ağrılar sete girmeden hemen önce uyarı veriyor: hangi bölge, bu hareket o bölgeyi neden yüklüyor ve aynı kası çalıştırmaya devam eden daha az zorlayıcı seçenekler. Hareket ENGELLENMİYOR — karar senin, uygulamanın işi kararı görünür kılmak. Eşik bilerek yüksek tutuldu: her küçük sızıda uyarı çıkarsa uyarılar okunmaz olur.'
+    },
+    {
+      title: 'Seansın Tahmini Bitiş Saati',
+      desc: 'Salonda en sık sorulan pratik soru "kaç dakikam kaldı" idi ve cevabı yoktu; sonuçta son hareketler ya aceleye geliyor ya da seans planlanandan yarım saat uzuyordu. Artık girilen setlerin gerçek temposundan bir tahmin çıkıyor: kalan dakika ve saat olarak bitiş. Tahmin şablonun teorik süresinden değil O SEANSIN kendi temposundan üretiliyor; üçüncü setten önce konuşmuyor ve set başına süre makul aralığın dışına çıkarsa (uzun bir ara verilmişse) sessiz kalıyor — yanlış bir sayı, sayı olmamasından kötüdür.'
+    },
+    {
+      title: 'Geçen Seferle Karşılaştırma',
+      desc: 'Seans sonu raporu bugünü tek başına anlatıyordu; "geçen sefere göre iyi miydim" sorusu iki kaydı elle açıp göz kararıyla kıyaslamayı gerektiriyordu. Artık aynı şablonun bir önceki seansı otomatik bulunuyor ve HAREKET bazında karşılaştırılıyor: hangi hareket kaç kg tonaj kazandı, en ağır set ne kadar çıktı, hangisi geriledi, hangisi yeni. Karşılaştırma hareket bazında, çünkü toplam tonaj hareket değişince yanıltır — bir hareketi bırakıp diğerini eklemek tonajda düşüş gibi görünür ama gerileme değildir.'
+    },
+    {
+      title: 'Kardiyo Seans Şablonları',
+      desc: '8 × 100 m serbest gibi bir set defterini her seferinde elle kurmak, defteri hiç kullanmamanın en kısa yoluydu. Artık defterli her kayıt tek dokunuşla şablona dönüşüyor ve bir sonraki seansta hazır yükleniyor. Şablon yalnızca PLAN alanlarını taşıyor — mesafe, stil, set tipi, dinlenme; ölçümleri (gerçek süre, kulaç sayısı) taşımıyor, çünkü onlar o seansa ait. En çok kullanılan şablon listenin başında duruyor.'
+    },
+    {
+      title: 'Haftalık Gözden Geçirmede Kardiyo',
+      desc: 'Hafta değerlendirilirken kardiyo hiç görünmüyordu; oysa bacak toparlanmasından en çok çalan iş o. Artık özet kartında seans sayısı, toplam dakika, mesafe ve düşük/orta/yüksek şiddet dağılımı var. Gelecek hafta önerilerine de giriyor ama yalnızca 30 dakikayı aşan bir değişim ya da üçten fazla yüksek şiddet seansı varsa — her hafta "kardiyo yaptın" demek bilgi değil gürültü.'
+    },
+    {
+      title: 'Kardiyo CSV Dışa Aktarma',
+      desc: 'CSV dışa aktarımda setler, ölçümler ve beslenme vardı; kardiyo yoktu. Set defteri seansın yapısını tutuyor ama tabloya hiç düşmüyordu. Artık her SET ayrı satır: tarih, aktivite, tempo, set no, tekrar, mesafe, stil, set tipi, süre, dinlenme, tempo ve SWOLF. Defteri olmayan kayıtlar tek satır olarak yine çıkıyor, böylece eski geçmiş de dışarı alınabiliyor.'
+    },
+    {
+      title: 'Koç Çakışma Kuralı',
+      desc: 'Koç aynı anda hem "şu hareketten rekor denemesi yap" hem de "o bölgende ağrı var" diyebiliyordu; çelişkili iki öneri arasında kalan kullanıcı ikisini de dinlemiyor. Ağrı koruması artık rekor takibini, hacim uyarısını ve rotasyon önerisini bastırıyor. Sağlık uyarısı ile performans önerisi çarpıştığında kazanan her zaman sağlık uyarısıdır.'
+    },
     {
       title: 'Yüzme Set Defteri',
       desc: 'Kardiyo kaydı tek satırdı: aktivite, süre, tempo. Yürüyüş için yeterli ama "45 dakika yüzme" cümlesi 8 x 100 m serbest ile 1500 m düz yüzmeyi aynı kefeye koyuyor. Artık set defteri var: her satırda tekrar, mesafe, stil ve süre. Sekiz stil seçilebiliyor — serbest, sırtüstü, kurbağalama, kelebek, karışık, teknik, ayak, kol — ve her birinin kendi MET çarpanı var; kelebek ağırlıklı bir seans aynı süredeki teknik çalışmasından belirgin daha pahalı. Satır başına tekrar tutuluyor: sekiz ayrı satır açmak hem yazmayı hem okumayı zorlaştırıyordu. Defter doldurulduğunda süre ve mesafe ORADAN çıkıyor, elle yazılmıyor — iki sayının sessizce ayrışmasına açık kapı bırakmamak için.'

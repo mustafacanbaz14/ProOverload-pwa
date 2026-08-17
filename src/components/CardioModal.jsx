@@ -21,12 +21,16 @@ const QUICK_MINUTES = [15, 20, 30, 45, 60];
  */
 const CardioModal = memo(({
   isOpen, onClose, onSave, weightKg, entriesFor, onDelete, planned = [],
-  initialDate, editingEntry = null, age = null, zoneOpts = {},
+  initialDate, editingEntry = null, presetEntry = null, age = null, zoneOpts = {},
   poolLength = '25', onChangePool,
 }) => {
-  const [type, setType] = useState(editingEntry?.type || 'zone2');
-  const [minutes, setMinutes] = useState(editingEntry?.minutes || 30);
-  const [effort, setEffort] = useState(editingEntry?.effort || DEFAULT_EFFORT);
+  // Şablondan yüklenirken de aynı başlangıç değerleri kullanılıyor, ama
+  // editingEntry olarak GEÇMİYOR: şablon yeni bir kayıt açar, var olan bir
+  // kaydı güncellemez. Ekran zaten key ile yeniden kuruluyor.
+  const baslangic = editingEntry || presetEntry || null;
+  const [type, setType] = useState(baslangic?.type || 'zone2');
+  const [minutes, setMinutes] = useState(baslangic?.minutes || 30);
+  const [effort, setEffort] = useState(baslangic?.effort || DEFAULT_EFFORT);
   const [customEffortMultiplier, setCustomEffortMultiplier] = useState(editingEntry?.customEffortMultiplier ?? 0.72);
   const [date, setDate] = useState(initialDate || getLocalDateString());
   const [note, setNote] = useState(editingEntry?.note || '');
@@ -35,7 +39,7 @@ const CardioModal = memo(({
   const [distanceKm, setDistanceKm] = useState(editingEntry?.distanceKm ?? '');
   const [avgHeartRate, setAvgHeartRate] = useState(editingEntry?.avgHeartRate ?? '');
   // Set defteri: yüzme ve interval gibi işlerde seansın yapısını tutuyor.
-  const [sets, setSets] = useState(() => (Array.isArray(editingEntry?.sets) ? editingEntry.sets : []));
+  const [sets, setSets] = useState(() => (Array.isArray(baslangic?.sets) ? baslangic.sets : []));
   const [showActivities, setShowActivities] = useState(false);
   const [activityQuery, setActivityQuery] = useState('');
   // Ekran kapanmadan kaç aktivite eklendiği — geri bildirim için.

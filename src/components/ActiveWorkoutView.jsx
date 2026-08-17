@@ -16,6 +16,8 @@ import { repRangeFor } from '../utils/exerciseTargets';
 const ActiveWorkoutView = memo(({
   deloadReturn = null,
   warmupRoutine = null,
+  painWarningFor = null,
+  sessionPace = null,
   activeWorkout,
   setActiveWorkout,
   setIsEndWorkoutModalOpen,
@@ -159,6 +161,34 @@ const ActiveWorkoutView = memo(({
               <span className="text-[9px] font-mono text-amber-200/80 block leading-relaxed">
                 {deload.preset.label} — {deload.preset.summary}. Hedefler buna göre geliyor.
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Tahmini bitiş. Salonda en sık sorulan pratik soru "kaç dakikam
+            kaldı"; cevabı olmayınca son hareketler aceleye geliyordu. Tahmin
+            seansın KENDİ temposundan çıkıyor, şablonun teorik süresinden
+            değil. */}
+        {sessionPace?.total > 0 && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 flex items-center gap-2.5">
+            <Timer size={13} className="text-cyan-400 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <div className="flex justify-between items-baseline gap-2">
+                <span className="text-[10px] font-bold text-zinc-200">
+                  {sessionPace.done}/{sessionPace.total} set
+                </span>
+                <span className="text-[9px] font-mono text-zinc-500">
+                  {sessionPace.hasEstimate
+                    ? `~${sessionPace.remainingMinutes} dk kaldı · bitiş ${sessionPace.finishLabel}`
+                    : sessionPace.reason === 'done' ? 'bütün setler girildi'
+                      : sessionPace.reason === 'tooEarly' ? 'tahmin için birkaç set daha'
+                        : sessionPace.reason === 'unreliable' ? 'tempo örneklemi güvenilmez'
+                          : ''}
+                </span>
+              </div>
+              <div className="h-1 bg-zinc-950 rounded-full mt-1 border border-zinc-800 overflow-hidden">
+                <div className="h-full bg-cyan-500 rounded-full" style={{ width: `${sessionPace.progress}%` }} />
+              </div>
             </div>
           </div>
         )}
@@ -332,6 +362,25 @@ const ActiveWorkoutView = memo(({
               {/* Bu hareketin bir setinin hangi kasa ne kadar yazıldığı */}
               {/* Vücut ağırlığı payı: ağırlık alanına 0 yazan kullanıcı, yükün
                   sıfır sayılmadığını görsün. */}
+              {/* Ağrı uyarısı. Ağrı günlüğü ile hareket listesi bu sürüme
+                  kadar birbirinden habersizdi; uyarının işe yarayacağı an
+                  tam burası — sete girmeden önce. Hareket ENGELLENMİYOR:
+                  karar kullanıcının, uygulamanın işi kararı görünür kılmak. */}
+              {(() => {
+                const uyari = painWarningFor?.(ex.name);
+                if (!uyari) return null;
+                return (
+                  <div className={`px-3 py-1.5 border-b border-zinc-800 flex items-start gap-2 ${uyari.severity === 'high' ? 'bg-red-950/20' : 'bg-amber-950/15'}`}>
+                    <AlertCircle size={10} className={`${uyari.severity === 'high' ? 'text-red-400' : 'text-amber-400'} shrink-0 mt-0.5`} />
+                    <span className={`text-[9px] font-mono ${uyari.severity === 'high' ? 'text-red-300/90' : 'text-amber-300/90'}`}>
+                      {uyari.regions.join(' / ')} ağrısı sürüyor ve bu hareket o bölgeyi yüklüyor.
+                      {' '}{uyari.note}
+                      {uyari.safer.length > 0 && <> Daha az yükleyen seçenekler: {uyari.safer.join(', ')}.</>}
+                    </span>
+                  </div>
+                );
+              })()}
+
               {/* Vücut ağırlığı bandı. Eskiden yalnızca "şu kadar ekleniyor"
                   diyordu; sayının hangi kilodan çıktığı ve alana ne yazılması
                   gerektiği görünmüyordu. Artık taban, kaynağı ve canlı toplam

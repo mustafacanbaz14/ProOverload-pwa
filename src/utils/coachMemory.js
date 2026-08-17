@@ -87,6 +87,13 @@ export const CONFLICT_RULES = [
     reason: 'Eklem ağrısı sürerken rekor denemek ve hacim eklemek riski büyütür.',
   },
   {
+    // Ağrılı bölgeyi yükleyen hareketler varken rekor denemek ve hacim
+    // eklemek, riski bilerek büyütmek olur.
+    winner: 'pain-guard',
+    losers: ['pr-watch', 'volume-low', 'rotation'],
+    reason: 'Bugünkü programda ağrılı bölgeyi yükleyen hareketler var; önce onların kararı verilmeli.',
+  },
+  {
     winner: 'joint',
     losers: ['pr-watch'],
     reason: 'Son seansta eklem ağrısı yüksekti; bugün rekor denemesi sırası değil.',

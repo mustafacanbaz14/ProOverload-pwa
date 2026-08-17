@@ -2,6 +2,10 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
+import { regionsLoadedBy, activePainRegions, painWarningFor, scanSessionForPain } from '../src/utils/painGuard.js';
+import { buildSessionPace, compareSessions, findComparableSessions } from '../src/utils/sessionPace.js';
+import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, templatesForActivity, applyCardioTemplate, describeCardioTemplate } from '../src/utils/cardioTemplates.js';
+import { cardioToCsv } from '../src/utils/csvExport.js';
 import { suggestSubstitutes } from '../src/utils/substitution.js';
 import { analyzeDayConflicts } from '../src/utils/interference.js';
 import { computeWeekPlan } from '../src/utils/weekPlan.js';
@@ -3008,6 +3012,210 @@ test('ısınma setleri rekor üretmez', () => {
     cardio: [{ type: 'swim', minutes: 20, sets: [{ reps: 1, distance: 100, stroke: 'free', kind: 'warmup', seconds: 80 }] }],
   }];
   assert.equal(buildCardioRecords(w).hasData, false);
+});
+
+
+// ---------------------------------------------------------------- 6.7
+
+test('ağrı bölgesi hareket adından bulunuyor', () => {
+  assert.ok(regionsLoadedBy('Barbell Bench Press').includes('shoulder'));
+  assert.ok(regionsLoadedBy('Barbell Back Squat').includes('knee'));
+  assert.ok(regionsLoadedBy('Deadlift').includes('lowBack'));
+  // Yükleme ilişkisi olmayan hareket hiçbir bölgeye bağlanmıyor.
+  assert.equal(regionsLoadedBy('Seated Calf Raise').includes('shoulder'), false);
+});
+
+test('yalnızca süren ya da şiddetli ağrı uyarı üretir', () => {
+  const hafif = [{ region: 'shoulder', severity: 2, date: '2026-08-16' }];
+  assert.equal(activePainRegions(hafif, { today: new Date('2026-08-17') }).length, 0);
+
+  // Aynı bölge birkaç gün üst üste: artık süren bir ağrı.
+  const suren = [
+    { region: 'shoulder', severity: 3, date: '2026-08-12' },
+    { region: 'shoulder', severity: 3, date: '2026-08-15' },
+    { region: 'shoulder', severity: 3, date: '2026-08-16' },
+  ];
+  const aktif = activePainRegions(suren, { today: new Date('2026-08-17') });
+  assert.equal(aktif.length, 1);
+  assert.equal(aktif[0].key, 'shoulder');
+});
+
+test('ağrı uyarısı yalnızca o bölgeyi yükleyen harekette çıkıyor', () => {
+  // Tek bir şiddetli kayıt (7+) süreklilik aranmadan uyarı üretiyor.
+  const gunluk = [{ region: 'shoulder', severity: 8, date: '2026-08-16' }];
+  const aktif = activePainRegions(gunluk, { today: new Date('2026-08-17') });
+  const uyari = painWarningFor('Barbell Overhead Press', aktif);
+  assert.ok(uyari);
+  assert.ok(uyari.safer.length > 0);
+  // Omuz ağrısı bacak hareketini etkilemiyor.
+  assert.equal(painWarningFor('Leg Extension', aktif), null);
+  // Ağrı yoksa hiçbir hareket uyarı vermiyor.
+  assert.equal(painWarningFor('Barbell Overhead Press', []), null);
+});
+
+test('seans taraması riskli hareketleri sayıyor', () => {
+  const aktif = activePainRegions([
+    { region: 'knee', severity: 4, date: '2026-08-12' },
+    { region: 'knee', severity: 4, date: '2026-08-15' },
+    { region: 'knee', severity: 4, date: '2026-08-16' },
+  ], { today: new Date('2026-08-17') });
+  const tarama = scanSessionForPain(
+    [{ name: 'Barbell Back Squat' }, { name: 'Lat Pulldown' }, { name: 'Leg Press' }],
+    aktif);
+  assert.equal(tarama.findings.length, 2);
+  assert.ok(tarama.hasWarnings);
+  assert.deepEqual(tarama.regions, ['Diz']);
+});
+
+test('seans temposu üçüncü setten önce tahmin vermiyor', () => {
+  const az = {
+    exercises: [{ name: 'Squat', sets: [{ reps: 8, weight: 100 }, { reps: 8, weight: 100 }, { reps: '', weight: '' }] }],
+  };
+  const p = buildSessionPace(az, 300);
+  assert.equal(p.hasEstimate, false);
+  assert.equal(p.reason, 'tooEarly');
+  assert.equal(p.total, 3);
+});
+
+test('şablondan gelen hedef tekrarlar tamamlanmış sayılmıyor', () => {
+  // Şablonla başlatılan seansta tekrar alanı baştan dolu, ağırlık boş.
+  const yeni = {
+    exercises: [{ name: 'Squat', sets: [{ reps: 8, weight: '' }, { reps: 8, weight: '' }, { reps: 8, weight: '' }] }],
+  };
+  assert.equal(buildSessionPace(yeni, 60).done, 0);
+  // Sıfır geçerli bir giriş: ek ağırlıksız barfiks seti tamamlanmış sayılıyor.
+  const bw = { exercises: [{ name: 'Pull-up', sets: [{ reps: 10, weight: 0 }, { reps: 10, weight: '' }] }] };
+  assert.equal(buildSessionPace(bw, 60).done, 1);
+});
+
+test('seans temposu kalan süreyi girilen setlerden çıkarıyor', () => {
+  const w = {
+    exercises: [{
+      name: 'Squat',
+      sets: [
+        { reps: 8, weight: 100 }, { reps: 8, weight: 100 }, { reps: 8, weight: 100 },
+        { reps: '', weight: '' }, { reps: '', weight: '' }, { reps: '', weight: '' },
+        { reps: '', weight: '' }, { reps: '', weight: '' },
+      ],
+    }],
+  };
+  // 3 set / 12 dakika = set başına 4 dakika, kalan 5 set = 20 dakika.
+  const p = buildSessionPace(w, 12 * 60, { now: new Date('2026-08-17T18:00:00') });
+  assert.equal(p.hasEstimate, true);
+  assert.equal(p.minutesPerSet, 4);
+  assert.equal(p.remainingMinutes, 20);
+  assert.equal(p.finishLabel, '18:20');
+});
+
+test('makul olmayan tempo tahmin üretmiyor', () => {
+  const w = {
+    exercises: [{
+      name: 'Squat',
+      sets: [{ reps: 8, weight: 100 }, { reps: 8, weight: 100 }, { reps: 8, weight: 100 }, { reps: '', weight: '' }],
+    }],
+  };
+  // 3 set için iki saat: aradan uzun bir ara geçmiş, tahmin yanıltıcı olurdu.
+  assert.equal(buildSessionPace(w, 7200).hasEstimate, false);
+  assert.equal(buildSessionPace(w, 7200).reason, 'unreliable');
+});
+
+test('seans karşılaştırması hareket bazında fark veriyor', () => {
+  const once = {
+    date: '2026-08-10', id: 'a', sourceTemplateId: 't1',
+    exercises: [{ name: 'Squat', sets: [{ reps: 8, weight: 95 }, { reps: 8, weight: 95 }] }],
+  };
+  const simdi = {
+    date: '2026-08-17', id: 'b', sourceTemplateId: 't1',
+    exercises: [
+      { name: 'Squat', sets: [{ reps: 8, weight: 100 }, { reps: 8, weight: 100 }] },
+      { name: 'Leg Curl', sets: [{ reps: 12, weight: 40 }] },
+    ],
+  };
+  const k = compareSessions(simdi, once);
+  assert.equal(k.tonnage.current, 2080);
+  assert.equal(k.tonnage.previous, 1520);
+  const squat = k.rows.find(r => r.name === 'Squat');
+  assert.equal(squat.tonnageDelta, 80);
+  assert.equal(squat.weightDelta, 5);
+  assert.equal(k.rows.find(r => r.name === 'Leg Curl').status, 'new');
+});
+
+test('karşılaştırma yalnızca aynı şablonun seanslarını eşliyor', () => {
+  const kayitlar = [
+    { id: 'c', date: '2026-08-17', sourceTemplateId: 't1', exercises: [] },
+    { id: 'b', date: '2026-08-14', sourceTemplateId: 't2', exercises: [] },
+    { id: 'a', date: '2026-08-10', sourceTemplateId: 't1', exercises: [] },
+  ];
+  const cift = findComparableSessions(kayitlar, 't1');
+  assert.equal(cift.current.id, 'c');
+  assert.equal(cift.previous.id, 'a');
+  // Tek seans varsa kıyaslanacak bir şey yok.
+  assert.equal(findComparableSessions(kayitlar, 't2'), null);
+  assert.equal(findComparableSessions(kayitlar, null), null);
+});
+
+test('kardiyo şablonu ölçülen değerleri taşımıyor', () => {
+  let n = 0;
+  const uret = () => `id${++n}`;
+  const kayit = {
+    type: 'swim', effort: 'medium',
+    sets: [{ reps: 8, distance: 100, stroke: 'free', kind: 'main', seconds: 95, restSeconds: 20, strokeCount: 43 }],
+  };
+  const sablon = templateFromEntry(kayit, 'Yüzme 8x100', uret);
+  assert.equal(sablon.sets[0].distance, 100);
+  assert.equal(sablon.sets[0].restSeconds, 20);
+  // Ölçülen kulaç sayısı şablona geçmiyor; hedef süre plan olduğu için kalıyor.
+  assert.equal(sablon.sets[0].strokeCount, '');
+  assert.equal(sablon.sets[0].seconds, 95);
+  // Defteri olmayan kayıttan şablon çıkmıyor.
+  assert.equal(templateFromEntry({ type: 'swim', minutes: 30 }, 'Boş', uret), null);
+});
+
+test('şablon listesi kullanım sayısına göre sıralanıyor', () => {
+  let liste = [];
+  liste = addCardioTemplate(liste, { id: 'a', name: 'A', type: 'swim', sets: [{ reps: 1, distance: 100 }] });
+  liste = addCardioTemplate(liste, { id: 'b', name: 'B', type: 'swim', sets: [{ reps: 1, distance: 200 }] });
+  liste = markCardioTemplateUsed(liste, 'b');
+  liste = markCardioTemplateUsed(liste, 'b');
+  assert.equal(templatesForActivity(liste, 'swim')[0].id, 'b');
+  assert.equal(templatesForActivity(liste, 'run').length, 0);
+  liste = removeCardioTemplate(liste, 'b');
+  assert.equal(liste.length, 1);
+});
+
+test('şablon uygulanınca forma plan alanları giriyor', () => {
+  const sablon = {
+    id: 'x', name: 'Y', type: 'swim', effort: 'hard',
+    sets: [{ reps: 8, distance: 100, stroke: 'free', kind: 'main', restSeconds: 20 }],
+  };
+  const u = applyCardioTemplate(sablon);
+  assert.equal(u.type, 'swim');
+  assert.equal(u.effort, 'hard');
+  assert.equal(u.sets[0].reps, 8);
+  assert.equal(applyCardioTemplate(null), null);
+  assert.ok(describeCardioTemplate(sablon, { poolLength: 25 }).summaryLabel.includes('800 m'));
+});
+
+test('kardiyo CSV her seti ayrı satıra yazıyor', () => {
+  const w = [{
+    date: '2026-08-16',
+    cardio: [{
+      type: 'swim', effort: 'medium', minutes: 20, avgHeartRate: 150, note: 'iyi',
+      sets: [
+        { reps: 8, distance: 100, stroke: 'free', kind: 'main', seconds: 95, restSeconds: 20, strokeCount: 40 },
+        { reps: 1, distance: 200, stroke: 'back', kind: 'cooldown', seconds: 240 },
+      ],
+    }],
+  }];
+  const satirlar = cardioToCsv(w, { poolLength: 25 }).trim().split('\n');
+  assert.equal(satirlar.length, 3);
+  assert.ok(satirlar[0].includes('SWOLF'));
+  assert.ok(satirlar[1].includes('Serbest'));
+  assert.ok(satirlar[2].includes('200'));
+
+  // Defteri olmayan kayıt da tek satır olarak çıkıyor.
+  const duz = cardioToCsv([{ date: '2026-08-16', cardio: [{ type: 'run', minutes: 40 }] }]).trim().split('\n');
+  assert.equal(duz.length, 2);
 });
 
 

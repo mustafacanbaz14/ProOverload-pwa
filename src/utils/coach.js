@@ -59,6 +59,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     cardioItem = null,
     standardsItem = null, effortItem = null, rotationItem = null,
     ratioItem = null, returnItem = null, periItem = null, restingHrItem = null,
+    painGuardItem = null,
   } = ctx;
 
   const items = [];
@@ -73,6 +74,16 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'joint', priority: 1, tone: TONES.danger, action: 'workout',
       title: 'Eklem ağrısı yüksek kaydedilmiş',
       detail: 'Son seansta eklem ağrın 7+. Eklem ağrısı kas ağrısıyla aynı sinyal değildir. Bugün ağrısız hareket aralığı ve daha kolay kontrol edilen bir varyant seç; ağrı sürüyorsa yükü zorlamadan değerlendirme al.',
+    });
+  }
+
+  // Ağrı koruması 1. öncelik: bugünkü programda ağrılı bölgeyi yükleyen
+  // hareketler varsa, karar sete girmeden önce verilmeli.
+  if (painGuardItem) {
+    ekle({
+      key: 'pain-guard', priority: 1, tone: TONES.warn, action: 'workout',
+      title: painGuardItem.title,
+      detail: painGuardItem.detail,
     });
   }
 

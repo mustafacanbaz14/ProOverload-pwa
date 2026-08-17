@@ -24,6 +24,10 @@ import { auditSessionQuality, sessionQualityCoachItem } from './utils/sessionQua
 import { buildCardioReport, cardioSuggestionForToday, cardioCoachItem } from './utils/cardioGoals';
 import { buildRestingHrReport, upsertRestingHr, restingHrCoachItem } from './utils/restingHrLog';
 import { buildCardioRecords } from './utils/cardioRecords';
+import { activePainRegions, scanSessionForPain, painGuardCoachItem, painWarningFor } from './utils/painGuard';
+import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
+import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, applyCardioTemplate } from './utils/cardioTemplates';
+import { cardioToCsv } from './utils/csvExport';
 import { bodyweightBasisFor, describeSetLoad } from './utils/bodyweight';
 import { buildStrengthStandards, strengthStandardCoachItem } from './utils/strengthStandards';
 import { buildEffortDistribution, effortCoachItem } from './utils/effortDistribution';
@@ -544,6 +548,12 @@ export default function App() {
       }),
       metrics: () => ({ text: metricsToCsv(sortedMetrics), name: 'olcumler' }),
       nutrition: () => ({ text: nutritionToCsv(sortedNutrition, dailyTotals), name: 'beslenme' }),
+      // Kardiyo dışa aktarımda hiç yoktu: set defteri seansın yapısını
+      // tutuyor ama tabloya "45 dakika yüzme" olarak düşüyordu.
+      cardio: () => ({
+        text: cardioToCsv(sortedWorkouts, { poolLength: Number(settings.poolLength) || 25 }),
+        name: 'kardiyo',
+      }),
     }[kind];
     if (!uretici) return;
 
@@ -642,6 +652,33 @@ export default function App() {
       showToast('Bildirim izni verilmedi. Tarayıcı ayarlarından açabilirsin.', 'warning');
     }
   }, [settings.restNotification, setSettings, showToast]);
+
+  /** Kardiyo kaydından şablon üretir; defteri olmayan kayıttan şablon çıkmaz. */
+  const handleSaveCardioTemplate = useCallback((entry, name) => {
+    const sablon = templateFromEntry(entry, name, generateId);
+    if (!sablon) {
+      showToast('Şablon için set defteri gerekiyor.', 'warning');
+      return;
+    }
+    setSettings(prev => ({ ...prev, cardioTemplates: addCardioTemplate(prev.cardioTemplates, sablon) }));
+    showToast(`${sablon.name} şablonu kaydedildi.`);
+  }, [setSettings, showToast]);
+
+  const handleDeleteCardioTemplate = useCallback((id) => {
+    setSettings(prev => ({ ...prev, cardioTemplates: removeCardioTemplate(prev.cardioTemplates, id) }));
+    showToast('Kardiyo şablonu silindi.');
+  }, [setSettings, showToast]);
+
+  /** Şablonu kardiyo formuna yükler ve kullanım sayacını artırır. */
+  const handleApplyCardioTemplate = useCallback((template) => {
+    const uygulama = applyCardioTemplate(template);
+    if (!uygulama) return;
+    setSettings(prev => ({ ...prev, cardioTemplates: markCardioTemplateUsed(prev.cardioTemplates, template.id) }));
+    // presetId key'e giriyor: aynı gün ikinci bir şablon yüklendiğinde
+    // ekran yeniden kurulmalı, yoksa ilk şablonun setleri kalırdı.
+    setCardioContext({ date: getLocalDateString(), preset: uygulama, presetId: `${template.id}-${Date.now()}` });
+    setIsCardioOpen(true);
+  }, [setSettings]);
 
   const handleNormalizeBodyweight = useCallback(() => {
     const { workouts: next, changed } = normalizeBodyweightEntries(workouts, {
@@ -2663,6 +2700,23 @@ export default function App() {
   }, [todayCoach, computedComp, settings.nutritionGoal, settings.proteinPerFfmBulk,
     settings.proteinPerFfmCut, maintenanceCalories, workouts, currentNutritionForm]);
 
+  // 6.7: ağrı koruması. Ağrı günlüğü ile hareket listesi bu sürüme kadar
+  // birbirinden habersizdi.
+  const painRegions = useMemo(
+    () => activePainRegions(settings.painLog, { workouts: sortedWorkouts }),
+    [settings.painLog, sortedWorkouts]);
+
+  const painScan = useMemo(() => {
+    const hareketler = activeWorkout?.exercises
+      || todayCoach?._signals?.planDay?.workouts?.flatMap(w => w.template?.exercises || [])
+      || [];
+    return scanSessionForPain(hareketler, painRegions, { customExercises });
+  }, [activeWorkout, todayCoach, painRegions, customExercises]);
+
+  const painWarningForExercise = useCallback(
+    (name) => painWarningFor(name, painRegions, { customExercises }),
+    [painRegions, customExercises]);
+
   const coachActions = useMemo(() => {
     const bugun = getLocalDateString();
     const sonOlcum = sortedMetrics[0]?.date;
@@ -2705,6 +2759,7 @@ export default function App() {
       orderItem: sessionQualityCoachItem(lastSessionQuality),
       cardioItem: cardioCoachItem(cardioReport, cardioSuggestion),
       restingHrItem: restingHrCoachItem(restingHrReport),
+      painGuardItem: painGuardCoachItem(painScan, painRegions),
       standardsItem: strengthStandardCoachItem(strengthStandards),
       effortItem: effortCoachItem(effortDistribution),
       rotationItem: rotationCoachItem(rotationReport),
@@ -2723,7 +2778,7 @@ export default function App() {
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
-    cardioReport, cardioSuggestion, restingHrReport,
+    cardioReport, cardioSuggestion, restingHrReport, painScan, painRegions,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
@@ -2925,6 +2980,10 @@ export default function App() {
                       restingHrReport={restingHrReport}
                       onLogRestingHr={handleLogRestingHr}
                       cardioRecords={cardioRecords}
+                      cardioTemplates={settings.cardioTemplates}
+                      onApplyCardioTemplate={handleApplyCardioTemplate}
+                      onDeleteCardioTemplate={handleDeleteCardioTemplate}
+                      onSaveCardioTemplate={handleSaveCardioTemplate}
                       poolLength={settings.poolLength}
                       onChangeZoneSettings={(patch) => setSettings(prev => ({ ...prev, ...patch }))}
                       activityTargets={settings.activityTargets}
@@ -3126,6 +3185,14 @@ export default function App() {
               bodyweightInfoFor={bodyweightContext}
               deload={deload}
               deloadReturn={deloadReturn}
+              painWarningFor={painWarningForExercise}
+              sessionPace={buildSessionPace(activeWorkout, (() => {
+                // Kronometrenin gösterdiği süre: biriken + çalışıyorsa aradan geçen.
+                const t = activeWorkout.timer || {};
+                let sn = t.accumulatedSeconds || 0;
+                if (t.status === 'running' && t.startTime) sn += Math.floor((Date.now() - t.startTime) / 1000);
+                return sn;
+              })())}
               warmupRoutine={buildWarmupRoutine(activeWorkout.exercises, { customExercises })}
               onOpenCardio={() => setIsCardioOpen(true)}
               cardioKcal={totalCardioCalories(activeWorkout.cardio || [], latestWeight)}
@@ -3459,6 +3526,12 @@ export default function App() {
         {/* SEANS RAPORU */}
         {sessionReport && <SessionReportModal
           report={sessionReport}
+          // Aynı şablonun son iki seansı: "geçen sefere göre ne değişti"
+          // sorusu için iki kaydı elle açıp göz kararı kıyaslamak gerekiyordu.
+          comparison={(() => {
+            const cift = findComparableSessions(sortedWorkouts, sessionReport.sourceTemplateId);
+            return cift ? compareSessions(cift.current, cift.previous, { resolveLoad: resolveSetLoad }) : null;
+          })()}
           onClose={() => setSessionReport(null)}
         />}
 
@@ -3473,6 +3546,7 @@ export default function App() {
           wellness={wellness}
           energyWeeks={weeklyEnergy}
           nutritionGoal={settings.nutritionGoal}
+          zoneOpts={zoneOpts}
           activeProtocol={activeCoachProtocol}
           onActivateProtocol={handleActivateCoachProtocol}
           onOpenCoach={() => { setIsWeeklyReviewOpen(false); setIsCoachCenterOpen(true); }}
@@ -3585,7 +3659,7 @@ export default function App() {
 
         {/* KARDİYO */}
         {isCardioOpen && <CardioModal
-          key={`${cardioContext?.workoutId || 'new'}-${cardioContext?.entry?.id || cardioContext?.date || 'today'}`}
+          key={`${cardioContext?.workoutId || 'new'}-${cardioContext?.entry?.id || cardioContext?.presetId || cardioContext?.date || 'today'}`}
           isOpen={isCardioOpen}
           onClose={() => { setIsCardioOpen(false); setCardioContext(null); }}
           onSave={handleSaveCardio}
@@ -3602,6 +3676,7 @@ export default function App() {
           planned={!cardioContext || cardioContext.date === getLocalDateString() ? todayPlannedCardio : []}
           initialDate={cardioContext?.date || getLocalDateString()}
           editingEntry={cardioContext?.entry || null}
+          presetEntry={cardioContext?.preset || null}
         />}
 
         {/* PLATE CALCULATOR */}
