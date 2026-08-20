@@ -206,6 +206,7 @@ const mergeSet = (set) => ({
   tempo: set?.tempo || '',
   formRating: set?.formRating ?? 8,
   setType: SET_TYPE_KEYS.includes(set?.setType) ? set.setType : 'normal',
+  ...(set?.completed ? { completed: true } : {}),
   // Bu setten ÖNCE ne kadar dinlenildiği (saniye). Uygulama dinlenme süresi
   // öneriyor ve kronometre çalıştırıyordu ama gerçekte ne kadar beklendiğini
   // kaydetmiyordu; "acele ettiğim için mi tekrar düşüyor" sorusu cevapsızdı.
@@ -537,6 +538,17 @@ export const mergeSettings = (saved = {}) => {
     .map(normalizeCoachProtocol)
     .filter(Boolean)
     .slice(0, 12);
+  merged.exerciseRestOverrides = merged.exerciseRestOverrides
+    && typeof merged.exerciseRestOverrides === 'object'
+    && !Array.isArray(merged.exerciseRestOverrides)
+    ? Object.fromEntries(Object.entries(merged.exerciseRestOverrides)
+      .map(([name, seconds]) => [String(name).trim(), Math.round(parseNumber(seconds))])
+      .filter(([name, seconds]) => name && seconds >= 15 && seconds <= 600))
+    : {};
+  if (!['soft', 'strong', 'insistent'].includes(merged.restAlertIntensity)) merged.restAlertIntensity = 'strong';
+  if (!['ascending', 'digital', 'bell'].includes(merged.restAlertTone)) merged.restAlertTone = 'ascending';
+  merged.restAlertVolume = Math.max(0.2, Math.min(1, parseNumber(merged.restAlertVolume) || 0.85));
+  if (![0, 5, 10, 15].includes(Number(merged.restPreAlertSeconds))) merged.restPreAlertSeconds = 10;
   if (!merged.weekPlan || typeof merged.weekPlan !== 'object') merged.weekPlan = {};
   // Tek programdan çoklu program listesine göç. Idempotent: yeni biçim aynen
   // geçer, eski `weekPlan` nesnesi ilk programa dönüşür.

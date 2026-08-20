@@ -1,6 +1,6 @@
-import { REST_ALERT_INTENSITIES } from '../lockScreen';
-import React, { memo } from 'react';
-import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles } from 'lucide-react';
+import { REST_ALERT_INTENSITIES, REST_ALERT_TONES } from '../lockScreen';
+import React, { memo, useState } from 'react';
+import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles, Volume2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { exportAppleHealthXML, exportGoogleFitJSON } from '../utils/healthSync';
 import { EXPERIENCE_LEVELS, APP_VERSION } from '../utils/constants';
 import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plates';
@@ -62,9 +62,19 @@ const SettingsModal = memo(({
   onTestRestAlert,
   notificationState = 'default',
 }) => {
+  const [soundTest, setSoundTest] = useState(null);
   if (!isOpen) return null;
 
   const set = (patch) => setSettings(s => ({ ...s, ...patch }));
+
+  const testSound = async (patch = {}) => {
+    const result = await onTestRestAlert?.({
+      intensityKey: patch.intensityKey || settings.restAlertIntensity || 'strong',
+      toneKey: patch.toneKey || settings.restAlertTone || 'ascending',
+      volume: patch.volume ?? settings.restAlertVolume ?? 0.85,
+    });
+    setSoundTest(result || { ok: false, state: 'unknown', error: 'Test sonucu alınamadı.' });
+  };
 
   // Hız seçenekleri döneme bağlı; koruma döneminde hız kavramı yok.
   const paceOptions = ratesForGoal(settings.nutritionGoal);
@@ -406,7 +416,7 @@ const SettingsModal = memo(({
             />
             <Toggle
               label="Bitişte Sesli Uyarı"
-              hint="Dinlenme bitince çift bip çalar."
+              hint="Dinlenme bitince seçtiğin tını ve ses düzeyiyle uyarır."
               checked={settings.restAlert}
               onChange={(v) => set({ restAlert: v })}
             />
@@ -419,15 +429,16 @@ const SettingsModal = memo(({
                 notalı dizi, tekrar ve güçlü titreşim deseni müziğin üstünde
                 duyuluyor. */}
             {settings.restAlert && (
-              <div className="px-1 pb-1">
-                <span className="text-[10px] font-mono text-zinc-500 block mb-1.5">Uyarı şiddeti</span>
+              <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800 space-y-3">
+                <div>
+                  <span className="text-[10px] font-mono text-zinc-500 block mb-1.5">Uyarı şiddeti</span>
                 <div className="flex gap-1.5">
                   {REST_ALERT_INTENSITIES.map(x => {
                     const secili = (settings.restAlertIntensity || 'strong') === x.key;
                     return (
                       <button
                         key={x.key}
-                        onClick={() => { set({ restAlertIntensity: x.key }); onTestRestAlert?.(x.key); }}
+                        onClick={() => { set({ restAlertIntensity: x.key }); testSound({ intensityKey: x.key }); }}
                         title={x.hint}
                         aria-pressed={secili}
                         className={`flex-1 py-2 rounded-xl text-[10px] font-bold border transition-colors ${secili ? 'border-cyan-600 bg-cyan-950/25 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
@@ -440,8 +451,86 @@ const SettingsModal = memo(({
                 <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1.5">
                   Dokununca örnek çalar. {REST_ALERT_INTENSITIES.find(x => x.key === (settings.restAlertIntensity || 'strong'))?.hint}
                 </p>
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-mono text-zinc-500 block mb-1.5">Uyarı tınısı</span>
+                  <div className="grid grid-cols-3 gap-1.5">
+                    {REST_ALERT_TONES.map(tone => {
+                      const active = (settings.restAlertTone || 'ascending') === tone.key;
+                      return (
+                        <button
+                          key={tone.key}
+                          onClick={() => { set({ restAlertTone: tone.key }); testSound({ toneKey: tone.key }); }}
+                          title={tone.hint}
+                          aria-pressed={active}
+                          className={`py-2 rounded-xl text-[10px] font-bold border transition-colors ${active ? 'border-amber-600 bg-amber-950/20 text-amber-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                        >
+                          {tone.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-[10px] font-mono mb-1.5">
+                    <span className="text-zinc-500">Ses düzeyi</span>
+                    <span className="text-cyan-400">%{Math.round((settings.restAlertVolume ?? 0.85) * 100)}</span>
+                  </div>
+                  <input
+                    type="range" min="0.2" max="1" step="0.05"
+                    value={settings.restAlertVolume ?? 0.85}
+                    onChange={(e) => set({ restAlertVolume: Number(e.target.value) })}
+                    onPointerUp={() => testSound()}
+                    className="w-full accent-cyan-500"
+                    aria-label="Dinlenme uyarısı ses düzeyi"
+                  />
+                </div>
+
+                <div>
+                  <span className="text-[10px] font-mono text-zinc-500 block mb-1.5">Bitişten önce kısa uyarı</span>
+                  <div className="grid grid-cols-4 gap-1.5">
+                    {[0, 5, 10, 15].map(seconds => (
+                      <button
+                        key={seconds}
+                        onClick={() => set({ restPreAlertSeconds: seconds })}
+                        className={`py-2 rounded-lg text-[10px] font-bold border ${Number(settings.restPreAlertSeconds || 0) === seconds ? 'border-cyan-600 bg-cyan-950/25 text-cyan-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                      >
+                        {seconds === 0 ? 'Kapalı' : `${seconds} sn`}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => testSound()}
+                  className="w-full py-2.5 rounded-xl border border-cyan-900/60 bg-cyan-950/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5"
+                >
+                  <Volume2 size={13} /> Seçili Ayarlarla Test Et
+                </button>
+                {soundTest && (
+                  <div className={`rounded-lg border px-2.5 py-2 flex items-start gap-2 ${soundTest.ok ? 'border-emerald-900/50 bg-emerald-950/15' : 'border-amber-900/50 bg-amber-950/15'}`}>
+                    {soundTest.ok
+                      ? <CheckCircle2 size={12} className="text-emerald-400 shrink-0 mt-0.5" />
+                      : <AlertTriangle size={12} className="text-amber-400 shrink-0 mt-0.5" />}
+                    <span className={`text-[9px] font-mono leading-relaxed ${soundTest.ok ? 'text-emerald-300' : 'text-amber-300'}`}>
+                      {soundTest.ok
+                        ? `Ses motoru hazır · ${soundTest.state}`
+                        : `Ses motoru hazır değil · ${soundTest.state}${soundTest.error ? ` · ${soundTest.error}` : ''}`}
+                    </span>
+                  </div>
+                )}
               </div>
             )}
+
+            <Toggle
+              label="Ekranı Işıkla Uyar"
+              hint="Dinlenme bittiğinde ses kapalı olsa bile ekranda kısa bir renkli uyarı gösterir."
+              checked={settings.restVisualAlert !== false}
+              onChange={(v) => set({ restVisualAlert: v })}
+            />
 
             <Toggle
               label="Müzik Önceliği"

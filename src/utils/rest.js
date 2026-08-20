@@ -186,3 +186,74 @@ export const suggestRestSeconds = (exerciseName, set = {}, { customExercises = [
  */
 export const restForCompletedSet = (exerciseName, set, opts) =>
   suggestRestSeconds(exerciseName, set, opts);
+
+/** Harekete özel süreleri tek biçime indirger; bozuk/abartılı kayıtları atar. */
+export const normalizeRestOverrides = (value = {}) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return Object.fromEntries(Object.entries(value)
+    .map(([name, seconds]) => [String(name).trim(), Math.round(parseNumber(seconds))])
+    .filter(([name, seconds]) => name && seconds >= 15 && seconds <= 600));
+};
+
+/**
+ * Sayaç hedefinin tek karar noktası. Öncelik: harekete özel → akıllı → genel.
+ */
+export const resolveRestTarget = (exerciseName, set = {}, settings = {}, opts = {}) => {
+  const overrides = normalizeRestOverrides(settings.exerciseRestOverrides);
+  const custom = overrides[exerciseName];
+  if (custom) {
+    return {
+      seconds: custom,
+      tier: restTierOf(custom),
+      isTechnique: false,
+      source: 'exercise',
+      reason: `Bu hareket için seçtiğin özel dinlenme süresi: ${custom} sn.`,
+    };
+  }
+  if (settings.smartRest !== false) {
+    return { ...suggestRestSeconds(exerciseName, set, opts), source: 'smart' };
+  }
+  const seconds = Math.max(15, Math.min(600, Math.round(parseNumber(settings.restSeconds) || 120)));
+  return {
+    seconds,
+    tier: restTierOf(seconds),
+    isTechnique: false,
+    source: 'default',
+    reason: `Genel dinlenme ayarı: ${seconds} sn.`,
+  };
+};
+
+/** Hızlı sayaç düğmelerinde 5 saniyenin altına ve 15 dakikanın üstüne çıkma. */
+export const adjustRestRemaining = (seconds, delta) =>
+  Math.max(5, Math.min(900, Math.round(parseNumber(seconds) + parseNumber(delta))));
+
+const setIsDone = (set) => Boolean(set?.completed);
+
+/** Dinlenme kartında gösterilecek sıradaki tamamlanmamış set/hareket. */
+export const nextSetCue = (workout = {}) => {
+  const exercises = Array.isArray(workout.exercises) ? workout.exercises : [];
+  if (!exercises.length) return null;
+  const activeIndex = Math.max(0, exercises.findIndex(ex => ex.id === workout.activeExerciseId));
+  const ordered = [...exercises.slice(activeIndex), ...exercises.slice(0, activeIndex)];
+  for (const exercise of ordered) {
+    const sets = Array.isArray(exercise.sets) ? exercise.sets : [];
+    const setIndex = sets.findIndex(set => !setIsDone(set));
+    if (setIndex >= 0) {
+      const set = sets[setIndex];
+      const details = [
+        parseNumber(set.weight) > 0 ? `${parseNumber(set.weight)} kg` : null,
+        parseNumber(set.reps) > 0 ? `${parseNumber(set.reps)} tekrar` : null,
+        set.rir !== '' && set.rir !== null && set.rir !== undefined ? `RIR ${set.rir}` : null,
+      ].filter(Boolean).join(' · ');
+      return {
+        exerciseId: exercise.id,
+        exerciseName: exercise.name,
+        setId: set.id,
+        setIndex: setIndex + 1,
+        totalSets: sets.length,
+        details: details || 'Değerleri gir ve seti tamamla',
+      };
+    }
+  }
+  return { complete: true, exerciseName: 'Planlanan bütün setler tamamlandı', details: 'Seansı bitirebilir veya set ekleyebilirsin.' };
+};

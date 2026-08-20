@@ -500,22 +500,44 @@ export const REST_ALERT_INTENSITIES = [
   },
 ];
 
+/** Aynı uyarının üç farklı tınısı; ses yüksekliğinden bağımsız seçilir. */
+export const REST_ALERT_TONES = [
+  { key: 'ascending', label: 'Yükselen', hint: 'Üç notalı, müzik içinde kolay ayırt edilen varsayılan uyarı.' },
+  { key: 'digital', label: 'Dijital', hint: 'Kısa ve keskin kare dalga; gürültülü salon için.' },
+  { key: 'bell', label: 'Zil', hint: 'Daha yumuşak, iki notalı zil benzeri uyarı.' },
+];
+
 export const findRestAlertIntensity = (key) =>
   REST_ALERT_INTENSITIES.find(i => i.key === key) || REST_ALERT_INTENSITIES[1];
 
-// Yükselen üç nota (La5, Do#6, Mi6) — bir majör arpej. Yükselen dizi,
-// düşen ya da sabit diziye göre dikkat çekmede belirgin biçimde daha etkili.
-const ALERT_NOTES = [880, 1108.73, 1318.51];
+const ALERT_TONE_PROFILES = {
+  ascending: { notes: [880, 1108.73, 1318.51], type: 'triangle', gap: 0.13, duration: 0.26 },
+  digital: { notes: [1046.5, 1318.51, 1046.5], type: 'square', gap: 0.11, duration: 0.2 },
+  bell: { notes: [783.99, 1174.66], type: 'sine', gap: 0.18, duration: 0.42 },
+};
 
 let alertCtx = null;
+let alertPrimed = false;
+let alertLastError = '';
+let scheduledAlertTarget = 0;
+let scheduledAlertNodes = [];
+let alertScheduleSequence = 0;
 
-/** AudioContext'i bir kez kurar; askıya alınmışsa uyandırır. */
-const ensureContext = () => {
+const alertToneOf = (key) => ALERT_TONE_PROFILES[key] || ALERT_TONE_PROFILES.ascending;
+
+/** AudioContext'i bir kez kurar; askıya alınmışsa UYANMASINI BEKLER. */
+const ensureContext = async () => {
   const Ctx = window.AudioContext || window.webkitAudioContext;
   if (!Ctx) return null;
   if (!alertCtx || alertCtx.state === 'closed') alertCtx = new Ctx();
-  // Arka plandan dönüşte context askıda kalıyor; resume çağrılmazsa ses çıkmıyor.
-  if (alertCtx.state === 'suspended') { try { alertCtx.resume(); } catch { /* yoksay */ } }
+  // Eski kod `resume()` Promise'ini beklemeden notaları zamanlıyordu. Özellikle
+  // iOS arka plandan dönerken context hâlâ suspended kaldığı için çağrı başarılı
+  // görünmesine rağmen ses çıkmıyordu.
+  if (alertCtx.state === 'suspended' || alertCtx.state === 'interrupted') {
+    try { await alertCtx.resume(); } catch (error) {
+      alertLastError = error?.message || 'Ses motoru uyandırılamadı.';
+    }
+  }
   return alertCtx;
 };
 
@@ -526,8 +548,8 @@ const ensureContext = () => {
  * Antrenman başlatılırken bir kez çağrılıyor; sonra dinlenme bittiğinde
  * (kullanıcı hareketi olmadan) ses çalınabiliyor.
  */
-export const primeRestAlert = () => {
-  const ctx = ensureContext();
+export const primeRestAlert = async () => {
+  const ctx = await ensureContext();
   if (!ctx) return false;
   try {
     const osc = ctx.createOscillator();
@@ -536,56 +558,134 @@ export const primeRestAlert = () => {
     osc.connect(gain).connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.01);
-    return true;
-  } catch {
+    alertPrimed = ctx.state === 'running';
+    alertLastError = alertPrimed ? '' : `Ses motoru ${ctx.state} durumunda.`;
+    return alertPrimed;
+  } catch (error) {
+    alertLastError = error?.message || 'Ses motoru hazırlanamadı.';
     return false;
   }
 };
 
 /** Tek bir yükselen dizi çalar. */
-const playSequence = (ctx, startAt, gainLevel) => {
+const playSequence = (ctx, startAt, gainLevel, toneKey = 'ascending', collector = null, short = false) => {
+  const profile = alertToneOf(toneKey);
   // Kompresör: üst üste binen notalar kırpılmasın, algılanan ses yüksek kalsın.
   const comp = ctx.createDynamicsCompressor();
   comp.threshold.value = -18;
   comp.ratio.value = 8;
   comp.connect(ctx.destination);
 
-  ALERT_NOTES.forEach((freq, i) => {
-    const t = startAt + i * 0.13;
+  const notes = short ? profile.notes.slice(0, 1) : profile.notes;
+  notes.forEach((freq, i) => {
+    const t = startAt + i * profile.gap;
     // Temel + bir oktav üstü: geniş spektrum, müziğin içinde kaybolmuyor.
     [[freq, 1], [freq * 2, 0.45]].forEach(([f, oran]) => {
       const osc = ctx.createOscillator();
       const g = ctx.createGain();
       // Kare dalgaya yakın bir tını daha delici; sinüs müzikte eriyor.
-      osc.type = f === freq ? 'triangle' : 'sine';
+      osc.type = f === freq ? profile.type : 'sine';
       osc.frequency.value = f;
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(Math.max(0.001, gainLevel * oran), t + 0.015);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + profile.duration);
       osc.connect(g).connect(comp);
       osc.start(t);
-      osc.stop(t + 0.28);
+      osc.stop(t + profile.duration + 0.02);
+      if (collector) {
+        collector.push(osc);
+        osc.addEventListener('ended', () => {
+          const index = collector.indexOf(osc);
+          if (index >= 0) collector.splice(index, 1);
+          if (collector === scheduledAlertNodes && collector.length === 0) scheduledAlertTarget = 0;
+        }, { once: true });
+      }
     });
   });
 };
+
+/** Zamanlanmış uyarıyı süre değişince/durdurulunca iptal eder. */
+export const cancelScheduledRestAlert = () => {
+  alertScheduleSequence += 1;
+  [...scheduledAlertNodes].forEach(node => { try { node.stop(); } catch { /* zaten bitmiş olabilir */ } });
+  scheduledAlertNodes = [];
+  scheduledAlertTarget = 0;
+};
+
+/**
+ * Uyarıyı sayaç BAŞLARKEN ses donanımının saatine yazar. JavaScript arka
+ * planda yavaşlatılsa bile AudioContext çalışıyorsa uyarı doğru anda çalar.
+ */
+export const scheduleRestAlert = async (delaySeconds, {
+  intensityKey = 'strong', toneKey = 'ascending', volume = 1, preAlertSeconds = 0,
+} = {}) => {
+  cancelScheduledRestAlert();
+  const mySequence = alertScheduleSequence;
+  const ctx = await ensureContext();
+  if (mySequence !== alertScheduleSequence) return { ok: false, state: 'cancelled' };
+  if (!ctx || ctx.state !== 'running') {
+    alertLastError = ctx ? `Ses motoru ${ctx.state} durumunda.` : 'Web Audio desteklenmiyor.';
+    return { ok: false, state: ctx?.state || 'unsupported' };
+  }
+  try {
+    const delay = Math.max(0.05, Number(delaySeconds) || 0.05);
+    const seviye = findRestAlertIntensity(intensityKey);
+    const gain = Math.max(0.05, Math.min(1, Number(volume) || 1)) * seviye.gain;
+    const finalAt = ctx.currentTime + delay;
+    const pre = Math.max(0, Math.round(Number(preAlertSeconds) || 0));
+    if (pre > 0 && delay > pre + 0.5) {
+      playSequence(ctx, finalAt - pre, Math.min(0.22, gain * 0.35), toneKey, scheduledAlertNodes, true);
+    }
+    for (let i = 0; i < seviye.repeats; i += 1) {
+      playSequence(ctx, finalAt + i * (seviye.gap || 0.9), gain, toneKey, scheduledAlertNodes);
+    }
+    scheduledAlertTarget = Date.now() + delay * 1000;
+    alertPrimed = true;
+    alertLastError = '';
+    return { ok: true, state: ctx.state, targetAt: scheduledAlertTarget };
+  } catch (error) {
+    cancelScheduledRestAlert();
+    alertLastError = error?.message || 'Uyarı zamanlanamadı.';
+    return { ok: false, state: ctx.state };
+  }
+};
+
+export const restAlertDiagnostics = () => ({
+  supported: typeof window !== 'undefined' && Boolean(window.AudioContext || window.webkitAudioContext),
+  state: alertCtx?.state || 'not-started',
+  primed: alertPrimed,
+  scheduled: scheduledAlertNodes.length > 0,
+  scheduledTarget: scheduledAlertTarget || null,
+  error: alertLastError,
+});
 
 /**
  * Dinlenme bitiş sesi.
  *
  * @param intensityKey 'soft' | 'strong' | 'insistent'
  */
-export const playRestAlert = (intensityKey = 'strong') => {
+export const playRestAlert = async (intensityKey = 'strong', { toneKey = 'ascending', volume = 1 } = {}) => {
   try {
-    const ctx = ensureContext();
-    if (!ctx) return;
+    const ctx = await ensureContext();
+    if (!ctx || ctx.state !== 'running') {
+      alertLastError = ctx ? `Ses motoru ${ctx.state} durumunda.` : 'Web Audio desteklenmiyor.';
+      return { ok: false, ...restAlertDiagnostics() };
+    }
     const seviye = findRestAlertIntensity(intensityKey);
     const now = ctx.currentTime;
+    const gain = Math.max(0.05, Math.min(1, Number(volume) || 1)) * seviye.gain;
     for (let i = 0; i < seviye.repeats; i += 1) {
-      playSequence(ctx, now + i * (seviye.gap || 0.9), seviye.gain);
+      playSequence(ctx, now + i * (seviye.gap || 0.9), gain, toneKey);
     }
+    alertPrimed = true;
+    alertLastError = '';
     // Context KAPATILMIYOR: her uyarıda yeni context açmak iOS'ta bir süre
     // sonra sessizliğe düşüyordu (açık context sayısı sınırlı).
-  } catch { /* ses çalınamadı */ }
+    return { ok: true, ...restAlertDiagnostics() };
+  } catch (error) {
+    alertLastError = error?.message || 'Ses çalınamadı.';
+    return { ok: false, ...restAlertDiagnostics() };
+  }
 };
 
 /**
@@ -668,20 +768,35 @@ export const requestNotificationPermission = async () => {
  * Aynı `tag` kullanılıyor: arka arkaya biten sayaçlar bildirim yığmıyor,
  * sonuncusu öncekinin yerine geçiyor.
  */
-export const showRestNotification = (body = 'Sıradaki sete geç.') => {
+export const showRestNotification = async (body = 'Sıradaki sete geç.') => {
   if (!isNotificationSupported() || Notification.permission !== 'granted') return false;
+  const options = {
+    body,
+    tag: 'po-rest',
+    renotify: true,
+    silent: false,
+    requireInteraction: true,
+    vibrate: [260, 100, 260, 100, 420],
+    icon: '/pwa-v5-192x192.png',
+    badge: '/pwa-v5-192x192.png',
+    data: { url: '/' },
+  };
   try {
-    const n = new Notification('⏱ Dinlenme bitti', {
-      body,
-      tag: 'po-rest',
-      renotify: true,
-      silent: false,
-      // Ekranda kalsın: birkaç saniyede kaybolan bir bildirim, telefon
-      // cepteyken hiç görülmemiş oluyor. Destekleyen platformlarda kullanıcı
-      // kapatana kadar duruyor.
-      requireInteraction: true,
-      vibrate: [260, 100, 260, 100, 420],
-    });
+    // Mobil tarayıcılarda Notification constructor güvenilir değil. MDN'nin
+    // önerdiği kalıcı yöntem aktif service worker üzerinden showNotification.
+    if ('serviceWorker' in navigator) {
+      try {
+        const registration = await Promise.race([
+          navigator.serviceWorker.ready,
+          new Promise(resolve => setTimeout(() => resolve(null), 1200)),
+        ]);
+        if (registration?.showNotification) {
+          await registration.showNotification('⏱ Dinlenme bitti', options);
+          return true;
+        }
+      } catch { /* masaüstü constructor yedeğine düş */ }
+    }
+    const n = new Notification('⏱ Dinlenme bitti', options);
     n.onclick = () => { try { window.focus(); n.close(); } catch { /* yoksay */ } };
     // Bildirim ekranda takılı kalmasın; sayaç bilgisi kısa ömürlü.
     // requireInteraction desteklenmiyorsa bile bir süre sonra temizlensin.

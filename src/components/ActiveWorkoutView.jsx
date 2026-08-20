@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame } from 'lucide-react';
+import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame, Volume2, VolumeX, RotateCcw, CheckCircle2, SlidersHorizontal, Minus } from 'lucide-react';
 import WorkoutTimer from './WorkoutTimer';
 import { FORM_RATINGS, SET_TYPES, SMALL_MUSCLE_GROUPS } from '../utils/constants';
 import {
@@ -9,7 +9,7 @@ import {
 } from '../utils/helpers';
 import { formatDay } from '../utils/dates';
 import { READINESS_FIELDS, READINESS_ZONES } from '../utils/readiness';
-import { suggestRestSeconds } from '../utils/rest';
+import { nextSetCue, resolveRestTarget } from '../utils/rest';
 import { sessionAdvice } from '../utils/autoregulation';
 import { repRangeFor } from '../utils/exerciseTargets';
 
@@ -32,6 +32,14 @@ const ActiveWorkoutView = memo(({
   repsOnFocusRef,
   startRest,
   stopRest,
+  pauseRest,
+  resumeRest,
+  adjustRest,
+  sessionRestMuted = false,
+  onToggleSessionRestMute,
+  onReplayRestAlert,
+  restAlertFlash = false,
+  onSetRestOverride,
   rest,
   restSecondsLeft,
   onOpenPlateCalc,
@@ -49,6 +57,7 @@ const ActiveWorkoutView = memo(({
   bodyweightInfoFor,
 }) => {
   if (!activeWorkout) return null;
+  const restCue = nextSetCue(activeWorkout);
 
   return (
     <div className="luxury-workout absolute inset-0 bg-black z-40 flex flex-col h-[100dvh]">
@@ -286,10 +295,13 @@ const ActiveWorkoutView = memo(({
           // sonuna ait, arada yalnızca geçiş var.
           const supersetPending = Boolean(ex.supersetId)
             && (activeWorkout.exercises || []).some(e => e.supersetId === ex.supersetId && e.id !== ex.id);
-          const restHint = settings.smartRest === false ? null : suggestRestSeconds(
+          const restHint = resolveRestTarget(
             ex.name,
             [...(ex.sets || [])].reverse().find(isWorkingSet) || { rir: 2 },
+            settings,
             { customExercises, supersetPending });
+          const restOverride = Number(settings.exerciseRestOverrides?.[ex.name]) || 0;
+          const restOverrideOptions = [0, 60, 90, 120, 150, 180, 240, 300];
           // Katkılar büyükten küçüğe: birincil kas en solda.
           const muscleParts = Object.entries(contributions || {}).sort((a, b) => b[1] - a[1]);
 
@@ -560,12 +572,16 @@ const ActiveWorkoutView = memo(({
                             const changed = repsOnFocusRef.current !== e.target.value;
                             repsOnFocusRef.current = null;
                             updateSet(ex.id, set.id, 'reps', clampNumber(e.target.value, INPUT_LIMITS.reps.min, INPUT_LIMITS.reps.max));
-                            if (changed && settings.autoRestTimer && !warmup && parseNumber(e.target.value) > 0) {
-                              // Süreyi az önce BİTEN setin özellikleri belirliyor:
-                              // yorgunluğu bırakan o set, sıradaki değil.
-                              const oneri = settings.smartRest === false ? null
-                                : suggestRestSeconds(ex.name, { ...set, reps: e.target.value }, { customExercises, supersetPending });
-                              startRest(oneri ? oneri.seconds : settings.restSeconds, oneri?.reason);
+                            if (changed && !warmup && parseNumber(e.target.value) > 0) {
+                              updateSet(ex.id, set.id, 'completed', true);
+                              if (settings.autoRestTimer) {
+                                // Süreyi az önce BİTEN setin özellikleri belirliyor:
+                                // yorgunluğu bırakan o set, sıradaki değil.
+                                const oneri = resolveRestTarget(
+                                  ex.name, { ...set, reps: e.target.value }, settings,
+                                  { customExercises, supersetPending });
+                                startRest(oneri.seconds, oneri.reason);
+                              }
                             }
                           }}
                           className={`w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 font-mono text-sm outline-none text-center focus:bg-zinc-800 h-10 transition-colors ${warmup ? 'text-zinc-500' : 'text-zinc-100'}`}
@@ -594,6 +610,22 @@ const ActiveWorkoutView = memo(({
                             <option value="failure">Tükeniş (F)</option>
                             <option value="rest_pause">Rest-Pause (RP)</option>
                           </select>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const complete = !set.completed;
+                              updateSet(ex.id, set.id, 'completed', complete);
+                              if (complete && settings.autoRestTimer && !warmup) {
+                                const suggestion = resolveRestTarget(ex.name, set, settings, { customExercises, supersetPending });
+                                startRest(suggestion.seconds, suggestion.reason);
+                              }
+                            }}
+                            aria-pressed={Boolean(set.completed)}
+                            title={set.completed ? 'Seti tamamlanmadı olarak işaretle' : 'Seti tamamla'}
+                            className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold border transition-colors ${set.completed ? 'border-emerald-800 bg-emerald-950/30 text-emerald-400' : 'border-zinc-800 bg-zinc-900 text-zinc-600'}`}
+                          >
+                            <CheckCircle2 size={10} /> {set.completed ? 'Tamam' : 'Bitir'}
+                          </button>
                         </div>
                         {warmup ? (
                           <span className="text-[10px] text-orange-600/70 font-mono tracking-widest uppercase">Isınma · hacme sayılmaz</span>
@@ -629,11 +661,24 @@ const ActiveWorkoutView = memo(({
                     <Layers size={14} />
                   </button>
                   <button
-                    onClick={() => startRest(restHint ? restHint.seconds : (settings.restSeconds || 120), restHint?.reason)}
-                    title={restHint ? restHint.reason : 'Dinlenme sayacını başlat'}
-                    className={`px-3 py-2 bg-zinc-950 active:bg-zinc-800 border border-zinc-800 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0 ${restHint ? restHint.tier.text : 'text-zinc-400'}`}
+                    onClick={() => {
+                      const index = Math.max(0, restOverrideOptions.indexOf(restOverride));
+                      const next = restOverrideOptions[(index + 1) % restOverrideOptions.length];
+                      onSetRestOverride?.(ex.name, next || null);
+                    }}
+                    title={restOverride ? `Harekete özel ${restOverride} sn — değiştirmek için dokun` : 'Harekete özel dinlenme süresi belirle'}
+                    aria-label="Harekete özel dinlenme süresini değiştir"
+                    className={`px-2 py-2 bg-zinc-950 active:bg-zinc-800 border rounded-xl transition-colors shrink-0 flex items-center gap-1 ${restOverride ? 'border-amber-800 text-amber-400' : 'border-zinc-800 text-zinc-600'}`}
                   >
-                    {restHint ? restHint.seconds : (settings.restSeconds || 120)}s
+                    <SlidersHorizontal size={12} />
+                    <span className="text-[8px] font-bold">{restOverride ? `${restOverride}s` : 'Özel'}</span>
+                  </button>
+                  <button
+                    onClick={() => startRest(restHint.seconds, restHint.reason)}
+                    title={restHint.reason}
+                    className={`px-3 py-2 bg-zinc-950 active:bg-zinc-800 border border-zinc-800 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0 ${restHint.tier.text}`}
+                  >
+                    {restHint.seconds}s{restOverride ? ' •' : ''}
                   </button>
                 </div>
               </div>
@@ -671,29 +716,63 @@ const ActiveWorkoutView = memo(({
         )}
       </div>
 
+      {/* Ses kapalıyken de bitiş fark edilsin; pointer-events-none olduğu için
+          kullanıcının dokunuşunu yutmaz. */}
+      {restAlertFlash && (
+        <div className="absolute inset-0 z-[70] pointer-events-none flex items-center justify-center bg-emerald-400/25 animate-pulse">
+          <div className="bg-zinc-950/95 border border-emerald-400 rounded-3xl px-7 py-5 shadow-2xl text-center">
+            <CheckCircle2 size={30} className="text-emerald-400 mx-auto mb-2" />
+            <span className="text-sm font-black uppercase tracking-widest text-emerald-300">Dinlenme Bitti</span>
+          </div>
+        </div>
+      )}
+
       {/* Dinlenme geri sayımı — ekranın altında sabit durur */}
       {rest && restSecondsLeft > 0 && (
         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-[360px]">
           <div className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl px-4 py-3">
             <div className="flex items-center justify-between mb-2">
               <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500 flex items-center">
-                <Timer size={12} className="mr-1.5 animate-pulse" /> Dinlenme
+                <Timer size={12} className={`mr-1.5 ${rest.paused ? '' : 'animate-pulse'}`} /> {rest.paused ? 'Dinlenme Duraklatıldı' : 'Dinlenme'}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <button
-                  onClick={() => startRest(restSecondsLeft + 30)}
-                  className="text-[10px] font-bold text-zinc-400 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 active:bg-zinc-800 transition-colors"
+                  onClick={onToggleSessionRestMute}
+                  title={sessionRestMuted ? 'Seans uyarılarını aç' : 'Yalnız bu seansın uyarılarını sessize al'}
+                  aria-label={sessionRestMuted ? 'Seans uyarılarını aç' : 'Seans uyarılarını sessize al'}
+                  className={`p-1.5 rounded-lg border bg-zinc-950 ${sessionRestMuted ? 'border-red-900/60 text-red-400' : 'border-zinc-800 text-zinc-500'}`}
                 >
-                  +30s
+                  {sessionRestMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
+                </button>
+                <button
+                  onClick={() => onReplayRestAlert?.()}
+                  title="Uyarıyı şimdi tekrar çal"
+                  aria-label="Dinlenme uyarısını tekrar çal"
+                  className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-500 active:text-cyan-400"
+                >
+                  <RotateCcw size={12} />
+                </button>
+                <button
+                  onClick={rest.paused ? resumeRest : pauseRest}
+                  title={rest.paused ? 'Sayacı sürdür' : 'Sayacı duraklat'}
+                  aria-label={rest.paused ? 'Dinlenme sayacını sürdür' : 'Dinlenme sayacını duraklat'}
+                  className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 active:text-cyan-400"
+                >
+                  {rest.paused ? <Play size={12} /> : <Pause size={12} />}
                 </button>
                 <button
                   onClick={stopRest}
+                  title="Dinlenmeyi bitir"
+                  aria-label="Dinlenme sayacını kapat"
                   className="text-zinc-500 active:text-red-400 bg-zinc-950 border border-zinc-800 p-1.5 rounded-lg transition-colors"
                 >
                   <X size={12} />
                 </button>
               </div>
             </div>
+            {sessionRestMuted && (
+              <p className="text-[9px] font-mono text-red-300/80 mb-2">Bu seans için ses, titreşim ve sistem bildirimi kapalı.</p>
+            )}
             <div className="flex items-center gap-3">
               <span className="font-mono font-bold text-3xl text-cyan-400 tabular-nums tracking-tight">
                 {Math.floor(restSecondsLeft / 60)}:{(restSecondsLeft % 60).toString().padStart(2, '0')}
@@ -705,6 +784,22 @@ const ActiveWorkoutView = memo(({
                 />
               </div>
             </div>
+            <div className="grid grid-cols-3 gap-1.5 mt-2">
+              <button aria-label="15 saniye azalt" onClick={() => adjustRest?.(-15)} className="py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-500 text-[10px] font-bold flex items-center justify-center gap-0.5"><Minus size={10} />15s</button>
+              <button aria-label="15 saniye ekle" onClick={() => adjustRest?.(15)} className="py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 text-[10px] font-bold">+15s</button>
+              <button aria-label="30 saniye ekle" onClick={() => adjustRest?.(30)} className="py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 text-[10px] font-bold">+30s</button>
+            </div>
+            {restCue && (
+              <div className={`mt-2 rounded-xl border px-2.5 py-2 ${restCue.complete ? 'border-emerald-900/50 bg-emerald-950/15' : 'border-cyan-900/40 bg-cyan-950/15'}`}>
+                <span className={`text-[8px] font-bold uppercase tracking-widest block ${restCue.complete ? 'text-emerald-500' : 'text-cyan-500'}`}>
+                  {restCue.complete ? 'Plan Durumu' : 'Sıradaki Set'}
+                </span>
+                <span className="text-[10px] font-bold text-zinc-200 block truncate mt-0.5">
+                  {restCue.exerciseName}{!restCue.complete && ` · ${restCue.setIndex}/${restCue.totalSets}`}
+                </span>
+                <span className="text-[9px] font-mono text-zinc-500 block truncate">{restCue.details}</span>
+              </div>
+            )}
             {/* Sürenin gerekçesi: sayı keyfi görünmesin, kullanıcı kabul ya da
                 reddetmeyi bilerek yapsın. */}
             {rest.reason && (

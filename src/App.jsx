@@ -6,7 +6,7 @@ import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
   requestWakeLock, playRestAlert, vibrateAlert,
   showRestNotification, requestNotificationPermission, notificationPermission,
-  primeRestAlert, REST_ALERT_INTENSITIES
+  primeRestAlert, scheduleRestAlert, cancelScheduledRestAlert, restAlertDiagnostics
 } from './lockScreen';
 
 import { DEFAULT_EXERCISES, MUSCLE_GROUPS, BODY_METRICS, getVolumeLandmarks, ACWR_MIN_DAYS, APP_VERSION } from './utils/constants';
@@ -264,6 +264,8 @@ export default function App() {
   const [deleteConfirm, setDeleteConfirm] = useState({ isOpen: false, type: null, id: null });
   const [rest, setRest] = useState(null);
   const [restSecondsLeft, setRestSecondsLeft] = useState(0);
+  const [sessionRestMuted, setSessionRestMuted] = useState(false);
+  const [restAlertFlash, setRestAlertFlash] = useState(false);
 
   const [analysisExercise, setAnalysisExercise] = useState('');
   const [bodyMetricKey, setBodyMetricKey] = useState('weight');
@@ -385,22 +387,36 @@ export default function App() {
   // Dinlenme sayacı
   useEffect(() => {
     if (!rest) return;
+    if (rest.paused) return;
     const tick = () => {
       const remaining = Math.max(0, Math.ceil((rest.endsAt - Date.now()) / 1000));
       setRestSecondsLeft(remaining);
       if (remaining === 0) {
         setRest(null);
-        // Şiddet ayarı: eski tek bip müzik çalarken duyulmuyordu.
-        if (settings.restAlert) playRestAlert(settings.restAlertIntensity);
-        vibrateAlert(settings.restAlertIntensity);
+        // Sayaç başında donanım saatine yazma başarısız olduysa bitiş anındaki
+        // bu çağrı emniyet ağıdır. Başarılıysa iki kez ses çıkarmıyoruz.
+        if (settings.restAlert && !sessionRestMuted && !rest.soundScheduled) {
+          void playRestAlert(settings.restAlertIntensity, {
+            toneKey: settings.restAlertTone,
+            volume: settings.restAlertVolume,
+          });
+        }
+        if (!sessionRestMuted) vibrateAlert(settings.restAlertIntensity);
+        if (settings.restVisualAlert !== false) {
+          setRestAlertFlash(true);
+          setTimeout(() => setRestAlertFlash(false), 1800);
+        }
         // Bildirim, ses ve titreşimin YERİNE değil yanına: telefon sessizdeyken
         // ya da uygulama arka plandayken tek görünür uyarı bu.
-        if (settings.restNotification) showRestNotification();
+        if (settings.restNotification && !sessionRestMuted) void showRestNotification();
       }
     };
     const interval = setInterval(tick, 500);
+    tick();
     return () => clearInterval(interval);
-  }, [rest, settings.restAlert, settings.restNotification, settings.restAlertIntensity]);
+  }, [rest, sessionRestMuted, settings.restAlert, settings.restNotification,
+    settings.restAlertIntensity, settings.restAlertTone, settings.restAlertVolume,
+    settings.restVisualAlert]);
 
 
   // Antrenman işlemleri
@@ -416,15 +432,124 @@ export default function App() {
 
   const startRest = useCallback((seconds, reason = null) => {
     const total = Math.max(1, Math.round(seconds));
+    const endsAt = Date.now() + total * 1000;
     restStartedAtRef.current = Date.now();
-    setRest({ endsAt: Date.now() + total * 1000, total, reason });
+    cancelScheduledRestAlert();
+    setRest({ endsAt, total, reason, paused: false, soundScheduled: false });
     setRestSecondsLeft(total);
-  }, []);
+    if (settings.restAlert && !sessionRestMuted) {
+      void scheduleRestAlert(total, {
+        intensityKey: settings.restAlertIntensity,
+        toneKey: settings.restAlertTone,
+        volume: settings.restAlertVolume,
+        preAlertSeconds: settings.restPreAlertSeconds,
+      }).then(result => {
+        setRest(current => current?.endsAt === endsAt
+          ? { ...current, soundScheduled: Boolean(result?.ok) }
+          : current);
+      });
+    }
+  }, [sessionRestMuted, settings.restAlert, settings.restAlertIntensity,
+    settings.restAlertTone, settings.restAlertVolume, settings.restPreAlertSeconds]);
 
   const stopRest = useCallback(() => {
+    cancelScheduledRestAlert();
     setRest(null);
     setRestSecondsLeft(0);
   }, []);
+
+  const pauseRest = useCallback(() => {
+    if (!rest || rest.paused) return;
+    const remaining = Math.max(1, Math.ceil((rest.endsAt - Date.now()) / 1000));
+    cancelScheduledRestAlert();
+    setRestSecondsLeft(remaining);
+    setRest({ ...rest, paused: true, remaining, soundScheduled: false });
+  }, [rest]);
+
+  const resumeRest = useCallback(() => {
+    if (!rest?.paused) return;
+    const remaining = Math.max(1, rest.remaining || restSecondsLeft);
+    const endsAt = Date.now() + remaining * 1000;
+    setRest({ ...rest, endsAt, paused: false, remaining: null, soundScheduled: false });
+    if (settings.restAlert && !sessionRestMuted) {
+      void scheduleRestAlert(remaining, {
+        intensityKey: settings.restAlertIntensity,
+        toneKey: settings.restAlertTone,
+        volume: settings.restAlertVolume,
+        preAlertSeconds: settings.restPreAlertSeconds,
+      }).then(result => setRest(value => value?.endsAt === endsAt
+        ? { ...value, soundScheduled: Boolean(result?.ok) }
+        : value));
+    }
+  }, [rest, restSecondsLeft, sessionRestMuted, settings.restAlert, settings.restAlertIntensity,
+    settings.restAlertTone, settings.restAlertVolume, settings.restPreAlertSeconds]);
+
+  const adjustRest = useCallback((delta) => {
+    if (!rest) return;
+    const base = rest.paused
+      ? (rest.remaining || restSecondsLeft)
+      : Math.max(1, Math.ceil((rest.endsAt - Date.now()) / 1000));
+    const remaining = Math.max(5, Math.min(900, base + delta));
+    const total = Math.max(remaining, rest.total + delta);
+    cancelScheduledRestAlert();
+    setRestSecondsLeft(remaining);
+    if (rest.paused) {
+      setRest({ ...rest, remaining, total, soundScheduled: false });
+      return;
+    }
+    const endsAt = Date.now() + remaining * 1000;
+    setRest({ ...rest, endsAt, total, soundScheduled: false });
+    if (settings.restAlert && !sessionRestMuted) {
+      void scheduleRestAlert(remaining, {
+        intensityKey: settings.restAlertIntensity,
+        toneKey: settings.restAlertTone,
+        volume: settings.restAlertVolume,
+        preAlertSeconds: settings.restPreAlertSeconds,
+      }).then(result => setRest(value => value?.endsAt === endsAt
+        ? { ...value, soundScheduled: Boolean(result?.ok) }
+        : value));
+    }
+  }, [rest, restSecondsLeft, sessionRestMuted, settings.restAlert, settings.restAlertIntensity,
+    settings.restAlertTone, settings.restAlertVolume, settings.restPreAlertSeconds]);
+
+  const toggleSessionRestMute = useCallback(() => {
+    if (!sessionRestMuted) {
+      cancelScheduledRestAlert();
+      setRest(current => current ? { ...current, soundScheduled: false } : current);
+      setSessionRestMuted(true);
+      return;
+    }
+    setSessionRestMuted(false);
+    if (!rest || rest.paused || !settings.restAlert) return;
+    const remaining = Math.max(1, Math.ceil((rest.endsAt - Date.now()) / 1000));
+    void scheduleRestAlert(remaining, {
+      intensityKey: settings.restAlertIntensity,
+      toneKey: settings.restAlertTone,
+      volume: settings.restAlertVolume,
+      preAlertSeconds: settings.restPreAlertSeconds,
+    }).then(result => setRest(current => current?.endsAt === rest.endsAt
+      ? { ...current, soundScheduled: Boolean(result?.ok) }
+      : current));
+  }, [rest, sessionRestMuted, settings.restAlert, settings.restAlertIntensity,
+    settings.restAlertTone, settings.restAlertVolume, settings.restPreAlertSeconds]);
+
+  const handleSetRestOverride = useCallback((exerciseName, seconds) => {
+    setSettings(previous => {
+      const overrides = { ...(previous.exerciseRestOverrides || {}) };
+      if (seconds) overrides[exerciseName] = seconds;
+      else delete overrides[exerciseName];
+      return { ...previous, exerciseRestOverrides: overrides };
+    });
+  }, [setSettings]);
+
+  const handleTestRestAlert = useCallback(async ({ intensityKey, toneKey, volume } = {}) => {
+    const result = await playRestAlert(intensityKey || settings.restAlertIntensity, {
+      toneKey: toneKey || settings.restAlertTone,
+      volume: volume ?? settings.restAlertVolume,
+    });
+    if (result?.ok) vibrateAlert(intensityKey || settings.restAlertIntensity);
+    return result || restAlertDiagnostics();
+  }, [settings.restAlertIntensity, settings.restAlertTone, settings.restAlertVolume]);
 
   const allExercisesNames = useMemo(() => {
     const customNames = customExercises.map(ex => typeof ex === 'object' ? ex.name : ex);
@@ -584,7 +709,7 @@ export default function App() {
     a.click();
     URL.revokeObjectURL(url);
     showToast('CSV indirildi.');
-  }, [sortedWorkouts, sortedMetrics, sortedNutrition, customExercises, resolveSetLoad, showToast]);
+  }, [sortedWorkouts, sortedMetrics, sortedNutrition, customExercises, resolveSetLoad, settings.poolLength, showToast]);
 
   /**
    * Hazır programı kurar: şablonları ekler, haftalık planı oluşturup aktif yapar.
@@ -1100,7 +1225,7 @@ export default function App() {
       exercises: (prev?.exercises || []).map(ex => ex.id === exerciseId
         ? { ...ex, sets: (ex.sets || []).map(s => s.id === setId ? { ...s, [field]: value } : s) } : ex)
     }));
-  }, [setActiveWorkout]);
+  }, [resolveSetLoad, setActiveWorkout]);
 
   /**
    * Hareketi bir sıra yukarı/aşağı taşır.
@@ -1335,6 +1460,7 @@ export default function App() {
     }
 
     setActiveWorkout(newWorkout);
+    setSessionRestMuted(false);
     setPreWorkoutModal(null);
 
     if (initialExercises.length === 0) {
@@ -1344,7 +1470,7 @@ export default function App() {
     // Ses motoru burada, kullanıcı hareketi içinde açılıyor. iOS
     // AudioContext'i yalnızca bir dokunma sırasında başlatıyor; sonradan
     // (dinlenme bitince) açmaya çalışmak sessizlikle sonuçlanıyordu.
-    primeRestAlert();
+    void primeRestAlert();
 
     // Müzik önceliği açıkken kart hiç başlatılmıyor: başlatmak, kullanıcının
     // dinlediği müziği kesmek demek ve bunu sessizce yapmak yanlış olurdu.
@@ -1411,6 +1537,8 @@ export default function App() {
     }));
 
     stopLockScreenActivity();
+    stopRest();
+    setSessionRestMuted(false);
     setLockScreenOn(false);
     setActiveWorkout(null);
     setIsEndWorkoutModalOpen(false);
@@ -3358,6 +3486,14 @@ export default function App() {
               repsOnFocusRef={repsOnFocusRef}
               startRest={startRest}
               stopRest={stopRest}
+              pauseRest={pauseRest}
+              resumeRest={resumeRest}
+              adjustRest={adjustRest}
+              sessionRestMuted={sessionRestMuted}
+              onToggleSessionRestMute={toggleSessionRestMute}
+              onReplayRestAlert={handleTestRestAlert}
+              restAlertFlash={restAlertFlash}
+              onSetRestOverride={handleSetRestOverride}
               onOpenPlateCalc={(w, exerciseId) => setPlateCalc({ weight: w, exerciseId })}
               onSaveAsTemplate={() => handleSaveAsTemplate(null)}
               onToggleSuperset={handleToggleSuperset}
@@ -3453,7 +3589,7 @@ export default function App() {
           bodyweightAudit={bodyweightAudit}
           onNormalizeBodyweight={handleNormalizeBodyweight}
           onToggleRestNotification={handleToggleRestNotification}
-          onTestRestAlert={(key) => { playRestAlert(key); vibrateAlert(key); }}
+          onTestRestAlert={handleTestRestAlert}
           notificationState={notificationPermission()}
           onExportCsv={handleExportCsv}
           profileGender={profileGender}

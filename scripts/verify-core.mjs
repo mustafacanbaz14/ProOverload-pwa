@@ -29,7 +29,10 @@ import { suggestSubstitutes } from '../src/utils/substitution.js';
 import { analyzeDayConflicts } from '../src/utils/interference.js';
 import { computeWeekPlan } from '../src/utils/weekPlan.js';
 import { findActivity } from '../src/utils/cardio.js';
-import { suggestRestSeconds } from '../src/utils/rest.js';
+import {
+  suggestRestSeconds, normalizeRestOverrides, resolveRestTarget,
+  adjustRestRemaining, nextSetCue,
+} from '../src/utils/rest.js';
 import { effectiveLoad, bodyweightFactorOf, describeSetLoad, bodyweightBasisFor } from '../src/utils/bodyweight.js';
 import { auditBodyweightEntries, normalizeBodyweightEntries } from '../src/utils/bodyweightAudit.js';
 import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
@@ -42,7 +45,7 @@ import { dayEnergyBreakdown, theoreticalWeek, estimateMacrosForTef, groupByWeek,
 import { calorieDashboard, deriveGoalSet } from '../src/utils/goals.js';
 import { mergeWellnessDay, computeSleepScore } from '../src/utils/wellness.js';
 import { migrateWeekPlans, removeTemplateFromPlans } from '../src/utils/planMigration.js';
-import { suggestNextTarget, estimate1RM, mergeWorkout, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords } from '../src/utils/helpers.js';
+import { suggestNextTarget, estimate1RM, mergeWorkout, mergeSettings, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords } from '../src/utils/helpers.js';
 import { dailyTotals, nutritionDayScore } from '../src/utils/nutritionStats.js';
 import {
   createDayTemplate, createMealTemplate, createRecipeTemplate,
@@ -1174,6 +1177,61 @@ test('süperset eşi beklerken araya tam dinlenme girmez', () => {
   const cift = suggestRestSeconds('Barbell Bench Press', { rir: 2, reps: 8 }, { supersetPending: true });
   assert.ok(cift.seconds < tek.seconds);
   assert.equal(cift.isTechnique, true);
+});
+
+test('harekete özel dinlenme akıllı ve genel sürenin önüne geçer', () => {
+  const target = resolveRestTarget('Barbell Bench Press', { rir: 0, reps: 3 }, {
+    smartRest: true,
+    restSeconds: 90,
+    exerciseRestOverrides: { 'Barbell Bench Press': 165 },
+  });
+  assert.equal(target.seconds, 165);
+  assert.equal(target.source, 'exercise');
+});
+
+test('bozuk harekete özel süreler temizlenir', () => {
+  assert.deepEqual(normalizeRestOverrides({ Bench: 120, Squat: -5, Curl: 999, '': 90 }), { Bench: 120 });
+  assert.deepEqual(normalizeRestOverrides([]), {});
+});
+
+test('uyarı ayarları yüklenirken geçersiz değerler güvenli varsayılana döner', () => {
+  const settings = mergeSettings({
+    restAlertIntensity: 'sonuna-kadar', restAlertTone: 'sirena',
+    restAlertVolume: 8, restPreAlertSeconds: 77,
+    exerciseRestOverrides: { Bench: 180, Curl: 900 },
+  });
+  assert.equal(settings.restAlertIntensity, 'strong');
+  assert.equal(settings.restAlertTone, 'ascending');
+  assert.equal(settings.restAlertVolume, 1);
+  assert.equal(settings.restPreAlertSeconds, 10);
+  assert.deepEqual(settings.exerciseRestOverrides, { Bench: 180 });
+});
+
+test('hızlı süre ayarı sayaç güvenlik sınırlarını korur', () => {
+  assert.equal(adjustRestRemaining(10, -15), 5);
+  assert.equal(adjustRestRemaining(890, 30), 900);
+  assert.equal(adjustRestRemaining(120, 15), 135);
+});
+
+test('sıradaki set özeti aktif hareketten ilk tamamlanmamış seti bulur', () => {
+  const cue = nextSetCue({
+    activeExerciseId: 'bench',
+    exercises: [
+      { id: 'bench', name: 'Bench Press', sets: [
+        { id: 's1', weight: 80, reps: 8, rir: 2, completed: true },
+        { id: 's2', weight: 80, reps: 8, rir: 2 },
+      ] },
+      { id: 'row', name: 'Row', sets: [{ id: 's3', weight: 60, reps: 10 }] },
+    ],
+  });
+  assert.equal(cue.exerciseName, 'Bench Press');
+  assert.equal(cue.setIndex, 2);
+  assert.match(cue.details, /80 kg/);
+});
+
+test('bütün setler tamamlanınca sıradaki set özeti seans sonunu söyler', () => {
+  const cue = nextSetCue({ exercises: [{ id: 'x', name: 'Curl', sets: [{ id: 's', completed: true }] }] });
+  assert.equal(cue.complete, true);
 });
 
 /* ------------------------------------------------------------------ *

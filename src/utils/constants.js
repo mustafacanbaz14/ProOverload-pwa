@@ -74,6 +74,14 @@ export const DEFAULT_SETTINGS = {
   // Dinlenme bitiş uyarısının şiddeti: 'soft' | 'strong' | 'insistent'.
   // Varsayılan 'strong' — eski tek bip müzik çalarken duyulmuyordu.
   restAlertIntensity: 'strong',
+  // 7.1 uyarı merkezi. Ton ve ses düzeyi birbirinden ayrıdır; ön uyarı ses
+  // donanımının saatine baştan yazıldığı için arka plan timer'ına bağlı kalmaz.
+  restAlertTone: 'ascending',
+  restAlertVolume: 0.85,
+  restPreAlertSeconds: 10,
+  restVisualAlert: true,
+  // Hareket adı → saniye. Yazılmayan hareketler akıllı/genel süreye düşer.
+  exerciseRestOverrides: {},
   // Kardiyo hedefi: { preset, lowMinutes, highSessions }. Boş bırakılan
   // sayılar önayarın değerini kullanıyor.
   cardioGoal: { preset: 'off', lowMinutes: '', highSessions: '' },
@@ -648,13 +656,29 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.0';
+export const APP_VERSION = '7.1';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.0',
-  date: '2026-08-17',
+  title: 'ProOverload 7.1',
+  date: '2026-08-20',
   items: [
+    {
+      title: 'Güvenilir Dinlenme Uyarısı',
+      desc: 'Askıya alınmış ses motoru artık uyandırılmadan nota zamanlamıyor; resume işlemi gerçekten tamamlanana kadar bekleniyor. Uyarı, sayaç başlarken AudioContext saatine yazıldığı için JavaScript arka planda yavaşlasa bile doğru anda çalabiliyor. Mobil bildirim doğrudan Notification constructor yerine service worker üzerinden gösteriliyor. Aynı anda ses, titreşim, kalıcı bildirim ve isteğe bağlı tam ekran ışık uyarısı birlikte çalışıyor.'
+    },
+    {
+      title: 'Kişisel Uyarı Merkezi',
+      desc: 'Yükselen, dijital ve zil tınıları; bağımsız ses düzeyi; 5/10/15 saniyelik ön uyarı; ses motoru durumunu gösteren tanılama ve gerçek ayarlarla test düğmesi eklendi. Seans sırasında yalnız o seans için sessize alma ve uyarıyı tekrar çalma da dinlenme kartında.'
+    },
+    {
+      title: 'Dinlenme Sayacı Kontrolleri',
+      desc: 'Sayaç artık duraklatılıp kaldığı yerden sürdürülebiliyor. -15, +15 ve +30 saniye düğmeleri gerçek dinlenme başlangıcını bozmadan hedefi değiştiriyor. Önceden +30 düğmesi gerçek bekleme ölçümünü sıfırlıyordu; bu da dinlenme analizini olduğundan kısa gösteriyordu.'
+    },
+    {
+      title: 'Hareket Özel Dinlenme ve Sıradaki Set',
+      desc: 'Her hareket için otomatik öneriyi geçersiz kılan kalıcı bir dinlenme süresi seçilebiliyor. Dinlenme kartı sıradaki hareketi, set numarasını, kilo/tekrar/RIR hedefini gösteriyor. Setler tek dokunuşla tamamlandı veya geri alındı olarak işaretlenebiliyor; bu durum sıradaki set hesabının ve seans ilerlemesinin veri kaynağı.'
+    },
     {
       title: 'Hareket Başına İlerleme Kuralı',
       desc: 'Uygulama tek bir sabit ilerleme algoritması uyguluyordu ve o algoritma her hareket için doğru değil: bench press ile yan kaldırış aynı kuralla ilerletilemez, birinde makul olan sıçrama diğerinde iki haftalık kazancı bir anda istemek demek. Artık her hareketin kendi kuralı var. ÇİFT İLERLEME (varsayılan) tekrarı aralığın üst ucuna kadar çıkarır, BÜTÜN setler üst uca ulaştığında ağırlığı artırır — ortalamaya bakmıyor, çünkü 12-8-8 ortalaması 9 çıkıp "aralıktasın" derken ilk set dışında hedef tutturulmamış oluyordu. DOĞRUSAL her başarılı seansta artırır. RIR TABANLI yedek tekrar hedefine göre ayarlar; bir tam tekrardan küçük sapmaları yok sayar çünkü RIR tahmini o hassasiyette değil. SABİT hiç öneri vermez, teknik ve rehabilitasyon çalışmaları için. Kural, hareketin profil ekranından seçiliyor.'

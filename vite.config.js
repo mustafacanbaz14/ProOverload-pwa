@@ -14,6 +14,8 @@ export default defineConfig({
       injectRegister: null,
       includeAssets: ['apple-touch-icon-v5.png', 'pwa-v5-192x192.png', 'pwa-v5-512x512.png'],
       workbox: {
+        // Mobil dinlenme bildiriminin üzerine dokununca kurulu PWA'ya dön.
+        importScripts: ['sw-notification.js'],
         // Barkod tarayıcı (zxing) ~450 KB ve zaten çevrimiçi ürün sorgusuyla
         // birlikte çalışıyor; ilk kuruluma yük olmasın diye önbelleğe alınmıyor,
         // ihtiyaç anında indirilip çalışma zamanı önbelleğine yazılıyor.
