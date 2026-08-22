@@ -2,6 +2,7 @@ import React, { memo, useState, useMemo } from 'react';
 import { Search, Eye, EyeOff, BrainCircuit, TrendingDown, Utensils } from 'lucide-react';
 import TrendChart from './TrendChart';
 import ConsistencyCard from './ConsistencyCard';
+import TrainingCalendarCard from './TrainingCalendarCard';
 import SessionQualityCard from './SessionQualityCard';
 import CardioCoachCard from './CardioCoachCard';
 import StrengthStandardsCard from './StrengthStandardsCard';
@@ -344,6 +345,7 @@ const AnalyticsView = memo(({
               soru. Biri "programı gerçekten uyguluyor muyum", diğeri "kuvvet
               kaslar arasında nasıl dağılmış". */}
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
+          <TrainingCalendarCard workouts={workouts} today={today} />
           <SessionQualityCard workouts={workouts} customExercises={customExercises} />
           <TrainingQualityCard workouts={workouts} customExercises={customExercises} resolveLoad={resolveLoad} />
           <StrengthStandardsCard

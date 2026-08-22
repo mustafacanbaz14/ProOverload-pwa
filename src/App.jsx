@@ -6,10 +6,15 @@ import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
   requestWakeLock, playRestAlert, vibrateAlert,
   showRestNotification, requestNotificationPermission, notificationPermission,
-  primeRestAlert, scheduleRestAlert, cancelScheduledRestAlert, restAlertDiagnostics
+  primeRestAlert, scheduleRestAlert, cancelScheduledRestAlert, restAlertDiagnostics,
+  restAlertMissed, startAlertKeepAlive, stopAlertKeepAlive,
+  scheduleRestNotification, cancelScheduledRestNotification
 } from './lockScreen';
 
-import { DEFAULT_EXERCISES, MUSCLE_GROUPS, BODY_METRICS, getVolumeLandmarks, ACWR_MIN_DAYS, APP_VERSION } from './utils/constants';
+import {
+  DEFAULT_EXERCISES, MUSCLE_GROUPS, BODY_METRICS, getVolumeLandmarks,
+  setVolumeTargetOverrides, ACWR_MIN_DAYS, APP_VERSION,
+} from './utils/constants';
 import { migrateCustomExercises } from './utils/migrations';
 import { painCoachItem, buildPainReport } from './utils/painLog';
 import { buildStrengthBalance, strengthBalanceCoachItem } from './utils/strengthBalance';
@@ -31,6 +36,8 @@ import { repRecordsFor, isRepRecord } from './utils/repRecords';
 import { buildRestReport, restCoachItem } from './utils/restQuality';
 import { buildTimeOfDayReport, timeOfDayCoachItem } from './utils/timeOfDay';
 import { buildTechniqueReport, techniqueCoachItem } from './utils/setTechniques';
+import { auditExerciseOrder, orderCoachItem } from './utils/exerciseOrder';
+import { buildWeeklyVolumeHistory } from './utils/volumeTargets';
 import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
 import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, applyCardioTemplate } from './utils/cardioTemplates';
 import { cardioToCsv } from './utils/csvExport';
@@ -115,8 +122,13 @@ const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
 const PainLogModal = lazy(() => import('./components/PainLogModal'));
 const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
 const ExerciseMergeModal = lazy(() => import('./components/ExerciseMergeModal'));
+const VolumeTargetsModal = lazy(() => import('./components/VolumeTargetsModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const CardioView = lazy(() => import('./components/CardioView'));
+
+// Kaçan dinlenme uyarısı en fazla bu kadar gecikmeyle telafi edilir. Ötesinde
+// ses çalmak, kullanıcının çoktan geçtiği bir ana ait uyarıyı bağırmak olur.
+const LATE_ALERT_LIMIT_MS = 90 * 1000;
 const SubstituteModal = lazy(() => import('./components/SubstituteModal'));
 const SessionReportModal = lazy(() => import('./components/SessionReportModal'));
 const WeeklyReviewModal = lazy(() => import('./components/WeeklyReviewModal'));
@@ -219,6 +231,7 @@ export default function App() {
   const [isPainOpen, setIsPainOpen] = useState(false);
   const [isDataHealthOpen, setIsDataHealthOpen] = useState(false);
   const [isMergeOpen, setIsMergeOpen] = useState(false);
+  const [isVolumeTargetsOpen, setIsVolumeTargetsOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
@@ -357,6 +370,18 @@ export default function App() {
     };
   }, [showToast]);
 
+  // Kişisel hacim hedefleri, hacim referanslarını okuyan tek noktaya yazılıyor.
+  //
+  // Bu useMemo bilinçli olarak dosyadaki DİĞER hacim memo'larından önce
+  // duruyor: hook'lar sırayla çalıştığı için sonraki memo'lar güncel kaydı
+  // görüyor. Kaydı okuyan memo'ların bağımlılık dizilerine `volumeTargets`
+  // ayrıca eklendi; yoksa hedef değişince tablo eski değerde kalırdı ve
+  // kullanıcı "değiştirdim ama bir şey olmadı" derdi.
+  useMemo(() => {
+    setVolumeTargetOverrides(settings.volumeTargets);
+    return settings.volumeTargets;
+  }, [settings.volumeTargets]);
+
   const showUndoToast = useCallback((message, onUndo, duration = 7000) => {
     showToast(message, 'info', {
       duration,
@@ -393,9 +418,25 @@ export default function App() {
       setRestSecondsLeft(remaining);
       if (remaining === 0) {
         setRest(null);
-        // Sayaç başında donanım saatine yazma başarısız olduysa bitiş anındaki
-        // bu çağrı emniyet ağıdır. Başarılıysa iki kez ses çıkarmıyoruz.
-        if (settings.restAlert && !sessionRestMuted && !rest.soundScheduled) {
+        stopAlertKeepAlive();
+        // Ses iki yoldan gelebiliyor: sayaç başında donanım saatine yazılan
+        // zamanlanmış notalar, ya da buradaki anlık çağrı.
+        //
+        // 7.1'e kadar ölçüt "zamanlama başarılı mıydı" idi ve bu yanlıştı:
+        // zamanlamadan SONRA ses motoru askıya alınırsa (ekran kapanması,
+        // arka plan, iOS kesintisi) notalar hiç çalmıyor ama bayrak hâlâ
+        // "planlandı" diyor, yedek de atlanıyordu. Sonuç sessizlik.
+        //
+        // Artık ölçüt "gerçekten çaldı mı": zamanlanmış uyarı kaçtıysa yedek
+        // devreye giriyor.
+        //
+        // Telafi bir PENCEREYLE sınırlı: sayfa donmuş ve kullanıcı on dakika
+        // sonra dönmüşse o dinlenme çoktan bitmiştir; o anda yüksek sesle
+        // uyarı çalmak bilgi değil şaşkınlık üretir. Geç kalınan durumda
+        // görsel uyarı ve bildirim yine çıkıyor, yalnızca ses susuyor.
+        const gecikme = Date.now() - rest.endsAt;
+        const kacti = rest.soundScheduled && restAlertMissed() && gecikme < LATE_ALERT_LIMIT_MS;
+        if (settings.restAlert && !sessionRestMuted && (!rest.soundScheduled || kacti)) {
           void playRestAlert(settings.restAlertIntensity, {
             toneKey: settings.restAlertTone,
             volume: settings.restAlertVolume,
@@ -438,6 +479,10 @@ export default function App() {
     setRest({ endsAt, total, reason, paused: false, soundScheduled: false });
     setRestSecondsLeft(total);
     if (settings.restAlert && !sessionRestMuted) {
+      // Ses motorunu dinlenme boyunca ayakta tut: ekran kapanınca tarayıcı
+      // hem sayfayı donduruyor hem motoru askıya alıyordu ve zamanlanmış
+      // notalar bu yüzden hiç çalmıyordu.
+      if (settings.restKeepAwake !== false) void startAlertKeepAlive();
       void scheduleRestAlert(total, {
         intensityKey: settings.restAlertIntensity,
         toneKey: settings.restAlertTone,
@@ -449,11 +494,20 @@ export default function App() {
           : current);
       });
     }
-  }, [sessionRestMuted, settings.restAlert, settings.restAlertIntensity,
-    settings.restAlertTone, settings.restAlertVolume, settings.restPreAlertSeconds]);
+    // Bildirimi işletim sistemine yaz: destekleyen tarayıcıda sayfa donmuş
+    // olsa bile zamanında çıkıyor. Desteklenmiyorsa sessizce atlanıyor ve
+    // bildirim eskisi gibi sayaç bitince gösteriliyor.
+    if (settings.restNotification && !sessionRestMuted) {
+      void scheduleRestNotification(total);
+    }
+  }, [sessionRestMuted, settings.restAlert, settings.restNotification, settings.restKeepAwake,
+    settings.restAlertIntensity, settings.restAlertTone, settings.restAlertVolume,
+    settings.restPreAlertSeconds]);
 
   const stopRest = useCallback(() => {
     cancelScheduledRestAlert();
+    void cancelScheduledRestNotification();
+    stopAlertKeepAlive();
     setRest(null);
     setRestSecondsLeft(0);
   }, []);
@@ -1097,7 +1151,7 @@ export default function App() {
       pushPullBalanced,
       hasPushPullData
     };
-  }, [workouts, customExercises, settings.experienceLevel]);
+  }, [workouts, customExercises, settings.experienceLevel, settings.volumeTargets]);
 
   const templateRecommendation = useMemo(
     () => bestTemplateRecommendation(templates, {
@@ -1108,7 +1162,7 @@ export default function App() {
       restSeconds: settings.restSeconds,
       today: getLocalDateString(),
     }),
-    [templates, dashboardStats.muscleVolume, customExercises, settings.experienceLevel,
+    [templates, dashboardStats.muscleVolume, customExercises, settings.experienceLevel, settings.volumeTargets,
       settings.restSeconds, sortedWorkouts],
   );
 
@@ -2471,7 +2525,7 @@ export default function App() {
     experienceLevel: settings.experienceLevel,
     weightKg: latestWeight,
     workouts,
-  }), [activePlan, settings.restSeconds, settings.experienceLevel,
+  }), [activePlan, settings.restSeconds, settings.experienceLevel, settings.volumeTargets,
     templates, customExercises, latestWeight, workouts]);
 
   const weekPlanDays = weekPlanResult.days;
@@ -2619,7 +2673,7 @@ export default function App() {
   const readiness = useMemo(() => readinessTrend(workouts, 10), [workouts]);
   const personalVolume = useMemo(
     () => buildPersonalVolumeGuidance(workouts, customExercises, settings.experienceLevel),
-    [workouts, customExercises, settings.experienceLevel]);
+    [workouts, customExercises, settings.experienceLevel, settings.volumeTargets]);
 
   const todayCoach = useMemo(() => {
     const date = getLocalDateString();
@@ -2743,7 +2797,7 @@ export default function App() {
       experienceLevel: settings.experienceLevel,
       weeks: 4,
     }),
-    [workouts, customExercises, settings.experienceLevel]);
+    [workouts, customExercises, settings.experienceLevel, settings.volumeTargets]);
 
   // Haftalık kalori dengesi: gözden geçirme ekranı da kalori detayıyla aynı
   // motoru kullansın diye burada bir kez hesaplanıyor, iki ayrı sayı çıkmasın.
@@ -2791,7 +2845,7 @@ export default function App() {
         feedback: settings.mesocycle?.feedback,
       }),
       weekPlanResult.statuses);
-  }, [mesocycle, settings.mesocycle, settings.experienceLevel, weekPlanResult.statuses]);
+  }, [mesocycle, settings.mesocycle, settings.experienceLevel, settings.volumeTargets, weekPlanResult.statuses]);
 
   const selectionReport = useMemo(
     () => auditExerciseSelection(weekPlanResult.statuses, { customExercises }),
@@ -2842,7 +2896,7 @@ export default function App() {
       customExercises,
       trainedMuscles: dashboardStats.trainedMusclesThisWeek || [],
     }),
-  [dashboardStats.muscleVolume, dashboardStats.trainedMusclesThisWeek, weekPlanResult, templates, workouts, settings.experienceLevel, customExercises]);
+  [dashboardStats.muscleVolume, dashboardStats.trainedMusclesThisWeek, weekPlanResult, templates, workouts, settings.experienceLevel, settings.volumeTargets, customExercises]);
 
   // Rekor eşiği yalnızca BUGÜN gündemde olan hareketler için: tüm kütüphaneyi
   // taramak her gün bir "rekora yakınsın" listesi üretir ve anlamını yitirir.
@@ -2986,6 +3040,25 @@ export default function App() {
     () => buildTechniqueReport(sortedWorkouts),
     [sortedWorkouts]);
 
+  // Kişisel hacim hedefi önerisinin girdisi: kas kas haftalık hacim ve o
+  // haftanın toparlanıp toparlanmadığı.
+  const weeklyVolumeHistory = useMemo(
+    () => buildWeeklyVolumeHistory(sortedWorkouts, {
+      customExercises,
+      detectMuscle: detectMuscleGroup,
+      estimate: estimate1RM,
+    }),
+    [sortedWorkouts, customExercises]);
+
+  // Sıra denetimi: bugünkü seansın ya da planlanan şablonun hareket sırası.
+  // Aynı hareket listesi farklı sırayla farklı sonuç veriyor.
+  const orderReport = useMemo(() => {
+    const hareketler = activeWorkout?.exercises
+      || todayCoach?._signals?.planDay?.workouts?.flatMap(w => w.template?.exercises || [])
+      || [];
+    return auditExerciseOrder(hareketler, { customExercises });
+  }, [activeWorkout, todayCoach, customExercises]);
+
   /** Hareketin tekrar bandı rekorları — profil ekranı için. */
   const repRecordsForExercise = useCallback(
     (name) => repRecordsFor(name, sortedWorkouts, { resolveLoad: resolveSetLoad }),
@@ -3069,6 +3142,9 @@ export default function App() {
       restQualityItem: restCoachItem(restReport),
       timeOfDayItem: timeOfDayCoachItem(timeOfDayReport),
       techniqueItem: techniqueCoachItem(techniqueReport),
+      exerciseOrderItem: orderCoachItem(orderReport, {
+        context: activeWorkout ? 'devam eden seans' : 'bugünkü plan',
+      }),
       standardsItem: strengthStandardCoachItem(strengthStandards),
       effortItem: effortCoachItem(effortDistribution),
       rotationItem: rotationCoachItem(rotationReport),
@@ -3083,12 +3159,12 @@ export default function App() {
     });
   }, [readiness, todayCoach, sortedWorkouts, sortedMetrics, computedComp,
     settings.nutritionGoal, settings.proteinPerFfmBulk, settings.proteinPerFfmCut,
-    settings.experienceLevel, dashboardStats, plateauInsights, deload, deloadSuggestion,
+    settings.experienceLevel, settings.volumeTargets, dashboardStats, plateauInsights, deload, deloadSuggestion,
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
     cardioReport, cardioSuggestion, restingHrReport, painScan, painRegions,
-    plateauReport, restReport, timeOfDayReport, techniqueReport,
+    plateauReport, restReport, timeOfDayReport, techniqueReport, orderReport,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
@@ -3235,6 +3311,7 @@ export default function App() {
                 pain: () => setIsPainOpen(true),
                 dataHealth: () => setIsDataHealthOpen(true),
                 mergeExercises: () => setIsMergeOpen(true),
+                volumeTargets: () => setIsVolumeTargetsOpen(true),
                 wizard: () => setIsWizardOpen(true),
                 coach: () => setIsCoachCenterOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
@@ -3555,6 +3632,7 @@ export default function App() {
               pain: () => setIsPainOpen(true),
               dataHealth: () => setIsDataHealthOpen(true),
               mergeExercises: () => setIsMergeOpen(true),
+              volumeTargets: () => setIsVolumeTargetsOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
@@ -3837,6 +3915,15 @@ export default function App() {
           today={getLocalDateString()}
         />}
 
+        {isVolumeTargetsOpen && <VolumeTargetsModal
+          isOpen={isVolumeTargetsOpen}
+          onClose={() => setIsVolumeTargetsOpen(false)}
+          overrides={settings.volumeTargets}
+          experienceLevel={settings.experienceLevel}
+          weeklyVolumeHistory={weeklyVolumeHistory}
+          onChange={(next) => setSettings(prev => ({ ...prev, volumeTargets: next }))}
+        />}
+
         {isMergeOpen && <ExerciseMergeModal
           isOpen={isMergeOpen}
           onClose={() => setIsMergeOpen(false)}
@@ -3985,6 +4072,7 @@ export default function App() {
               pain: () => setIsPainOpen(true),
               dataHealth: () => setIsDataHealthOpen(true),
               mergeExercises: () => setIsMergeOpen(true),
+              volumeTargets: () => setIsVolumeTargetsOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),

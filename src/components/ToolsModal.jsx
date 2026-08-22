@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import {
-  Merge,
+  Merge, Target,
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
   Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
   Layers3, Wand2, Activity, Stethoscope, ShieldCheck,
@@ -55,6 +55,7 @@ const GROUPS = [
       { key: 'weeklyReview', label: 'Haftalık Gözden Geçirme', hint: 'Haftayı kapat, gelecek hafta için ayar al', icon: ClipboardCheck, color: 'text-emerald-400' },
       { key: 'dataHealth', label: 'Veri Sağlığı', hint: 'Aykırı değer, yarım kalmış set ve kopya kayıt taraması', icon: Stethoscope, color: 'text-emerald-400' },
       { key: 'mergeExercises', label: 'Hareket Birleştir', hint: 'Aynı hareketin iki kaydını tek isimde topla, geçmişi aktar', icon: Merge, color: 'text-amber-400' },
+      { key: 'volumeTargets', label: 'Hacim Hedefleri', hint: 'Kas başına kendi MEV/MAV/MRV değerlerini yaz', icon: Target, color: 'text-cyan-400' },
       { key: 'report', label: 'Gelişim Raporu', hint: 'Rekorlar ve dönem özeti', icon: Trophy, color: 'text-yellow-400' },
     ],
   },

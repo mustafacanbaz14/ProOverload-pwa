@@ -522,6 +522,19 @@ let alertLastError = '';
 let scheduledAlertTarget = 0;
 let scheduledAlertNodes = [];
 let alertScheduleSequence = 0;
+// Zamanlanmis uyarinin GERCEKTEN calip calmadigi.
+//
+// 7.1'e kadar sayac basinda donanim saatine yazma basarili olunca uygulama
+// "ses halloldu" varsayiyor ve bitisteki yedek calmayi atliyordu. Ama ses
+// motoru zamanlamadan SONRA askiya alinabiliyor (ekran kapanmasi, uygulamanin
+// arka plana atilmasi, iOS kesintisi) ve o durumda zamanlanan notalar hic
+// duyulmuyor. Yedek de atlandigi icin sonuc tam sessizlik oluyordu.
+//
+// Artik en az bir nota gercekten bittiginde bu bayrak kalkiyor; kalkmadiysa
+// uygulama uyarinin kactigini anlayip telafi ediyor.
+let scheduledAlertFired = false;
+// Ses motorunu ayakta tutan sessiz dugum cifti.
+let keepAliveNodes = null;
 
 const alertToneOf = (key) => ALERT_TONE_PROFILES[key] || ALERT_TONE_PROFILES.ascending;
 
@@ -597,6 +610,9 @@ const playSequence = (ctx, startAt, gainLevel, toneKey = 'ascending', collector 
         osc.addEventListener('ended', () => {
           const index = collector.indexOf(osc);
           if (index >= 0) collector.splice(index, 1);
+          // Bir nota gercekten bitti: uyari duyulmus demektir. Askiya alinmis
+          // bir motorda `ended` hic gelmiyor, dogrulamayi mumkun kilan da bu.
+          if (collector === scheduledAlertNodes) scheduledAlertFired = true;
           if (collector === scheduledAlertNodes && collector.length === 0) scheduledAlertTarget = 0;
         }, { once: true });
       }
@@ -610,7 +626,68 @@ export const cancelScheduledRestAlert = () => {
   [...scheduledAlertNodes].forEach(node => { try { node.stop(); } catch { /* zaten bitmiş olabilir */ } });
   scheduledAlertNodes = [];
   scheduledAlertTarget = 0;
+  scheduledAlertFired = false;
 };
+
+/**
+ * Zamanlanmis uyari kacti mi.
+ *
+ * Hedef saat gecmis ama hicbir nota calmamissa uyari kacmis demektir. Cagiran
+ * taraf bunu gorup aninda telafi calabiliyor.
+ *
+ * `graceMs` payi var cunku `ended` olayi notanin bitisinden birkac yuz
+ * milisaniye sonra gelebiliyor; pay olmadan her seferinde yanlis alarm olurdu.
+ */
+export const restAlertMissed = (graceMs = 1500) => {
+  if (!scheduledAlertTarget) return false;
+  if (scheduledAlertFired) return false;
+  return Date.now() > scheduledAlertTarget + graceMs;
+};
+
+/**
+ * Ses motorunu dinlenme boyunca ayakta tutar.
+ *
+ * Ekran kapaninca ya da uygulama arka plana gecince tarayici hem sayfayi
+ * donduruyor hem de AudioContext'i askiya aliyor; zamanlanmis notalar da bu
+ * yuzden calmiyordu. Duyulmayacak kadar dusuk ama SIFIR OLMAYAN bir cikis,
+ * sayfayi "ses caliyor" sinifinda tutuyor ve motorun askiya alinmasini
+ * geciktiriyor.
+ *
+ * Media Session KULLANILMIYOR: cihazda tek bir "Su An Calinan" oturumu var ve
+ * onu almak kullanicinin muzigini durdururdu. Web Audio muzigin ustune
+ * biniyor, odagi calmiyor.
+ *
+ * Frekans duyma esiginin altinda (20 Hz) secildi; kazanc da ayrica cok dusuk.
+ * Ikisi birden, hicbir hoparlorde duyulmamasini garanti ediyor.
+ */
+export const startAlertKeepAlive = async () => {
+  if (keepAliveNodes) return true;
+  const ctx = await ensureContext();
+  if (!ctx || ctx.state !== 'running') return false;
+  try {
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = 20;
+    gain.gain.value = 0.0015;
+    osc.connect(gain).connect(ctx.destination);
+    osc.start();
+    keepAliveNodes = { osc, gain };
+    return true;
+  } catch (error) {
+    alertLastError = error?.message || 'Ses motoru ayakta tutulamadi.';
+    return false;
+  }
+};
+
+export const stopAlertKeepAlive = () => {
+  if (!keepAliveNodes) return;
+  try { keepAliveNodes.osc.stop(); } catch { /* zaten durmus olabilir */ }
+  try { keepAliveNodes.osc.disconnect(); keepAliveNodes.gain.disconnect(); } catch { /* yoksay */ }
+  keepAliveNodes = null;
+};
+
+export const isAlertKeepAliveOn = () => keepAliveNodes !== null;
 
 /**
  * Uyarıyı sayaç BAŞLARKEN ses donanımının saatine yazar. JavaScript arka
@@ -640,6 +717,7 @@ export const scheduleRestAlert = async (delaySeconds, {
       playSequence(ctx, finalAt + i * (seviye.gap || 0.9), gain, toneKey, scheduledAlertNodes);
     }
     scheduledAlertTarget = Date.now() + delay * 1000;
+    scheduledAlertFired = false;
     alertPrimed = true;
     alertLastError = '';
     return { ok: true, state: ctx.state, targetAt: scheduledAlertTarget };
@@ -656,6 +734,10 @@ export const restAlertDiagnostics = () => ({
   primed: alertPrimed,
   scheduled: scheduledAlertNodes.length > 0,
   scheduledTarget: scheduledAlertTarget || null,
+  fired: scheduledAlertFired,
+  keepAlive: keepAliveNodes !== null,
+  notification: isNotificationSupported() ? Notification.permission : 'unsupported',
+  triggers: supportsNotificationTriggers(),
   error: alertLastError,
 });
 
@@ -763,6 +845,71 @@ export const requestNotificationPermission = async () => {
 };
 
 /**
+ * Tarayıcı bildirimi ÖNCEDEN zamanlayabiliyor mu.
+ *
+ * `TimestampTrigger` destekleyen tarayıcılarda bildirim işletim sistemine
+ * yazılıyor ve sayfa donmuş olsa bile zamanında çıkıyor. Ekran kapalıyken
+ * bildirim gelmemesinin asıl çözümü bu — ama desteği sınırlı, o yüzden
+ * yalnızca varsa kullanılıyor, yoksa hiçbir şey değişmiyor.
+ */
+export const supportsNotificationTriggers = () =>
+  typeof window !== 'undefined'
+  && 'Notification' in window
+  && 'showTrigger' in Notification.prototype
+  && typeof window.TimestampTrigger === 'function';
+
+/** Bildirim seçenekleri tek yerde: zamanlanmış ve anlık gösterim aynı görünsün. */
+const restNotificationOptions = (body) => ({
+  body,
+  tag: 'po-rest',
+  renotify: true,
+  silent: false,
+  requireInteraction: true,
+  vibrate: [260, 100, 260, 100, 420],
+  icon: '/pwa-v5-192x192.png',
+  badge: '/pwa-v5-192x192.png',
+  data: { url: '/' },
+});
+
+/**
+ * Dinlenme bitişini işletim sistemine zamanlar.
+ *
+ * Sayfa donsa, ekran kapansa, müzik çalsa bile bildirim çıkıyor — çünkü artık
+ * bildirimi gösteren şey uygulamanın JavaScript sayacı değil, işletim sistemi.
+ *
+ * @returns true — zamanlandı; false — bu tarayıcı desteklemiyor
+ */
+export const scheduleRestNotification = async (delaySeconds, body = 'Sıradaki sete geç.') => {
+  if (!supportsNotificationTriggers()) return false;
+  if (!isNotificationSupported() || Notification.permission !== 'granted') return false;
+  const delay = Math.max(1, Number(delaySeconds) || 0);
+  try {
+    const registration = await navigator.serviceWorker?.ready;
+    if (!registration?.showNotification) return false;
+    await cancelScheduledRestNotification();
+    await registration.showNotification('⏱ Dinlenme bitti', {
+      ...restNotificationOptions(body),
+      showTrigger: new window.TimestampTrigger(Date.now() + delay * 1000),
+    });
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+/** Sayaç erken durdurulursa zamanlanmış bildirimi geri alır. */
+export const cancelScheduledRestNotification = async () => {
+  if (!('serviceWorker' in navigator)) return;
+  try {
+    const registration = await navigator.serviceWorker.ready;
+    // `includeTriggered: false` yalnızca HENÜZ ÇIKMAMIŞ olanları getiriyor;
+    // çıkmış bir bildirimi kapatmak kullanıcının gördüğü uyarıyı silmek olurdu.
+    const bekleyen = await registration.getNotifications({ tag: 'po-rest', includeTriggered: true });
+    bekleyen.forEach(n => { if (n.showTrigger) n.close(); });
+  } catch { /* desteklenmiyorsa yapacak bir şey yok */ }
+};
+
+/**
  * Dinlenme bittiğinde bildirim gösterir.
  *
  * Aynı `tag` kullanılıyor: arka arkaya biten sayaçlar bildirim yığmıyor,
@@ -770,17 +917,7 @@ export const requestNotificationPermission = async () => {
  */
 export const showRestNotification = async (body = 'Sıradaki sete geç.') => {
   if (!isNotificationSupported() || Notification.permission !== 'granted') return false;
-  const options = {
-    body,
-    tag: 'po-rest',
-    renotify: true,
-    silent: false,
-    requireInteraction: true,
-    vibrate: [260, 100, 260, 100, 420],
-    icon: '/pwa-v5-192x192.png',
-    badge: '/pwa-v5-192x192.png',
-    data: { url: '/' },
-  };
+  const options = restNotificationOptions(body);
   try {
     // Mobil tarayıcılarda Notification constructor güvenilir değil. MDN'nin
     // önerdiği kalıcı yöntem aktif service worker üzerinden showNotification.

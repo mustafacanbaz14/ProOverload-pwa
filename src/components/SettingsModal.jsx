@@ -519,11 +519,40 @@ const SettingsModal = memo(({
                       {soundTest.ok
                         ? `Ses motoru hazır · ${soundTest.state}`
                         : `Ses motoru hazır değil · ${soundTest.state}${soundTest.error ? ` · ${soundTest.error}` : ''}`}
+                      {/* Sesin neden gelmediğini tahmin ettirmek yerine
+                          söylüyoruz: üç mekanizmanın hangisinin çalıştığı
+                          ayrı ayrı görünüyor. */}
+                      <span className="block mt-1 text-zinc-500">
+                        Bildirim izni: {soundTest.notification === 'granted' ? 'verildi'
+                          : soundTest.notification === 'denied' ? 'reddedildi'
+                            : soundTest.notification === 'unsupported' ? 'desteklenmiyor' : 'sorulmadı'}
+                        {' · '}
+                        Zamanlanmış bildirim: {soundTest.triggers ? 'destekleniyor' : 'yok'}
+                        {' · '}
+                        Ayakta tutma: {soundTest.keepAlive ? 'açık' : 'kapalı'}
+                      </span>
+                      {!soundTest.triggers && (
+                        <span className="block mt-1 text-zinc-600">
+                          Bu tarayıcı bildirimi önceden zamanlayamıyor. Ekran
+                          kapalıyken uyarının kaçmaması için "Dinlenmede Ses
+                          Motorunu Ayakta Tut" açık kalmalı.
+                        </span>
+                      )}
                     </span>
                   </div>
                 )}
               </div>
             )}
+
+            {/* Ekran kapanınca tarayıcı sayfayı donduruyor ve ses motorunu
+                askıya alıyordu; zamanlanmış uyarı bu yüzden bazen hiç
+                çalmıyordu. */}
+            <Toggle
+              label="Dinlenmede Ses Motorunu Ayakta Tut"
+              hint="Dinlenme sayacı çalışırken duyulmayan bir ses akışı sürer. Ekran kapalıyken ve müzik çalarken uyarının kaçmasını önler; kapatırsan pil biraz daha az harcanır ama uyarı bazen gelmeyebilir."
+              checked={settings.restKeepAwake !== false}
+              onChange={(v) => set({ restKeepAwake: v })}
+            />
 
             <Toggle
               label="Ekranı Işıkla Uyar"

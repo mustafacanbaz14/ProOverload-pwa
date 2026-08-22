@@ -80,6 +80,14 @@ export const DEFAULT_SETTINGS = {
   restAlertVolume: 0.85,
   restPreAlertSeconds: 10,
   restVisualAlert: true,
+  // Dinlenme boyunca ses motorunu ayakta tutar. Ekran kapanınca tarayıcı hem
+  // sayfayı donduruyor hem motoru askıya alıyordu ve zamanlanmış uyarı hiç
+  // çalmıyordu. Duyulmayan bir çıkış sayfayı "ses çalıyor" sınıfında tutuyor.
+  // Varsayılan açık: kapalıyken uyarı ekran kapalıyken kaçabiliyor.
+  restKeepAwake: true,
+  // Kas bazında kişisel haftalık hacim hedefi: { 'Yan Omuz': { mev, mav, mrv } }.
+  // Yazılmayan kaslar literatür değerlerini kullanmaya devam ediyor.
+  volumeTargets: {},
   // Hareket adı → saniye. Yazılmayan hareketler akıllı/genel süreye düşer.
   exerciseRestOverrides: {},
   // Kardiyo hedefi: { preset, lowMinutes, highSessions }. Boş bırakılan
@@ -544,10 +552,46 @@ export const EXPERIENCE_LEVELS = [
 ];
 
 /**
+ * Kullanıcının kendi hacim hedefleri: { 'Yan Omuz': { mev, mav, mrv } }.
+ *
+ * NEDEN MODÜL DÜZEYİNDE BİR KAYIT: `getVolumeLandmarks` uygulamanın kırk iki
+ * ayrı yerinden çağrılıyor — koç, hacim tablosu, ısı haritası, program
+ * üreticisi, haftalık projeksiyon, mezosiklik. Kişisel hedefi parametre olarak
+ * geçirmek bu çağrıların HEPSİNİ değiştirmeyi gerektirirdi ve bir tanesinin
+ * atlanması, uygulamanın bir köşesinde eski değerlerin yaşamaya devam etmesi
+ * demekti: kullanıcı hedefini değiştirdiği halde ısı haritası eski renkte
+ * kalırdı ve bunun sebebini kimse bulamazdı.
+ *
+ * Hedefler zaten uygulama genelinde tek bir kullanıcı tercihi; onları tek bir
+ * yerde tutmak modelin kendisine uygun. Kayıt boşken davranış birebir eskisi
+ * gibi — Node'da çalışan doğrulama betikleri de bu yüzden etkilenmiyor.
+ */
+let volumeTargetOverrides = {};
+
+/** Ayarlar yüklendiğinde/değiştiğinde bir kez çağrılıyor. */
+export const setVolumeTargetOverrides = (overrides) => {
+  volumeTargetOverrides = overrides && typeof overrides === 'object' ? overrides : {};
+};
+
+export const getVolumeTargetOverrides = () => volumeTargetOverrides;
+
+/**
  * Seçili deneyim seviyesine göre ölçeklenmiş hacim referansları.
  * Tam sayıya yuvarlanır; MEV<MAV<MRV sırası her koşulda korunur.
+ *
+ * Kullanıcı o kas için kendi hedefini yazdıysa deneyim ölçeklemesi
+ * UYGULANMIYOR: kişisel değer zaten o kişinin kendi kapasitesi, üstüne bir de
+ * seviye çarpanı bindirmek onu kullanıcının yazmadığı bir sayıya taşırdı.
  */
 export const getVolumeLandmarks = (muscle, level = 'intermediate') => {
+  const kisisel = volumeTargetOverrides[muscle];
+  if (kisisel && kisisel.mrv > 0) {
+    const mev = Math.max(1, Math.round(kisisel.mev));
+    const mav = Math.max(mev, Math.round(kisisel.mav));
+    const mrv = Math.max(mav, Math.round(kisisel.mrv));
+    return { mev, mav, mrv, custom: true };
+  }
+
   const base = MUSCLE_VOLUME_LANDMARKS[muscle];
   if (!base) return { mev: 6, mav: 16, mrv: 22 };
 
@@ -656,13 +700,41 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.1';
+export const APP_VERSION = '7.2';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.1',
-  date: '2026-08-20',
+  title: 'ProOverload 7.2',
+  date: '2026-08-22',
   items: [
+    {
+      title: 'Uyarı Çaldı mı Diye Bakıyor',
+      desc: '7.1 askıya alınmış ses motorunu uyandırma sorununu çözmüştü ama "bazen geliyor bazen gelmiyor" devam ediyordu; sebebi başkaymış. Uyarı, sayaç BAŞLARKEN ses donanımının saatine yazılıyor — böylece JavaScript arka planda yavaşlasa bile doğru anda çalabiliyor. Yazma başarılı olunca uygulama "ses halloldu" varsayıp bitişteki yedek çalmayı atlıyordu. Ama ses motoru yazmadan SONRA askıya alınabiliyor: ekran kapanınca, uygulama arka plana atılınca, iOS bir kesinti yaşayınca. O durumda zamanlanan notalar hiç çalmıyor ve yedek de atlandığı için sonuç tam sessizlik oluyordu. Artık ölçüt "zamanlama başarılı mıydı" değil, "ses GERÇEKTEN çaldı mı": en az bir nota bittiğinde bayrak kalkıyor, kalkmadıysa uygulama uyarının kaçtığını anlayıp anında telafi çalıyor. Telafi bir pencereyle sınırlı — sayfa donmuş ve on dakika sonra döndüysen o dinlenme çoktan bitmiştir ve o anda yüksek sesle uyarı çalmak bilgi değil şaşkınlık üretir; geç kalınan durumda görsel uyarı ve bildirim yine çıkıyor, yalnızca ses susuyor.'
+    },
+    {
+      title: 'Ekran Kapalıyken ve Müzik Çalarken',
+      desc: 'Ekran kapanınca tarayıcı iki şeyi birden yapıyor: sayfayı donduruyor (JavaScript sayacı durduğu için bildirim çıkmıyor) ve ses motorunu askıya alıyor (zamanlanmış notalar çalmıyor). Artık dinlenme sayacı çalışırken duyulmayacak kadar düşük ama sıfır olmayan bir ses akışı sürüyor; bu, sayfayı tarayıcının gözünde "ses çalıyor" sınıfında tutuyor ve donmasını geciktiriyor. Frekans duyma eşiğinin altında seçildi, kazanç da ayrıca çok düşük — hiçbir hoparlörde duyulmuyor. Önemlisi bu bir "Şu An Çalınan" oturumu DEĞİL: müziğini durdurmuyor, üstüne biniyor. Ayarlardan kapatılabiliyor; kapalıyken pil biraz daha az harcanır ama uyarı yine kaçabilir.'
+    },
+    {
+      title: 'İşletim Sistemine Zamanlanan Bildirim',
+      desc: 'Bildirim şimdiye kadar sayaç bitince, yani uygulamanın kodu çalışabiliyorsa gösteriliyordu; sayfa donmuşsa bildirim de yoktu. Destekleyen tarayıcılarda bildirim artık sayaç BAŞLARKEN işletim sistemine yazılıyor ve uygulamanın durumundan bağımsız olarak zamanında çıkıyor. Sayaç erken durdurulursa zamanlanmış bildirim geri alınıyor. Desteklemeyen tarayıcıda hiçbir şey değişmiyor — ve test panelinde tarayıcının bunu destekleyip desteklemediği açıkça yazıyor, böylece uyarının neye dayandığı belirsiz kalmıyor.'
+    },
+    {
+      title: 'Uyarı Tanılama Paneli',
+      desc: 'Ses gelmediğinde sebebini tahmin etmek gerekiyordu. Ayarlardaki test artık dört şeyi ayrı ayrı gösteriyor: ses motoru hangi durumda, bildirim izni verilmiş mi, tarayıcı bildirimi önceden zamanlayabiliyor mu, ses motoru ayakta tutma açık mı. Zamanlanmış bildirim desteklenmiyorsa ne yapılması gerektiği de yazıyor.'
+    },
+    {
+      title: 'Kas Başına Kişisel Hacim Hedefi',
+      desc: 'MEV/MAV/MRV değerleri literatür ortalaması ve deneyim seviyesine göre ölçekleniyordu — doğru bir başlangıç ama kişisel değil. Aynı seviyedeki iki kişinin aynı kastaki toparlanma kapasitesi belirgin farklı olabiliyor ve kişi bunu birkaç blok sonra kendi verisinden öğreniyor; "benim omzum 22 sette iyi topluyor" bilgisinin uygulamada tutulacak yeri yoktu. Artık her kas için kendi değerlerini yazabiliyorsun ve bunlar uygulamanın HER YERİNDE geçerli: hacim tablosu, ısı haritası, koç uyarıları, program üreticisi, haftalık projeksiyon. Yalnızca değiştirdiğin kas kaydediliyor, gerisi literatürde kalıyor. Kişisel değere deneyim çarpanı uygulanmıyor — yazdığın sayı zaten senin kapasiten. Geçmişinden öneri de çıkıyor: iyi toparladığın en yüksek haftalık hacme göre. "İyi toparlama" dolaylı ölçülüyor (sonraki hafta o kasın gücü düşmemişse) ve bilinmeyen hafta iyimser sayılmıyor, çünkü öyle saymak toparlayamadığın bir hacmi hedef olarak önermek olurdu.'
+    },
+    {
+      title: 'Antrenman Takvimi',
+      desc: 'Tutarlılık kartı aynı veriyi sayıyla anlatıyordu: haftada kaç gün, kaç hafta üst üste. Doğru ama soyut. Artık gün gün bir ızgara var: nerede boşluk kaldığı, hangi ayın çöktüğü, aradan sonra toparlanmanın ne kadar sürdüğü tek bakışta görünüyor. Renk yoğunluğu ETKİLİ SET sayısını gösteriyor, seans sayısını değil — yirmi dakikalık tamamlama seansıyla iki saatlik bacak gününü aynı renkte göstermek ızgarayı "gittim/gitmedim" tablosuna indirir ve asıl bilgiyi siler. Bir güne dokununca o günün ayrıntısı çıkıyor; altında en uzun kesintisiz seri ve en uzun ara duruyor.'
+    },
+    {
+      title: 'Hareket Sırası Denetimi',
+      desc: 'Uygulama bir seansta hangi hareketlerin ve kaç setin olduğunu denetliyordu ama SIRAYI hiç sormuyordu. Oysa aynı liste farklı sırayla farklı sonuç veriyor: en çok yük kaldırılan hareket, o kas ön yorgunken yapılırsa daha az yükle çalışılıyor ve o hareketin asıl katkısı küçülüyor. Üç şeye bakılıyor — aynı kasın izolasyonu bileşkeden önce mi geliyor, iki ağır bileşke peş peşe mi, ve gerilmede yükleyen tek hareket seansın en yorgun anına mı bırakılmış. Hepsi uyarı, hiçbiri hata: sıralamanın tek doğrusu yok ve bilinçli ön yorgunluk gibi tercihler bu kalıplara benziyor. Modül ne yapıldığını söylüyor, ne yapılacağını değil.'
+    },
     {
       title: 'Güvenilir Dinlenme Uyarısı',
       desc: 'Askıya alınmış ses motoru artık uyandırılmadan nota zamanlamıyor; resume işlemi gerçekten tamamlanana kadar bekleniyor. Uyarı, sayaç başlarken AudioContext saatine yazıldığı için JavaScript arka planda yavaşlasa bile doğru anda çalabiliyor. Mobil bildirim doğrudan Notification constructor yerine service worker üzerinden gösteriliyor. Aynı anda ses, titreşim, kalıcı bildirim ve isteğe bağlı tam ekran ışık uyarısı birlikte çalışıyor.'

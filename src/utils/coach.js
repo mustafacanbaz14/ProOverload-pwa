@@ -64,6 +64,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     restQualityItem = null,
     timeOfDayItem = null,
     techniqueItem = null,
+    exerciseOrderItem = null,
   } = ctx;
 
   const items = [];
@@ -126,6 +127,17 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'time-of-day', priority: 7, tone: TONES.info, action: 'progress',
       title: timeOfDayItem.title,
       detail: timeOfDayItem.detail,
+    });
+  }
+
+  // Hareket sırası: aynı liste farklı sırayla farklı sonuç veriyor. Düşük
+  // öncelikli, çünkü sıralamanın tek doğrusu yok ve bilinçli tercihler bu
+  // kalıplara benziyor.
+  if (exerciseOrderItem) {
+    ekle({
+      key: 'exercise-order', priority: 6, tone: TONES.info, action: 'workout',
+      title: exerciseOrderItem.title,
+      detail: exerciseOrderItem.detail,
     });
   }
 

@@ -3,6 +3,16 @@ import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import {
+  targetsFor, setVolumeTarget, normalizeVolumeTarget, suggestVolumeTarget,
+  buildWeeklyVolumeHistory, customTargetMuscles,
+} from '../src/utils/volumeTargets.js';
+import {
+  buildTrainingCalendar, intensityLevel, calendarMonthLabels, describeCalendarDay,
+} from '../src/utils/trainingCalendar.js';
+import { auditExerciseOrder, orderCoachItem } from '../src/utils/exerciseOrder.js';
+import { setVolumeTargetOverrides } from '../src/utils/constants.js';
+import { detectMuscleGroup as detectMuscleFor72, estimate1RM as estimate1RMFor72 } from '../src/utils/helpers.js';
+import {
   nextTargetByRule, setProgressionRule, progressionFor, buildNextSessionTargets, PROGRESSION_RULES,
 } from '../src/utils/progression.js';
 import { assessExercise, scanPlateaus, plateauCoachItem, exerciseTrend } from '../src/utils/plateau.js';
@@ -3986,6 +3996,165 @@ test('teknik rehberi hacim sayımını açıklıyor', () => {
   assert.ok(techniqueInfo('rest_pause').caution);
   // Tanınmayan anahtar normale düşüyor.
   assert.equal(techniqueInfo('uyduruk').key, 'normal');
+});
+
+
+// ---------------------------------------------------------------- 7.2
+
+test('kişisel hacim hedefi varsayılanın üstüne yazıyor', () => {
+  let o = {};
+  o = setVolumeTarget(o, 'Yan Omuz', { mev: 10, mav: 20, mrv: 26 });
+  assert.deepEqual(o['Yan Omuz'], { mev: 10, mav: 20, mrv: 26 });
+  assert.equal(targetsFor('Yan Omuz', { overrides: o }).source, 'custom');
+  // Dokunulmayan kas literatürde kalıyor.
+  assert.equal(targetsFor('Göğüs', { overrides: o }).source, 'default');
+  assert.deepEqual(customTargetMuscles(o), ['Yan Omuz']);
+  // Boş değer kaydı siliyor: ayrı bir "varsayılana dön" alanı gerekmesin.
+  o = setVolumeTarget(o, 'Yan Omuz', null);
+  assert.deepEqual(o, {});
+  // Tanınmayan kas yok sayılıyor.
+  assert.deepEqual(setVolumeTarget({}, 'Uyduruk Kas', { mev: 5, mav: 10, mrv: 15 }), {});
+});
+
+test('bozuk sıralı hedef sessizce düzeltiliyor', () => {
+  // MRV, MEV altında kalırsa hacim çözümleyicisi anlamsız sonuç üretirdi.
+  assert.deepEqual(normalizeVolumeTarget(20, 5, 3), { mev: 20, mav: 20, mrv: 20 });
+  // Sınırlar: sıfır set bir hedef değil, 999 hiçbir kişide toparlanmıyor.
+  assert.deepEqual(normalizeVolumeTarget(0, 999, 999), { mev: 1, mav: 60, mrv: 60 });
+});
+
+test('kayıt hacim referanslarını uygulama genelinde değiştiriyor', () => {
+  const varsayilan = getVolumeLandmarks('Yan Omuz', 'intermediate');
+  setVolumeTargetOverrides({ 'Yan Omuz': { mev: 10, mav: 20, mrv: 26 } });
+  const kisisel = getVolumeLandmarks('Yan Omuz', 'intermediate');
+  assert.equal(kisisel.custom, true);
+  assert.equal(kisisel.mrv, 26);
+  // Kişisel değere deneyim çarpanı UYGULANMIYOR: yazılan sayı zaten kapasite.
+  assert.deepEqual(getVolumeLandmarks('Yan Omuz', 'advanced'), kisisel);
+  // Dokunulmayan kas etkilenmiyor.
+  assert.equal(getVolumeLandmarks('Göğüs', 'intermediate').custom, undefined);
+  // Kayıt boşaltılınca eski davranış birebir geri geliyor.
+  setVolumeTargetOverrides({});
+  assert.deepEqual(getVolumeLandmarks('Yan Omuz', 'intermediate'), varsayilan);
+});
+
+test('hacim önerisi iyi toparlanan en yüksek haftaya bakıyor', () => {
+  const haftalar = [
+    { volume: 12, recovered: true }, { volume: 16, recovered: true },
+    { volume: 20, recovered: true }, { volume: 26, recovered: false },
+    { volume: 22, recovered: true },
+  ];
+  const o = suggestVolumeTarget('Yan Omuz', haftalar);
+  // Tavan, toparlanmayan 26 değil toparlanan en yüksek olan 22.
+  assert.equal(o.mrv, 22);
+  assert.ok(o.mev <= o.mav && o.mav <= o.mrv);
+  assert.equal(o.recoveredWeeks, 4);
+  // Dört haftadan az veriyle öneri üretilmiyor: gürültüyü kural sanmak olurdu.
+  assert.equal(suggestVolumeTarget('Yan Omuz', haftalar.slice(0, 3)), null);
+  // Hiç toparlanan hafta yoksa öneri yok.
+  assert.equal(suggestVolumeTarget('Yan Omuz', haftalar.map(w => ({ ...w, recovered: false }))), null);
+});
+
+test('haftalık hacim geçmişi toparlanmayı sonraki haftadan okuyor', () => {
+  const mk = (date, setSayisi, kg) => ({
+    id: date, date,
+    exercises: [{ name: 'Lateral Raise (Cable)', sets: Array(setSayisi).fill({ reps: 12, weight: kg, rir: 1, setType: 'normal' }) }],
+  });
+  const w = [mk('2026-06-01', 6, 10), mk('2026-06-08', 9, 11), mk('2026-06-15', 12, 9)];
+  const g = buildWeeklyVolumeHistory(w, { detectMuscle: detectMuscleFor72, estimate: estimate1RMFor72 });
+  const seri = g['Yan Omuz'];
+  assert.equal(seri.length, 3);
+  // İlk hafta: sonraki hafta güç arttı, toparlandı.
+  assert.equal(seri[0].recovered, true);
+  // İkinci hafta: sonraki hafta güç düştü, toparlanmadı.
+  assert.equal(seri[1].recovered, false);
+  // Son hafta hiç değerlendirilmiyor: ardından gelen hafta yok.
+  assert.equal(seri[2].recovered, false);
+  // Bağımlılıklar verilmezse boş dönüyor, çökmüyor.
+  assert.deepEqual(buildWeeklyVolumeHistory(w), {});
+});
+
+test('takvim etkili sete göre yoğunluk basamağı veriyor', () => {
+  assert.equal(intensityLevel(0), 0);
+  assert.equal(intensityLevel(5), 1);
+  assert.equal(intensityLevel(12), 2);
+  assert.equal(intensityLevel(20), 3);
+  assert.equal(intensityLevel(30), 4);
+});
+
+test('takvim tam haftalarla hizalanıyor ve geleceği işaretliyor', () => {
+  const mk = (date, setSayisi) => ({
+    id: date, date, name: 'Push',
+    exercises: [{ name: 'A', sets: Array(setSayisi).fill({ reps: 10, weight: 50, setType: 'normal' }) }],
+  });
+  const c = buildTrainingCalendar([mk('2026-08-17', 20), mk('2026-08-10', 6)],
+    { weeks: 6, today: new Date('2026-08-22') });
+  assert.equal(c.weeks.length, 6);
+  // Her sütun tam bir hafta: yarım hafta sütunları kaydırıp olmayan bir
+  // örüntü gösteriyordu.
+  c.weeks.forEach(h => assert.equal(h.length, 7));
+  assert.equal(c.hasData, true);
+  assert.equal(c.totalDays, 2);
+  const dolu = c.weeks.flat().filter(d => d.sessions > 0);
+  assert.equal(dolu.find(d => d.date === '2026-08-17').level, 3);
+  assert.equal(dolu.find(d => d.date === '2026-08-10').level, 1);
+  // Bugünden sonrası gelecek olarak işaretli ve sayıma girmiyor.
+  assert.ok(c.weeks.flat().some(d => d.future));
+  assert.ok(c.weeks.flat().some(d => d.today));
+  assert.equal(buildTrainingCalendar([], { weeks: 4 }).hasData, false);
+});
+
+test('takvim seri ve en uzun arayı hesaplıyor', () => {
+  const mk = (date) => ({
+    id: date, date,
+    exercises: [{ name: 'A', sets: [{ reps: 10, weight: 50, setType: 'normal' }] }],
+  });
+  const c = buildTrainingCalendar([mk('2026-08-17'), mk('2026-08-10'), mk('2026-06-01')],
+    { weeks: 14, today: new Date('2026-08-22') });
+  assert.equal(c.streakWeeks, 2);
+  assert.ok(c.longestGap > 30);
+  assert.ok(calendarMonthLabels(c).length >= 3);
+  const gun = c.weeks.flat().find(d => d.date === '2026-08-17');
+  assert.equal(describeCalendarDay(gun).sets, 1);
+  // Boş gün özetlenmiyor.
+  assert.equal(describeCalendarDay({ sessions: 0 }), null);
+});
+
+test('izolasyon bileşkeden önceyse uyarı çıkıyor', () => {
+  const r = auditExerciseOrder([
+    'Cable Fly (High to Low)', 'Barbell Bench Press', 'Rope Pushdown',
+  ]);
+  const bulgu = r.findings.find(f => f.key === 'isolation-first');
+  assert.ok(bulgu);
+  assert.ok(bulgu.title.includes('Barbell Bench Press'));
+  assert.equal(bulgu.severity, 'medium');
+  // Koç yalnızca orta şiddetli bulguda konuşuyor.
+  assert.ok(orderCoachItem(r));
+});
+
+test('doğru sırada izolasyon uyarısı çıkmıyor', () => {
+  const r = auditExerciseOrder([
+    'Barbell Bench Press', 'Cable Fly (High to Low)', 'Rope Pushdown',
+  ]);
+  assert.equal(r.findings.some(f => f.key === 'isolation-first'), false);
+});
+
+test('arka arkaya iki ağır bileşke işaretleniyor', () => {
+  const r = auditExerciseOrder(['Barbell Bench Press', 'Incline Dumbbell Press']);
+  assert.ok(r.findings.some(f => f.key === 'back-to-back-compound'));
+  // Farklı kasların bileşkeleri peş peşe olabilir, sorun değil.
+  const temiz = auditExerciseOrder(['Barbell Bench Press', 'Barbell Back Squat']);
+  assert.equal(temiz.findings.some(f => f.key === 'back-to-back-compound'), false);
+});
+
+test('tek hareketlik liste denetlenmiyor', () => {
+  const r = auditExerciseOrder(['Barbell Back Squat']);
+  assert.equal(r.hasIssues, false);
+  assert.deepEqual(auditExerciseOrder([]).findings, []);
+  assert.equal(orderCoachItem(null), null);
+  // Yalnızca düşük şiddetli bulgu varsa koç susuyor.
+  const dusuk = auditExerciseOrder(['Barbell Bench Press', 'Incline Dumbbell Press']);
+  assert.equal(orderCoachItem(dusuk), null);
 });
 
 
