@@ -148,6 +148,33 @@ export const SPLIT_PRESETS = [
     schedule: { mon: 0, wed: 1, fri: 2 },
   },
   {
+    id: 'upper-lower-full-3', daysPerWeek: 3,
+    name: 'Üst / Alt / Tam Vücut',
+    summary: 'İki bölünmüş gün, üçüncüde her yeri topla',
+    tags: ['Dengeli', 'Esnek üçüncü gün'],
+    rationale: 'İlk iki gün üst ve alt vücudu ayırarak seans başına hacmi makul tutar; üçüncü gün tam vücut olduğu için her kas haftada iki kez uyarılmış olur. Tam vücut varyantının aksine ilk iki gün odaklı, klasik bölmelerin aksine sıklık düşmüyor — üç günde en dengeli seçeneklerden biri.',
+    days: [
+      { name: 'Üst', groups: [...UPPER] },
+      { name: 'Alt', groups: [...LEGS, ...CORE] },
+      { name: 'Tam Vücut', groups: [...FULL_BODY] },
+    ],
+    schedule: { mon: 0, wed: 1, fri: 2 },
+  },
+  {
+    id: 'ppl-upper-4', daysPerWeek: 4,
+    name: 'İtiş / Çekiş / Bacak / Üst',
+    summary: 'Klasik üçlüye dördüncü bir üst gün ekle',
+    tags: ['Hibrit', 'Üst vücut önceliği'],
+    rationale: 'Push/Pull/Legs üç günde her kası yalnızca bir kez uyarıyor. Dördüncü gün üst vücut eklenince göğüs, sırt ve omuz haftada iki kez çalışılır; bacak tek ağır günde kalır. Üst vücut gelişimini önceleyip bacağa tek gün ayırmak isteyen için.',
+    days: [
+      { name: 'İtiş', groups: [...PUSH] },
+      { name: 'Çekiş', groups: [...PULL] },
+      { name: 'Bacak', groups: [...LEGS, ...CORE] },
+      { name: 'Üst Tamamlama', groups: [...UPPER] },
+    ],
+    schedule: { mon: 0, tue: 1, thu: 2, fri: 3 },
+  },
+  {
     id: 'upper-lower-4', daysPerWeek: 4, recommended: true,
     name: 'Üst / Alt 4 Gün',
     summary: 'İki üst ve iki alt vücut günü',
@@ -247,6 +274,36 @@ export const SPLIT_PRESETS = [
       { name: 'Alt B', groups: [...LEGS, ...CORE] },
     ],
     schedule: { mon: 0, tue: 1, thu: 2, fri: 3, sat: 4 },
+  },
+  {
+    id: 'ppl-upper-lower-5', daysPerWeek: 5,
+    name: 'İtiş / Çekiş / Bacak / Üst / Alt',
+    summary: 'Push-Pull-Legs ile Üst-Alt aynı haftada',
+    tags: ['Hibrit', 'Her kas 2×'],
+    rationale: 'Haftanın ilk yarısı klasik üçlü bölme, ikinci yarısı üst/alt. İki yaklaşımın da iyi tarafını alıyor: ilk üç gün bölgeye tam odaklanma, son iki gün her kasa ikinci uyaran. Push/Pull/Legs sevip haftada bir uyarımın az geldiğini düşünenler için beş günde en doğrudan çözüm — altı güne çıkmadan sıklığı ikiye tamamlıyor.',
+    days: [
+      { name: 'İtiş', groups: [...PUSH] },
+      { name: 'Çekiş', groups: [...PULL] },
+      { name: 'Bacak', groups: [...LEGS, ...CORE] },
+      { name: 'Üst', groups: [...UPPER] },
+      { name: 'Alt', groups: [...LEGS, ...CORE] },
+    ],
+    schedule: { mon: 0, tue: 1, wed: 2, fri: 3, sat: 4 },
+  },
+  {
+    id: 'torso-limbs-5', daysPerWeek: 5,
+    name: 'Gövde / Uzuvlar / Bacak / Gövde / Uzuvlar',
+    summary: 'İtme-çekme yerine gövde-uzuv ayrımı',
+    tags: ['Alternatif', 'Omuz ve kol hacmi'],
+    rationale: 'İtiş-çekiş ayrımında omuz ve kol her zaman büyük bir bileşkeden sonra, yorgun halde çalışılıyor. Gövde-uzuv ayrımı bunu tersine çeviriyor: göğüs ve sırt bir günde, deltoidlerle kollar kendi gününde taze başlıyor. Omuz ve kol gelişimi geride kalanlar için görünür fark yaratan bölme.',
+    days: [
+      { name: 'Gövde A', groups: [...TORSO] },
+      { name: 'Uzuvlar A', groups: [...SHOULDERS_ARMS, ...CORE] },
+      { name: 'Bacak', groups: [...LEGS, ...CORE] },
+      { name: 'Gövde B', groups: [...TORSO] },
+      { name: 'Uzuvlar B', groups: [...SHOULDERS_ARMS, ...CORE] },
+    ],
+    schedule: { mon: 0, tue: 1, wed: 2, fri: 3, sat: 4 },
   },
   {
     id: 'ppl-6', daysPerWeek: 6, recommended: true,
@@ -425,14 +482,63 @@ const uygunMu = (name, profile) => {
 };
 
 /**
+ * Kullanicinin kendi eklediklerini aday havuzuna karistirir.
+ *
+ * Aday havuzu 7.2'ye kadar elle yazilmis sabit bir listeydi. Sonucu su
+ * oluyordu: kutuphanede olmayan bir hareketi elle ekleyen kullanici onu
+ * uygulamanin her yerinde kullanabiliyor ama program uretici onu HIC
+ * secmiyordu. Kendi salonundaki makineyi tanitan biri, urettigi programda
+ * o makineyi asla gormuyordu.
+ *
+ * Ozel hareket, birincil kasinin havuzuna giriyor ve ROLU ad kalibindan
+ * cikariliyor: gerilmede yukleyen bir hareketse `stretch`, degilse `extra`.
+ * `anchor` rolune otomatik girmiyorlar — seansi acan agir bileske secimi
+ * program iskeletini belirliyor ve orayi tahminle doldurmak, kullanicinin
+ * yazdigi bir izolasyon hareketini bench press'in yerine koymak olurdu.
+ *
+ * Sabit havuz ONCE geliyor: `adaySec` ilk uygun adayi seciyor, yani ozel
+ * hareketler bilinen adaylar tukendiginde ya da tercih listesindeyken
+ * devreye giriyor.
+ */
+const havuzuGenislet = (customExercises = []) => {
+  if (!customExercises || customExercises.length === 0) return POOL;
+
+  const genis = {};
+  Object.entries(POOL).forEach(([kas, roller]) => { genis[kas] = { ...roller }; });
+
+  customExercises.forEach(ex => {
+    const ad = typeof ex === 'object' ? ex.name : ex;
+    if (typeof ad !== 'string' || !ad.trim()) return;
+    const { muscle } = detectMuscleGroup(ad, customExercises);
+    if (!muscle || !DIRECT_MUSCLES.includes(muscle)) return;
+    if (!genis[muscle]) genis[muscle] = { anchor: [], stretch: [], extra: [] };
+
+    // Rol ad kalıbından çıkarılıyor: gerilmede yükleyen bir hareketse
+    // `stretch`, değilse `anchor` listesinin SONUNA ekleniyor.
+    //
+    // `extra` rolüne konmuyorlar çünkü o rol pratikte yalnızca son çare
+    // olarak okunuyor; oraya yazılan bir hareket neredeyse hiç seçilmezdi.
+    // Sona eklenmesi şunu garantiliyor: `adaySec` ilk KULLANILMAMIŞ adayı
+    // seçtiği için yerleşik hareketler önce deneniyor, kullanıcının kendi
+    // hareketi ancak onlar tükendiğinde ya da tercih listesindeyken geliyor.
+    const rol = lengthBias(ad) === 'stretch' ? 'stretch' : 'anchor';
+    const mevcut = genis[muscle][rol] || [];
+    if (mevcut.includes(ad)) return;
+    genis[muscle] = { ...genis[muscle], [rol]: [...mevcut, ad] };
+  });
+
+  return genis;
+};
+
+/**
  * Rol için profile uyan, henüz kullanılmamış ilk aday.
  *
  * Yasaklı hareketler havuzdan tamamen çıkıyor. Bu, bir kası adaysız
  * bırakabilir; üretici o durumda o kası atlıyor ve rapor hacmi eksik
  * gösteriyor — sessizce yasaklı hareketi seçmektense eksiği söylemek doğru.
  */
-const adaySec = (muscle, role, profile, kullanilan, tercihEdilen = new Set(), yasakli = new Set(), variant = 0) => {
-  const liste = POOL[muscle]?.[role] || [];
+const adaySec = (muscle, role, profile, kullanilan, tercihEdilen = new Set(), yasakli = new Set(), variant = 0, havuz = POOL) => {
+  const liste = havuz[muscle]?.[role] || [];
   const uygun = liste
     .filter(ad => uygunMu(ad, profile) && !yasakli.has(ad))
     .sort((a, b) => Number(tercihEdilen.has(b)) - Number(tercihEdilen.has(a)));
@@ -530,6 +636,9 @@ export const buildProgram = ({
   const tercihEdilen = new Set(preferredExercises || []);
   const yasakli = new Set((excludedExercises || []).filter(Boolean));
   const seansTavani = findSessionLength(sessionLength).cap;
+  // Kullanicinin kendi hareketleri de aday: kutuphanede olmayan bir hareketi
+  // elle ekleyen kisi, urettigi programda onu hic gormuyordu.
+  const havuz = havuzuGenislet(customExercises);
 
   const landmarks = Object.fromEntries(
     MUSCLE_GROUPS.map(m => [m, getVolumeLandmarks(m, experienceLevel)]));
@@ -578,8 +687,8 @@ export const buildProgram = ({
       // Gerilmede yükleyen hareket ÖNCE seçiliyor: 3.9 denetiminin aradığı şey
       // bu ve her kasta bir tane olduğundan emin olmanın en kolay yolu, onu
       // isteğe bağlı değil zorunlu kılmak.
-      const gerilme = adaySec(kas, 'stretch', profile, kullanilan, tercihEdilen, yasakli, variant);
-      const ana = adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen, yasakli, variant);
+      const gerilme = adaySec(kas, 'stretch', profile, kullanilan, tercihEdilen, yasakli, variant, havuz);
+      const ana = adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen, yasakli, variant, havuz);
       const secilen = [];
 
       if (gunBasi <= MAX_SETS_PER_EXERCISE && (ana || gerilme)) {
@@ -665,10 +774,13 @@ export const buildProgram = ({
       return true;
     }
     // Bu kasın hiç hareketi yok ya da hepsi doldu: yeni hareket ekle.
-    const rol = (POOL[kas]?.stretch || []).some(ad => uygunMu(ad, profile)) ? 'stretch' : 'anchor';
-    const yeni = adaySec(kas, rol, profile, kullanilan, tercihEdilen)
-      || adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen)
-      || adaySec(kas, 'extra', profile, kullanilan, tercihEdilen);
+    // Bu yol 7.3'e kadar `havuz`, `yasakli` ve `variant` almıyordu: kullanıcının
+    // DIŞLADIĞI bir hareket buradan sessizce programa girebiliyordu.
+    const rol = (havuz[kas]?.stretch || []).some(ad => uygunMu(ad, profile) && !yasakli.has(ad))
+      ? 'stretch' : 'anchor';
+    const yeni = adaySec(kas, rol, profile, kullanilan, tercihEdilen, yasakli, variant, havuz)
+      || adaySec(kas, 'anchor', profile, kullanilan, tercihEdilen, yasakli, variant, havuz)
+      || adaySec(kas, 'extra', profile, kullanilan, tercihEdilen, yasakli, variant, havuz);
     if (!yeni) return false;
     const gunIndexleri = gunler
       .map((g, i) => (g.groups.includes(kas) ? i : -1))
@@ -849,7 +961,7 @@ export const buildProgram = ({
     // kütüphanede dambılla uzun boyda yükleyen bir arka deltoid hareketi yok;
     // bunu eksik saymak, kapatılması imkânsız bir kusur bildirmek olurdu.
     withoutStretch: DIRECT_MUSCLES.filter(kas => {
-      const adayVar = (POOL[kas]?.stretch || []).some(ad => uygunMu(ad, profile));
+      const adayVar = (havuz[kas]?.stretch || []).some(ad => uygunMu(ad, profile) && !yasakli.has(ad));
       if (!adayVar) return false;
       return !gunler.some(g => g.exercises.some(e => e.muscle === kas && lengthBias(e.name) === 'stretch'));
     }),

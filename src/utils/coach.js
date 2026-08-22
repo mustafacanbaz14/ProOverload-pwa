@@ -65,6 +65,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     timeOfDayItem = null,
     techniqueItem = null,
     exerciseOrderItem = null,
+    frequencyPlanItem = null,
   } = ctx;
 
   const items = [];
@@ -133,6 +134,15 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
   // Hareket sırası: aynı liste farklı sırayla farklı sonuç veriyor. Düşük
   // öncelikli, çünkü sıralamanın tek doğrusu yok ve bilinçli tercihler bu
   // kalıplara benziyor.
+  // Sıklık planı: hacim tablosu yeterli derken tek güne yığılmış kaslar.
+  if (frequencyPlanItem) {
+    ekle({
+      key: 'frequency-plan', priority: 4, tone: TONES.info, action: 'plan',
+      title: frequencyPlanItem.title,
+      detail: frequencyPlanItem.detail,
+    });
+  }
+
   if (exerciseOrderItem) {
     ekle({
       key: 'exercise-order', priority: 6, tone: TONES.info, action: 'workout',

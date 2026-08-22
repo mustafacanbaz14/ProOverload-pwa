@@ -1,9 +1,13 @@
 import React, { useState, useMemo, memo } from 'react';
-import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Flame, Copy, RefreshCw, Link2, MoveRight, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Flame, Copy, RefreshCw, Link2, MoveRight, AlertTriangle, CheckCircle2, LifeBuoy, Zap, Wand2, SlidersHorizontal } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { generateId } from '../utils/helpers';
 import { suggestSubstitutes } from '../utils/substitution';
+import { suggestOrder, auditExerciseOrder } from '../utils/exerciseOrder';
+import { EMPHASIS_MODES, findEmphasis } from '../utils/undulation';
+import { PLANNABLE_TECHNIQUES } from '../utils/constants';
+import { TECHNIQUE_GUIDE } from '../utils/setTechniques';
 import { estimateLiftingCalories } from '../utils/cardio';
 import { WEEKDAYS } from '../utils/weekPlan';
 import {
@@ -50,6 +54,7 @@ const TemplateBuilderModal = memo(({
       weekday: 'mon',
       // Süperset bağları şablondan GERİ OKUNUYOR. Bu yapılmadığı sürece var
       // olan bir şablonu düzenlemeye açmak bağları sessizce düşürüyordu.
+      emphasis: editing.emphasis || 'standard',
       exercises: (editing.exercises || []).map((ex, i, liste) => ({
         // Aynı hareket bir güne iki kez eklenebiliyor; listeyi index yerine
         // kalıcı bir kimlikle keylemek silme sonrası karışmayı önler.
@@ -57,6 +62,11 @@ const TemplateBuilderModal = memo(({
         name: ex.name,
         sets: Math.max(1, (ex.sets || []).length),
         superset: draftFlagsFromSupersetIds(liste)[i],
+        // Plan alanları da geri okunuyor; okunmasaydı şablonu düzenleyip
+        // kaydetmek yedek hareketi ve tekniği sessizce silerdi.
+        ...(ex.backup ? { backup: ex.backup } : {}),
+        ...(ex.plannedTechnique ? { plannedTechnique: ex.plannedTechnique } : {}),
+        ...(ex.repRange ? { repRange: ex.repRange } : {}),
       })),
     }]
     : initialDraft?.days?.length
@@ -77,6 +87,8 @@ const TemplateBuilderModal = memo(({
   const [removeArmed, setRemoveArmed] = useState(false);
   // Açık olan "başka güne taşı" menüsünün hareketi.
   const [moveTarget, setMoveTarget] = useState(null);
+  // Hareket başına plan paneli (yedek hareket, teknik, tekrar aralığı).
+  const [planTarget, setPlanTarget] = useState(null);
 
   // Haftalık toplam: gün gün bakarak program yazan biri, her günü makul görünen
   // ama haftalık toplamı MEV altında kalan bir program üretebiliyordu. Hook
@@ -121,6 +133,19 @@ const TemplateBuilderModal = memo(({
     [list[index], list[to]] = [list[to], list[index]];
     updateDay({ exercises: list });
   };
+  const orderReport = auditExerciseOrder(day.exercises, { customExercises });
+  const orderSuggestion = suggestOrder(day.exercises, { customExercises });
+
+  const applySuggestedOrder = () => {
+    if (!orderSuggestion.changed) return;
+    updateDay({ exercises: orderSuggestion.order });
+  };
+
+  /** Hareketin plan alanlarını (yedek, teknik, aralık) günceller. */
+  const setExercisePlan = (uid, patch) => updateDay({
+    exercises: day.exercises.map(ex => (ex.uid === uid ? { ...ex, ...patch } : ex)),
+  });
+
   const moveToEdge = (uid, edge) => updateDay(moveDraftExerciseToEdge(day, uid, edge));
   const moveToDay = (uid, toIndex, copy) => {
     const next = moveDraftExerciseToDay(days, activeDay, uid, toIndex, { copy, generateId });
@@ -362,6 +387,62 @@ const TemplateBuilderModal = memo(({
           onAddSuggested={addSuggested}
         />
 
+        {/* Gün vurgusu. Uygulamanın ilerleme modeli haftalıktı; haftanın
+            İÇİNDE bir yapı yoktu ve aynı kası iki kez çalışan kişi iki seansı
+            da aynı aralıkta yapıyordu. */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 space-y-2">
+          <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
+            <SlidersHorizontal size={11} className="text-violet-400" /> Gün Vurgusu
+          </span>
+          <div className="grid grid-cols-4 gap-1.5">
+            {Object.values(EMPHASIS_MODES).map(v => {
+              const secili = (day.emphasis || 'standard') === v.key;
+              return (
+                <button
+                  key={v.key}
+                  onClick={() => updateDay({ emphasis: v.key })}
+                  aria-pressed={secili}
+                  title={v.hint}
+                  className={`rounded-xl py-2 border text-[9px] font-bold transition-colors ${secili ? 'border-violet-500 bg-violet-950/30 text-violet-200' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                >
+                  {v.short}
+                </button>
+              );
+            })}
+          </div>
+          <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+            {findEmphasis(day.emphasis).detail}
+          </p>
+        </div>
+
+        {/* Sıra denetimi ve tek dokunuşla düzeltme. */}
+        {(orderReport.hasIssues || orderSuggestion.changed) && (
+          <div className="rounded-2xl border border-amber-900/40 bg-amber-950/15 p-3 space-y-2">
+            <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
+              <AlertTriangle size={11} /> Hareket Sırası
+            </span>
+            {orderReport.findings.slice(0, 2).map(f => (
+              <p key={f.key + f.index} className="text-[9px] font-mono text-amber-200/85 leading-relaxed">
+                {f.detail}
+              </p>
+            ))}
+            {orderSuggestion.changed && (
+              <button
+                onClick={applySuggestedOrder}
+                className="w-full rounded-lg border border-amber-800/60 bg-amber-950/30 py-2 text-[10px] font-bold text-amber-200 active:bg-amber-900/30 flex items-center justify-center gap-1.5"
+              >
+                <Wand2 size={11} /> Sırayı Düzelt
+              </button>
+            )}
+            {orderSuggestion.locked > 0 && (
+              <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+                Süpersetli {orderSuggestion.locked} hareket yerinde kalır: bağ komşuluk
+                demek ve sıralamayı değiştirmek onu koparırdı.
+              </p>
+            )}
+          </div>
+        )}
+
         {/* Hareketler */}
         <div className="space-y-2">
           {day.exercises.length === 0 ? (
@@ -452,6 +533,15 @@ const TemplateBuilderModal = memo(({
                     <Link2 size={13} />
                   </button>
                   <button
+                    onClick={() => setPlanTarget(planTarget === ex.uid ? null : ex.uid)}
+                    title="Yedek hareket, teknik ve tekrar aralığı"
+                    aria-label={`${ex.name} için plan ayarları`}
+                    aria-expanded={planTarget === ex.uid}
+                    className={`p-1.5 ${planTarget === ex.uid ? 'text-violet-400' : 'text-zinc-600 active:text-violet-400'}`}
+                  >
+                    <SlidersHorizontal size={13} />
+                  </button>
+                  <button
                     onClick={() => updateDay({ exercises: day.exercises.filter(e => e.uid !== ex.uid) })}
                     aria-label={`${ex.name} hareketini çıkar`}
                     className="text-zinc-600 active:text-red-500 p-1.5"
@@ -460,6 +550,124 @@ const TemplateBuilderModal = memo(({
                   </button>
                 </div>
               </div>
+              {planTarget === ex.uid && (
+                <div className="mb-2 rounded-lg border border-violet-900/50 bg-violet-950/10 p-2.5 space-y-2.5">
+                  {/* Yedek hareket. "Makine dolu" ya da "bugün omzum ağrıyor"
+                      durumunda seansta hareket aramak yerine tek dokunuşla
+                      geçilecek alternatif şablonda yazılı duruyor. */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-violet-300 uppercase tracking-widest flex items-center gap-1">
+                      <LifeBuoy size={9} /> Yedek Hareket
+                    </span>
+                    {ex.backup ? (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-zinc-300 truncate flex-1">{ex.backup}</span>
+                        <button
+                          onClick={() => setExercisePlan(ex.uid, { backup: '' })}
+                          className="text-zinc-600 active:text-red-400 p-1 shrink-0"
+                          aria-label="Yedek hareketi kaldır"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap gap-1">
+                        {suggestSubstitutes(ex.name, libraryProps.allExerciseNames || [], { customExercises, limit: 4 })
+                          .map(o => (
+                            <button
+                              key={o.name}
+                              onClick={() => setExercisePlan(ex.uid, { backup: o.name })}
+                              title={`%${Math.round(o.similarity * 100)} örtüşme`}
+                              className="bg-zinc-900 border border-zinc-700 text-zinc-300 px-2 py-1 rounded-lg text-[9px] font-bold active:bg-zinc-800"
+                            >
+                              {o.name}
+                            </button>
+                          ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Planlanan teknik: seansta hatırlatma olarak çıkıyor,
+                      seti otomatik işaretlemiyor. */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-violet-300 uppercase tracking-widest flex items-center gap-1">
+                      <Zap size={9} /> Planlanan Teknik
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                      {PLANNABLE_TECHNIQUES.map(k => {
+                        const secili = ex.plannedTechnique === k;
+                        return (
+                          <button
+                            key={k}
+                            onClick={() => setExercisePlan(ex.uid, { plannedTechnique: secili ? '' : k })}
+                            aria-pressed={secili}
+                            title={TECHNIQUE_GUIDE[k]?.when}
+                            className={`px-2 py-1 rounded-lg text-[9px] font-bold border ${secili ? 'border-purple-600 bg-purple-950/30 text-purple-300' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                          >
+                            {TECHNIQUE_GUIDE[k]?.label || k}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {ex.plannedTechnique && (
+                      <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+                        {TECHNIQUE_GUIDE[ex.plannedTechnique]?.how}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Şablona özel tekrar aralığı: aynı hareket kuvvet
+                      şablonunda 4-6, hipertrofi şablonunda 10-14 olabilir. */}
+                  <div className="space-y-1">
+                    <span className="text-[9px] font-bold text-violet-300 uppercase tracking-widest">
+                      Bu Şablonda Tekrar Aralığı
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <input
+                        type="number" inputMode="numeric" min="1" max="30"
+                        value={ex.repRange?.min ?? ''}
+                        onChange={(e) => setExercisePlan(ex.uid, {
+                          repRange: { min: e.target.value, max: ex.repRange?.max ?? '' },
+                        })}
+                        placeholder="alt"
+                        aria-label={`${ex.name} alt tekrar`}
+                        className="w-14 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] font-mono text-zinc-200 outline-none focus:border-violet-500"
+                      />
+                      <span className="text-[10px] text-zinc-600">–</span>
+                      <input
+                        type="number" inputMode="numeric" min="1" max="30"
+                        value={ex.repRange?.max ?? ''}
+                        onChange={(e) => setExercisePlan(ex.uid, {
+                          repRange: { min: ex.repRange?.min ?? '', max: e.target.value },
+                        })}
+                        placeholder="üst"
+                        aria-label={`${ex.name} üst tekrar`}
+                        className="w-14 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] font-mono text-zinc-200 outline-none focus:border-violet-500"
+                      />
+                      {ex.repRange && (
+                        <button
+                          onClick={() => setExercisePlan(ex.uid, { repRange: null })}
+                          className="text-zinc-600 active:text-red-400 p-1"
+                          aria-label="Tekrar aralığını temizle"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
+                    </div>
+                    {ex.repRange?.min > 0 && (day.emphasis && day.emphasis !== 'standard') && (
+                      <p className="text-[9px] font-mono text-violet-300/80 leading-relaxed">
+                        Buraya bir aralık yazdığın için {findEmphasis(day.emphasis).label.toLowerCase()}
+                        {' '}gün vurgusu bu harekete UYGULANMAZ: yazdığın sayı açık bir
+                        tercih, vurgu ise günün geneline konmuş varsayılan.
+                      </p>
+                    )}
+                    <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                      Boş bırakılırsa hareketin genel aralığı kullanılır.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {moveTarget === ex.uid && (
                 <div className="mb-2 rounded-lg border border-amber-900/50 bg-amber-950/15 p-2 space-y-1.5">
                   <span className="text-[9px] font-mono text-amber-300/80 block">
@@ -574,7 +782,7 @@ const TemplateBuilderModal = memo(({
         <button
           disabled={!canSave}
           onClick={() => {
-            if (editing) onUpdate(editing.id, programName.trim(), days[0].exercises);
+            if (editing) onUpdate(editing.id, programName.trim(), days[0].exercises, { emphasis: days[0].emphasis });
             else onSave(programName.trim(), days, { createWeekPlan });
             onClose();
           }}

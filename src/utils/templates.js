@@ -105,6 +105,12 @@ export const templateToExercises = (template, generateId) => {
     id: generateId(),
     name: ex.name,
     supersetId: ex.supersetId || null,
+    // Şablonda planlanan alanlar seansa aynen taşınıyor. Taşınmasalardı
+    // şablonda yazılan plan yalnızca bir not olurdu; seansta uygulanabilir
+    // olması bunların hareketle birlikte gelmesine bağlı.
+    ...(ex.backup ? { backup: ex.backup } : {}),
+    ...(ex.plannedTechnique ? { plannedTechnique: ex.plannedTechnique } : {}),
+    ...(ex.repRange ? { repRange: ex.repRange } : {}),
     sets: (ex.sets || []).map(s => ({
       id: generateId(),
       weight: s.weight || '',

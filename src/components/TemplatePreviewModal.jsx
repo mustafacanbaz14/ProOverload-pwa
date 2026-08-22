@@ -1,8 +1,10 @@
 import React, { memo } from 'react';
-import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star, RefreshCw } from 'lucide-react';
+import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star, RefreshCw, History, SlidersHorizontal } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { isWorkingSet } from '../utils/helpers';
+import { formatDay } from '../utils/dates';
+import { EMPHASIS_MODES } from '../utils/undulation';
 import { estimateLiftingCalories } from '../utils/cardio';
 import MuscleHeatmap from './MuscleHeatmap';
 import TemplateAssistantCard from './TemplateAssistantCard';
@@ -25,6 +27,9 @@ const TemplatePreviewModal = memo(({
   // düzenleyiciyi açıp kaydetmek gereksiz uzun bir yoldu.
   onReplaceExercise,
   nextTargets = null,
+  versions = [],
+  onRestoreVersion,
+  versionDiff,
 }) => {
   if (!isOpen || !template) return null;
 
@@ -123,6 +128,57 @@ const TemplatePreviewModal = memo(({
             )}
           </div>
 
+          {template.emphasis && template.emphasis !== 'standard' && (
+            <div className="rounded-2xl border border-violet-900/40 bg-violet-950/15 p-3 flex items-start gap-2">
+              <SlidersHorizontal size={12} className="text-violet-400 shrink-0 mt-0.5" />
+              <span className="text-[9px] font-mono text-violet-200/85 leading-relaxed">
+                <strong>{EMPHASIS_MODES[template.emphasis]?.label} gün.</strong>{' '}
+                {EMPHASIS_MODES[template.emphasis]?.detail}
+              </span>
+            </div>
+          )}
+
+          {/* Sürüm geçmişi. Şablonu düzenlemek 7.3'e kadar geri alınamaz bir
+              işlemdi ve eski düzen hiçbir yerde durmuyordu. */}
+          {versions.length > 0 && onRestoreVersion && (
+            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="px-3.5 py-2 border-b border-zinc-800 bg-zinc-900/60 flex justify-between items-baseline">
+                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
+                  <History size={11} className="text-amber-400" /> Sürüm Geçmişi
+                </h4>
+                <span className="text-[9px] font-mono text-zinc-600">{versions.length} kayıt</span>
+              </div>
+              <div className="divide-y divide-zinc-800/70">
+                {versions.map((v, i) => {
+                  const fark = versionDiff?.(v);
+                  return (
+                    <div key={v.savedAt + i} className="px-3.5 py-2 flex items-center gap-2">
+                      <span className="min-w-0 flex-1">
+                        <span className="text-[10px] text-zinc-300 block truncate">
+                          {formatDay(v.savedAt.slice(0, 10), 'short')} · {v.exercises.length} hareket · {v.totalSets} set
+                        </span>
+                        <span className="text-[9px] font-mono text-zinc-600 block truncate">
+                          {fark?.summary || v.label || 'Kayıtlı sürüm'}
+                        </span>
+                      </span>
+                      <button
+                        onClick={() => onRestoreVersion(i)}
+                        className="shrink-0 bg-amber-950/30 border border-amber-900/60 text-amber-300 px-2 py-1 rounded-lg text-[9px] font-bold active:bg-amber-900/30"
+                      >
+                        Geri Dön
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-900/40">
+                Geri dönmek de bir değişiklik: şu anki hal geçmişe yazılır, yani
+                geri aldıktan sonra yeni haline de dönebilirsin. Setlerin
+                ağırlık değerleri korunur.
+              </p>
+            </div>
+          )}
+
           {/* Bir sonraki seans hedefleri. Hedefler tek tek hareket ekranında
               görünüyordu; seansa başlamadan önce "bugün ne yapacağım"
               sorusunun toplu cevabı yoktu ve kullanıcı salonda hareket hareket
@@ -180,6 +236,21 @@ const TemplatePreviewModal = memo(({
                     <span className="text-[11px] text-zinc-200 font-bold truncate flex items-center min-w-0">
                       {ex.supersetId && <Link2 size={11} className="mr-1.5 text-purple-400 shrink-0" />}
                       <span className="truncate">{ex.name}</span>
+                      {ex.plannedTechnique && (
+                        <span className="ml-1.5 text-[7px] font-bold text-purple-300 bg-purple-950/30 border border-purple-900/50 rounded px-1 py-0.5 shrink-0">
+                          {ex.plannedTechnique === 'drop' ? 'DROP' : ex.plannedTechnique === 'rest_pause' ? 'RP' : 'F'}
+                        </span>
+                      )}
+                      {ex.repRange?.min > 0 && (
+                        <span className="ml-1 text-[7px] font-mono text-cyan-400 shrink-0">
+                          {ex.repRange.min}-{ex.repRange.max}
+                        </span>
+                      )}
+                      {ex.backup && (
+                        <span className="ml-1 text-[7px] font-mono text-emerald-500 shrink-0" title={`Yedek: ${ex.backup}`}>
+                          +yedek
+                        </span>
+                      )}
                     </span>
                     <span className="flex items-center gap-1.5 shrink-0">
                       <span className="text-[10px] font-mono text-zinc-500">

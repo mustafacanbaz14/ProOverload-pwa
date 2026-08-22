@@ -114,3 +114,78 @@ export const orderCoachItem = (report, { context = 'şablon' } = {}) => {
     detail: `${onemli.detail} (${context})`,
   };
 };
+
+/**
+ * Denetimin bulgularına göre önerilen sıra.
+ *
+ * Kural üç kademeli ve TEK yönlü çalışıyor, yani sonuç deterministik:
+ *
+ *  1. Bileşke hareketler önce, izolasyonlar sonra. En çok yük kaldırılan iş
+ *     kas taze iken yapılmalı.
+ *  2. Bileşkeler içinde aynı kasın hareketleri arka arkaya gelmesin —
+ *     ikincisi neredeyse her zaman düşük performansla yapılıyor.
+ *  3. İzolasyonlar içinde gerilmede yükleyenler önce. Uzun boyda yüklenme
+ *     büyüme uyaranının en değerli parçası; en yorgun ana bırakılmamalı.
+ *
+ * Süperset bağı olan hareketler DOKUNULMADAN bırakılıyor: bağ komşuluk
+ * demek ve sıralamayı değiştirmek onu koparırdı. Kullanıcı bir süperset
+ * kurmuşsa bu bilinçli bir karar, otomatik düzenlemenin bozacağı bir şey değil.
+ */
+export const suggestOrder = (exercises = [], { customExercises = [] } = {}) => {
+  const liste = (exercises || [])
+    .map(ex => (typeof ex === 'string' ? { name: ex } : ex))
+    .filter(ex => ex?.name);
+  if (liste.length < 3) return { changed: false, order: liste };
+
+  // Süpersetli hareketler yerlerinde kalıyor; yalnızca serbest olanlar
+  // yeniden sıralanıyor ve boşalan yuvalara yerleşiyorlar.
+  const sabitIndexler = new Set();
+  liste.forEach((ex, i) => { if (ex.supersetId) sabitIndexler.add(i); });
+
+  const serbest = liste
+    .map((ex, i) => ({ ex, i }))
+    .filter(x => !sabitIndexler.has(x.i))
+    .map(x => ({
+      ...x,
+      muscle: detectMuscleGroup(x.ex.name, customExercises).muscle,
+      compound: bilesikMi(x.ex.name, customExercises),
+      stretch: lengthBias(x.ex.name) === 'stretch',
+    }));
+
+  const bilesikler = serbest.filter(x => x.compound);
+  const izolasyonlar = serbest.filter(x => !x.compound);
+
+  // Aynı kasın bileşkelerini serpiştir: sırayla farklı kaslardan al.
+  const serpistir = (items) => {
+    const kasHarita = new Map();
+    items.forEach(x => {
+      if (!kasHarita.has(x.muscle)) kasHarita.set(x.muscle, []);
+      kasHarita.get(x.muscle).push(x);
+    });
+    const kuyruklar = [...kasHarita.values()];
+    const cikti = [];
+    let devam = true;
+    while (devam) {
+      devam = false;
+      kuyruklar.forEach(k => {
+        if (k.length > 0) { cikti.push(k.shift()); devam = true; }
+      });
+    }
+    return cikti;
+  };
+
+  // Gerilmede yükleyen izolasyonlar önce.
+  const siraliIzolasyon = [
+    ...izolasyonlar.filter(x => x.stretch),
+    ...izolasyonlar.filter(x => !x.stretch),
+  ];
+
+  const yeniSerbest = [...serpistir(bilesikler), ...siraliIzolasyon].map(x => x.ex);
+
+  // Serbest yuvaları sırayla doldur, sabitleri yerinde bırak.
+  let p = 0;
+  const order = liste.map((ex, i) => (sabitIndexler.has(i) ? ex : yeniSerbest[p++]));
+
+  const changed = order.some((ex, i) => ex.name !== liste[i].name);
+  return { changed, order, locked: sabitIndexler.size };
+};

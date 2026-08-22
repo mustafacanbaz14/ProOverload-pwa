@@ -3,6 +3,16 @@ import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import {
+  EMPHASIS_MODES, findEmphasis, shiftRepRange, suggestEmphasis, applyEmphasis, auditEmphasis,
+} from '../src/utils/undulation.js';
+import {
+  buildFrequencyPlan, planMuscleDays, frequencyPlanCoachItem,
+} from '../src/utils/frequencyPlanner.js';
+import {
+  pushVersion, restoreVersion, describeVersionDiff, snapshotTemplate, sameStructure, MAX_VERSIONS,
+} from '../src/utils/templateVersions.js';
+import { suggestOrder } from '../src/utils/exerciseOrder.js';
+import {
   targetsFor, setVolumeTarget, normalizeVolumeTarget, suggestVolumeTarget,
   buildWeeklyVolumeHistory, customTargetMuscles,
 } from '../src/utils/volumeTargets.js';
@@ -4155,6 +4165,280 @@ test('tek hareketlik liste denetlenmiyor', () => {
   // Yalnızca düşük şiddetli bulgu varsa koç susuyor.
   const dusuk = auditExerciseOrder(['Barbell Bench Press', 'Incline Dumbbell Press']);
   assert.equal(orderCoachItem(dusuk), null);
+});
+
+
+// ---------------------------------------------------------------- 7.3
+
+test('istenen yeni düzenler var ve doğru gün yapısında', () => {
+  const uc = getSplitOptions(3).find(x => x.id === 'upper-lower-full-3');
+  assert.ok(uc);
+  assert.deepEqual(uc.days.map(d => d.name), ['Üst', 'Alt', 'Tam Vücut']);
+  // Üçüncü gün tam vücut: her kas haftada iki kez uyarılsın.
+  assert.ok(uc.days[2].groups.includes('Göğüs') && uc.days[2].groups.includes('Quadriceps'));
+
+  const dort = getSplitOptions(4).find(x => x.id === 'ppl-upper-4');
+  assert.ok(dort);
+  assert.deepEqual(dort.days.map(d => d.name), ['İtiş', 'Çekiş', 'Bacak', 'Üst Tamamlama']);
+
+  // Kullanıcının istediği düzen: Push/Pull/Legs + Üst/Alt.
+  const bes = getSplitOptions(5).find(x => x.id === 'ppl-upper-lower-5');
+  assert.ok(bes);
+  assert.deepEqual(bes.days.map(d => d.name), ['İtiş', 'Çekiş', 'Bacak', 'Üst', 'Alt']);
+  assert.ok(bes.days[3].groups.includes('Göğüs') && bes.days[3].groups.includes('Kanat'));
+
+  const govde = getSplitOptions(5).find(x => x.id === 'torso-limbs-5');
+  assert.ok(govde);
+  // Uzuv günü omuz ve kolu içeriyor, göğüs ve sırtı içermiyor.
+  assert.ok(govde.days[1].groups.includes('Yan Omuz') && govde.days[1].groups.includes('Biseps'));
+  assert.equal(govde.days[1].groups.includes('Göğüs'), false);
+});
+
+test('yeni düzenler hacim sınırlarını tutturuyor', () => {
+  [['upper-lower-full-3', 3], ['ppl-upper-4', 4], ['ppl-upper-lower-5', 5], ['torso-limbs-5', 5]]
+    .forEach(([id, gun]) => {
+      const r = buildProgram({ daysPerWeek: gun, splitId: id });
+      assert.equal(r.split.id, id);
+      assert.deepEqual(r.belowMev, [], `${id}: MEV altı kas var`);
+      assert.deepEqual(r.aboveMrv, [], `${id}: MRV üstü kas var`);
+      assert.deepEqual(r.withoutStretch, [], `${id}: gerilme hareketi olmayan kas var`);
+    });
+});
+
+test('özel hareketler üreticinin aday havuzuna giriyor', () => {
+  const custom = [
+    { name: 'Salon Yan Kaldırış Makinesi', muscle: 'Yan Omuz', contributions: { 'Yan Omuz': 1 }, mechanics: 'Isolation', schema: 2 },
+  ];
+  const adlar = (b) => b.days.flatMap(d => d.exercises.map(e => e.name));
+  // Tercih edilirse seçiliyor.
+  const secili = buildProgram({
+    daysPerWeek: 4, customExercises: custom, preferredExercises: ['Salon Yan Kaldırış Makinesi'],
+  });
+  assert.ok(adlar(secili).includes('Salon Yan Kaldırış Makinesi'));
+  // Özel hareket verilmezse ortaya çıkmıyor.
+  assert.equal(adlar(buildProgram({ daysPerWeek: 4 })).includes('Salon Yan Kaldırış Makinesi'), false);
+  // Sınırlar bozulmuyor.
+  assert.deepEqual(secili.belowMev, []);
+});
+
+test('dışlama hacim tamamlama yolunda da geçerli', () => {
+  // Bu yol 7.3'e kadar yasak listesini atlıyordu.
+  const yasak = ['Barbell Back Squat', 'Leg Press', 'Hack Squat', 'Bulgarian Split Squat', 'Barbell Front Squat'];
+  const b = buildProgram({ daysPerWeek: 2, excludedExercises: yasak });
+  const secilen = b.days.flatMap(d => d.exercises.map(e => e.name));
+  yasak.forEach(ad => assert.equal(secilen.includes(ad), false, `${ad} sızmış`));
+});
+
+test('vurgu tekrar aralığını kaydırıyor, genişliği korunuyor', () => {
+  const taban = { min: 6, max: 10 };
+  assert.deepEqual(
+    { min: shiftRepRange(taban, 'heavy').min, max: shiftRepRange(taban, 'heavy').max },
+    { min: 3, max: 7 });
+  assert.deepEqual(
+    { min: shiftRepRange(taban, 'light').min, max: shiftRepRange(taban, 'light').max },
+    { min: 10, max: 14 });
+  // Standart ve orta kaydırmıyor.
+  assert.equal(shiftRepRange(taban, 'standard').shifted, false);
+  assert.equal(shiftRepRange(taban, 'moderate').shifted, false);
+  // Alt sınır 1'in altına inmiyor, genişlik korunuyor.
+  const dip = shiftRepRange({ min: 2, max: 4 }, 'heavy');
+  assert.equal(dip.min, 1);
+  assert.equal(dip.max - dip.min, 2);
+  // Üst sınır 30'u aşmıyor.
+  const tavan = shiftRepRange({ min: 25, max: 30 }, 'light');
+  assert.ok(tavan.max <= 30);
+  // Hafif günde hedef yedek tekrar düşüyor.
+  assert.equal(findEmphasis('light').rirTarget, 1);
+  assert.equal(Object.keys(EMPHASIS_MODES).length, 4);
+});
+
+test('vurgu önerisi tekrar eden kaslara dalga veriyor', () => {
+  const ustAlt = [
+    { name: 'Üst A', muscles: ['Göğüs', 'Kanat'] },
+    { name: 'Alt A', muscles: ['Quadriceps', 'Hamstring'] },
+    { name: 'Üst B', muscles: ['Göğüs', 'Kanat'] },
+    { name: 'Alt B', muscles: ['Quadriceps', 'Hamstring'] },
+  ];
+  const o = suggestEmphasis(ustAlt);
+  assert.equal(o[0].emphasis, 'heavy');
+  assert.equal(o[2].emphasis, 'light');
+  // Haftada bir çalışılan kaslarda dalgalanma yok.
+  const ppl = suggestEmphasis([
+    { name: 'İtiş', muscles: ['Göğüs'] },
+    { name: 'Çekiş', muscles: ['Kanat'] },
+    { name: 'Bacak', muscles: ['Quadriceps'] },
+  ]);
+  assert.ok(ppl.every(x => x.emphasis === 'standard'));
+});
+
+test('vurgu uygulaması ve denetimi', () => {
+  assert.equal(applyEmphasis('standard', { min: 6, max: 10 }), null);
+  const u = applyEmphasis('light', { min: 6, max: 10 });
+  assert.equal(u.repRange.min, 10);
+  assert.equal(u.rirTarget, 1);
+  // Bütün günleri ağır yapmak dalgalanma değil.
+  const hepsi = auditEmphasis([{ emphasis: 'heavy' }, { emphasis: 'heavy' }, { emphasis: 'heavy' }]);
+  assert.equal(hepsi.ok, false);
+  assert.ok(hepsi.findings.some(f => f.key === 'all-heavy'));
+  assert.equal(auditEmphasis([{ emphasis: 'heavy' }, { emphasis: 'light' }]).ok, true);
+  // Tek gün dalgalanma sayılmıyor.
+  assert.equal(auditEmphasis([{ emphasis: 'heavy' }]).ok, true);
+});
+
+const setDizisi = (n) => Array.from({ length: n }, () => ({}));
+
+test('sıklık planı tek güne yığılan kasları buluyor', () => {
+  const templates = [
+    // Set sayısı MEV'in üstünde: 'hacim yeterli ama tek güne yığılmış'
+    // durumunu ancak eşiği geçen hacim üretiyor.
+    { id: 't1', name: 'İtiş', exercises: [{ name: 'Barbell Bench Press', sets: setDizisi(12) }] },
+    { id: 't2', name: 'Çekiş', exercises: [{ name: 'Lat Pulldown', sets: setDizisi(12) }] },
+  ];
+  const plan = {
+    mon: [{ type: 'workout', templateId: 't1' }],
+    thu: [{ type: 'workout', templateId: 't2' }],
+    tue: [], wed: [], fri: [], sat: [], sun: [],
+  };
+  const r = buildFrequencyPlan(plan, templates);
+  assert.equal(r.hasData, true);
+  assert.equal(r.trainingDays, 2);
+  const gogus = r.rows.find(x => x.muscle === 'Göğüs');
+  assert.equal(gogus.frequency, 1);
+  assert.ok(gogus.concentrated, 'hacim eşiğin üstünde ama tek güne yığılmış olmalı');
+  assert.ok(frequencyPlanCoachItem(r).title.includes('tek güne'));
+  assert.equal(buildFrequencyPlan({}, templates).hasData, false);
+});
+
+test('arka arkaya günlerde tekrarlanan kas işaretleniyor', () => {
+  const templates = [{ id: 't1', name: 'İtiş', exercises: [{ name: 'Barbell Bench Press', sets: setDizisi(5) }] }];
+  const bitisik = {
+    mon: [{ type: 'workout', templateId: 't1' }],
+    tue: [{ type: 'workout', templateId: 't1' }],
+    wed: [], thu: [], fri: [], sat: [], sun: [],
+  };
+  const r = buildFrequencyPlan(bitisik, templates);
+  assert.equal(r.backToBack.length, 1);
+  assert.ok(r.backToBack[0].shared.includes('Göğüs'));
+  // İki gün arası varsa çakışma yok.
+  const ayrik = {
+    mon: [{ type: 'workout', templateId: 't1' }],
+    thu: [{ type: 'workout', templateId: 't1' }],
+    tue: [], wed: [], fri: [], sat: [], sun: [],
+  };
+  assert.equal(buildFrequencyPlan(ayrik, templates).backToBack.length, 0);
+  // Eşiğin altında kalan katkı "çalışıldı" saymıyor.
+  const gunler = planMuscleDays(bitisik, templates);
+  assert.ok(gunler[0].trained.includes('Göğüs'));
+});
+
+test('sürüm geçmişi aynı hali iki kez yazmıyor', () => {
+  let n = 0;
+  const gid = () => `id${++n}`;
+  const t = {
+    id: 't', name: 'Push',
+    exercises: [
+      { name: 'Bench', supersetId: null, sets: [{ id: gid(), weight: 80, reps: 10 }, { id: gid(), weight: 80, reps: 10 }] },
+      { name: 'Fly', supersetId: null, sets: [{ id: gid(), weight: 15, reps: 12 }] },
+    ],
+  };
+  let gecmis = pushVersion([], t);
+  assert.equal(gecmis.length, 1);
+  assert.equal(gecmis[0].totalSets, 3);
+  // Değişiklik yoksa geçmiş büyümüyor.
+  assert.equal(pushVersion(gecmis, t).length, 1);
+  assert.ok(sameStructure(snapshotTemplate(t), gecmis[0]));
+
+  const t2 = { ...t, exercises: [t.exercises[0]] };
+  gecmis = pushVersion(gecmis, t2);
+  assert.equal(gecmis.length, 2);
+
+  // Sınır aşılmıyor.
+  let cok = [];
+  for (let i = 0; i < 12; i += 1) cok = pushVersion(cok, { ...t, name: `V${i}` });
+  assert.equal(cok.length, MAX_VERSIONS);
+});
+
+test('sürüm geri yüklenince ağırlıklar korunuyor', () => {
+  let n = 0;
+  const gid = () => `id${++n}`;
+  const t = {
+    id: 't', name: 'Push',
+    exercises: [
+      { name: 'Bench', supersetId: null, sets: [{ id: gid(), weight: 80, reps: 10 }] },
+      { name: 'Fly', supersetId: null, sets: [{ id: gid(), weight: 15, reps: 12 }] },
+    ],
+  };
+  const gecmis = pushVersion([], t);
+  const sonraki = { ...t, exercises: [t.exercises[0]] };
+  const geri = restoreVersion(sonraki, gecmis[0], gid);
+  assert.equal(geri.exercises.length, 2);
+  // Var olan hareketin yükü taşınıyor.
+  assert.equal(geri.exercises[0].sets[0].weight, 80);
+  // Geri gelen hareket boş setle açılıyor.
+  assert.equal(geri.exercises[1].sets[0].weight, '');
+  assert.equal(restoreVersion(null, gecmis[0], gid), null);
+});
+
+test('sürüm farkı ne değiştiğini söylüyor', () => {
+  const t = {
+    id: 't', name: 'Push',
+    exercises: [
+      { name: 'Bench', supersetId: null, sets: [{}, {}, {}] },
+      { name: 'Fly', supersetId: null, sets: [{}, {}] },
+    ],
+  };
+  const surum = snapshotTemplate(t);
+  const yeni = {
+    ...t,
+    exercises: [
+      { name: 'Bench', supersetId: null, sets: [{}, {}] },
+      { name: 'Pushdown', supersetId: null, sets: [{}] },
+    ],
+  };
+  const fark = describeVersionDiff(surum, yeni);
+  assert.deepEqual(fark.removed, ['Fly']);
+  assert.deepEqual(fark.added, ['Pushdown']);
+  assert.equal(fark.setChanges[0].from, 3);
+  assert.equal(fark.setChanges[0].to, 2);
+  assert.equal(fark.setDelta, -2);
+  assert.equal(fark.identical, false);
+  assert.equal(describeVersionDiff(surum, t).identical, true);
+
+  // Yalnızca sıra değişmişse bu da bir fark: sıra hangi hareketin taze
+  // yapıldığını belirliyor ve "yapı aynı" demek yanıltıcı olurdu.
+  const tersi = {
+    ...t,
+    exercises: [t.exercises[1], t.exercises[0]],
+  };
+  const siraFarki = describeVersionDiff(surum, tersi);
+  assert.equal(siraFarki.reordered, true);
+  assert.equal(siraFarki.identical, false);
+  assert.ok(siraFarki.summary.includes("sıra değişmiş"));
+});
+
+test('önerilen sıra bileşkeleri öne alıyor', () => {
+  const kotu = ['Cable Fly (High to Low)', 'Rope Pushdown', 'Barbell Bench Press', 'Lateral Raise (Cable)'];
+  const r = suggestOrder(kotu);
+  assert.equal(r.changed, true);
+  assert.equal(r.order[0].name, 'Barbell Bench Press');
+  // İzolasyon bileşkeden önce gelme bulgusu kalkmalı.
+  assert.equal(auditExerciseOrder(r.order).findings.some(f => f.key === 'isolation-first'), false);
+  // Üçten az hareket sıralanmıyor.
+  assert.equal(suggestOrder(['A', 'B']).changed, false);
+});
+
+test('süpersetli hareketler sıralamada yerinde kalıyor', () => {
+  const liste = [
+    { name: 'Cable Fly (High to Low)' },
+    { name: 'Barbell Bench Press', supersetId: 'x' },
+    { name: 'Incline Dumbbell Press', supersetId: 'x' },
+    { name: 'Rope Pushdown' },
+  ];
+  const r = suggestOrder(liste);
+  assert.equal(r.locked, 2);
+  // Bağlı çift hâlâ 2. ve 3. sırada ve komşu: bağ komşuluk demek.
+  assert.equal(r.order[1].supersetId, 'x');
+  assert.equal(r.order[2].supersetId, 'x');
 });
 
 

@@ -482,6 +482,12 @@ export const SET_TYPES = {
 
 export const SET_TYPE_KEYS = ['normal', 'warmup', 'drop', 'failure', 'rest_pause'];
 
+// Şablonda PLANLANABİLECEK teknikler. Isınma burada yok: ısınma her hareketin
+// başında zaten var ve planlanacak bir şey değil. Teknik şablona yazıldığında
+// seansta hatırlatma olarak çıkıyor, seti otomatik işaretlemiyor —
+// uygulanıp uygulanmadığına kullanıcı karar veriyor.
+export const PLANNABLE_TECHNIQUES = ['drop', 'rest_pause', 'failure'];
+
 // Haftalık set hacmi referansları (kas grubu başına):
 //   MEV  koruma için gereken en az hacim
 //   MAV  gelişimin en verimli olduğu aralığın üst ucu
@@ -700,13 +706,49 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.2';
+export const APP_VERSION = '7.3';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.2',
+  title: 'ProOverload 7.3',
   date: '2026-08-22',
   items: [
+    {
+      title: 'Dört Yeni Düzen',
+      desc: 'ÜST / ALT / TAM VÜCUT (3 gün): ilk iki gün bölünmüş olduğu için seans başına hacim makul kalıyor, üçüncü gün tam vücut olduğu için her kas haftada iki kez uyarılıyor — üç günde en dengeli seçeneklerden biri. İTİŞ / ÇEKİŞ / BACAK / ÜST (4 gün): klasik üçlü bölmenin haftada bir uyaran sorununu dördüncü bir üst gün ekleyerek çözüyor, bacak tek ağır günde kalıyor. İTİŞ / ÇEKİŞ / BACAK / ÜST / ALT (5 gün): haftanın ilk yarısı Push-Pull-Legs, ikinci yarısı Üst-Alt. İki yaklaşımın da iyi tarafını alıyor ve altı güne çıkmadan sıklığı ikiye tamamlıyor — PPL sevip haftada bir uyarımın az geldiğini düşünenler için en doğrudan çözüm. GÖVDE / UZUVLAR / BACAK / GÖVDE / UZUVLAR (5 gün): itiş-çekiş ayrımında omuz ve kol hep büyük bir bileşkeden sonra yorgun halde çalışılıyor; bu bölme onları kendi gününde taze başlatıyor. Dördü de üreticinin altın testinden geçiyor: her kas koruma eşiğinin üstünde, tavanın altında ve gerilmede yükleyen en az bir harekete sahip.'
+    },
+    {
+      title: 'Program Üretici Artık Kendi Hareketlerini de Kullanıyor',
+      desc: 'Aday havuzu elle yazılmış sabit bir listeydi. Sonucu şuydu: kütüphanede olmayan bir hareketi elle ekleyen kullanıcı onu uygulamanın her yerinde kullanabiliyor ama program üretici onu HİÇ seçmiyordu — kendi salonundaki makineyi tanıtan biri, ürettiği programda o makineyi asla görmüyordu. Artık özel hareketler birincil kaslarının havuzuna giriyor ve rolleri ad kalıbından çıkarılıyor: gerilmede yükleyen bir hareketse o role, değilse listenin sonuna. Sona eklenmeleri yerleşik hareketlerin önce denenmesini garantiliyor; kendi hareketin ancak onlar tükendiğinde ya da "bildiğim hareketleri öne al" seçiliyken geliyor. Bu arada sessiz bir hata da çıktı: hacim tamamlama yolu dışlama listesini atlıyordu, yani yapamadığını söylediğin bir hareket programa girebiliyordu. Düzeltildi.'
+    },
+    {
+      title: 'Dalgalı Periyotlama: Gün Vurgusu',
+      desc: 'Uygulamanın ilerleme modeli haftalıktı — mezosiklik hacmi haftadan haftaya artırıyor, ilerleme kuralı seanstan seansa yükü ayarlıyor. Ama haftanın İÇİNDE bir yapı yoktu: aynı kası haftada iki kez çalışan biri iki seansı da aynı tekrar aralığında yapıyordu. Artık her güne ağır, orta veya hafif vurgu verilebiliyor ve bu vurgu o günün tekrar aralıklarını kaydırıyor (ağır üç basamak aşağı, hafif dört basamak yukarı; hafif günde hedef yedek tekrar bire iniyor çünkü yüksek tekrarda tükenişe yaklaşmak uyaranın şartı). Aralık genişliği korunuyor: 6-10 ağır vurguda 3-7 oluyor, anlamsızca genişlemiyor. Aynı kasın iki seansını farklı aralıklarda çalışmak ağır günde mekanik gerilim, hafif günde metabolik stres ve daha az eklem yükü veriyor; toplam hacim aynı kalırken toparlanma kolaylaşıyor.'
+    },
+    {
+      title: 'Şablonda Yedek Hareket',
+      desc: '"Makine dolu" ya da "bugün omzum ağrıyor" durumunda seansın ortasında hareket aramak gerekiyordu. Artık her hareketin yanına şablonda bir yedek yazılabiliyor ve seansta tek dokunuşla geçiliyor. Öneriler kas katkı profiline göre geliyor, yani elle aramak da gerekmiyor. Geçildiğinde asıl hareket yedek olarak yazılıyor — geri dönmek de tek dokunuş. Setlerin ağırlık ve tekrar değerleri temizleniyor: başka bir hareketin yükünü yeni harekete taşımak yanlış bir başlangıç değeri önermek olurdu.'
+    },
+    {
+      title: 'Şablon Sürüm Geçmişi',
+      desc: 'Şablonu düzenlemek geri alınamaz bir işlemdi: bir hareketi çıkarıp kaydettikten sonra eski hali hiçbir yerde durmuyordu. Üç aydır kullandığı programı "biraz deneyeyim" diye değiştiren biri, beğenmediğinde eski düzeni hatırlamak zorunda kalıyordu. Artık her kaydetmeden önce şablonun o anki hali geçmişe yazılıyor ve şablon önizlemesinden tek dokunuşla geri dönülebiliyor. Ne değiştiği de yazıyor — "3 gün önce" tek başına hangi sürüme döneceğini seçmeye yetmiyor. Geri dönmek de bir değişiklik sayılıyor: şu anki hal geçmişe yazılıyor, yani geri aldıktan sonra yeni haline de dönebilirsin. Setlerin ağırlıkları korunuyor; eski yapıya dönmek öğrenilmiş yükleri çöpe atmayı gerektirmiyor.'
+    },
+    {
+      title: 'Şablonda Planlanan Teknik',
+      desc: 'Drop set ve rest-pause seansın ortasında akla geliyordu, yani plan değil doğaçlamaydı. Artık şablonda hareket bazında planlanabiliyor ve seansta hatırlatma olarak çıkıyor. Seti otomatik işaretlemiyor: uygulanıp uygulanmadığına yorgunluğa bakarak sen karar veriyorsun. Isınma planlanabilir teknikler arasında yok — her hareketin başında zaten var ve planlanacak bir şey değil.'
+    },
+    {
+      title: 'Şablona Özel Tekrar Aralığı',
+      desc: 'Tekrar aralığı ya geneldi ya harekete özeldi; şablona bağlı değildi. Oysa aynı hareket kuvvet şablonunda 4-6, hipertrofi şablonunda 10-14 olmalı ve tek bir değer ikisini birden anlatamıyordu. Artık aralık şablonun içinde yaşıyor. Öncelik sırası net: şablona yazılmışsa o, yoksa hareketin kendi aralığı, o da yoksa genel ayar. Gün vurgusu varsa aralık ayrıca kaydırılıyor ve seansta hangi sayının nereden geldiği rozet olarak yazıyor.'
+    },
+    {
+      title: 'Kas Sıklık Planlayıcı',
+      desc: 'Sıklık analizi GEÇMİŞE bakıyordu: geçen haftalarda hangi kası kaç kez çalıştın. Doğru ama geç — hafta bittikten sonra öğreniyorsun. Yeni planlayıcı PLANA bakıyor: kurduğun haftalık program her kası kaç kez uyaracak. En değerli uyarı şu: hacmi koruma eşiğinin üstünde ama tek güne yığılmış kaslar. Hacim tablosu bunları sorun göstermiyor çünkü toplam yeterli — ama protein sentezi yanıtı yaklaşık iki günde sönüyor ve o kas haftanın kalanını uyaransız geçiriyor. Aynı hacmi ikiye bölmek, toplamı hiç artırmadan daha iyi sonuç veriyor. Arka arkaya gelen günlerde tekrarlanan kaslar da işaretleniyor; hafta sonu ile pazartesi de komşu sayılıyor.'
+    },
+    {
+      title: 'Hareket Sırasını Tek Dokunuşla Düzelt',
+      desc: '7.2 hareket sırasını denetliyor ama düzeltmeyi kullanıcıya bırakıyordu. Artık şablon düzenleyicide önerilen sıra tek dokunuşla uygulanıyor. Kural üç kademeli ve deterministik: bileşkeler önce, aynı kasın bileşkeleri serpiştirilerek (peş peşe gelen ikinci bileşke neredeyse her zaman düşük performansla yapılıyor), izolasyonlar içinde gerilmede yükleyenler önce. Süpersetli hareketler DOKUNULMADAN kalıyor: bağ komşuluk demek ve sıralamayı değiştirmek onu koparırdı; kullanıcı bir süperset kurmuşsa bu bilinçli bir karar.'
+    },
     {
       title: 'Uyarı Çaldı mı Diye Bakıyor',
       desc: '7.1 askıya alınmış ses motorunu uyandırma sorununu çözmüştü ama "bazen geliyor bazen gelmiyor" devam ediyordu; sebebi başkaymış. Uyarı, sayaç BAŞLARKEN ses donanımının saatine yazılıyor — böylece JavaScript arka planda yavaşlasa bile doğru anda çalabiliyor. Yazma başarılı olunca uygulama "ses halloldu" varsayıp bitişteki yedek çalmayı atlıyordu. Ama ses motoru yazmadan SONRA askıya alınabiliyor: ekran kapanınca, uygulama arka plana atılınca, iOS bir kesinti yaşayınca. O durumda zamanlanan notalar hiç çalmıyor ve yedek de atlandığı için sonuç tam sessizlik oluyordu. Artık ölçüt "zamanlama başarılı mıydı" değil, "ses GERÇEKTEN çaldı mı": en az bir nota bittiğinde bayrak kalkıyor, kalkmadıysa uygulama uyarının kaçtığını anlayıp anında telafi çalıyor. Telafi bir pencereyle sınırlı — sayfa donmuş ve on dakika sonra döndüysen o dinlenme çoktan bitmiştir ve o anda yüksek sesle uyarı çalmak bilgi değil şaşkınlık üretir; geç kalınan durumda görsel uyarı ve bildirim yine çıkıyor, yalnızca ses susuyor.'

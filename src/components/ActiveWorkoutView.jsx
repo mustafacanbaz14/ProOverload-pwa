@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame, Volume2, VolumeX, RotateCcw, CheckCircle2, SlidersHorizontal, Minus } from 'lucide-react';
+import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame, Volume2, VolumeX, RotateCcw, CheckCircle2, SlidersHorizontal, Minus, LifeBuoy } from 'lucide-react';
 import WorkoutTimer from './WorkoutTimer';
 import { FORM_RATINGS, SET_TYPES, SMALL_MUSCLE_GROUPS } from '../utils/constants';
 import {
@@ -12,12 +12,15 @@ import { READINESS_FIELDS, READINESS_ZONES } from '../utils/readiness';
 import { nextSetCue, resolveRestTarget } from '../utils/rest';
 import { sessionAdvice } from '../utils/autoregulation';
 import { repRangeFor } from '../utils/exerciseTargets';
+import { applyEmphasis } from '../utils/undulation';
+import { TECHNIQUE_GUIDE } from '../utils/setTechniques';
 
 const ActiveWorkoutView = memo(({
   deloadReturn = null,
   warmupRoutine = null,
   painWarningFor = null,
   sessionPace = null,
+  onUseBackup = null,
   activeWorkout,
   setActiveWorkout,
   setIsEndWorkoutModalOpen,
@@ -272,12 +275,28 @@ const ActiveWorkoutView = memo(({
           const { muscle, contributions } = detectMuscleGroup(ex.name, customExercises);
           // Hedef tekrar aralığı harekete özel; hem buradaki hedef hem aşağıdaki
           // seans içi yük ayarı aynı yerden okuyor ki ikisi çelişmesin.
-          const repRange = repRangeFor(ex.name, {
-            overrides: settings.repRangeOverrides,
-            customExercises,
-            globalMin: settings.repRangeMin,
-            globalMax: settings.repRangeMax,
-          });
+          // Öncelik sırası: şablona yazılmış aralık, sonra hareketin kendi
+          // aralığı. Aynı hareket kuvvet şablonunda 4-6, hipertrofi
+          // şablonunda 10-14 olabiliyor ve tek bir genel aralık ikisini
+          // birden anlatamıyordu.
+          const tabanAralik = ex.repRange?.min > 0 && ex.repRange?.max > 0
+            ? { min: ex.repRange.min, max: ex.repRange.max, source: 'template' }
+            : repRangeFor(ex.name, {
+              overrides: settings.repRangeOverrides,
+              customExercises,
+              globalMin: settings.repRangeMin,
+              globalMax: settings.repRangeMax,
+            });
+          // Gün vurgusu aralığı kaydırıyor: ağır günde aşağı, hafif günde
+          // yukarı. Ama ŞABLONA ÖZEL bir aralık yazılmışsa vurgu uygulanmıyor:
+          // o değer kullanıcının bu hareket için bu şablonda açıkça yazdığı
+          // sayı, vurgu ise günün geneline konmuş bir varsayılan. İkisini üst
+          // üste bindirmek, 4-6 yazan birinin ağır günde 1-3 görmesi demekti —
+          // yani açık niyetin sessizce değişmesi.
+          const vurguSonucu = tabanAralik.source === 'template'
+            ? null
+            : applyEmphasis(activeWorkout.emphasis, tabanAralik);
+          const repRange = vurguSonucu ? vurguSonucu.repRange : tabanAralik;
           const target = recentData ? suggestNextTarget(recentData.sets, {
             repRangeMin: repRange.min,
             repRangeMax: repRange.max,
@@ -392,6 +411,46 @@ const ActiveWorkoutView = memo(({
                   </div>
                 );
               })()}
+
+              {/* Şablonda planlanmış olanlar: yedek hareket, teknik ve
+                  kaydırılmış tekrar aralığı. Plan şablonda kalsaydı seansta
+                  hatırlanması kullanıcıya kalırdı. */}
+              {(ex.backup || ex.plannedTechnique || vurguSonucu || tabanAralik.source === 'template') && (
+                <div className="px-3 py-1.5 border-b border-zinc-800 bg-zinc-950/40 flex flex-wrap items-center gap-1.5">
+                  {vurguSonucu && (
+                    <span className="text-[8px] font-bold text-violet-300 bg-violet-950/30 border border-violet-900/50 rounded px-1.5 py-0.5">
+                      {vurguSonucu.emphasis.label} · {repRange.min}-{repRange.max} tekrar
+                    </span>
+                  )}
+                  {tabanAralik.source === 'template' && (
+                    <span
+                      title={activeWorkout.emphasis && activeWorkout.emphasis !== 'standard'
+                        ? 'Şablona özel aralık yazıldığı için gün vurgusu bu harekete uygulanmadı.'
+                        : undefined}
+                      className="text-[8px] font-bold text-cyan-300 bg-cyan-950/30 border border-cyan-900/50 rounded px-1.5 py-0.5"
+                    >
+                      şablon aralığı {repRange.min}-{repRange.max}
+                    </span>
+                  )}
+                  {ex.plannedTechnique && (
+                    <span
+                      title={TECHNIQUE_GUIDE[ex.plannedTechnique]?.how}
+                      className="text-[8px] font-bold text-purple-300 bg-purple-950/30 border border-purple-900/50 rounded px-1.5 py-0.5"
+                    >
+                      planlı: {TECHNIQUE_GUIDE[ex.plannedTechnique]?.label}
+                    </span>
+                  )}
+                  {ex.backup && onUseBackup && (
+                    <button
+                      onClick={() => onUseBackup(ex.id, ex.backup)}
+                      title={`${ex.name} yerine ${ex.backup}`}
+                      className="text-[8px] font-bold text-emerald-300 bg-emerald-950/30 border border-emerald-900/50 rounded px-1.5 py-0.5 active:bg-emerald-900/30 flex items-center gap-1"
+                    >
+                      <LifeBuoy size={8} /> yedek: {ex.backup}
+                    </button>
+                  )}
+                </div>
+              )}
 
               {/* Vücut ağırlığı bandı. Eskiden yalnızca "şu kadar ekleniyor"
                   diyordu; sayının hangi kilodan çıktığı ve alana ne yazılması

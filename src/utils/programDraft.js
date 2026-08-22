@@ -282,12 +282,18 @@ export const instantiateDraftProgram = (programName, draftDays = [], generateId,
     id: generateId(),
     name: `${programName} — ${day.name}`,
     createdAt,
+    // Gün vurgusu şablona yazılıyor: seansta tekrar aralıklarını kaydıran şey
+    // bu alan. Taslakta kalsaydı yalnızca kurulum anında var olurdu.
+    ...(day.emphasis && day.emphasis !== 'standard' ? { emphasis: day.emphasis } : {}),
     // Komşuluk bayrağı gerçek kimliğe çevriliyor: bayraklı hareket ve onu
     // izleyen hareket aynı kimliği paylaşıyor. Zincirleme bağlar (a-b-c) tek
     // grup oluyor; ActiveWorkoutView ikiden fazla üyeyi de doğru gösteriyor.
     exercises: day.exercises.map((ex, i) => ({
       name: ex.name,
       supersetId: draftSupersetIds(day.exercises, day.uid || 'g')[i],
+      ...(ex.backup ? { backup: ex.backup } : {}),
+      ...(ex.plannedTechnique ? { plannedTechnique: ex.plannedTechnique } : {}),
+      ...(ex.repRange ? { repRange: ex.repRange } : {}),
       sets: Array.from({ length: Math.max(1, Number(ex.sets) || 1) }, () => ({
         id: generateId(), weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal',
       })),

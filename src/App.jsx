@@ -38,6 +38,8 @@ import { buildTimeOfDayReport, timeOfDayCoachItem } from './utils/timeOfDay';
 import { buildTechniqueReport, techniqueCoachItem } from './utils/setTechniques';
 import { auditExerciseOrder, orderCoachItem } from './utils/exerciseOrder';
 import { buildWeeklyVolumeHistory } from './utils/volumeTargets';
+import { pushVersion, restoreVersion, describeVersionDiff } from './utils/templateVersions';
+import { buildFrequencyPlan, frequencyPlanCoachItem } from './utils/frequencyPlanner';
 import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
 import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, applyCardioTemplate } from './utils/cardioTemplates';
 import { cardioToCsv } from './utils/csvExport';
@@ -1496,6 +1498,11 @@ export default function App() {
       rating: 4,
       notes: ''
     };
+    // Gün vurgusu seansa taşınıyor: tekrar aralıklarını kaydıran şey bu alan
+    // ve şablonda kalsaydı seansta hiçbir etkisi olmazdı.
+    if (sessionTemplate?.emphasis && sessionTemplate.emphasis !== 'standard') {
+      newWorkout.emphasis = sessionTemplate.emphasis;
+    }
     if (sourceTemplateId) {
       newWorkout.sourceTemplateId = sourceTemplateId;
       const plannedTemplate = snapshotTemplatePlan(sessionTemplate);
@@ -1900,7 +1907,7 @@ export default function App() {
   // Var olan şablonu günceller. Set sayısı değişse bile eski setlerin ağırlık ve
   // tekrar bilgisi korunur — şablonlar bir sonraki seansın başlangıç değerlerini
   // taşıyor, sıfırlamak kullanıcının girdiği veriyi çöpe atmak olurdu.
-  const handleUpdateTemplate = useCallback((templateId, name, exercises) => {
+  const handleUpdateTemplate = useCallback((templateId, name, exercises, { emphasis } = {}) => {
     setTemplates(prev => prev.map(t => {
       if (t.id !== templateId) return t;
       const oldByName = new Map((t.exercises || []).map(ex => [ex.name, ex.sets || []]));
@@ -1911,11 +1918,21 @@ export default function App() {
       return {
         ...t,
         name: name || t.name,
+        ...(emphasis && emphasis !== 'standard' ? { emphasis } : { emphasis: undefined }),
+        // Kaydetmeden ÖNCEKİ hali geçmişe itiliyor. Şablonu düzenlemek 7.3'e
+        // kadar geri alınamaz bir işlemdi: bir hareketi çıkarıp kaydeden
+        // kullanıcı eski düzeni hatırlamak zorunda kalıyordu.
+        versions: pushVersion(t.versions, t),
         exercises: exercises.map((ex, i) => {
           const old = oldByName.get(ex.name) || [];
           return {
             name: ex.name,
             supersetId: supersetIds[i],
+            ...(ex.backup ? { backup: ex.backup } : {}),
+            ...(ex.plannedTechnique ? { plannedTechnique: ex.plannedTechnique } : {}),
+            ...(parseNumber(ex.repRange?.min) > 0 && parseNumber(ex.repRange?.max) > 0
+              ? { repRange: { min: parseNumber(ex.repRange.min), max: parseNumber(ex.repRange.max) } }
+              : {}),
             sets: Array.from({ length: ex.sets }, (_, i2) => old[i2]
               ? { ...old[i2], id: old[i2].id || generateId() }
               : { id: generateId(), weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal' }),
@@ -1924,6 +1941,21 @@ export default function App() {
       };
     }));
     showToast('Şablon güncellendi.');
+  }, [setTemplates, showToast]);
+
+  /** Şablonu daha önceki bir sürümüne döndürür. */
+  const handleRestoreTemplateVersion = useCallback((templateId, index) => {
+    setTemplates(prev => prev.map(t => {
+      if (t.id !== templateId) return t;
+      const surum = (t.versions || [])[index];
+      if (!surum) return t;
+      const geri = restoreVersion(t, surum, generateId);
+      if (!geri) return t;
+      // Geri dönmek de bir değişiklik: mevcut hal geçmişe yazılıyor ki
+      // "geri aldım ama yeni halini de kaybetmek istemiyorum" mümkün olsun.
+      return { ...geri, versions: pushVersion(t.versions, t, { label: 'geri alma öncesi' }) };
+    }));
+    showToast('Şablon önceki sürüme döndürüldü.');
   }, [setTemplates, showToast]);
 
   // --- Hareket birleştirme -------------------------------------------------
@@ -1995,6 +2027,34 @@ export default function App() {
     }));
     showToast(`${oldName} → ${newName}`);
   }, [setTemplates, showToast]);
+
+  /**
+   * Şablonda planlanmış yedek harekete geçer.
+   *
+   * `handleSubstituteExercise`'ten farkı: yedek zaten şablonda yazılı olduğu
+   * için ikame ekranı açılmıyor, tek dokunuşla geçiliyor. Girilmiş setler
+   * KORUNUYOR ama ağırlık ve tekrar temizleniyor — başka bir hareketin yükünü
+   * yeni harekete taşımak yanlış bir başlangıç değeri olurdu.
+   */
+  const handleUseBackupExercise = useCallback((exerciseId, backupName) => {
+    if (!exerciseId || !backupName) return;
+    setActiveWorkout(prev => {
+      if (!prev) return prev;
+      const hedef = (prev.exercises || []).find(e => e.id === exerciseId);
+      if (!hedef) return prev;
+      return {
+        ...prev,
+        exercises: prev.exercises.map(ex => (ex.id !== exerciseId ? ex : {
+          ...ex,
+          name: backupName,
+          // Geri dönebilmek için asıl hareket yedek olarak yazılıyor.
+          backup: ex.name,
+          sets: (ex.sets || []).map(set => ({ ...set, weight: '', reps: '' })),
+        })),
+      };
+    });
+    showToast(`Yedek harekete geçildi: ${backupName}`);
+  }, [setActiveWorkout, showToast]);
 
   const handleSaveProgram = useCallback((programName, days, { createWeekPlan = true } = {}) => {
     const installation = instantiateDraftProgram(programName, days, generateId);
@@ -3050,6 +3110,15 @@ export default function App() {
     }),
     [sortedWorkouts, customExercises]);
 
+  // Sıklık planı: frequency.js GEÇMİŞE bakıyor, bu PLANA. Hafta bitmeden
+  // hangi kasın tek uyaranda kaldığını söylüyor.
+  const frequencyPlan = useMemo(
+    () => buildFrequencyPlan(activePlan?.days, templates, {
+      customExercises,
+      experienceLevel: settings.experienceLevel,
+    }),
+    [activePlan, templates, customExercises, settings.experienceLevel, settings.volumeTargets]);
+
   // Sıra denetimi: bugünkü seansın ya da planlanan şablonun hareket sırası.
   // Aynı hareket listesi farklı sırayla farklı sonuç veriyor.
   const orderReport = useMemo(() => {
@@ -3142,6 +3211,7 @@ export default function App() {
       restQualityItem: restCoachItem(restReport),
       timeOfDayItem: timeOfDayCoachItem(timeOfDayReport),
       techniqueItem: techniqueCoachItem(techniqueReport),
+      frequencyPlanItem: frequencyPlanCoachItem(frequencyPlan),
       exerciseOrderItem: orderCoachItem(orderReport, {
         context: activeWorkout ? 'devam eden seans' : 'bugünkü plan',
       }),
@@ -3164,7 +3234,7 @@ export default function App() {
     painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
     cardioReport, cardioSuggestion, restingHrReport, painScan, painRegions,
-    plateauReport, restReport, timeOfDayReport, techniqueReport, orderReport,
+    plateauReport, restReport, timeOfDayReport, techniqueReport, orderReport, frequencyPlan,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
@@ -3582,6 +3652,7 @@ export default function App() {
               deload={deload}
               deloadReturn={deloadReturn}
               painWarningFor={painWarningForExercise}
+              onUseBackup={handleUseBackupExercise}
               sessionPace={buildSessionPace(activeWorkout, (() => {
                 // Kronometrenin gösterdiği süre: biriken + çalışıyorsa aradan geçen.
                 const t = activeWorkout.timer || {};
@@ -3764,6 +3835,12 @@ export default function App() {
           }}
           onReplaceExercise={(t, name) => setSubstituteFor({ name, templateId: t.id })}
           nextTargets={nextSessionTargetsFor(previewTemplate)}
+          versions={previewTemplate.versions || []}
+          versionDiff={(v) => describeVersionDiff(v, previewTemplate)}
+          onRestoreVersion={(index) => {
+            handleRestoreTemplateVersion(previewTemplate.id, index);
+            setPreviewTemplate(null);
+          }}
         />}
 
         {/* EXERCISE MAPPING EDITOR */}
