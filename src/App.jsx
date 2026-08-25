@@ -38,6 +38,13 @@ import { buildTimeOfDayReport, timeOfDayCoachItem } from './utils/timeOfDay';
 import { buildTechniqueReport, techniqueCoachItem } from './utils/setTechniques';
 import { auditExerciseOrder, orderCoachItem } from './utils/exerciseOrder';
 import { buildWeeklyVolumeHistory } from './utils/volumeTargets';
+import { buildWarmupLadder, applyWarmupLadder, removeWarmupSets } from './utils/warmupSets';
+import { setExerciseNote, notesFor } from './utils/exerciseNotes';
+import { scanSideBalance, sideBalanceCoachItem } from './utils/unilateral';
+import { buildSessionVolume } from './utils/sessionVolume';
+import { dailyWaterTarget, addWater, waterSummary, waterCoachItem } from './utils/hydration';
+import { planToIcs } from './utils/calendarExport';
+import { buildRecordTimeline } from './utils/recordTimeline';
 import { pushVersion, restoreVersion, describeVersionDiff } from './utils/templateVersions';
 import { buildFrequencyPlan, frequencyPlanCoachItem } from './utils/frequencyPlanner';
 import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
@@ -125,6 +132,7 @@ const PainLogModal = lazy(() => import('./components/PainLogModal'));
 const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
 const ExerciseMergeModal = lazy(() => import('./components/ExerciseMergeModal'));
 const VolumeTargetsModal = lazy(() => import('./components/VolumeTargetsModal'));
+const ExerciseCompareModal = lazy(() => import('./components/ExerciseCompareModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const CardioView = lazy(() => import('./components/CardioView'));
 
@@ -234,6 +242,7 @@ export default function App() {
   const [isDataHealthOpen, setIsDataHealthOpen] = useState(false);
   const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [isVolumeTargetsOpen, setIsVolumeTargetsOpen] = useState(false);
+  const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
@@ -2036,6 +2045,79 @@ export default function App() {
    * KORUNUYOR ama ağırlık ve tekrar temizleniyor — başka bir hareketin yükünü
    * yeni harekete taşımak yanlış bir başlangıç değeri olurdu.
    */
+  /** Hareketin çalışma ağırlığına göre ısınma merdiveni ekler. */
+  const handleAddWarmup = useCallback((exerciseId) => {
+    setActiveWorkout(prev => {
+      if (!prev) return prev;
+      const hedef = (prev.exercises || []).find(e => e.id === exerciseId);
+      if (!hedef) return prev;
+      const gecmis = getRecentExerciseData(hedef.name);
+      const merdiven = buildWarmupLadder(hedef, {
+        history: gecmis,
+        barWeight: 20,
+        plates: settings.availablePlates,
+        customExercises,
+      });
+      if (!merdiven?.steps?.length) {
+        // Sebep söyleniyor: sessizce hiçbir şey yapmamak "düğme bozuk" gibi
+        // görünürdü.
+        showToast(merdiven?.reason === 'no-target'
+          ? 'Isınma için önce çalışma ağırlığı gerekiyor.'
+          : merdiven?.reason === 'existing'
+            ? 'Bu harekette zaten ısınma seti var.'
+            : 'Bu yük için ısınma merdiveni çıkmıyor.', 'warning');
+        return prev;
+      }
+      return {
+        ...prev,
+        exercises: prev.exercises.map(ex => (ex.id === exerciseId
+          ? applyWarmupLadder(ex, merdiven, generateId)
+          : ex)),
+      };
+    });
+  }, [setActiveWorkout, getRecentExerciseData, settings.availablePlates, customExercises, showToast]);
+
+  const handleRemoveWarmup = useCallback((exerciseId) => {
+    setActiveWorkout(prev => (prev ? {
+      ...prev,
+      exercises: prev.exercises.map(ex => (ex.id === exerciseId ? removeWarmupSets(ex) : ex)),
+    } : prev));
+  }, [setActiveWorkout]);
+
+  const handleSetExerciseNote = useCallback((exerciseId, text) => {
+    setActiveWorkout(prev => (prev ? {
+      ...prev,
+      exercises: prev.exercises.map(ex => (ex.id === exerciseId ? setExerciseNote(ex, text) : ex)),
+    } : prev));
+  }, [setActiveWorkout]);
+
+  /** Setin tarafını döndürür: yok → sol → sağ → yok. */
+  const handleSetSide = useCallback((exerciseId, setId) => {
+    setActiveWorkout(prev => (prev ? {
+      ...prev,
+      exercises: prev.exercises.map(ex => (ex.id !== exerciseId ? ex : {
+        ...ex,
+        sets: (ex.sets || []).map(st => {
+          if (st.id !== setId) return st;
+          const sonraki = st.side === 'left' ? 'right' : st.side === 'right' ? undefined : 'left';
+          if (!sonraki) { const { side: _cikan, ...kalan } = st; return kalan; }
+          return { ...st, side: sonraki };
+        }),
+      })),
+    } : prev));
+  }, [setActiveWorkout]);
+
+  const pastNotesForExercise = useCallback(
+    (name) => notesFor(name, sortedWorkouts, { excludeWorkoutId: activeWorkout?.id }),
+    [sortedWorkouts, activeWorkout?.id]);
+
+  const sessionVolumeReport = useMemo(
+    () => buildSessionVolume(activeWorkout, sortedWorkouts, {
+      customExercises,
+      experienceLevel: settings.experienceLevel,
+    }),
+    [activeWorkout, sortedWorkouts, customExercises, settings.experienceLevel, settings.volumeTargets]);
+
   const handleUseBackupExercise = useCallback((exerciseId, backupName) => {
     if (!exerciseId || !backupName) return;
     setActiveWorkout(prev => {
@@ -3110,6 +3192,59 @@ export default function App() {
     }),
     [sortedWorkouts, customExercises]);
 
+  // --- 7.4 raporları --------------------------------------------------
+  const sideBalance = useMemo(
+    () => scanSideBalance(sortedWorkouts),
+    [sortedWorkouts]);
+
+  const waterTarget = useMemo(
+    () => dailyWaterTarget(latestWeight, {
+      training: Boolean(activeWorkout) || sortedWorkouts.some(w => w.date === getLocalDateString()),
+      heat: Boolean(settings.waterHeatBonus),
+    }),
+    [latestWeight, activeWorkout, sortedWorkouts, settings.waterHeatBonus]);
+
+  const waterReport = useMemo(
+    () => waterSummary(settings.waterLog, {
+      target: waterTarget.ml,
+      todayKey: getLocalDateString(),
+    }),
+    [settings.waterLog, waterTarget.ml]);
+
+  const handleAddWater = useCallback((ml) => {
+    setSettings(prev => ({
+      ...prev,
+      waterLog: addWater(prev.waterLog, getLocalDateString(), ml),
+    }));
+  }, [setSettings]);
+
+  /**
+   * Haftalık planı takvim dosyasına aktarır.
+   *
+   * Dosya olarak indiriliyor, bir servise gönderilmiyor: uygulama çevrimdışı
+   * çalışıyor ve hiçbir veri dışarı çıkmıyor.
+   */
+  const handleExportCalendar = useCallback(() => {
+    const ics = planToIcs(activePlan, templates, { restSeconds: settings.restSeconds });
+    if (!ics) {
+      showToast('Aktif planda takvime yazılacak antrenman yok.', 'warning');
+      return;
+    }
+    const blob = new Blob([ics.text], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = ics.filename;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast(`${ics.events.length} antrenman takvime aktarıldı.`);
+  }, [activePlan, templates, settings.restSeconds, showToast]);
+
+  /** Rekor zaman çizelgesi: bütün rekorlar tek listede, yeniden eskiye. */
+  const recordTimeline = useMemo(
+    () => buildRecordTimeline(sortedWorkouts, { resolveLoad: resolveSetLoad, customExercises }),
+    [sortedWorkouts, resolveSetLoad, customExercises]);
+
   // Sıklık planı: frequency.js GEÇMİŞE bakıyor, bu PLANA. Hafta bitmeden
   // hangi kasın tek uyaranda kaldığını söylüyor.
   const frequencyPlan = useMemo(
@@ -3212,6 +3347,8 @@ export default function App() {
       timeOfDayItem: timeOfDayCoachItem(timeOfDayReport),
       techniqueItem: techniqueCoachItem(techniqueReport),
       frequencyPlanItem: frequencyPlanCoachItem(frequencyPlan),
+      sideBalanceItem: sideBalanceCoachItem(sideBalance),
+      waterItem: waterCoachItem(waterReport),
       exerciseOrderItem: orderCoachItem(orderReport, {
         context: activeWorkout ? 'devam eden seans' : 'bugünkü plan',
       }),
@@ -3235,6 +3372,7 @@ export default function App() {
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
     cardioReport, cardioSuggestion, restingHrReport, painScan, painRegions,
     plateauReport, restReport, timeOfDayReport, techniqueReport, orderReport, frequencyPlan,
+    sideBalance, waterReport,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
@@ -3382,6 +3520,7 @@ export default function App() {
                 dataHealth: () => setIsDataHealthOpen(true),
                 mergeExercises: () => setIsMergeOpen(true),
                 volumeTargets: () => setIsVolumeTargetsOpen(true),
+                compareExercises: () => setIsCompareOpen(true),
                 wizard: () => setIsWizardOpen(true),
                 coach: () => setIsCoachCenterOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
@@ -3515,6 +3654,10 @@ export default function App() {
               dayTemplates={dayTemplates}
               setDayTemplates={setDayTemplates}
               coachProtocol={activeCoachProtocol}
+              waterSummary={waterReport}
+              waterTarget={waterTarget}
+              onAddWater={handleAddWater}
+              onToggleWaterHeat={(v) => setSettings(prev => ({ ...prev, waterHeatBonus: v }))}
             />
           )}
 
@@ -3553,6 +3696,7 @@ export default function App() {
                 workouts,
               }}
               analyticsProps={{
+                recordTimeline,
                 analysisType,
                 frequency: frequencyReport,
                 setAnalysisType,
@@ -3653,6 +3797,12 @@ export default function App() {
               deloadReturn={deloadReturn}
               painWarningFor={painWarningForExercise}
               onUseBackup={handleUseBackupExercise}
+              onAddWarmup={handleAddWarmup}
+              onRemoveWarmup={handleRemoveWarmup}
+              onSetExerciseNote={handleSetExerciseNote}
+              onSetSide={handleSetSide}
+              pastNotesFor={pastNotesForExercise}
+              sessionVolume={sessionVolumeReport}
               sessionPace={buildSessionPace(activeWorkout, (() => {
                 // Kronometrenin gösterdiği süre: biriken + çalışıyorsa aradan geçen.
                 const t = activeWorkout.timer || {};
@@ -3704,6 +3854,7 @@ export default function App() {
               dataHealth: () => setIsDataHealthOpen(true),
               mergeExercises: () => setIsMergeOpen(true),
               volumeTargets: () => setIsVolumeTargetsOpen(true),
+              compareExercises: () => setIsCompareOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
@@ -3949,6 +4100,7 @@ export default function App() {
           weightKg={latestWeight}
           workouts={workouts}
           gender={profileGender}
+          onExportCalendar={handleExportCalendar}
         />}
 
         {isMesocycleOpen && <MesocycleModal
@@ -3990,6 +4142,15 @@ export default function App() {
           workouts={sortedWorkouts}
           exerciseNames={allExercisesNames}
           today={getLocalDateString()}
+        />}
+
+        {isCompareOpen && <ExerciseCompareModal
+          isOpen={isCompareOpen}
+          onClose={() => setIsCompareOpen(false)}
+          allNames={allExercisesNames}
+          workouts={sortedWorkouts}
+          resolveLoad={resolveSetLoad}
+          customExercises={customExercises}
         />}
 
         {isVolumeTargetsOpen && <VolumeTargetsModal
@@ -4150,6 +4311,7 @@ export default function App() {
               dataHealth: () => setIsDataHealthOpen(true),
               mergeExercises: () => setIsMergeOpen(true),
               volumeTargets: () => setIsVolumeTargetsOpen(true),
+              compareExercises: () => setIsCompareOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),

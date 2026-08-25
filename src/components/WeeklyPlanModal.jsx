@@ -1,7 +1,7 @@
 import React, { useState, useMemo, memo } from 'react';
 import {
   X, CalendarRange, Clock, Layers, Flame, Moon, AlertTriangle, CheckCircle2, Info,
-  Plus, Trash2, Dumbbell, HeartPulse, Star, Pencil, Check, Zap, ChevronDown,
+  Plus, Trash2, Dumbbell, HeartPulse, Star, Pencil, Check, Zap, ChevronDown, CalendarPlus,
 } from 'lucide-react';
 import MuscleHeatmap from './MuscleHeatmap';
 import SelectionAuditCard from './SelectionAuditCard';
@@ -41,6 +41,7 @@ const WeeklyPlanModal = memo(({
   weightKg = 0,
   workouts = [],
   gender = 'male',
+  onExportCalendar,
 }) => {
   const [editingDay, setEditingDay] = useState(null);
   const [renaming, setRenaming] = useState(null);
@@ -122,9 +123,23 @@ const WeeklyPlanModal = memo(({
         <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
           <CalendarRange size={15} className="mr-2 text-cyan-400" /> Haftalık Programlar
         </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
+        <span className="flex items-center gap-1">
+          {/* Plan uygulamanın içinde duruyordu ve hayatın geri kalanı başka bir
+              takvimde. Dosya olarak iniyor, hiçbir veri dışarı gitmiyor. */}
+          {onExportCalendar && (
+            <button
+              onClick={onExportCalendar}
+              title="Haftalık planı takvim dosyası (.ics) olarak indir"
+              aria-label="Planı takvime aktar"
+              className="text-zinc-500 active:text-cyan-400 p-2"
+            >
+              <CalendarPlus size={17} />
+            </button>
+          )}
+          <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
+            <X size={20} />
+          </button>
+        </span>
       </div>
 
       {/* Program seçici */}

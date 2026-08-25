@@ -14,6 +14,7 @@ import { sessionAdvice } from '../utils/autoregulation';
 import { repRangeFor } from '../utils/exerciseTargets';
 import { applyEmphasis } from '../utils/undulation';
 import { TECHNIQUE_GUIDE } from '../utils/setTechniques';
+import { SIDES, isUnilateralName, sideSummary } from '../utils/unilateral';
 
 const ActiveWorkoutView = memo(({
   deloadReturn = null,
@@ -21,6 +22,12 @@ const ActiveWorkoutView = memo(({
   painWarningFor = null,
   sessionPace = null,
   onUseBackup = null,
+  onAddWarmup = null,
+  onRemoveWarmup = null,
+  onSetExerciseNote = null,
+  onSetSide = null,
+  pastNotesFor = null,
+  sessionVolume = null,
   activeWorkout,
   setActiveWorkout,
   setIsEndWorkoutModalOpen,
@@ -202,6 +209,42 @@ const ActiveWorkoutView = memo(({
                 <div className="h-full bg-cyan-500 rounded-full" style={{ width: `${sessionPace.progress}%` }} />
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Kalan hacim. Hacim tablosu haftayı BİTTİKTEN SONRA anlatıyordu;
+            seansın ortasında "bu kastan bu hafta kaç set kaldı" sorusunun
+            cevabı yoktu, oysa karar tam orada veriliyor. Planlanan ama henüz
+            girilmemiş setler ayrı gösteriliyor: onları saymamak "6 set açık"
+            deyip zaten programda duran setleri görmezden gelmek olurdu. */}
+        {sessionVolume?.hasData && (
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 space-y-1.5">
+            <div className="flex justify-between items-baseline">
+              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
+                Bu Hafta Kalan
+              </span>
+              <span className="text-[9px] font-mono text-zinc-600">planlananlar dahil</span>
+            </div>
+            <div className="flex flex-wrap gap-1">
+              {sessionVolume.rows.slice(0, 8).map(r => (
+                <span
+                  key={r.muscle}
+                  title={`${r.muscle}: hafta ${r.priorWeek} + bugün ${r.entered} girildi, ${r.planned} planlı → ${r.projected} (MEV ${r.mev} · MRV ${r.mrv})`}
+                  className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
+                    r.willExceedMrv ? 'border-red-900/60 bg-red-950/20 text-red-300'
+                      : r.shortOfMev ? 'border-amber-900/60 bg-amber-950/20 text-amber-300'
+                        : 'border-emerald-900/60 bg-emerald-950/20 text-emerald-300'}`}
+                >
+                  {r.muscle} {r.projected}/{r.mev}
+                  {r.planned > 0 && <span className="text-zinc-500"> (+{r.planned})</span>}
+                </span>
+              ))}
+            </div>
+            {sessionVolume.willExceedMrv.length > 0 && (
+              <p className="text-[9px] font-mono text-red-300/85 leading-relaxed">
+                Tavanı aşacak: {sessionVolume.willExceedMrv.map(r => `${r.muscle} +${r.overBy}`).join(' · ')}
+              </p>
+            )}
           </div>
         )}
 
@@ -412,6 +455,72 @@ const ActiveWorkoutView = memo(({
                 );
               })()}
 
+              {/* Isınma merdiveni, seans notu ve tek taraflı takip.
+                  Üçü de hareketin kendi bandında: seansın genel not alanına
+                  yazılanlar bir sonraki seansta kimse tarafından açılmıyordu. */}
+              {(onAddWarmup || onSetExerciseNote) && (
+                <div className="px-3 py-1.5 border-b border-zinc-800 bg-zinc-950/40 space-y-1.5">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {onAddWarmup && (() => {
+                      const isinmaVar = (ex.sets || []).some(st => st.setType === 'warmup');
+                      return isinmaVar ? (
+                        <button
+                          onClick={() => onRemoveWarmup?.(ex.id)}
+                          className="text-[8px] font-bold text-orange-300 bg-orange-950/25 border border-orange-900/50 rounded px-1.5 py-0.5 active:bg-orange-900/30"
+                        >
+                          ısınmayı kaldır
+                        </button>
+                      ) : (
+                        <button
+                          onClick={() => onAddWarmup(ex.id)}
+                          title="Çalışma ağırlığına göre ısınma merdiveni ekle"
+                          className="text-[8px] font-bold text-orange-300 bg-orange-950/25 border border-orange-900/50 rounded px-1.5 py-0.5 active:bg-orange-900/30 flex items-center gap-1"
+                        >
+                          <Flame size={8} /> ısınma ekle
+                        </button>
+                      );
+                    })()}
+
+                    {/* Tek taraflı takip yalnızca adı çağrıştıran hareketlerde
+                        önerilir; her harekete sol/sağ düğmesi koymak arayüzü
+                        gereksiz doldururdu. */}
+                    {isUnilateralName(ex.name) && (() => {
+                      const ozet = sideSummary(ex.sets);
+                      return ozet.hasBoth ? (
+                        <span
+                          className={`text-[8px] font-bold rounded px-1.5 py-0.5 border ${ozet.gapPercent >= 10
+                            ? 'text-amber-300 bg-amber-950/25 border-amber-900/50'
+                            : 'text-zinc-400 bg-zinc-900 border-zinc-800'}`}
+                        >
+                          S {ozet.left.tonnage} · D {ozet.right.tonnage}
+                          {ozet.gapPercent >= 10 && ` (%${ozet.gapPercent} fark)`}
+                        </span>
+                      ) : null;
+                    })()}
+                  </div>
+
+                  {onSetExerciseNote && (
+                    <input
+                      type="text"
+                      value={ex.note || ''}
+                      onChange={(e) => onSetExerciseNote(ex.id, e.target.value)}
+                      placeholder="Bu harekete not… (sehpa deliği, sıkışma, ayar)"
+                      maxLength={240}
+                      aria-label={`${ex.name} için seans notu`}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-[9px] font-mono text-zinc-300 outline-none focus:border-cyan-600 placeholder:text-zinc-700"
+                    />
+                  )}
+
+                  {/* Geçmiş notlar: kalıcı kurulum notundan farklı, o seansa
+                      ait gözlemler. Dört ay öncesinden eskisi gösterilmiyor. */}
+                  {pastNotesFor?.(ex.name)?.map(n => (
+                    <p key={n.date} className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+                      <span className="text-zinc-600">{n.label}:</span> {n.note}
+                    </p>
+                  ))}
+                </div>
+              )}
+
               {/* Şablonda planlanmış olanlar: yedek hareket, teknik ve
                   kaydırılmış tekrar aralığı. Plan şablonda kalsaydı seansta
                   hatırlanması kullanıcıya kalırdı. */}
@@ -613,13 +722,40 @@ const ActiveWorkoutView = memo(({
 
                   return (
                     <div key={set.id} className={`grid grid-cols-12 gap-1 items-center p-1 rounded-xl border transition-colors relative ${borderStyle}`}>
-                      <button
-                        onClick={() => updateSet(ex.id, set.id, 'setType', getNextSetType(set.setType))}
-                        title={`Set Tipi: ${st.label} (Dokun: değiştir)`}
-                        className={`col-span-1 text-center text-[11px] font-mono font-bold h-10 rounded-lg transition-colors ${st.textClass}`}
-                      >
-                        {setBadgeText}
-                      </button>
+                      {/* Tek taraflı hareketlerde rozet hücresi ikiye bölünüyor:
+                          üstte set tipi, altta taraf. Ayrı bir sütun açmak
+                          on iki sütunluk ızgarayı bozardı ve taraf takibi
+                          yalnızca birkaç harekette gerekiyor. */}
+                      {onSetSide && isUnilateralName(ex.name) ? (
+                        <div className="col-span-1 flex flex-col gap-0.5">
+                          <button
+                            onClick={() => updateSet(ex.id, set.id, 'setType', getNextSetType(set.setType))}
+                            title={`Set Tipi: ${st.label} (Dokun: değiştir)`}
+                            className={`text-center text-[10px] font-mono font-bold h-6 rounded-md transition-colors ${st.textClass}`}
+                          >
+                            {setBadgeText}
+                          </button>
+                          <button
+                            onClick={() => onSetSide(ex.id, set.id)}
+                            title={set.side === 'left' ? 'Sol taraf' : set.side === 'right' ? 'Sağ taraf' : 'Taraf yok (dokun: sol)'}
+                            aria-label={`${set.side === 'left' ? 'Sol' : set.side === 'right' ? 'Sağ' : 'Tarafsız'} — değiştirmek için dokun`}
+                            className={`text-center text-[9px] font-mono font-bold h-3.5 rounded-md transition-colors ${
+                              set.side === 'left' ? 'text-violet-300 bg-violet-950/40'
+                                : set.side === 'right' ? 'text-cyan-300 bg-cyan-950/40'
+                                  : 'text-zinc-700 bg-zinc-900'}`}
+                          >
+                            {set.side === 'left' ? SIDES[0].short : set.side === 'right' ? SIDES[1].short : '·'}
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => updateSet(ex.id, set.id, 'setType', getNextSetType(set.setType))}
+                          title={`Set Tipi: ${st.label} (Dokun: değiştir)`}
+                          className={`col-span-1 text-center text-[11px] font-mono font-bold h-10 rounded-lg transition-colors ${st.textClass}`}
+                        >
+                          {setBadgeText}
+                        </button>
+                      )}
                       <div className="col-span-3"><input type="number" inputMode="decimal" min={INPUT_LIMITS.weight.min} max={INPUT_LIMITS.weight.max} value={set.weight} onChange={(e) => updateSet(ex.id, set.id, 'weight', e.target.value)} onFocus={e => e.target.select()} onBlur={(e) => updateSet(ex.id, set.id, 'weight', clampNumber(e.target.value, INPUT_LIMITS.weight.min, INPUT_LIMITS.weight.max))} className={`w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 font-mono text-sm outline-none text-center focus:bg-zinc-800 h-10 transition-colors ${warmup ? 'text-orange-300/70' : 'text-cyan-400'}`} placeholder="0" /></div>
                       <div className="col-span-2">
                         <input

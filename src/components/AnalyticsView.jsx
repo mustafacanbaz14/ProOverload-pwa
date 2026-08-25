@@ -3,6 +3,7 @@ import { Search, Eye, EyeOff, BrainCircuit, TrendingDown, Utensils } from 'lucid
 import TrendChart from './TrendChart';
 import ConsistencyCard from './ConsistencyCard';
 import TrainingCalendarCard from './TrainingCalendarCard';
+import RecordTimelineCard from './RecordTimelineCard';
 import SessionQualityCard from './SessionQualityCard';
 import CardioCoachCard from './CardioCoachCard';
 import StrengthStandardsCard from './StrengthStandardsCard';
@@ -35,6 +36,7 @@ const FREQ_TONE = {
 };
 
 const AnalyticsView = memo(({
+  recordTimeline = null,
   analysisType,
   cardioReport = null,
   cardioSuggestion = null,
@@ -346,6 +348,7 @@ const AnalyticsView = memo(({
               kaslar arasında nasıl dağılmış". */}
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
           <TrainingCalendarCard workouts={workouts} today={today} />
+          <RecordTimelineCard timeline={recordTimeline} />
           <SessionQualityCard workouts={workouts} customExercises={customExercises} />
           <TrainingQualityCard workouts={workouts} customExercises={customExercises} resolveLoad={resolveLoad} />
           <StrengthStandardsCard

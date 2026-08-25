@@ -211,6 +211,10 @@ const mergeSet = (set) => ({
   // öneriyor ve kronometre çalıştırıyordu ama gerçekte ne kadar beklendiğini
   // kaydetmiyordu; "acele ettiğim için mi tekrar düşüyor" sorusu cevapsızdı.
   ...(parseNumber(set?.restBefore) > 0 ? { restBefore: Math.round(parseNumber(set.restBefore)) } : {}),
+  // Tek taraflı hareketlerde setin hangi tarafa ait olduğu. Yazılmayan setler
+  // eskisi gibi tek kayıt olarak duruyor; ayrı bir set tipi açılmadı ki geçmiş
+  // bozulmasın ve takip yalnızca istenen harekette kullanılsın.
+  ...(set?.side === 'left' || set?.side === 'right' ? { side: set.side } : {}),
 });
 
 const mergeExercise = (ex) => ({

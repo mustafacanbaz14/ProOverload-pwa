@@ -16,6 +16,7 @@ import { dayMindCalories } from '../utils/wellness';
 import { dayEnergyBreakdown, hasDayNeatOverride, neatOptsForDay } from '../utils/energyModel';
 import NutritionTemplatesModal from './NutritionTemplatesModal';
 import { isCoachProtocolActive } from '../utils/coachProtocol';
+import HydrationCard from './HydrationCard';
 
 const MacroTile = ({ label, value, numericValue, target, color, bar }) => {
   const ratio = target > 0 ? Math.min(100, Math.round((parseNumber(numericValue) / target) * 100)) : null;
@@ -59,6 +60,10 @@ const NutritionView = memo(({
   dayTemplates = [],
   setDayTemplates,
   coachProtocol = null,
+  waterSummary = null,
+  waterTarget = null,
+  onAddWater,
+  onToggleWaterHeat,
 }) => {
   const safeMeals = Array.isArray(currentNutritionForm.meals) ? currentNutritionForm.meals : [];
   const isDaily = currentNutritionForm.entryMode === 'daily';
@@ -636,6 +641,21 @@ const NutritionView = memo(({
       >
         <Save size={15} className="mr-2" /> {isToday ? 'Bugünün Kaydını Kaydet' : 'Geçmiş Kaydı Kaydet'}
       </button>
+
+      {/* Su takibi. Enerji dengesi açılır bölümünün içinde duruyordu ama
+          orası varsayılan kapalı: günlük ve tek dokunuşluk bir işlemi
+          kapalı bir bölmeye gömmek onu pratikte kullanılamaz yapıyordu.
+          Yalnızca bugünün kaydında görünüyor — geçmiş bir güne su eklemek
+          anlamlı bir işlem değil. */}
+      {isToday && waterSummary && waterTarget && (
+        <HydrationCard
+          summary={waterSummary}
+          target={waterTarget}
+          onAdd={onAddWater}
+          onToggleHeat={onToggleWaterHeat}
+          heat={Boolean(settings.waterHeatBonus)}
+        />
+      )}
 
       <DisclosureCard
         key={`energy-${detailed || advancedOpen}`}

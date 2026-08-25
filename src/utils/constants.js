@@ -88,6 +88,11 @@ export const DEFAULT_SETTINGS = {
   // Kas bazında kişisel haftalık hacim hedefi: { 'Yan Omuz': { mev, mav, mrv } }.
   // Yazılmayan kaslar literatür değerlerini kullanmaya devam ediyor.
   volumeTargets: {},
+  // Su takibi: { '2026-08-24': 2300 } — gün başına toplam mililitre.
+  // Her bardağı ayrı satır tutmak kimsenin sürdüremediği bir alışkanlık;
+  // amaç günün toplamını bilmek.
+  waterLog: {},
+  waterHeatBonus: false,
   // Hareket adı → saniye. Yazılmayan hareketler akıllı/genel süreye düşer.
   exerciseRestOverrides: {},
   // Kardiyo hedefi: { preset, lowMinutes, highSessions }. Boş bırakılan
@@ -706,13 +711,49 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.3';
+export const APP_VERSION = '7.4';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.3',
-  date: '2026-08-22',
+  title: 'ProOverload 7.4',
+  date: '2026-08-25',
   items: [
+    {
+      title: 'Isınma Setlerini Tek Dokunuşla Ekle',
+      desc: 'Isınma merdivenini hesaplayan kod uygulamada zaten vardı ama yalnızca plaka hesaplayıcısında kullanılıyordu: ağırlıkları görüyor, sonra setleri seansa elle giriyordun. Pratikte kimse girmiyor. Artık hareketin yanındaki düğme merdiveni doğrudan sete yazıyor. Setler ısınma tipiyle giriyor, yani hacme sayılmıyorlar ama kayıtta duruyorlar. Merdiven çalışma ağırlığına göre kuruluyor: önce bu seansta girilmiş sete, yoksa şablonda planlanana, o da yoksa geçmişteki son çalışma setine bakıyor. Bar ağırlığı yalnızca barbell hareketlerinde uygulanıyor — kabloya 20 kg taban koymak yan kaldırışta merdiveni tamamen boş bırakıyordu. Küçük kas gruplarında ve hafif yüklerde merdiven iki kademeye iniyor; yan kaldırışa dört kademe ısınma seansı uzatmaktan başka bir şey yapmıyor.'
+    },
+    {
+      title: 'Hareket Başına Seans Notu',
+      desc: 'Seansın tamamı için bir not alanı vardı ama salonda tutulmak istenen notların çoğu HAREKETE ait ve bir sonraki seansta o hareketin başında hatırlanması gerekiyor: "sehpa dördüncü delik", "sol omuz son sette sıkıştı", "bu makinede pim iki numara". Seans notuna yazılınca kayboluyorlardı, çünkü kimse üç hafta önceki seansın not alanını açmıyor. Artık her hareketin kendi not satırı var ve o hareketin geçmiş notları hemen altında görünüyor. Kurulum notundan farklı: o KALICI bir ayar, bu O SEANSA ait bir gözlem. Dört aydan eski notlar hatırlatılmıyor — o kadar eski bir "sehpa deliği" notu büyük ihtimalle artık geçerli değil.'
+    },
+    {
+      title: 'Tek Taraflı Hareketlerde Sol/Sağ Takibi',
+      desc: 'Tek kol ve tek bacak hareketleri kayda tek bir set olarak giriyordu, oysa o set iki farklı performans: solda 10, sağda 12 tekrar yapmış olabilirsin ve uygulama ikisini de göremiyordu. Artık setin tarafı işaretlenebiliyor ve iki taraf yan yana toplanıyor. Ayrı bir set tipi AÇILMADI: taraf isteğe bağlı bir alan, yazılmayan setler eskisi gibi duruyor, yani geçmiş bozulmuyor ve takip yalnızca istediğin harekette çalışıyor. Taraf seçici de yalnızca adı tek taraflı çalışmayı çağrıştıran hareketlerde çıkıyor. Denge taraması tek seansın farkına değil, BİRKAÇ SEANSTA AYNI YÖNDE tekrarlanan farka bakıyor — bir günlük fark rastlantı, tekrarlanan fark örüntü. %10 altındaki fark hiç konuşulmuyor; o kadarı ölçüm gürültüsü.'
+    },
+    {
+      title: 'Seans İçi Kalan Hacim Sayacı',
+      desc: 'Hacim tablosu haftayı bittikten SONRA anlatıyordu; seansın ortasında "bu kastan bu hafta kaç set kaldı" sorusunun cevabı yoktu. Oysa karar tam orada veriliyor: son hareketi bırakayım mı, bir set daha ekleyeyim mi. Sayaç üç parçayı topluyor: bu hafta daha önce yapılanlar, bu seansta girilenler ve bu seansta planlanmış ama henüz girilmemiş setler. Üçüncüsü kritik — planlananları saymamak "MEV için 6 set açık" deyip zaten programda duran setleri görmezden gelmek olurdu. Tavanı aşacak kaslar ayrıca kırmızıyla uyarıyor, yani set eklemeden önce görüyorsun.'
+    },
+    {
+      title: 'Rekor Zaman Çizelgesi',
+      desc: 'Rekorlar hareket başına tutuluyordu: bir hareketin profilini açınca en iyisini görüyordun. Ama "son üç ayda kaç rekor kırdım", "hangi bölge ilerliyor" soruları için on beş profili tek tek açmak gerekiyordu. Artık hepsi tek listede, yeniden eskiye. Rekor tanımı ileriye doğru kuruluyor: bir set YAPILDIĞI GÜN rekor olduysa listede kalıyor, sonradan geçilmiş olması onu düşürmüyor — bugünün gözünden bakıp geçmişteki başarıları silmek olmazdı. İlk kez yapılan hareketler ayrı sayılıyor, çünkü onlar ilerleme değil başlangıç. Son rekorun üstünden kaç gün geçtiği de yazıyor: durgunluğun en basit göstergesi.'
+    },
+    {
+      title: 'İki Hareketi Yan Yana Karşılaştır',
+      desc: '"Bench mi incline mı daha iyi gidiyor", "kabloya geçtiğim hareket eskisinden daha mı iyi ilerliyor", "hangisini bırakayım" — bu sorular iki profili açıp göz kararı kıyaslamayı gerektiriyordu. Artık seans sayısı, toplam set, en iyi ve şu anki 1RM, haftalık artış ve tonaj yan yana. Haftalık artış toplam farktan değil ilk ve son ölçüm arasındaki süreye bölünerek hesaplanıyor: iki yıldır yaptığın hareket iki aydır yaptığını her zaman yenerdi ve bu bir ilerleme farkı değil süre farkı olurdu. Ekran iddia üretmiyor — hangisinin "daha iyi" olduğunu söylemiyor, çünkü bu kişiye, ekipmana ve hedefe bağlı. Boy yüklenmesinde de kazanan yok; ikisi de değerli.'
+    },
+    {
+      title: 'Tek Tekrar Maksimum Test Protokolü',
+      desc: 'Uygulama 1RM\'i her yerde tahmin ediyor ve bu çoğu iş için yeterli, ama tahmin tekrar sayısı arttıkça sapıyor. Gerçek maksimumu ölçmek isteyen için hiçbir rehber yoktu: ne ısınma merdiveni, ne deneme seçimi. Artık üç kademeli ısınma ve üç deneme planı çıkıyor, aralarında beş dakika dinlenmeyle. İlk deneme KESİN kaldırılacak bir yük: başarısız bir ilk deneme hem güveni hem kalan denemeleri harcıyor. Üçten fazla deneme yok, çünkü yorgunluk birikince test gerçek maksimumu olduğundan düşük ölçtürüyor — testin kendisi sonucu bozuyor. Başarısız denemeler kayda hiç yazılmıyor: sıfır tekrarlı bir set hacim ve rekor hesabında anlamsız olurdu.'
+    },
+    {
+      title: 'Su Takibi',
+      desc: 'Beslenme tarafı kaloriyi ve makroyu ayrıntılı izliyordu ama suyu hiç saymıyordu. Oysa performansa etkisi doğrudan: vücut ağırlığının yaklaşık %2\'si kadar sıvı kaybı kuvvet çıktısını ölçülebilir biçimde düşürüyor. Hedef vücut ağırlığından türetiliyor, sabit "2 litre" değil — 55 kiloluk biriyle 100 kiloluk birinin ihtiyacı aynı olamaz. Antrenman gününe ve istersen sıcak havaya ek pay veriliyor ve sayının nereden geldiği kartta yazıyor. Kayıt gün bazında toplam olarak tutuluyor, her bardak ayrı satır değil: amaç günün toplamını bilmek ve her yudumu kaydetmek kimsenin sürdüremediği bir alışkanlık. Koç yalnızca dört günden fazla takip varsa ve ortalama hedefin dörtte üçünün altındaysa konuşuyor.'
+    },
+    {
+      title: 'Haftalık Planı Takvime Aktar',
+      desc: 'Plan uygulamanın içinde duruyordu ve hayatının geri kalanı başka bir takvimde; antrenman saatini telefonun takvimine elle girmek gerekiyordu. Artık haftalık plan takvim dosyası (.ics) olarak indiriliyor. Etkinlikler haftalık tekrarlı: her hafta ayrı etkinlik üretmek takvimi doldururdu ve plan değişince eskilerini temizlemek imkânsız olurdu — tek tekrarlı etkinlik tek silme işlemiyle kalkıyor. Süre şablonun kendi tahmininden geliyor, hareket listesi de etkinliğin açıklamasına yazılıyor. Dosya olarak iniyor, bir servise gönderilmiyor: uygulama çevrimdışı çalışıyor ve hiçbir veri dışarı çıkmıyor.'
+    },
     {
       title: 'Dört Yeni Düzen',
       desc: 'ÜST / ALT / TAM VÜCUT (3 gün): ilk iki gün bölünmüş olduğu için seans başına hacim makul kalıyor, üçüncü gün tam vücut olduğu için her kas haftada iki kez uyarılıyor — üç günde en dengeli seçeneklerden biri. İTİŞ / ÇEKİŞ / BACAK / ÜST (4 gün): klasik üçlü bölmenin haftada bir uyaran sorununu dördüncü bir üst gün ekleyerek çözüyor, bacak tek ağır günde kalıyor. İTİŞ / ÇEKİŞ / BACAK / ÜST / ALT (5 gün): haftanın ilk yarısı Push-Pull-Legs, ikinci yarısı Üst-Alt. İki yaklaşımın da iyi tarafını alıyor ve altı güne çıkmadan sıklığı ikiye tamamlıyor — PPL sevip haftada bir uyarımın az geldiğini düşünenler için en doğrudan çözüm. GÖVDE / UZUVLAR / BACAK / GÖVDE / UZUVLAR (5 gün): itiş-çekiş ayrımında omuz ve kol hep büyük bir bileşkeden sonra yorgun halde çalışılıyor; bu bölme onları kendi gününde taze başlatıyor. Dördü de üreticinin altın testinden geçiyor: her kas koruma eşiğinin üstünde, tavanın altında ve gerilmede yükleyen en az bir harekete sahip.'

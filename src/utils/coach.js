@@ -66,6 +66,8 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     techniqueItem = null,
     exerciseOrderItem = null,
     frequencyPlanItem = null,
+    sideBalanceItem = null,
+    waterItem = null,
   } = ctx;
 
   const items = [];
@@ -140,6 +142,24 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'frequency-plan', priority: 4, tone: TONES.info, action: 'plan',
       title: frequencyPlanItem.title,
       detail: frequencyPlanItem.detail,
+    });
+  }
+
+  // Tek taraflı asimetri: sakatlık riski ve gelişim farkı, ama acil değil.
+  if (sideBalanceItem) {
+    ekle({
+      key: 'side-balance', priority: 5, tone: TONES.info, action: 'progress',
+      title: sideBalanceItem.title,
+      detail: sideBalanceItem.detail,
+    });
+  }
+
+  // Su: en düşük öncelikli, çünkü etkisi gerçek ama dolaylı.
+  if (waterItem) {
+    ekle({
+      key: 'hydration', priority: 8, tone: TONES.info, action: 'nutrition',
+      title: waterItem.title,
+      detail: waterItem.detail,
     });
   }
 

@@ -3,6 +3,21 @@ import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import {
+  buildWarmupLadder, applyWarmupLadder, removeWarmupSets, warmupTargetFor,
+} from '../src/utils/warmupSets.js';
+import { setExerciseNote, notesFor, normalizeNote, allNotedExercises } from '../src/utils/exerciseNotes.js';
+import {
+  isUnilateralName, sideSummary, scanSideBalance, sideBalanceCoachItem,
+} from '../src/utils/unilateral.js';
+import { buildSessionVolume } from '../src/utils/sessionVolume.js';
+import { buildRecordTimeline } from '../src/utils/recordTimeline.js';
+import { compareExercises, exerciseStats } from '../src/utils/exerciseCompare.js';
+import { buildMaxTestPlan, maxTestToSets, maxTestResult } from '../src/utils/maxTest.js';
+import {
+  dailyWaterTarget, addWater, waterSummary, waterCoachItem,
+} from '../src/utils/hydration.js';
+import { planToIcs } from '../src/utils/calendarExport.js';
+import {
   EMPHASIS_MODES, findEmphasis, shiftRepRange, suggestEmphasis, applyEmphasis, auditEmphasis,
 } from '../src/utils/undulation.js';
 import {
@@ -4439,6 +4454,239 @@ test('süpersetli hareketler sıralamada yerinde kalıyor', () => {
   // Bağlı çift hâlâ 2. ve 3. sırada ve komşu: bağ komşuluk demek.
   assert.equal(r.order[1].supersetId, 'x');
   assert.equal(r.order[2].supersetId, 'x');
+});
+
+
+// ---------------------------------------------------------------- 7.4
+
+const ns = (kg, r, extra = {}) => ({ weight: kg, reps: r, rir: 1, setType: 'normal', ...extra });
+
+test('ısınma merdiveni çalışma ağırlığından kuruluyor', () => {
+  const ex = { id: 'e', name: 'Barbell Bench Press', sets: [{ id: 'a', ...ns(100, 8) }] };
+  const l = buildWarmupLadder(ex);
+  assert.ok(l.steps.length >= 3);
+  // Kademeler artan, hepsi hedefin altında.
+  l.steps.forEach(st => assert.ok(st.weight < 100));
+  assert.equal(l.target, 100);
+  assert.equal(l.source, 'session');
+  assert.equal(warmupTargetFor(ex).weight, 100);
+});
+
+test('bar ağırlığı yalnızca barbell hareketinde uygulanıyor', () => {
+  // Kabloya 20 kg taban koymak merdiveni tamamen boş bırakıyordu.
+  const kablo = { name: 'Lateral Raise (Cable)', sets: [{ id: 'a', ...ns(14, 15) }] };
+  const l = buildWarmupLadder(kablo);
+  assert.ok(l.steps.length > 0, 'kablo hareketinde merdiven boş kalmamalı');
+  assert.equal(l.shortened, true, 'küçük kasta merdiven kısalmalı');
+  assert.ok(l.steps.length <= 2);
+});
+
+test('ısınma bir kez ekleniyor ve geri alınabiliyor', () => {
+  let n = 0;
+  const gid = () => `w${++n}`;
+  const ex = { id: 'e', name: 'Barbell Bench Press', sets: [{ id: 'a', ...ns(100, 8) }] };
+  const l = buildWarmupLadder(ex);
+  const eklendi = applyWarmupLadder(ex, l, gid);
+  // Isınma BAŞA ekleniyor: kayıt gerçeği yansıtmalı.
+  assert.equal(eklendi.sets[0].setType, 'warmup');
+  assert.equal(eklendi.sets[eklendi.sets.length - 1].setType, 'normal');
+  // İkinci kez eklenmiyor.
+  assert.equal(buildWarmupLadder(eklendi).reason, 'existing');
+  assert.equal(removeWarmupSets(eklendi).sets.length, 1);
+});
+
+test('hedef yoksa ısınma merdiveni kurulmuyor', () => {
+  const bos = { name: 'X', sets: [{ id: 'a', weight: '', reps: '', setType: 'normal' }] };
+  assert.equal(buildWarmupLadder(bos).reason, 'no-target');
+  // Geçmişten de okunabiliyor.
+  const l = buildWarmupLadder({ name: 'Barbell Back Squat', sets: [{ id: 'a', weight: '', reps: '', setType: 'normal' }] },
+    { history: { sets: [ns(140, 5)] } });
+  assert.equal(l.target, 140);
+  assert.equal(l.source, 'history');
+});
+
+test('hareket notu yazılıyor, boşaltılınca siliniyor', () => {
+  const ex = { name: 'Bench', sets: [] };
+  const notlu = setExerciseNote(ex, '  sehpa 4. delik  ');
+  assert.equal(notlu.note, 'sehpa 4. delik');
+  assert.equal(setExerciseNote(notlu, '').note, undefined);
+  // Uzunluk sınırlanıyor.
+  assert.equal(normalizeNote('x'.repeat(500)).length, 240);
+});
+
+test('geçmiş notlar hatırlatılıyor, eskiler elenmiyor', () => {
+  const w = [
+    { id: '1', date: '2026-08-20', exercises: [{ name: 'Bench', note: 'sol omuz sıkıştı', sets: [] }] },
+    { id: '2', date: '2026-08-10', exercises: [{ name: 'Bench', note: 'sehpa 4', sets: [] }] },
+    // 4 aydan eski: hatırlatılmıyor.
+    { id: '3', date: '2026-01-10', exercises: [{ name: 'Bench', note: 'çok eski', sets: [] }] },
+  ];
+  const notlar = notesFor('Bench', w, { today: new Date('2026-08-25') });
+  assert.equal(notlar.length, 2);
+  assert.equal(notlar[0].note, 'sol omuz sıkıştı');
+  // Devam eden seans dışlanabiliyor.
+  assert.equal(notesFor('Bench', w, { today: new Date('2026-08-25'), excludeWorkoutId: '1' }).length, 1);
+  assert.equal(allNotedExercises(w)[0].name, 'Bench');
+});
+
+test('tek taraflı ad tanıma ve taraf özeti', () => {
+  assert.equal(isUnilateralName('Bulgarian Split Squat'), true);
+  assert.equal(isUnilateralName('Single Arm Lat Pulldown'), true);
+  assert.equal(isUnilateralName('Barbell Bench Press'), false);
+
+  const o = sideSummary([
+    ns(30, 12, { side: 'left' }), ns(30, 10, { side: 'left' }),
+    ns(30, 12, { side: 'right' }), ns(30, 12, { side: 'right' }),
+  ]);
+  assert.equal(o.hasBoth, true);
+  assert.equal(o.stronger, 'right');
+  assert.ok(o.gapPercent > 0);
+  // Taraf yazılmamış setler "iki tarafı kapsıyor" varsayılmıyor.
+  assert.equal(sideSummary([ns(30, 12)]).hasBoth, false);
+});
+
+test('denge taraması tekrarlanan farkı arıyor', () => {
+  const seans = (d, solTekrar) => ({
+    id: d, date: d,
+    exercises: [{ name: 'Single Arm Row', sets: [ns(30, solTekrar, { side: 'left' }), ns(30, 12, { side: 'right' })] }],
+  });
+  const surekli = scanSideBalance([seans('2026-08-01', 9), seans('2026-08-08', 9), seans('2026-08-15', 9)]);
+  assert.equal(surekli.hasData, true);
+  assert.equal(surekli.items[0].stronger, 'right');
+  assert.ok(surekli.items[0].persistent);
+  assert.ok(sideBalanceCoachItem(surekli).title.includes('sol'));
+
+  // Eşik altındaki fark gürültü sayılıyor.
+  const kucuk = scanSideBalance([seans('2026-08-01', 12), seans('2026-08-08', 12)]);
+  assert.equal(kucuk.hasData, false);
+  assert.equal(sideBalanceCoachItem(kucuk), null);
+});
+
+test('seans hacmi planlananları ayrı sayıyor', () => {
+  const bos = () => ({ weight: '', reps: '', rir: 2, setType: 'normal' });
+  const aktif = {
+    id: 'a', date: '2026-08-24',
+    exercises: [{ name: 'Barbell Bench Press', sets: [ns(50, 10), ns(50, 10), bos(), bos()] }],
+  };
+  const r = buildSessionVolume(aktif, [], { today: new Date('2026-08-24') });
+  const g = r.rows.find(x => x.muscle === 'Göğüs');
+  assert.equal(g.entered, 2);
+  assert.equal(g.planned, 2);
+  // Planlananlar dahil beklenen: ikisinin toplamı.
+  assert.equal(g.projected, 4);
+  assert.equal(buildSessionVolume(null, []).hasData, false);
+});
+
+test('rekor çizelgesi o günün rekorunu koruyor', () => {
+  const mk = (d, kg) => ({ id: d, date: d, exercises: [{ name: 'Bench', sets: [ns(kg, 8)] }] });
+  const t = buildRecordTimeline([mk('2026-05-01', 80), mk('2026-06-01', 85), mk('2026-07-01', 84), mk('2026-08-01', 90)],
+    { today: new Date('2026-08-25') });
+  // Üç rekor: 80 (ilk), 85, 90. Aradaki 84 rekor değil.
+  assert.equal(t.total, 3);
+  assert.equal(t.items[0].e1rm > t.items[1].e1rm, true);
+  assert.equal(t.items[t.items.length - 1].first, true);
+  assert.ok(t.daysSinceLast >= 24);
+  assert.equal(buildRecordTimeline([]).hasData, false);
+});
+
+test('hareket karşılaştırma haftalık artışı süreye bölüyor', () => {
+  const mk = (d, a, b) => ({
+    id: d, date: d,
+    // Kütüphanedeki tam ad kullanılıyor: kısaltılmış bir ad kas eşlemesine
+    // düşmüyor ve karşılaştırma ortak kas bulamıyor.
+    exercises: [{ name: 'Barbell Bench Press', sets: [ns(a, 8)] }, { name: 'Incline Dumbbell Press', sets: [ns(b, 10)] }],
+  });
+  const w = [mk('2026-06-01', 80, 30), mk('2026-07-01', 85, 30), mk('2026-08-01', 90, 32)];
+  const k = compareExercises('Barbell Bench Press', 'Incline Dumbbell Press', w);
+  assert.equal(k.comparable, true);
+  assert.ok(k.sharedMuscles.includes('Göğüs'));
+  assert.equal(k.enoughData, true);
+  const a = exerciseStats('Barbell Bench Press', w);
+  assert.ok(a.weeklyGain > 0);
+  assert.equal(a.sessions, 3);
+  // Aynı hareket karşılaştırılmıyor.
+  assert.equal(compareExercises('Barbell Bench Press', 'Barbell Bench Press', w), null);
+});
+
+test('maksimum test planı ve sonucu', () => {
+  const p2 = buildMaxTestPlan('Barbell Bench Press', { estimate1RM: 120 });
+  assert.ok(p2.warmups.length >= 2);
+  assert.equal(p2.attempts.length, 3);
+  // İlk deneme tahminin altında, sonuncusu üstünde.
+  assert.ok(p2.attempts[0].weight < p2.estimate);
+  assert.ok(p2.attempts[2].weight > p2.estimate);
+  assert.equal(p2.restSeconds, 300);
+
+  let n = 0;
+  const gid = () => `s${++n}`;
+  const setler = maxTestToSets(p2, [{ success: true }, { success: true }, { success: false }], gid);
+  // Başarısız deneme yazılmıyor: sıfır tekrarlı set anlamsız olurdu.
+  assert.equal(setler.filter(x => x.setType === 'normal').length, 2);
+  assert.equal(setler.filter(x => x.setType === 'warmup').length, p2.warmups.length);
+
+  const sonuc = maxTestResult(p2, [{ success: true }, { success: true }, { success: false }]);
+  assert.equal(sonuc.success, true);
+  assert.equal(sonuc.best, p2.attempts[1].weight);
+  assert.equal(maxTestResult(p2, [{ success: false }]).success, false);
+  assert.equal(buildMaxTestPlan('X', {}).reason, 'no-estimate');
+});
+
+test('su hedefi kilodan türüyor', () => {
+  const t = dailyWaterTarget(85, { training: true });
+  assert.equal(t.base, Math.round(85 * t.perKg));
+  assert.ok(t.trainingBonus > 0);
+  assert.equal(t.ml, t.base + t.trainingBonus);
+  // Kilo yoksa ortalama varsayılıyor ama bu söyleniyor.
+  assert.equal(dailyWaterTarget(0).estimatedWeight, true);
+});
+
+test('su kaydı sınırlar içinde kalıyor', () => {
+  let log = {};
+  log = addWater(log, '2026-08-24', 500);
+  log = addWater(log, '2026-08-24', 330);
+  assert.equal(log['2026-08-24'], 830);
+  // Sıfırın altına inmiyor, kayıt siliniyor.
+  log = addWater(log, '2026-08-24', -2000);
+  assert.deepEqual(log, {});
+  // Yazım hatasına karşı tavan.
+  assert.equal(addWater({}, '2026-08-24', 99999)['2026-08-24'], 10000);
+});
+
+test('su koçu yalnızca düzenli takipte ve belirgin geride konuşuyor', () => {
+  const log = {
+    '2026-08-18': 1500, '2026-08-19': 1600, '2026-08-20': 1400,
+    '2026-08-21': 1700, '2026-08-22': 1500,
+  };
+  const dusuk = waterSummary(log, { target: 3000, todayKey: '2026-08-22' });
+  assert.ok(waterCoachItem(dusuk));
+  // Hedefe yakınsa sessiz.
+  const iyi = waterSummary(log, { target: 1800, todayKey: '2026-08-22' });
+  assert.equal(waterCoachItem(iyi), null);
+  // Az takip varsa sessiz.
+  assert.equal(waterCoachItem(waterSummary({ '2026-08-22': 1000 }, { target: 3000 })), null);
+});
+
+test('takvim dosyası haftalık tekrarlı etkinlik üretiyor', () => {
+  const templates = [{ id: 't1', name: 'Push', exercises: [{ name: 'Bench', sets: [{}, {}, {}] }] }];
+  const plan = {
+    id: 'p1', name: 'Test',
+    days: {
+      mon: [{ type: 'workout', templateId: 't1', time: '19:30' }],
+      // Silinmiş şablona işaret eden slot takvime yazılmıyor.
+      wed: [{ type: 'workout', templateId: 'yok' }],
+      tue: [], thu: [], fri: [], sat: [], sun: [],
+    },
+  };
+  const ics = planToIcs(plan, templates, { today: new Date('2026-08-24') });
+  assert.equal(ics.events.length, 1);
+  assert.ok(ics.text.includes('RRULE:FREQ=WEEKLY;BYDAY=MO'));
+  assert.ok(ics.text.includes('SUMMARY:Push'));
+  // RFC 5545 satır sonu CRLF olmak zorunda.
+  assert.ok(ics.text.includes('\r\n'));
+  assert.ok(ics.text.startsWith('BEGIN:VCALENDAR'));
+  assert.ok(ics.text.trimEnd().endsWith('END:VCALENDAR'));
+  // Antrenman yoksa dosya üretilmiyor.
+  assert.equal(planToIcs({ days: {} }, templates), null);
 });
 
 
