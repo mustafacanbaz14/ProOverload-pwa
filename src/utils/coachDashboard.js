@@ -171,7 +171,7 @@ export const buildDailyCapacity = ({
 };
 
 const DIRECT_KEYS = new Set([
-  'joint', 'pain', 'pain-guard', 'plan', 'conflict', 'calories', 'protein',
+  'joint', 'pain', 'pain-guard', 'plan', 'plan-execution', 'conflict', 'calories', 'protein',
   'sleep-missing', 'metric', 'dataHealth', 'hydration', 'cardio-todo',
 ]);
 const MODEL_KEYS = new Set([

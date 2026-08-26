@@ -24,7 +24,7 @@ export const ITEM_CATEGORIES = {
   recovery: ['deload', 'deload-running', 'deload-return', 'readiness-low', 'sleep', 'sleep-missing', 'resting-hr', 'acwr', 'form-overreach', 'form-fresh', 'rest-quality', 'time-of-day', 'adaptive-rest', 'block-compare', 'anomaly'],
   health: ['joint', 'pain', 'pain-guard', 'side-balance', 'balance', 'cycle', 'cycle-upcoming'],
   nutrition: ['protein', 'calories', 'peri-nutrition', 'hydration'],
-  consistency: ['consistency', 'plan', 'dataHealth', 'metric', 'analysis-lock', 'coach-ledger', 'coach-protocol', 'conflict', 'training-age'],
+  consistency: ['consistency', 'plan', 'plan-execution', 'dataHealth', 'metric', 'analysis-lock', 'coach-ledger', 'coach-protocol', 'conflict', 'training-age'],
   cardio: ['cardio', 'cardio-todo', 'cardio-balance'],
 };
 

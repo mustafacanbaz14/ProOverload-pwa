@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
+import { APP_VERSION, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
+import { LATEST_RELEASE_NOTES, RELEASE_HISTORY, findRelease } from '../src/utils/releaseHistory.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import { pickGhost, buildGhostRace, ghostTargetFor } from '../src/utils/ghostSession.js';
 import { planTimeCrunch, describeTimeCrunch } from '../src/utils/timeCrunch.js';
@@ -84,6 +85,7 @@ import { effectiveLoad, bodyweightFactorOf, describeSetLoad, bodyweightBasisFor 
 import { auditBodyweightEntries, normalizeBodyweightEntries } from '../src/utils/bodyweightAudit.js';
 import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
 import { buildSessionReport, buildPlanAdherence, snapshotTemplatePlan } from '../src/utils/sessionReport.js';
+import { buildPlanExecution, planExecutionCoachItem } from '../src/utils/planExecution.js';
 import { rankTemplateRecommendations } from '../src/utils/templateRecommendation.js';
 import { buildExerciseProfile } from '../src/utils/exerciseProfile.js';
 import { buildWeeklyReview, lastCompletedWeekStart } from '../src/utils/weeklyReview.js';
@@ -6329,6 +6331,116 @@ test('kanıt defterinde her kaydın karşı görüşü var', () => {
   assert.ok(evidenceByTopic().length >= 5);
   assert.equal(findEvidence('equivalence-trial').line, 'directTrial');
   assert.equal(findEvidence('yok'), null);
+});
+
+test('plan gerçekleşme merkezi mevcut planı anlık şablon kayıtlarıyla ölçüyor', () => {
+  const setler = (count) => Array.from({ length: count }, () => ({
+    weight: '80', reps: '8', rir: 2, setType: 'normal', completed: true,
+  }));
+  const sablon = (id, name, exercises) => ({
+    id, name,
+    exercises: exercises.map(([exerciseName, count]) => ({ name: exerciseName, sets: setler(count) })),
+  });
+  const upper = sablon('upper', 'Üst A', [['Barbell Bench Press', 3], ['Barbell Row', 3]]);
+  const lower = sablon('lower', 'Alt A', [['Barbell Back Squat', 3], ['Romanian Deadlift (RDL)', 3]]);
+  const bos = (key, label) => ({ key, label, workouts: [], isOffDay: true, byMuscle: {} });
+  const planResult = {
+    trainingDays: 2,
+    muscleVolume: { Göğüs: 3, 'Orta Sırt': 3, Quadriceps: 3, Hamstring: 3 },
+    days: [
+      { key: 'mon', label: 'Pazartesi', isOffDay: false, byMuscle: { Göğüs: 3, 'Orta Sırt': 3 }, workouts: [{ templateId: upper.id, template: upper, sets: 6, minutes: 45 }] },
+      bos('tue', 'Salı'),
+      bos('wed', 'Çarşamba'),
+      { key: 'thu', label: 'Perşembe', isOffDay: false, byMuscle: { Quadriceps: 3, Hamstring: 3 }, workouts: [{ templateId: lower.id, template: lower, sets: 6, minutes: 48 }] },
+      bos('fri', 'Cuma'), bos('sat', 'Cumartesi'), bos('sun', 'Pazar'),
+    ],
+  };
+  const kayit = (id, date, template, actual, duration = 45) => ({
+    id, date, sourceTemplateId: template.id, duration,
+    plannedTemplate: {
+      name: template.name,
+      exercises: template.exercises.map(exercise => ({ name: exercise.name, sets: exercise.sets.length })),
+    },
+    exercises: actual.map(([name, count]) => ({ name, sets: setler(count) })),
+  });
+  const fullUpper = [['Barbell Bench Press', 3], ['Barbell Row', 3]];
+  const shortUpper = [['Barbell Bench Press', 3], ['Barbell Row', 2]];
+  const fullLower = [['Barbell Back Squat', 3], ['Romanian Deadlift (RDL)', 3]];
+  const workouts = [
+    kayit('seed', '2026-07-20', upper, fullUpper, 44),
+    kayit('w1u', '2026-07-27', upper, shortUpper, 42),
+    kayit('w1l', '2026-07-30', lower, fullLower, 50),
+    kayit('w2u', '2026-08-04', upper, fullUpper, 47),
+    kayit('w3u', '2026-08-10', upper, fullUpper, 45),
+    kayit('w3l', '2026-08-13', lower, fullLower, 49),
+    kayit('w4l', '2026-08-20', lower, fullLower, 46),
+    kayit('now', '2026-08-24', upper, shortUpper, 43),
+    { id: 'free', date: '2026-08-25', exercises: [{ name: 'Cable Curl', sets: setler(3) }], duration: 20 },
+  ];
+
+  const report = buildPlanExecution(workouts, planResult, {
+    today: '2026-08-27', weeks: 8,
+  });
+  assert.equal(report.hasPlan, true);
+  assert.equal(report.hasData, true);
+  assert.equal(report.measuredWeeks, 4);
+  assert.equal(report.attendancePercent, 75);
+  assert.ok(report.score > 60 && report.score <= 100);
+  assert.ok(report.confidence >= 60);
+  assert.equal(report.templates.length, 2);
+  assert.equal(report.currentWeek.matched, 1);
+  assert.equal(report.currentWeek.expected, 2);
+  assert.equal(report.unplannedSessions, 1);
+  assert.equal(report.catchup.targetDay, 'fri');
+  assert.ok(report.sessions.some(session => session.setPercent === 83));
+  assert.ok(report.muscles.some(row => row.muscle === 'Göğüs' && row.percent === 100));
+  assert.equal(planExecutionCoachItem(report).key, 'plan-execution');
+});
+
+test('düşük plan uyumu uygulanabilir gün sayısını sadeleştiriyor', () => {
+  const sets = Array.from({ length: 3 }, () => ({ weight: '50', reps: '10', rir: 2, setType: 'normal', completed: true }));
+  const template = { id: 'full', name: 'Tam Vücut', exercises: [{ name: 'Barbell Bench Press', sets }] };
+  const workoutDay = (key, label) => ({
+    key, label, isOffDay: false, byMuscle: { Göğüs: 3 },
+    workouts: [{ templateId: template.id, template, sets: 3, minutes: 25 }],
+  });
+  const off = (key, label) => ({ key, label, isOffDay: true, byMuscle: {}, workouts: [] });
+  const plan = {
+    trainingDays: 4, muscleVolume: { Göğüs: 12 },
+    days: [workoutDay('mon', 'Pazartesi'), workoutDay('tue', 'Salı'), off('wed', 'Çarşamba'), workoutDay('thu', 'Perşembe'), off('fri', 'Cuma'), workoutDay('sat', 'Cumartesi'), off('sun', 'Pazar')],
+  };
+  const record = (date, id) => ({
+    id, date, sourceTemplateId: template.id, duration: 25,
+    plannedTemplate: { name: template.name, exercises: [{ name: 'Barbell Bench Press', sets: 3 }] },
+    exercises: [{ name: 'Barbell Bench Press', sets }],
+  });
+  const report = buildPlanExecution([
+    record('2026-07-20', 'seed'), record('2026-07-27', 'a'), record('2026-08-03', 'b'),
+    record('2026-08-10', 'c'), record('2026-08-17', 'd'),
+  ], plan, { today: '2026-08-27' });
+  assert.equal(report.attendancePercent, 25);
+  assert.equal(report.simplification.currentDays, 4);
+  assert.equal(report.simplification.suggestedDays, 2);
+  assert.match(planExecutionCoachItem(report).title, /2 güne/);
+});
+
+test('plan gerçekleşmesi plansız durumda sayı uydurmuyor', () => {
+  const report = buildPlanExecution([], null, { today: '2026-08-27' });
+  assert.equal(report.hasPlan, false);
+  assert.equal(report.score, null);
+  assert.equal(report.confidence, 0);
+  assert.equal(planExecutionCoachItem(report), null);
+});
+
+test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {
+  assert.equal(LATEST_RELEASE_NOTES.version, APP_VERSION);
+  assert.equal(RELEASE_HISTORY[0], LATEST_RELEASE_NOTES);
+  assert.ok(LATEST_RELEASE_NOTES.items.length >= 14);
+  assert.equal(findRelease('7.9')?.version, '7.9');
+  assert.equal(findRelease('0.0'), null);
+  assert.equal(new Set(RELEASE_HISTORY.map(entry => entry.version)).size, RELEASE_HISTORY.length);
+  assert.ok(RELEASE_HISTORY.every(entry => entry.date && entry.title && entry.items.length > 0));
+  assert.ok(!LATEST_RELEASE_NOTES.items.some(entry => /Doz.?Yanıt Hacim Modeli/.test(entry.title)));
 });
 
 for (const { name, run } of tests) {

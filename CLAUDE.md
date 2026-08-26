@@ -27,10 +27,11 @@ ediyor ve ayrışırsa **build kırılır**:
 
 1. `APP_VERSION === package.json`'daki `version`
 2. Sürüm `^\d+\.\d+$` biçiminde (yama parçası yok)
-3. `LATEST_RELEASE_NOTES.version` aynı sürüm
+3. `releaseHistory.js` içindeki `LATEST_RELEASE_NOTES.version` aynı sürüm
 
 Yani sürüm yükseltirken üç yeri birlikte güncellemek gerekiyor: `package.json`,
-`APP_VERSION` ve sürüm notları.
+`APP_VERSION` ve `releaseHistory.js` içindeki son sürüm notları. Geçmiş sürümler
+ayrı kayıtlar olarak korunur; son güncelleme listesine kopyalanmaz.
 
 ## Veri ve göç
 

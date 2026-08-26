@@ -15,6 +15,7 @@ import AnalysisUnlockCard from './AnalysisUnlockCard';
 import DoseResponseCard from './DoseResponseCard';
 import SetCountingCard from './SetCountingCard';
 import ProximityCard from './ProximityCard';
+import PlanExecutionCard from './PlanExecutionCard';
 import CoachBriefingCard from './CoachBriefingCard';
 import PeriodComparisonCard from './PeriodComparisonCard';
 import CoachCalibrationCard from './CoachCalibrationCard';
@@ -70,6 +71,7 @@ const AnalyticsView = memo(({
   coachBriefing = null,
   coachCalibration = null,
   optimalVolumeProfile = null,
+  planExecution = null,
   sleepScores = {},
   onOpenLedger,
   onApplyCoach,
@@ -298,11 +300,12 @@ const AnalyticsView = memo(({
 
   return (
     <div className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black`}>
-      <div className="luxury-segmented grid grid-cols-5 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+      <div className="luxury-segmented grid grid-cols-6 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
         {[
           { key: 'body', label: 'Vücut' },
           { key: '1rm', label: '1RM' },
           { key: 'muscle', label: 'Hacim' },
+          { key: 'plan', label: 'Plan' },
           { key: 'nutrition', label: 'Beslenme' },
           { key: 'coach', label: 'Koç' },
         ].map(t => (
@@ -589,6 +592,20 @@ const AnalyticsView = memo(({
           ) : (
             <div className="text-center py-12 text-zinc-600 text-xs font-mono">Grafiği görmek için bir hareket seçin</div>
           )}
+        </div>
+      )}
+
+      {analysisType === 'plan' && (
+        <div className="space-y-3">
+          <PlanExecutionCard report={planExecution} onOpenPlan={onOpenPlan} />
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
+            <p className="text-[9px] font-mono leading-relaxed text-zinc-600">
+              Bu ekran programın bilimsel kalitesini değil, uygulanmasını ölçer.
+              Gün değiştirmek başarısızlık sayılmaz; şablon, set ve hareket
+              anlık görüntüleri korunur. Geçmişte aktif planı sürümleyerek
+              saklamadığımız dönemlerde kesinlik özellikle düşürülür.
+            </p>
+          </div>
         </div>
       )}
 

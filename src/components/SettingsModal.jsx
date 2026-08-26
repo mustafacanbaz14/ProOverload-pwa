@@ -1092,7 +1092,7 @@ const SettingsModal = memo(({
             <div className="flex items-center justify-between bg-zinc-950 p-3 rounded-xl border border-zinc-800">
               <div>
                 <span className="text-[11px] font-bold text-zinc-200 block">ProOverload v{APP_VERSION}</span>
-                <span className="text-[9px] font-mono text-zinc-500 block mt-0.5">Son Güncelleme Notları</span>
+                <span className="text-[9px] font-mono text-zinc-500 block mt-0.5">Son güncelleme · sürüm geçmişi</span>
               </div>
               {onOpenReleaseNotes && (
                 <button
@@ -1100,7 +1100,7 @@ const SettingsModal = memo(({
                   onClick={onOpenReleaseNotes}
                   className="bg-zinc-900 border border-zinc-800 hover:border-cyan-800 text-cyan-400 text-[10px] font-bold px-3 py-1.5 rounded-lg active:bg-zinc-800 transition-colors"
                 >
-                  Notları Oku
+                  Güncellemeler
                 </button>
               )}
             </div>

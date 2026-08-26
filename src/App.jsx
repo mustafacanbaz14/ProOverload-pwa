@@ -19,6 +19,7 @@ import { migrateCustomExercises } from './utils/migrations';
 import { painCoachItem, buildPainReport } from './utils/painLog';
 import { buildStrengthBalance, strengthBalanceCoachItem } from './utils/strengthBalance';
 import { buildConsistency, buildAdherence, consistencyCoachItem } from './utils/consistency';
+import { buildPlanExecution, planExecutionCoachItem } from './utils/planExecution';
 import { auditWorkoutData, removeEmptyWorkouts, dataHealthCoachItem } from './utils/dataHealth';
 import { repRangeFor, setRepRangeOverride } from './utils/exerciseTargets';
 import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem } from './utils/coachMemory';
@@ -3111,6 +3112,14 @@ export default function App() {
     () => buildAdherence(sortedWorkouts, weekPlanResult),
     [sortedWorkouts, weekPlanResult]);
 
+  const planExecutionReport = useMemo(
+    () => buildPlanExecution(sortedWorkouts, weekPlanResult, {
+      today: getLocalDateString(),
+      weeks: 8,
+      customExercises,
+    }),
+    [sortedWorkouts, weekPlanResult, customExercises]);
+
   const dataHealthReport = useMemo(
     () => auditWorkoutData(sortedWorkouts),
     [sortedWorkouts]);
@@ -3801,6 +3810,7 @@ export default function App() {
       painItem: painCoachItem(painReport),
       balanceItem: strengthBalanceCoachItem(strengthBalance),
       consistencyItem: consistencyCoachItem(consistencyReport, adherenceReport),
+      planExecutionItem: planExecutionCoachItem(planExecutionReport),
       dataHealthItem: dataHealthCoachItem(dataHealthReport),
       projectionAvailable: weekProjection.hasData,
       projectionItem: projectionCoachItem(weekProjection),
@@ -3859,7 +3869,7 @@ export default function App() {
     settings.nutritionGoal, settings.proteinPerFfmBulk, settings.proteinPerFfmCut,
     settings.experienceLevel, settings.volumeTargets, dashboardStats, plateauInsights, deload, deloadSuggestion,
     mesocycle, mesocycleInstructions, selectionReport, frequencyReport,
-    painReport, strengthBalance, consistencyReport, adherenceReport, dataHealthReport,
+    painReport, strengthBalance, consistencyReport, adherenceReport, planExecutionReport, dataHealthReport,
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
     cardioReport, cardioSuggestion, restingHrReport, painScan, painRegions,
     plateauReport, restReport, timeOfDayReport, techniqueReport, orderReport, frequencyPlan,
@@ -4260,6 +4270,7 @@ export default function App() {
                 coachBriefing,
                 coachCalibration,
                 optimalVolumeProfile,
+                planExecution: planExecutionReport,
                 sleepScores: sleepScoreByDay,
                 onAction: handleCoachAction,
                 onApplyCoach: handleApplyCoachItem,

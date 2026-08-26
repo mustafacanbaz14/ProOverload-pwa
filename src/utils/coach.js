@@ -55,6 +55,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     deload = null, deloadSuggestion = null, gender = 'male', cycle = null,
     mesocycleItem = null, selectionItem = null, coachProtocol = null,
     painItem = null, balanceItem = null, consistencyItem = null, dataHealthItem = null,
+    planExecutionItem = null,
     projectionItem = null, prItem = null, rirItem = null, orderItem = null,
     cardioItem = null,
     standardsItem = null, effortItem = null, rotationItem = null,
@@ -477,6 +478,19 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'consistency', priority: 2, tone: TONES.info, action: 'analysis',
       title: consistencyItem.title,
       detail: consistencyItem.detail,
+    });
+  }
+
+  // Plan gerçekleşmesi mevcut planın teorik kalitesini değil, fiilen ne
+  // kadarının yapıldığını ölçer. Düşükse daha çok set önermek yerine önce
+  // uygulanabilir gün sayısını ve kaçan şablonu düzeltmek gerekir.
+  if (planExecutionItem) {
+    ekle({
+      key: 'plan-execution', priority: 2,
+      tone: planExecutionItem.tone === 'warn' ? TONES.warn : TONES.info,
+      action: 'plan',
+      title: planExecutionItem.title,
+      detail: planExecutionItem.detail,
     });
   }
 
