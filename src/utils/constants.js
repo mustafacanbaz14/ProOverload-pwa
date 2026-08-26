@@ -121,6 +121,13 @@ export const DEFAULT_SETTINGS = {
   activityTargets: {},
   // Koç hafızası: ertelenen ve kapatılan madde anahtarları.
   coachMemory: { snoozed: {}, dismissed: [] },
+  // Koç odağı: madde önceliklerini kaydırıyor. Maddeleri silmiyor ve sağlık
+  // maddelerini hiçbir odakta geri itmiyor.
+  coachFocus: 'balanced',
+  // Koç karar defteri: uygulanan tavsiyeler ve üç hafta sonra ölçülen
+  // sonuçları. Koçu yanlış olabilir hale getiren şey bu — yanlış olamayan bir
+  // tavsiye doğru da olamaz.
+  coachLedger: [],
   // Kadın profillerinde döngü takibinin takvim varsayımları. Günlük belirtiler
   // ayrı `cycle` localStorage anahtarında tutulur.
   cycleConfig: { cycleLength: 28, periodLength: 5, hormonalContraception: false },
@@ -715,13 +722,53 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.5';
+export const APP_VERSION = '7.6';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.5',
+  title: 'ProOverload 7.6',
   date: '2026-08-26',
   items: [
+    {
+      title: 'Koç Karar Defteri: Tavsiye İşe Yaradı mı',
+      desc: 'Koç her gün tavsiye veriyordu ama hiçbiri geri dönüp kontrol edilmiyordu. Kullanıcı "göğsüne iki set ekle" tavsiyesini uyguluyor, üç hafta geçiyor ve ne olduğunu kimse bilmiyor. Bu, koçu yanlış olamayan bir şeye çeviriyordu — ve yanlış olamayan bir tavsiye doğru da olamaz. Artık koç kartındaki her maddede "Uyguladım" var: dokunduğunda o anki haftalık hacim ve tahmini 1RM not ediliyor, üç hafta sonra tekrar ölçülüyor. Defter iki şeyi AYRI takip ediyor ve karıştırmıyor: tavsiye edilen şey gerçekten yapıldı mı (uygulama) ve sonuç ne oldu (tahmini 1RM). Ayrı tutulmalarının sebebi şu: uygulanmamış bir tavsiye BAŞARISIZ değildir, sadece denenmemiştir. İsabet oranı yalnızca gerçekten uygulanmış tavsiyelerden hesaplanıyor — denenmemişleri saymak, oranı koçun değil kullanıcının davranışının ölçüsü yapardı. Beş ölçümün altında oran hiç yazılmıyor: iki denemenin biri tutunca çıkan "%50 isabet" bir bilgi değil. Ölçüm penceresi üç hafta: daha kısası antrenman gürültüsünü sonuç sanmak, daha uzunu tavsiyenin etkisini araya giren on başka değişikliğe karıştırmak.'
+    },
+    {
+      title: 'Performans Sürücüleri: Sende Ne İşe Yarıyor',
+      desc: 'Uygulama uyku, hazır oluşluk, protein, dinlenme günü ve kiloyu ayrı ayrı kaydediyordu; hepsinin gerekçesi "performansı etkiler" idi. Ama hangisinin SENİN performansını etkilediği hiç ölçülmüyordu — literatür ortalama bir insanı anlatıyor. Zor kısım "iyi seans"ı tanımlamaktı: toplam tonaj işe yaramaz, çünkü bacak günü her zaman kol gününden ağırdır ve bu bir performans farkı değil program farkı. Burada her seans KENDİ hareketlerinin son beş seansına göre puanlanıyor, yani bacak günüyle kol günü aynı ölçekte. Sonra dokuz sinyalin her biri bu puanla karşılaştırılıyor ve ekranda korelasyon katsayısı değil anlaşılır olan gösteriliyor: en yüksek üçte birlik dilimde seanslar ortalama ne kadar iyi geçti. Ayrıca kişisel bir EŞİK aranıyor — "hazır oluşluk 60 altındaysa ağırlık artırma" gibi bir kural herkes için aynı yerde değil; kesme noktası iki tarafta da yeterli seans kalacak şekilde farkı en büyüten yerden çıkıyor. Modül nedensellik iddia etmiyor ve bunu her çıktısında yazıyor: iyi uyunan gün genellikle stresin de düşük olduğu gündür.'
+    },
+    {
+      title: 'Tepki Profili: Hangi Tekrar Aralığı Sende Çalışıyor',
+      desc: 'Uygulamanın bütün varsayılanları popülasyon ortalamalarından geliyor — 6-10 tekrar, haftada iki gün, MEV ile MAV arası hacim. İyi başlangıç değerleri ama hiçbiri kişinin kendi kaydına bakmıyor. Oysa kayıt yeterince uzunsa cevap orada: bu kişi hangi tekrar aralığında, hangi hacim bandında ve hangi sıklıkta gerçekten daha hızlı ilerlemiş. Ölçü SEANS BAŞINA tahmini 1RM kazancı — haftalık ölçmek daha çok antrenman yapan bandı otomatik kazandırırdı ("haftada üç gün çalışınca daha çok ilerliyorsun" bir keşif değil, tanım). Her kazanç onu ÜRETEN seansın bandına yazılıyor: bir sonraki seansta görülen artış, bir öncekinde yapılan işin sonucu. İki bandın farkı küçükse "en iyi" seçilmiyor — uydurmak olurdu. Yeterli gözlemi olmayan bantlar gizlenmiyor, gri gösteriliyor: "bu bantta hiç çalışmamışsın" bilgisi de en az sonucun kendisi kadar değerli.'
+    },
+    {
+      title: 'Hareket Getirisi: Hangi Hareket Yerini Hak Ediyor',
+      desc: 'Program kurarken sorulan soru hep "hangi hareketi ekleyeyim" oluyor; asla "hangisini çıkarayım" değil. Oysa seans süresi sabit ve her hareket başka bir hareketin yerini alıyor. Duraklama ile VERİM aynı şey değil: ilerleyen ama bunun için haftada on iki set yiyen bir hareket, altı setle aynı kazancı veren hareketten pahalı. Ölçü, yatırılan on set başına tahmini 1RM kazancı. İki tuzağa karşı önlem var. Birincisi izolasyon haksızlığı: lateral raise ile squat aynı ölçekte ilerlemiyor ve mutlak sıralama izolasyonları hep en dibe yazardı — bu yüzden asıl sıralama KAS İÇİNDE. İkincisi yeni hareket yanılgısı: ilk haftalardaki sıçrama kas kazancı değil teknik öğrenmesi, o yüzden en az dört seans ve yirmi bir gün isteniyor. Düşük getirili bir hareket kötü hareket değil — eklem dostu olduğu ya da bir zayıf noktayı hedeflediği için tutuluyor olabilir; modül bunu söylüyor ve silme kararını vermiyor.'
+    },
+    {
+      title: 'Kas Karnesi',
+      desc: 'Bir kasın durumu üç ayrı ekrandan okunuyordu: hacim tablosundan yeterli mi, 1RM grafiğinden ilerliyor mu, sıklık kartından yeterince bölünmüş mü. Üçü de ayrı ayrı doğru ama kullanıcı "göğsüm iyi gidiyor mu" diye sorduğunda üç ekranı gezip kendi sentezini yapmak zorundaydı ve çoğunlukla yapmıyordu. Karne üçünü tek nota indiriyor: hacim 40, tahmini 1RM ilerlemesi 40, sıklık 20 puan. Asıl değerli olan notun kendisi değil yanındaki SINIRLAYICI ETKEN — "Göğüs C" bir şey söylemiyor, "Göğüs C, sınırlayan hacim" ne yapılacağını söylüyor. İlerlemesi ölçülemeyen kaslara sıfır değil nötr puan veriliyor: ölçemediğimiz için cezalandırmak yanlış olurdu. Hiçbir seansta iki set almamış kaslar hiç notlanmıyor — çömelişin bele yazdığı çeyrek setler bir "bel programı" değil ve bunlara not vermek en düşük notu her zaman aynı yan etki kasına yazdırıp asıl sorunlu kası listenin ortasında bırakıyordu.'
+    },
+    {
+      title: 'Sessiz Sinyaller: Kural Yazılmamış Değişimler',
+      desc: 'Uygulamadaki bütün uyarılar kural tabanlı: birinin oturup "hacim MEV altına düşerse uyar" diye yazması gerekti. Bu iyi çalışıyor ama kaçınılmaz bir kör noktası var — yalnızca önceden düşünülmüş şeyleri yakalıyor. Set başına ortalama tekrarın iki haftada belirgin düşmesi hiçbir kuralı tetiklemiyor, çünkü kimse o kuralı yazmadı; oysa ağırlık aynıyken tekrarın düşmesi çoğu zaman ilk sinyal. Bu kart kural yazmıyor, DEĞİŞİM arıyor: dokuz seriye aynı soruyu soruyor — son ölçümler kendi geçmişinin normal dalgalanmasına göre sıra dışı mı. Ortalama ve standart sapma yerine ortanca ve MAD kullanılıyor, çünkü tek bir rekor seansı ya da hasta geçirilen bir hafta ikisini birlikte şişirip gerçek değişimi normal gösteriyor. Düzenli bir eğilim (sürekli artan tonaj gibi) uyarı üretmiyor: aranan şey eğilim değil eğilimden sapma. Bulgular teşhis değil — aynı düşüşü yeni bir programa geçmek de üretir ve o iyi haberdir.'
+    },
+    {
+      title: 'Blok Karşılaştırma: Ne Değişti, Ne Üretti',
+      desc: 'Uygulama "bu hafta geçen haftaya göre" karşılaştırmasını yapıyordu ama tek hafta bir blok değil: bir haftanın hacmi tatil, hastalık ya da yoğun bir iş haftası yüzünden düşebilir ve bunun programla ilgisi yoktur. Antrenman kararları dört-altı haftalık ölçekte veriliyor, karşılaştırma da orada yapılmalı. Asıl tasarım kararı GİRDİ ile ÇIKTIyı ayırmak: hacim, sıklık, şiddet ve hareket sayısı senin seçtiklerin; tahmini 1RM ise sonuç. İkisini aynı listede karıştırmak "hacmim %20 arttı" ile "gücüm %3 arttı"yı eşit iki başarı gibi gösterirdi, oysa birincisi yalnızca ikincisinin bedeli. Çıktı ölçümünde tek kritik nokta: yalnızca İKİ BLOKTA DA yapılmış hareketler karşılaştırılıyor. Yeni bir harekete başlamak ortalama 1RM\'i düşürüyor (teknik henüz oturmamış), bırakmak yükseltiyor; ortak olmayanları saymak hareket değiştirmeyi gelişim ya da gerileme diye okumak olurdu.'
+    },
+    {
+      title: 'Senaryo: Şunu Değiştirsem Ne Olur',
+      desc: 'Uygulama ne yapman gerektiğini söylüyordu ama sonucunu denemeden görmenin yolu yoktu. Tavsiyeyi uygulayan biri sonucu üç hafta sonra görüyor; beğenmezse üç hafta gitmiş oluyor. Program kurmanın en pahalı tarafı bu gecikme. Senaryo gecikmeyi kısaltmıyor — kısaltamaz — ama kararı verirken elde olan bilgiyi görünür kılıyor: değişiklikten sonra hacim hangi banda düşüyor, o bantta senin geçmişinde ne olmuş ve bedeli kaç dakika. Mevcut duruma göre hazır sorular üretiliyor, çünkü boş bir form kimseye bir şey sordurmuyor. Tahmin üretmemesi bilinçli: hacim-tepki ilişkisi kişide ölçülebilir ama gereken veri miktarı tipik bir kullanıcıda yok ve "iki set eklersen %1.4 daha hızlı ilerlersin" demek uydurulmuş bir kesinlik olurdu. Veri yoksa kart bunu açıkça söylüyor — boş bir alan bırakmak cevabı olumlu sanmaya yol açardı.'
+    },
+    {
+      title: 'Koç Odağı',
+      desc: 'Koç maddelerinin önceliği kodun içine sabitlenmişti ve bu sabitler herkes için aynıydı. Ama aynı uygulamayı kullanan iki kişi aynı şeyi istemiyor: biri kas kazanmaya çalışıyor, diğeri omzunu bir daha sakatlamamaya. İkisine de aynı sırayla aynı sekiz maddeyi göstermek, ikisinin de kendi maddesini listenin ortasında bulması demek. Altı odak var: Dengeli, Kas Kazanımı, Kuvvet, Sakatlıksız Kalmak, Düzen Kurmak, Yağ Kaybı. Odak maddeleri SİLMİYOR, sıralarını kaydırıyor — bir maddeyi tamamen kapatmak kullanıcının işi ve erteleme/kapatma zaten var. Tek istisna kasıtlı: sağlık ve toparlanma maddeleri hiçbir odakta geri itilmiyor. "Kas kazanımı" odağı seçen biri, eklem ağrısı uyarısını görmemeyi seçmiş olmuyor; bir tercih ekranının kullanıcıyı sakatlığa götürebilmesi kabul edilebilir bir tasarım değil. Seçilen odak koç kartının başlığında rozet olarak duruyor: etkisi görünmeyen bir ayar unutulur.'
+    },
+    {
+      title: 'Analiz Kilitleri: Bu Kart Neden Boş',
+      desc: 'Uygulamadaki analizlerin çoğunun bir veri eşiği var ve bu doğru — dört seanslık veriden plato çıkarmak, gürültüyü teşhis diye sunmak olurdu. Ama eşik SESSİZ çalışıyordu: kart ya hiç görünmüyor ya da "yeterli veri yok" yazıyordu. İkisi de aynı soruyu cevapsız bırakıyor: ne kadar yeterli değil ve ne girersem açılır. Kullanıcı açısından sonucu şuydu — uygulamanın yarısının var olduğu bile bilinmiyordu; bir kart hiç görünmediyse o özelliğin eksik olduğu değil VAR OLMADIĞI sanılıyor. Artık on altı analizin her biri için ne gerektiği, elde ne olduğu ve ne kadar kaldığı yazıyor. En işe yarayan tarafı da şu: hangi TEK veri türünü girmenin en çok analizi açacağını söylüyor. İlerleme yüzdesi en zayıf koşula göre hesaplanıyor — üç koşuldan ikisi tamsa ve biri hiç yoksa "%66 hazır" demek, analizin açılmaya yakın olduğunu ima ederdi. Hepsi açıksa kart kendini gizliyor.'
+    },
     {
       title: 'Hayalet Seans: Geçen Seferle Canlı Yarış',
       desc: 'Seans sonu raporu "geçen sefere göre ne değişti" sorusunu seans BİTTİKTEN sonra cevaplıyordu. Ama o cevabın işe yarayacağı an seansın içi: son sette bir tekrar daha yapıp yapmama kararı orada veriliyor ve o an elinde karşılaştırma yok. Artık aynı şablonun bir önceki seansı yanına konuyor ve set set ilerlerken "şu an öndesin / gerisin" yazıyor. Her boş setin üstünde geçen seferin aynı sıradaki seti görünüyor — hedef vermiyor, sadece hatırlatıyor. Karşılaştırma SET SIRASINA göre: aynı hareketin üçüncü seti üçüncü setle kıyaslanıyor, çünkü ortalama almak yanıltıcıydı; dört set yerine üç yapan biri "daha az tonaj" görünüp aslında her sette daha iyi olabiliyor. Yalnızca iki tarafta da yapılmış setler sayılıyor: henüz girilmemiş setler için "gerisin" demek haksız olurdu. Şablon yoksa aynı hareketleri en çok paylaşan seans hayalet oluyor, yani serbest çalışan da yarışabiliyor.'

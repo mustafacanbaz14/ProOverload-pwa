@@ -3,7 +3,7 @@ import {
   Merge, Target, ArrowLeftRight,
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
   Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
-  Layers3, Wand2, Activity, Stethoscope, ShieldCheck,
+  Layers3, Wand2, Activity, Stethoscope, ShieldCheck, BookCheck, GitCompareArrows, FlaskConical,
 } from 'lucide-react';
 
 /**
@@ -45,6 +45,7 @@ const GROUPS = [
       { key: 'sleep', label: 'Uyku Takibi', hint: 'Yatış/uyanış saati, 100 üzerinden puan', icon: Moon, color: 'text-purple-400' },
       { key: 'pain', label: 'Ağrı Takibi', hint: 'Bölge bölge eklem ağrısı, trend ve hareket ilişkisi', icon: Activity, color: 'text-red-400' },
       { key: 'mind', label: 'Meditasyon & Esneme', hint: 'Günlük, haftalık, aylık log', icon: Brain, color: 'text-cyan-400' },
+      { key: 'coachLedger', label: 'Koç Karar Defteri', hint: 'Uyguladığın tavsiyeler işe yaradı mı — ölçülmüş cevap', icon: BookCheck, color: 'text-emerald-400' },
     ],
   },
   {
@@ -59,6 +60,8 @@ const GROUPS = [
       { key: 'compareExercises', label: 'Hareket Karşılaştır', hint: 'İki hareketin ilerlemesini yan yana koy', icon: ArrowLeftRight, color: 'text-cyan-400' },
       { key: 'autoAdapt', label: 'Programı Güncelle', hint: 'Geçen haftanın ölçümlerini plana uygula', icon: Wand2, color: 'text-violet-400' },
       { key: 'yearReview', label: 'Yıl Özeti', hint: 'Son on iki ayın tamamı tek ekranda', icon: Trophy, color: 'text-yellow-400' },
+      { key: 'blockCompare', label: 'Blok Karşılaştırma', hint: 'Son iki blok: ne değişti, ne üretti', icon: GitCompareArrows, color: 'text-cyan-400' },
+      { key: 'scenario', label: 'Senaryo', hint: '"Şu kasa iki set eklesem ne olur" sorusunun cevabı', icon: FlaskConical, color: 'text-violet-400' },
       { key: 'report', label: 'Gelişim Raporu', hint: 'Rekorlar ve dönem özeti', icon: Trophy, color: 'text-yellow-400' },
     ],
   },

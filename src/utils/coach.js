@@ -71,6 +71,8 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     formItem = null,
     adaptiveRestItem = null,
     waterItem = null,
+    ledgerItem = null, driverItem = null, responseItem = null, roiItem = null,
+    scorecardItem = null, lockItem = null, blockItem = null, anomalyItem = null,
   } = ctx;
 
   const items = [];
@@ -157,6 +159,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       action: weakLinkItem.action || 'analysis',
       title: weakLinkItem.title,
       detail: weakLinkItem.detail,
+      muscle: weakLinkItem.muscle || null,
     });
   }
 
@@ -393,10 +396,14 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     });
   }
 
-  const durgun = plateaus.filter(p => p.state === 'decline').slice(0, 1);
+  // Eski gerileme taraması. `plateauItem` (scanPlateaus) aynı hareketi daha
+  // ayrıntılı anlatıyor; ikisi birlikte gösterilince liste aynı şeyi iki kez
+  // söylüyordu ve iki maddenin anahtarı da aynı olduğu için erteleme/kapatma
+  // ikisini birden vuruyordu. Yeni tarama varsa bu susuyor.
+  const durgun = plateauItem ? [] : plateaus.filter(p => p.state === 'decline').slice(0, 1);
   if (durgun.length > 0) {
     ekle({
-      key: 'plateau', priority: 3, tone: TONES.warn, action: 'analysis',
+      key: 'plateau-decline', priority: 3, tone: TONES.warn, action: 'analysis',
       title: `${durgun[0].name} gerilemede`,
       detail: durgun[0].advice,
     });
@@ -572,6 +579,87 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'metric', priority: 3, tone: TONES.info, action: 'metrics',
       title: `${daysSinceMetric} gündür ölçüm yok`,
       detail: 'Gerçek günlük harcama (adaptif TDEE) kilo eğiliminden hesaplanıyor; ölçüm girilmezse kalori hedefleri formül tahmininde kalıyor.',
+    });
+  }
+
+  /* --- 7.6: ölçülen ve doğrulanan --- */
+
+  // Sapma taraması 2. öncelik: kural yazılmamış bir değişim, kural yazılmış
+  // bir uyarıdan daha az değil daha ÇOK dikkat isteyebilir — o değişimi
+  // arayan başka hiçbir şey yok.
+  if (anomalyItem) {
+    ekle({
+      key: 'anomaly', priority: 2, tone: TONES.warn, action: 'analysis',
+      title: anomalyItem.title,
+      detail: anomalyItem.detail,
+    });
+  }
+
+  // Blok karşılaştırması: yük arttı ama sonuç gelmedi.
+  if (blockItem) {
+    ekle({
+      key: 'block-compare', priority: 2, tone: TONES.warn, action: 'analysis',
+      title: blockItem.title,
+      detail: blockItem.detail,
+    });
+  }
+
+  // Kas karnesi 2. öncelik: en düşük notlu kas, program düzenlenirken
+  // bakılacak ilk yer.
+  if (scorecardItem) {
+    ekle({
+      key: 'muscle-scorecard', priority: 2, tone: TONES.warn, action: 'analysis',
+      title: scorecardItem.title,
+      detail: scorecardItem.detail,
+      muscle: scorecardItem.muscle || null,
+    });
+  }
+
+  // Defter: ölçülmeyi bekleyen kayıtlar ya da koçun kendi karnesi. Bugünü
+  // değiştirmiyor ama koçun tamamına duyulan güveni değiştiriyor.
+  if (ledgerItem) {
+    ekle({
+      key: 'coach-ledger', priority: 3,
+      tone: ledgerItem.tone === 'warn' ? TONES.warn : ledgerItem.tone === 'good' ? TONES.good : TONES.info,
+      action: 'ledger',
+      title: ledgerItem.title,
+      detail: ledgerItem.detail,
+    });
+  }
+
+  // Sürücü, tepki profili ve getiri: üçü de "aynı emekle daha iyi sonuç"
+  // maddeleri. Bilgi değerleri yüksek, aciliyetleri düşük.
+  if (driverItem) {
+    ekle({
+      key: 'perf-driver', priority: 3, tone: TONES.info, action: 'analysis',
+      title: driverItem.title,
+      detail: driverItem.detail,
+    });
+  }
+
+  if (responseItem) {
+    ekle({
+      key: 'response-profile', priority: 3, tone: TONES.info, action: 'analysis',
+      title: responseItem.title,
+      detail: responseItem.detail,
+    });
+  }
+
+  if (roiItem) {
+    ekle({
+      key: 'exercise-roi', priority: 3, tone: TONES.info, action: 'analysis',
+      title: roiItem.title,
+      detail: roiItem.detail,
+    });
+  }
+
+  // Kilitli analizler en düşük öncelik: eksik olan şey veri ve veri girmek
+  // bugünün antrenmanını değiştirmiyor.
+  if (lockItem) {
+    ekle({
+      key: 'analysis-lock', priority: 4, tone: TONES.info, action: 'analysis',
+      title: lockItem.title,
+      detail: lockItem.detail,
     });
   }
 

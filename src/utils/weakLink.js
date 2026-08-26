@@ -189,6 +189,9 @@ export const weakLinkCoachItem = (report) => {
   return {
     key: 'weak-link',
     tone: p.impact === 'high' ? 'warn' : 'info',
+    // Kas adı maddeye ekleniyor: karar defteri "hangi kasın hacmi" sorusunu
+    // maddenin başlığından çıkaramaz ve kassız bir kayıt ölçülemez.
+    muscle: p.muscle || null,
     title: `Zayıf halka: ${p.title}`,
     detail: `${p.detail} ${report.total > 1 ? `Toplam ${report.total} bulgu var; bu listenin en üstündeki.` : ''}`,
     action: p.action,

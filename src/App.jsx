@@ -22,6 +22,17 @@ import { buildConsistency, buildAdherence, consistencyCoachItem } from './utils/
 import { auditWorkoutData, removeEmptyWorkouts, dataHealthCoachItem } from './utils/dataHealth';
 import { repRangeFor, setRepRangeOverride } from './utils/exerciseTargets';
 import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem } from './utils/coachMemory';
+import {
+  snapshotDecision, logDecision, logRejection, dueEntries, settleDue, ledgerStats, ledgerCoachItem,
+} from './utils/coachLedger';
+import { applyCoachFocus, findFocus } from './utils/coachFocus';
+import { buildPerformanceDrivers, driverCoachItem } from './utils/performanceDrivers';
+import { buildResponseProfile, responseProfileCoachItem } from './utils/responseProfile';
+import { buildExerciseRoi, roiCoachItem } from './utils/exerciseRoi';
+import { buildMuscleScorecard, scorecardCoachItem } from './utils/muscleScorecard';
+import { buildAnalysisReadiness, readinessCoachItem } from './utils/analysisReadiness';
+import { buildBlockCompare, blockCoachItem } from './utils/blockCompare';
+import { buildAnomalyWatch, anomalyCoachItem } from './utils/anomalyWatch';
 import { buildWeekProjection, projectionCoachItem } from './utils/weekProjection';
 import { buildPrWatch, prWatchCoachItem } from './utils/prWatch';
 import { buildRirCalibration, rirCoachItem } from './utils/rirCalibration';
@@ -145,6 +156,9 @@ const VolumeTargetsModal = lazy(() => import('./components/VolumeTargetsModal'))
 const ExerciseCompareModal = lazy(() => import('./components/ExerciseCompareModal'));
 const AutoAdaptModal = lazy(() => import('./components/AutoAdaptModal'));
 const YearReviewModal = lazy(() => import('./components/YearReviewModal'));
+const CoachLedgerModal = lazy(() => import('./components/CoachLedgerModal'));
+const BlockCompareModal = lazy(() => import('./components/BlockCompareModal'));
+const ScenarioModal = lazy(() => import('./components/ScenarioModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const CardioView = lazy(() => import('./components/CardioView'));
 
@@ -257,6 +271,9 @@ export default function App() {
   const [isCompareOpen, setIsCompareOpen] = useState(false);
   const [isAutoAdaptOpen, setIsAutoAdaptOpen] = useState(false);
   const [isYearReviewOpen, setIsYearReviewOpen] = useState(false);
+  const [isLedgerOpen, setIsLedgerOpen] = useState(false);
+  const [isBlockCompareOpen, setIsBlockCompareOpen] = useState(false);
+  const [isScenarioOpen, setIsScenarioOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
@@ -3360,6 +3377,231 @@ export default function App() {
     }),
     [sortedWorkouts, weekPlanResult.statuses, customExercises, allExercisesNames]);
 
+  // --- 7.6 koç ve analiz raporları -----------------------------------
+
+  /** Gün → uyku puanı. Sürücü analizi ve sapma taraması aynı tabloyu kullanıyor. */
+  const sleepScoreByDay = useMemo(() => {
+    const tablo = {};
+    const gunler = [...wellness].filter(d => d?.date && d.sleep)
+      .sort((a, b) => new Date(a.date) - new Date(b.date));
+    gunler.forEach((gun, i) => {
+      // Puan önceki gecelere göre hesaplanıyor; sıralı gezmek şart.
+      const oncekiler = gunler.slice(0, i).reverse().map(g => g.sleep);
+      const puan = computeSleepScore(gun.sleep, oncekiler);
+      if (puan?.score > 0) tablo[gun.date] = puan.score;
+    });
+    return tablo;
+  }, [wellness]);
+
+  /**
+   * Performans sürücüleri: uyku, protein, dinlenme ve kilonun seans kalitesiyle
+   * ilişkisi. Nedensellik iddiası taşımıyor; modül bunu her çıktısında yazıyor.
+   */
+  const performanceDrivers = useMemo(
+    () => buildPerformanceDrivers({
+      workouts: sortedWorkouts,
+      sleepScores: sleepScoreByDay,
+      nutrition: nutritionHistory,
+      metrics: metricsHistory,
+      resolveLoad: resolveSetLoad,
+    }),
+    [sortedWorkouts, sleepScoreByDay, nutritionHistory, metricsHistory, resolveSetLoad]);
+
+  /** Tepki profili: hangi tekrar aralığı, hacim bandı ve sıklıkta daha hızlı ilerliyor. */
+  const responseProfile = useMemo(
+    () => buildResponseProfile(sortedWorkouts, customExercises, {
+      experienceLevel: settings.experienceLevel,
+      resolveLoad: resolveSetLoad,
+    }),
+    [sortedWorkouts, customExercises, settings.experienceLevel, settings.volumeTargets, resolveSetLoad]);
+
+  /** Hareket getirisi: yatırılan set başına tahmini 1RM kazancı. */
+  const exerciseRoi = useMemo(
+    () => buildExerciseRoi(sortedWorkouts, customExercises, { resolveLoad: resolveSetLoad }),
+    [sortedWorkouts, customExercises, resolveSetLoad]);
+
+  /** Kas karnesi: hacim, ilerleme ve sıklıktan tek not. */
+  const muscleScorecard = useMemo(
+    () => buildMuscleScorecard(sortedWorkouts, customExercises, {
+      weeks: 8,
+      experienceLevel: settings.experienceLevel,
+      resolveLoad: resolveSetLoad,
+    }),
+    [sortedWorkouts, customExercises, settings.experienceLevel, settings.volumeTargets, resolveSetLoad]);
+
+  /**
+   * Defterin ölçüm penceresi ayrı: karne sekiz haftaya bakıyor ve o kadar
+   * geniş bir ortalama, üç hafta önce yapılmış bir set değişikliğini
+   * seyreltip görünmez kılıyor.
+   */
+  const recentScorecard = useMemo(
+    () => buildMuscleScorecard(sortedWorkouts, customExercises, {
+      weeks: 4,
+      experienceLevel: settings.experienceLevel,
+      resolveLoad: resolveSetLoad,
+    }),
+    [sortedWorkouts, customExercises, settings.experienceLevel, settings.volumeTargets, resolveSetLoad]);
+
+  /** Sessiz sinyaller: kural yazılmamış değişimler. */
+  const anomalyWatch = useMemo(
+    () => buildAnomalyWatch({
+      workouts: sortedWorkouts,
+      metrics: metricsHistory,
+      sleepScores: sleepScoreByDay,
+      restingHrLog: settings.restingHrLog,
+      resolveLoad: resolveSetLoad,
+    }),
+    [sortedWorkouts, metricsHistory, sleepScoreByDay, settings.restingHrLog, resolveSetLoad]);
+
+  /**
+   * Blok karşılaştırma modal içinden pencere uzunluğu seçilerek çağrılıyor;
+   * memo yerine callback, çünkü sonuç kullanıcının seçtiği süreye bağlı.
+   */
+  const blockCompareFor = useCallback(
+    (weeks) => buildBlockCompare(sortedWorkouts, customExercises, { weeks, resolveLoad: resolveSetLoad }),
+    [sortedWorkouts, customExercises, resolveSetLoad]);
+
+  const blockCompare = useMemo(() => blockCompareFor(4), [blockCompareFor]);
+
+  /** Son dört haftanın en iyi tahmini 1RM'leri — defterin sonuç ölçüsü. */
+  const strengthSnapshot = useMemo(() => {
+    const sinir = new Date();
+    sinir.setDate(sinir.getDate() - 28);
+    const byMuscle = new Map();
+    const byExercise = new Map();
+    sortedWorkouts.forEach(w => {
+      if (new Date(w.date) < sinir) return;
+      (w.exercises || []).forEach(ex => {
+        const { muscle } = detectMuscleGroup(ex.name, customExercises);
+        const en = Math.max(0, ...(ex.sets || [])
+          .filter(isCompletedWorkingSet)
+          .map(setKaydi => estimate1RM(resolveSetLoad(ex.name, setKaydi.weight, w), setKaydi.reps, setKaydi.rir)));
+        if (en <= 0) return;
+        byExercise.set(ex.name, Math.max(byExercise.get(ex.name) || 0, en));
+        byMuscle.set(muscle, Math.max(byMuscle.get(muscle) || 0, en));
+      });
+    });
+    return { byMuscle, byExercise };
+  }, [sortedWorkouts, customExercises, resolveSetLoad]);
+
+  /** Defterin ölçüm kaynakları: modül kendi başına hacim ya da 1RM hesaplamıyor. */
+  const ledgerSources = useMemo(() => ({
+    // Kas belirtilmemişse toplam haftalık hacim: "hacim ekle" tavsiyesinin
+    // uygulanıp uygulanmadığı bu sayıdan okunabiliyor.
+    weeklyVolumeOf: (kas) => (kas
+      ? recentScorecard.rows.find(r => r.muscle === kas)?.weeklyVolume || 0
+      : recentScorecard.rows.reduce((t, r) => t + (r.weeklyVolume || 0), 0)),
+    bestE1rmOf: ({ muscle, exercise }) =>
+      (exercise ? strengthSnapshot.byExercise.get(exercise) : 0)
+      || (muscle ? strengthSnapshot.byMuscle.get(muscle) : 0)
+      || Math.max(0, ...strengthSnapshot.byMuscle.values()),
+    weeklySessions: () => {
+      const sinir = new Date();
+      sinir.setDate(sinir.getDate() - 28);
+      return sortedWorkouts.filter(w => new Date(w.date) >= sinir).length / 4;
+    },
+  }), [recentScorecard, strengthSnapshot, sortedWorkouts]);
+
+  const coachLedger = useMemo(
+    () => (Array.isArray(settings.coachLedger) ? settings.coachLedger : []),
+    [settings.coachLedger]);
+  const ledgerDue = useMemo(() => dueEntries(coachLedger), [coachLedger]);
+  const ledgerReport = useMemo(() => ledgerStats(coachLedger), [coachLedger]);
+
+  /** Analiz kilitleri: hangi kart neden boş ve ne girilirse açılır. */
+  const analysisLocks = useMemo(() => {
+    const tarihler = sortedWorkouts.map(w => new Date(w.date)).filter(d => !Number.isNaN(d.getTime()));
+    const gunAraligi = tarihler.length >= 2
+      ? Math.round((Math.max(...tarihler) - Math.min(...tarihler)) / 86400000)
+      : 0;
+
+    let dinlenmeOrnegi = 0;
+    sortedWorkouts.forEach(w => (w.exercises || []).forEach(ex => (ex.sets || []).forEach(setKaydi => {
+      if (parseNumber(setKaydi.restBefore) > 0) dinlenmeOrnegi += 1;
+    })));
+
+    // Geçen tam hafta (pazartesi–pazar).
+    const bugun = new Date();
+    const gun = bugun.getDay() === 0 ? 7 : bugun.getDay();
+    const buPazartesi = new Date(bugun);
+    buPazartesi.setHours(0, 0, 0, 0);
+    buPazartesi.setDate(bugun.getDate() - gun + 1);
+    const gecenPazartesi = new Date(buPazartesi);
+    gecenPazartesi.setDate(buPazartesi.getDate() - 7);
+    const gecenHafta = sortedWorkouts.filter(w => {
+      const d = new Date(w.date);
+      return d >= gecenPazartesi && d < buPazartesi;
+    }).length;
+
+    return buildAnalysisReadiness({
+      workouts: sortedWorkouts.length,
+      trainingDays: gunAraligi,
+      exercisesWith4Sessions: [...exercisePerformCounts.values()].filter(n => n >= 4).length,
+      sleepNights: Object.keys(sleepScoreByDay).length,
+      nutritionDays: nutritionHistory.length,
+      metricEntries: metricsHistory.length,
+      restSamples: dinlenmeOrnegi,
+      painEntries: (settings.painLog || []).length,
+      restingHrEntries: (settings.restingHrLog || []).length,
+      bodyWeight: parseNumber(sortedMetrics.find(m => parseNumber(m.weight) > 0)?.weight) > 0 ? 1 : 0,
+      mainLifts: strengthStandards?.rows?.length || 0,
+      lastWeekSessions: gecenHafta,
+      ledgerEntries: coachLedger.length,
+    });
+  }, [sortedWorkouts, exercisePerformCounts, sleepScoreByDay, nutritionHistory, metricsHistory,
+    settings.painLog, settings.restingHrLog, sortedMetrics, strengthStandards, coachLedger]);
+
+  /** Senaryo ekranının çalıştığı kas durumu: sekiz haftalık ortalama. */
+  const scenarioMuscleStates = useMemo(
+    () => muscleScorecard.trained.map(r => ({
+      muscle: r.muscle,
+      volume: r.weeklyVolume,
+      frequency: r.weeklySessions,
+      landmarks: r.landmarks,
+    })),
+    [muscleScorecard]);
+
+  /**
+   * Koç maddesini deftere yazar.
+   *
+   * Kayıt ANINDA ölçülüyor: üç hafta sonra "o gün hacmin neydi" sorusunun
+   * cevabı geriye dönük hesaplanabilir ama araya giren her değişiklik o
+   * cevabı bulanıklaştırırdı.
+   */
+  const handleApplyCoachItem = useCallback((item) => {
+    const kayit = snapshotDecision(item, ledgerSources, { id: generateId() });
+    if (!kayit) return;
+    setSettings(prev => ({ ...prev, coachLedger: logDecision(prev.coachLedger, kayit) }));
+    showToast(kayit.kind === 'none'
+      ? 'Deftere yazıldı. Bu tavsiyenin sayısal bir karşılığı yok, isabet oranına girmiyor.'
+      : 'Deftere yazıldı; üç hafta sonra sonucu ölçülecek.');
+  }, [ledgerSources, setSettings, showToast]);
+
+  const handleRejectCoachItem = useCallback((item) => {
+    setSettings(prev => ({ ...prev, coachLedger: logRejection(prev.coachLedger, item) }));
+  }, [setSettings]);
+
+  const handleSettleLedger = useCallback(() => {
+    setSettings(prev => {
+      const { ledger, settled } = settleDue(prev.coachLedger || [], (entry) => ({
+        complianceValue: entry.compliance?.kind === 'sessions'
+          ? ledgerSources.weeklySessions()
+          : ledgerSources.weeklyVolumeOf(entry.compliance?.muscle),
+        resultValue: ledgerSources.bestE1rmOf({
+          muscle: entry.result?.muscle,
+          exercise: entry.result?.exercise,
+        }),
+      }));
+      if (settled > 0) showToast(`${settled} tavsiyenin sonucu ölçüldü.`);
+      return { ...prev, coachLedger: ledger };
+    });
+  }, [ledgerSources, setSettings, showToast]);
+
+  const handleSetCoachFocus = useCallback((key) => {
+    setSettings(prev => ({ ...prev, coachFocus: key }));
+    showToast(`Koç odağı: ${findFocus(key).label}.`);
+  }, [setSettings, showToast]);
+
   /**
    * Şablonu paylaşılabilir koda çevirip panoya kopyalar.
    *
@@ -3506,6 +3748,14 @@ export default function App() {
       ratioItem: bodyRatioCoachItem(bodyRatios),
       returnItem: deloadReturnCoachItem(deloadReturn),
       periItem: periNutritionCoachItem(periNutrition),
+      ledgerItem: ledgerCoachItem(ledgerReport, ledgerDue),
+      driverItem: driverCoachItem(performanceDrivers),
+      responseItem: responseProfileCoachItem(responseProfile),
+      roiItem: roiCoachItem(exerciseRoi),
+      scorecardItem: scorecardCoachItem(muscleScorecard),
+      lockItem: readinessCoachItem(analysisLocks),
+      blockItem: blockCoachItem(blockCompare),
+      anomalyItem: anomalyCoachItem(anomalyWatch),
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -3522,13 +3772,19 @@ export default function App() {
     plateauReport, restReport, timeOfDayReport, techniqueReport, orderReport, frequencyPlan,
     sideBalance, waterReport, weakLinks, formCurve, restProfile, settings.restSeconds,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
+    ledgerReport, ledgerDue, performanceDrivers, responseProfile, exerciseRoi, muscleScorecard,
+    analysisLocks, blockCompare, anomalyWatch,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
   // Koç hafızası: ertelenen/kapatılan maddeler ve çelişki çözümü. Ham liste
   // yerine bu sonuç gösteriliyor.
-  const coachView = useMemo(
-    () => applyCoachMemory(coachActions, settings.coachMemory, getLocalDateString()),
-    [coachActions, settings.coachMemory]);
+  const coachView = useMemo(() => {
+    const hafiza = applyCoachMemory(coachActions, settings.coachMemory, getLocalDateString());
+    // Odak hafızadan SONRA uygulanıyor: ertelenmiş bir maddeyi öne çekmenin
+    // anlamı yok, ve çelişki elemesi önceliğe göre çalışıyor.
+    const odak = applyCoachFocus(hafiza.items, settings.coachFocus);
+    return { ...hafiza, items: odak.items, focus: odak.focus, focusShifted: odak.shifted };
+  }, [coachActions, settings.coachMemory, settings.coachFocus]);
 
   const handleSnoozeCoach = useCallback((key) => {
     setSettings(prev => ({ ...prev, coachMemory: snoozeCoachItem(prev.coachMemory, key) }));
@@ -3652,6 +3908,11 @@ export default function App() {
               onSnoozeCoach={handleSnoozeCoach}
               onDismissCoach={handleDismissCoach}
               onRestoreCoach={handleRestoreCoach}
+              onApplyCoach={handleApplyCoachItem}
+              onRejectCoach={handleRejectCoachItem}
+              coachFocus={coachView.focus}
+              onOpenLedger={() => setIsLedgerOpen(true)}
+              ledgerOpenCount={ledgerReport.open}
               coachHiddenCount={coachView.hiddenCount}
               coachConflictCount={coachView.conflictCount}
               onCoachAction={(hedef) => ({
@@ -3671,6 +3932,9 @@ export default function App() {
                 compareExercises: () => setIsCompareOpen(true),
                 autoAdapt: () => setIsAutoAdaptOpen(true),
                 yearReview: () => setIsYearReviewOpen(true),
+                coachLedger: () => setIsLedgerOpen(true),
+                blockCompare: () => setIsBlockCompareOpen(true),
+                scenario: () => setIsScenarioOpen(true),
                 wizard: () => setIsWizardOpen(true),
                 coach: () => setIsCoachCenterOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
@@ -3850,6 +4114,12 @@ export default function App() {
                 weakLinks,
                 formCurve,
                 discovery,
+                muscleScorecard,
+                exerciseRoi,
+                performanceDrivers,
+                responseProfile,
+                anomalyWatch,
+                analysisLocks,
                 analysisType,
                 frequency: frequencyReport,
                 setAnalysisType,
@@ -4016,6 +4286,9 @@ export default function App() {
               compareExercises: () => setIsCompareOpen(true),
               autoAdapt: () => setIsAutoAdaptOpen(true),
               yearReview: () => setIsYearReviewOpen(true),
+              coachLedger: () => setIsLedgerOpen(true),
+              blockCompare: () => setIsBlockCompareOpen(true),
+              scenario: () => setIsScenarioOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
@@ -4051,6 +4324,8 @@ export default function App() {
           onNormalizeBodyweight={handleNormalizeBodyweight}
           onToggleRestNotification={handleToggleRestNotification}
           onTestRestAlert={handleTestRestAlert}
+          coachFocus={settings.coachFocus}
+          onChangeCoachFocus={handleSetCoachFocus}
           trainingGoal={settings.trainingGoal}
           onChangeTrainingGoal={handleSetTrainingGoal}
           onImportProgramCode={handleImportTemplateCode}
@@ -4316,6 +4591,29 @@ export default function App() {
           onApply={handleApplyAdaptation}
         />}
 
+        {isLedgerOpen && <CoachLedgerModal
+          isOpen={isLedgerOpen}
+          onClose={() => setIsLedgerOpen(false)}
+          ledger={coachLedger}
+          stats={ledgerReport}
+          due={ledgerDue}
+          onSettle={handleSettleLedger}
+        />}
+
+        {isBlockCompareOpen && <BlockCompareModal
+          isOpen={isBlockCompareOpen}
+          onClose={() => setIsBlockCompareOpen(false)}
+          buildReport={blockCompareFor}
+        />}
+
+        {isScenarioOpen && <ScenarioModal
+          isOpen={isScenarioOpen}
+          onClose={() => setIsScenarioOpen(false)}
+          muscleStates={scenarioMuscleStates}
+          profile={responseProfile}
+          restSeconds={settings.restSeconds}
+        />}
+
         {isYearReviewOpen && <YearReviewModal
           isOpen={isYearReviewOpen}
           onClose={() => setIsYearReviewOpen(false)}
@@ -4492,6 +4790,9 @@ export default function App() {
               compareExercises: () => setIsCompareOpen(true),
               autoAdapt: () => setIsAutoAdaptOpen(true),
               yearReview: () => setIsYearReviewOpen(true),
+              coachLedger: () => setIsLedgerOpen(true),
+              blockCompare: () => setIsBlockCompareOpen(true),
+              scenario: () => setIsScenarioOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),

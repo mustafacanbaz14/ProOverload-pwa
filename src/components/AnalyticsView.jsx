@@ -6,6 +6,12 @@ import TrainingCalendarCard from './TrainingCalendarCard';
 import RecordTimelineCard from './RecordTimelineCard';
 import WeakLinkCard from './WeakLinkCard';
 import FormCurveCard from './FormCurveCard';
+import MuscleScorecardCard from './MuscleScorecardCard';
+import ExerciseRoiCard from './ExerciseRoiCard';
+import PerformanceDriversCard from './PerformanceDriversCard';
+import ResponseProfileCard from './ResponseProfileCard';
+import AnomalyCard from './AnomalyCard';
+import AnalysisUnlockCard from './AnalysisUnlockCard';
 import SessionQualityCard from './SessionQualityCard';
 import CardioCoachCard from './CardioCoachCard';
 import StrengthStandardsCard from './StrengthStandardsCard';
@@ -42,6 +48,12 @@ const AnalyticsView = memo(({
   weakLinks = null,
   formCurve = null,
   discovery = null,
+  muscleScorecard = null,
+  exerciseRoi = null,
+  performanceDrivers = null,
+  responseProfile = null,
+  anomalyWatch = null,
+  analysisLocks = null,
   onAction,
   analysisType,
   cardioReport = null,
@@ -353,7 +365,11 @@ const AnalyticsView = memo(({
               soru. Biri "programı gerçekten uyguluyor muyum", diğeri "kuvvet
               kaslar arasında nasıl dağılmış". */}
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
+          {/* Karne en üstte: "göğsüm iyi gidiyor mu" sorusunun cevabı, altındaki
+              on kartın hepsinden önce gelir. */}
+          <MuscleScorecardCard report={muscleScorecard} />
           <WeakLinkCard report={weakLinks} onAction={onAction} />
+          <ExerciseRoiCard report={exerciseRoi} />
 
           {/* Hareket keşfi: kütüphanede iki yüzden fazla hareket var ve
               tipik kullanıcı yirmi otuzunu kullanıyor. Arama, ne aradığını
@@ -570,6 +586,10 @@ const AnalyticsView = memo(({
             </div>
           </div>
 
+          <PerformanceDriversCard report={performanceDrivers} />
+          <ResponseProfileCard profile={responseProfile} />
+          <AnomalyCard report={anomalyWatch} />
+
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <Utensils size={14} className="text-emerald-400" />
@@ -582,6 +602,10 @@ const AnalyticsView = memo(({
               {coachInsights.nutrition.message} · {coachInsights.nutrition.samples} eşleşen gün
             </p>
           </div>
+
+          {/* Kilitler en altta: "bu kart neden boş" sorusunun cevabı, ama
+              açılmış analizlerin önüne geçmemeli. */}
+          <AnalysisUnlockCard report={analysisLocks} />
         </div>
       )}
 

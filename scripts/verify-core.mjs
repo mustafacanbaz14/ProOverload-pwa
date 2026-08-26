@@ -158,6 +158,28 @@ import {
   duplicateTemplate, markTemplateUsed, organizeTemplates, toggleTemplateFavorite,
 } from '../src/utils/templateLibrary.js';
 
+import {
+  snapshotDecision, logDecision, logRejection, dueEntries, settleEntry, settleDue,
+  ledgerStats, ledgerCoachItem, describeEntry, LEDGER_REVIEW_DAYS,
+} from '../src/utils/coachLedger.js';
+import {
+  buildPerformanceDrivers, personalThreshold, driverCoachItem, relativePerformance,
+} from '../src/utils/performanceDrivers.js';
+import {
+  buildResponseProfile, responseProfileCoachItem, REP_BANDS as RESPONSE_REP_BANDS,
+} from '../src/utils/responseProfile.js';
+import { buildExerciseRoi, roiCoachItem, roiFor, describeRoi } from '../src/utils/exerciseRoi.js';
+import { buildMuscleScorecard, scorecardCoachItem, GRADES } from '../src/utils/muscleScorecard.js';
+import { buildAnalysisReadiness, readinessCoachItem, ANALYSES } from '../src/utils/analysisReadiness.js';
+import { buildBlockCompare, blockCoachItem, describeBlocks } from '../src/utils/blockCompare.js';
+import {
+  COACH_FOCUSES, findFocus, categoryOf, applyCoachFocus, describeFocus, PROTECTED_CATEGORIES,
+} from '../src/utils/coachFocus.js';
+import {
+  buildAnomalyWatch, scanSeries, buildAnomalySeries, anomalyCoachItem, describeFinding,
+} from '../src/utils/anomalyWatch.js';
+import { buildScenario, suggestScenarios, totalCost, SCENARIO_KINDS } from '../src/utils/whatIf.js';
+
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
 
@@ -5022,6 +5044,563 @@ test('mod ile ayar çelişkisi bildiriliyor', () => {
   assert.ok(c.findings.some(f => f.key === 'rest'));
 });
 
+
+
+/* ---------------------------------------------------------------- 7.6 */
+
+// Ortak fikstür: haftada iki seans, on altı hafta, düzenli ilerleyen bir
+// geçmiş. Testlerin çoğu bunun üstünde çalışıyor çünkü modüllerin hepsi
+// "yeterli veri" eşiği taşıyor ve tek seanslık kurgular hiçbirini tetiklemiyor.
+const gunEkle = (temel, gun) => {
+  const d = new Date(temel);
+  d.setDate(d.getDate() + gun);
+  return d.toISOString().slice(0, 10);
+};
+
+const TEMEL = '2026-05-04';
+
+const setYap = (weight, reps, rir = 2, extra = {}) => ({
+  weight: String(weight), reps: String(reps), rir, setType: 'normal', completed: true, ...extra,
+});
+
+const gecmisUret = ({ hafta = 16, artis = 2.5, tekrar = 8, seansBasiSet = 4 } = {}) => {
+  const out = [];
+  for (let h = 0; h < hafta; h += 1) {
+    for (const kaydirma of [0, 3]) {
+      const tarih = gunEkle(TEMEL, h * 7 + kaydirma);
+      const bench = 80 + h * artis;
+      const squat = 100 + h * artis;
+      out.push({
+        id: `w-${h}-${kaydirma}`,
+        date: tarih,
+        duration: 62,
+        readiness: { score: 60 + ((h * 7 + kaydirma) % 30), raw: { jointPain: 1, soreness: 4 } },
+        exercises: [
+          {
+            name: 'Barbell Bench Press',
+            sets: Array.from({ length: seansBasiSet }, () => setYap(bench, tekrar)),
+          },
+          {
+            name: 'Barbell Back Squat',
+            sets: Array.from({ length: seansBasiSet }, () => setYap(squat, tekrar)),
+          },
+          {
+            name: 'Lateral Raise (Dumbbell)',
+            sets: Array.from({ length: 3 }, () => setYap(12, 14)),
+          },
+        ],
+      });
+    }
+  }
+  return out;
+};
+
+test('koç defteri kararı ölçülebilir bir kayda çeviriyor', () => {
+  const kaynak = {
+    weeklyVolumeOf: (kas) => (kas === 'Göğüs' ? 10 : 6),
+    bestE1rmOf: ({ muscle }) => (muscle === 'Göğüs' ? 100 : 80),
+    weeklySessions: () => 3,
+  };
+  const kayit = snapshotDecision(
+    { key: 'volume', title: 'Göğüs eşik altında', muscle: 'Göğüs', action: 'plan' },
+    kaynak, { now: new Date('2026-08-01'), id: 'k1' });
+
+  assert.equal(kayit.kind, 'volume');
+  assert.equal(kayit.compliance.baseline, 10);
+  assert.equal(kayit.result.baseline, 100);
+  // Ölçüm tarihi tam üç hafta sonra.
+  assert.equal(kayit.reviewOn, '2026-08-22');
+
+  // Aynı madde açıkken ikinci kayıt açılmıyor: tek değişiklik iki kez puanlanmaz.
+  const defter = logDecision(logDecision([], kayit), { ...kayit, id: 'k2' });
+  assert.equal(defter.length, 1);
+});
+
+test('defter kas bilinmiyorsa toplam hacmi ölçüyor', () => {
+  const kaynak = {
+    weeklyVolumeOf: (kas) => (kas ? 10 : 96),
+    bestE1rmOf: () => 120,
+    weeklySessions: () => 3,
+  };
+  // Kas taşıyan madde: o kasın hacmi.
+  const kasli = snapshotDecision({ key: 'weak-link', title: 't', muscle: 'Göğüs' }, kaynak, { id: 'a' });
+  assert.equal(kasli.compliance.baseline, 10);
+  assert.equal(kasli.compliance.label, 'haftalık set');
+
+  // Kassız madde: toplam hacim. Sıfır kaydetmek her tavsiyeyi "denenmedi"
+  // damgasına mahkûm ederdi.
+  const kassiz = snapshotDecision({ key: 'volume', title: 't' }, kaynak, { id: 'b' });
+  assert.equal(kassiz.compliance.baseline, 96);
+  assert.equal(kassiz.compliance.label, 'haftalık toplam set');
+
+  // Ölçülemeyen tavsiyeye ölçüm tarihi yazılmıyor.
+  const olculemez = snapshotDecision({ key: 'sleep-missing', title: 't' }, kaynak, { id: 'c' });
+  assert.equal(olculemez.kind, 'none');
+  assert.equal(olculemez.reviewOn, '');
+  assert.equal(dueEntries([olculemez], new Date('2030-01-01')).length, 0);
+  assert.equal(ledgerStats([olculemez]).open, 0);
+  assert.equal(ledgerStats([olculemez]).unmeasurable, 1);
+});
+
+test('defter uygulama ile sonucu ayrı ölçüyor', () => {
+  const temelKayit = {
+    id: 'a', key: 'volume', title: 't', area: 'plan', kind: 'volume',
+    decidedAt: '2026-08-01', reviewOn: '2026-08-22', decision: 'applied',
+    compliance: { kind: 'volume', label: 'haftalık set', muscle: 'Göğüs', baseline: 10 },
+    result: { kind: 'e1rm', muscle: 'Göğüs', baseline: 100 },
+    outcome: null,
+  };
+
+  // Uygulandı ve işe yaradı.
+  const iyi = settleEntry(temelKayit, { complianceValue: 14, resultValue: 105 }, new Date('2026-08-22'));
+  assert.equal(iyi.outcome.verdict, 'worked');
+  assert.equal(iyi.outcome.complianceMet, true);
+
+  // Uygulanmadı: sonuç iyi olsa bile "başarı" sayılmıyor, çünkü test edilmedi.
+  const denenmedi = settleEntry(temelKayit, { complianceValue: 10, resultValue: 120 }, new Date('2026-08-22'));
+  assert.equal(denenmedi.outcome.verdict, 'not-applied');
+
+  // Uygulandı ama geriye gitti.
+  const ters = settleEntry(temelKayit, { complianceValue: 14, resultValue: 94 }, new Date('2026-08-22'));
+  assert.equal(ters.outcome.verdict, 'backfired');
+
+  // Toparlanma tavsiyesinde "uygulandı" AZALMA demek.
+  const dinlenme = { ...temelKayit, kind: 'recovery', compliance: { ...temelKayit.compliance, baseline: 4 } };
+  assert.equal(settleEntry(dinlenme, { complianceValue: 2, resultValue: 103 }).outcome.verdict, 'worked');
+  assert.equal(settleEntry(dinlenme, { complianceValue: 5, resultValue: 103 }).outcome.complianceMet, false);
+});
+
+test('defter isabet oranını yalnızca denenmiş tavsiyelerden hesaplıyor', () => {
+  const yap = (i, verdict, met = true) => ({
+    id: `x${i}`, key: `k${i}`, area: 'plan', kind: 'volume', decision: 'applied',
+    compliance: { baseline: 10, label: 'set' }, result: { baseline: 100 },
+    outcome: { complianceMet: met, verdict, deltaPct: 0, complianceValue: 12, resultValue: 100 },
+  });
+  const defter = [
+    yap(1, 'worked'), yap(2, 'worked'), yap(3, 'worked'),
+    yap(4, 'flat'), yap(5, 'backfired'),
+    yap(6, 'not-applied', false), yap(7, 'not-applied', false),
+  ];
+  const k = ledgerStats(defter);
+  assert.equal(k.tested, 5);
+  assert.equal(k.worked, 3);
+  assert.equal(k.notApplied, 2);
+  assert.equal(k.hitRate, 60);
+
+  // Beş ölçümün altında oran yazılmıyor.
+  assert.equal(ledgerStats([yap(1, 'worked'), yap(2, 'flat')]).hitRate, null);
+
+  // Reddedilen kayıt ölçüme girmiyor ama sayılıyor.
+  const red = logRejection([], { key: 'volume', title: 'x' }, { id: 'r1' });
+  assert.equal(ledgerStats(red).rejected, 1);
+  assert.equal(ledgerStats(red).tested, 0);
+  assert.ok(describeEntry(red[0]).includes('reddedildi'));
+});
+
+test('defter zamanı gelen kayıtları topluca ölçüyor', () => {
+  const defter = [
+    { id: 'a', key: 'k1', kind: 'volume', decision: 'applied', reviewOn: '2026-08-01', compliance: { baseline: 10 }, result: { baseline: 100 }, outcome: null },
+    { id: 'b', key: 'k2', kind: 'volume', decision: 'applied', reviewOn: '2026-12-01', compliance: { baseline: 10 }, result: { baseline: 100 }, outcome: null },
+    { id: 'c', key: 'k3', kind: 'none', decision: 'applied', reviewOn: '2026-08-01', compliance: null, result: null, outcome: null },
+  ];
+  const due = dueEntries(defter, new Date('2026-08-15'));
+  assert.equal(due.length, 1);
+  assert.equal(due[0].id, 'a');
+
+  const { ledger, settled } = settleDue(defter, () => ({ complianceValue: 13, resultValue: 106 }), new Date('2026-08-15'));
+  assert.equal(settled, 1);
+  assert.equal(ledger[0].outcome.verdict, 'worked');
+  assert.equal(ledger[1].outcome, null);
+
+  assert.ok(ledgerCoachItem(ledgerStats(defter), due).title.includes('ölçülmeyi bekliyor'));
+});
+
+test('performans sürücüleri seansı kendi geçmişine göre puanlıyor', () => {
+  const gecmis = new Map([['Barbell Bench Press', [100, 100, 100, 100]]]);
+  const seans = { exercises: [{ name: 'Barbell Bench Press', sets: [setYap(90, 8, 2)] }] };
+  const p = relativePerformance(seans, gecmis);
+  // 90 kg × 8 tekrar, RIR 2 → 10 toplam tekrar → 90 × (1 + 10/30) = 120
+  assert.equal(p.exercises, 1);
+  assert.ok(p.value > 1.1 && p.value < 1.3);
+
+  // Geçmişi olmayan hareket puanlamaya girmiyor.
+  assert.equal(relativePerformance({ exercises: [{ name: 'Yeni Hareket', sets: [setYap(50, 8)] }] }, gecmis), null);
+});
+
+test('performans sürücüleri ilişkiyi ölçüp örneklem sayısını bildiriyor', () => {
+  // Uyku puanı ile performans arasında kasıtlı bir bağ kurulmuş veri.
+  const workouts = [];
+  const sleepScores = {};
+  for (let i = 0; i < 24; i += 1) {
+    const tarih = gunEkle(TEMEL, i * 3);
+    const iyiGun = i % 2 === 0;
+    const uyku = iyiGun ? 85 : 45;
+    sleepScores[tarih] = uyku;
+    workouts.push({
+      id: `s${i}`, date: tarih,
+      readiness: { score: 70, raw: { jointPain: 1, soreness: 4 } },
+      exercises: [{
+        name: 'Barbell Bench Press',
+        sets: [setYap(iyiGun ? 105 : 90, 8), setYap(iyiGun ? 105 : 90, 8)],
+      }],
+    });
+  }
+  const r = buildPerformanceDrivers({ workouts, sleepScores });
+  assert.equal(r.hasData, true);
+  const uykuSurucu = r.drivers.find(d => d.key === 'sleep');
+  assert.ok(uykuSurucu.enough);
+  assert.ok(uykuSurucu.samples >= 8);
+  // Yüksek uyku bandı daha iyi performans göstermeli.
+  assert.ok(uykuSurucu.spread > 0, `spread=${uykuSurucu.spread}`);
+  assert.ok(Math.abs(uykuSurucu.r) > 0.15);
+
+  const kart = driverCoachItem(r);
+  assert.ok(kart === null || kart.detail.includes('neden-sonuç kanıtı değil'));
+});
+
+test('kişisel eşik iki tarafta da yeterli örneklem arıyor', () => {
+  const satirlar = Array.from({ length: 20 }, (_, i) => ({
+    readiness: i < 10 ? 40 : 80,
+    performance: i < 10 ? 0.95 : 1.05,
+  }));
+  const esik = personalThreshold(satirlar, 'readiness');
+  assert.equal(esik.cut, 80);
+  assert.ok(esik.gap > 9);
+
+  // Az veri: eşik üretilmiyor.
+  assert.equal(personalThreshold(satirlar.slice(0, 6), 'readiness'), null);
+  // Ayrışma yoksa eşik yok.
+  assert.equal(personalThreshold(
+    Array.from({ length: 20 }, (_, i) => ({ readiness: i, performance: 1 })), 'readiness'), null);
+});
+
+test('tepki profili kazancı onu üreten seansın bandına yazıyor', () => {
+  const profil = buildResponseProfile(gecmisUret({ hafta: 16 }), []);
+  assert.equal(profil.hasData, true);
+  assert.ok(profil.observations >= 12);
+  // 8 tekrarla çalışılmış: 6-8 bandında gözlem olmalı.
+  const band = profil.repBands.find(b => b.key === 'lowMid');
+  assert.ok(band.observations > 0, 'lowMid bandında gözlem yok');
+  // Bant tanımları çakışmıyor.
+  assert.equal(RESPONSE_REP_BANDS.filter(b => 8 >= b.min && 8 <= b.max).length, 1);
+});
+
+test('tepki profili anlamsız farkta "en iyi" demiyor', () => {
+  const profil = buildResponseProfile(gecmisUret({ hafta: 16, artis: 0 }), []);
+  // Hiç ilerleme yoksa bantlar eşit; berabere işaretlenmeli ya da hiç seçilmemeli.
+  const r = profil.best.rep;
+  assert.ok(r === null || r.tie === true, 'ilerleme yokken bant kazanan seçildi');
+  assert.equal(responseProfileCoachItem(profil), null);
+});
+
+test('hareket getirisi kas içinde sıralanıyor ve yeni hareketi saymıyor', () => {
+  const workouts = gecmisUret({ hafta: 16 });
+  // Son iki seansa yeni bir hareket ekle: dört seans eşiğini geçmemeli.
+  workouts.slice(-2).forEach(w => w.exercises.push({
+    name: 'Preacher Curl', sets: [setYap(30, 10), setYap(30, 10)],
+  }));
+
+  const r = buildExerciseRoi(workouts, [], { now: new Date(gunEkle(TEMEL, 16 * 7)) });
+  assert.equal(r.hasData, true);
+  assert.ok(!r.items.some(x => x.name === 'Preacher Curl'), 'yeni hareket getiriye girdi');
+
+  const bench = roiFor(r, 'Barbell Bench Press');
+  assert.ok(bench.sessions >= 4);
+  assert.ok(bench.gainPct > 0);
+  assert.equal(bench.rankInMuscle >= 1, true);
+  assert.ok(describeRoi(bench).includes('on set başına'));
+
+  // İlerlemeyen izolasyon, aynı kasta tek hareketse zayıf işaretlenmiyor.
+  const yan = roiFor(r, 'Lateral Raise (Dumbbell)');
+  if (yan) assert.equal(yan.muscleCount >= 1, true);
+});
+
+test('hareket getirisi koç kartı yalnızca alternatifi olan harekette çıkıyor', () => {
+  assert.equal(roiCoachItem({ underperformers: [], byMuscle: [] }), null);
+  const sahte = {
+    underperformers: [{ name: 'A', muscle: 'Göğüs', days: 60, sets: 40, gainPct: 0, roi: 0 }],
+    byMuscle: [{ muscle: 'Göğüs', items: [{ name: 'B', roi: 2 }, { name: 'A', roi: 0 }] }],
+  };
+  assert.ok(roiCoachItem(sahte).title.includes('A'));
+});
+
+test('kas karnesi sınırlayıcı bileşeni doğru seçiyor', () => {
+  const workouts = gecmisUret({ hafta: 8, seansBasiSet: 5 });
+  const karne = buildMuscleScorecard(workouts, [], { now: new Date(gunEkle(TEMEL, 8 * 7)) });
+  assert.equal(karne.hasData, true);
+
+  const gogus = karne.rows.find(r => r.muscle === 'Göğüs');
+  assert.equal(gogus.trained, true);
+  assert.ok(gogus.score > 0 && gogus.score <= 100);
+  assert.ok(['volume', 'strength', 'frequency'].includes(gogus.limiting.key));
+  assert.ok(gogus.advice.length > 10);
+
+  // Sınırlayan etken en çok PUAN kaybedilen bileşen: tavanları farklı olduğu
+  // için oran karşılaştırması hacmi haksız yere ikinci sıraya atıyordu.
+  const kayip = (c) => c.max - c.score;
+  const enCokKayip = [...gogus.components].filter(c => !c.estimated)
+    .sort((a, b) => kayip(b) - kayip(a))[0];
+  assert.equal(gogus.limiting.key, enCokKayip.key);
+
+  // Hiç çalışılmamış kas "trained: false".
+  const calismayan = karne.rows.find(r => !r.trained);
+  assert.ok(calismayan, 'hiç çalışılmamış kas bulunamadı');
+  assert.equal(karne.untrained.includes(calismayan.muscle), true);
+
+  // Not ölçeği tanımlı aralıkta.
+  assert.equal(GRADES.at(-1).min, 0);
+  assert.ok(karne.average >= 0 && karne.average <= 100);
+});
+
+test('kas karnesi ölçülemeyen ilerlemeyi sıfır saymıyor', () => {
+  // Tek seans: ilerleme hesaplanamaz, nötr puan verilmeli.
+  const tek = [{
+    date: TEMEL, exercises: [{ name: 'Barbell Bench Press', sets: [setYap(80, 8), setYap(80, 8)] }],
+  }, {
+    date: gunEkle(TEMEL, 7), exercises: [{ name: 'Barbell Bench Press', sets: [setYap(80, 8), setYap(80, 8)] }],
+  }];
+  const karne = buildMuscleScorecard(tek, [], { now: new Date(gunEkle(TEMEL, 14)) });
+  const gogus = karne.rows.find(r => r.muscle === 'Göğüs');
+  assert.equal(gogus.strengthChange, null);
+  const kuvvet = gogus.components.find(c => c.key === 'strength');
+  assert.equal(kuvvet.estimated, true);
+  assert.equal(kuvvet.score, 20);
+});
+
+test('analiz kilitleri en zayıf koşula göre ilerleme veriyor', () => {
+  const bos = buildAnalysisReadiness({});
+  assert.equal(bos.ready, 0);
+  assert.equal(bos.locked, ANALYSES.length);
+  assert.ok(bos.bottleneck);
+
+  const dolu = buildAnalysisReadiness({
+    workouts: 40, trainingDays: 200, exercisesWith4Sessions: 8, sleepNights: 40,
+    nutritionDays: 40, metricEntries: 20, restSamples: 40, painEntries: 5,
+    restingHrEntries: 20, bodyWeight: 1, mainLifts: 3, lastWeekSessions: 4, ledgerEntries: 2,
+  });
+  assert.equal(dolu.silent, true);
+  assert.equal(dolu.locked, 0);
+  assert.equal(readinessCoachItem(dolu), null);
+
+  // İki koşuldan biri tamsa ilerleme YÜKSEK olan değil DÜŞÜK olan koşuldan.
+  const yari = buildAnalysisReadiness({ workouts: 100, exercisesWith4Sessions: 0 });
+  const tepki = yari.rows.find(r => r.key === 'response');
+  assert.equal(tepki.ready, false);
+  assert.equal(tepki.progress, 0);
+});
+
+test('analiz kilitleri darboğazı en çok analizi açan veriden seçiyor', () => {
+  const r = buildAnalysisReadiness({ workouts: 0, trainingDays: 0 });
+  const d = r.bottleneck;
+  assert.ok(d.unlocks >= 3);
+  const kart = readinessCoachItem(r);
+  assert.ok(kart.title.includes(String(d.unlocks)));
+});
+
+test('blok karşılaştırma yalnızca ortak hareketleri sonuç sayıyor', () => {
+  const simdi = new Date(gunEkle(TEMEL, 16 * 7));
+  const r = buildBlockCompare(gecmisUret({ hafta: 16 }), [], { weeks: 4, now: simdi });
+  assert.equal(r.hasData, true);
+  assert.ok(r.shared >= 2);
+  assert.ok(r.outcome.meanChange > 0, 'ilerleyen veride çıktı artmadı');
+  assert.ok(r.inputs.some(i => i.key === 'sets'));
+  assert.ok(r.verdict.includes('nedensellik çıkarılamaz') || r.verdict.includes('Girdilerde'));
+
+  // Az veri: açıkça reddediliyor.
+  const az = buildBlockCompare(gecmisUret({ hafta: 16 }).slice(0, 4), [], { weeks: 4, now: simdi });
+  assert.equal(az.hasData, false);
+  assert.ok(az.reason.includes('üç antrenman'));
+});
+
+test('blok karşılaştırma hareket değişimini ilerleme sanmıyor', () => {
+  const simdi = new Date(gunEkle(TEMEL, 16 * 7));
+  const workouts = gecmisUret({ hafta: 16 });
+  // Son blokta bench yerine çok daha hafif yeni bir hareket: ortak listede
+  // olmadığı için ortalama değişimi bozmamalı.
+  workouts.slice(-8).forEach(w => {
+    w.exercises = w.exercises.filter(e => e.name !== 'Lateral Raise (Dumbbell)');
+    w.exercises.push({ name: 'Cable Bicep Curl', sets: [setYap(15, 12), setYap(15, 12)] });
+  });
+  const r = buildBlockCompare(workouts, [], { weeks: 4, now: simdi });
+  assert.ok(r.added.includes('Cable Bicep Curl'));
+  assert.ok(!r.outcome.gainers.some(g => g.name === 'Cable Bicep Curl'));
+  assert.ok(r.outcome.meanChange > 0);
+});
+
+test('koç odağı sağlık maddelerini geri itmiyor', () => {
+  const maddeler = [
+    { key: 'volume', priority: 2, title: 'hacim' },
+    { key: 'pain', priority: 1, title: 'ağrı' },
+    { key: 'protein', priority: 2, title: 'protein' },
+    { key: 'plateau', priority: 2, title: 'plato' },
+  ];
+  assert.equal(categoryOf('pain'), 'health');
+  assert.equal(categoryOf('bilinmeyen-anahtar'), 'other');
+
+  const yagKaybi = applyCoachFocus(maddeler, 'fatloss');
+  // Beslenme hacmin ve ilerlemenin önüne geçmeli. Ağrı zaten 1. öncelikte ve
+  // korunuyor; beraberlikte girdi sırası kazandığı için en üstte o kalıyor.
+  const sira = yagKaybi.items.map(i => i.key);
+  assert.ok(sira.indexOf('protein') < sira.indexOf('volume'));
+  assert.ok(sira.indexOf('protein') < sira.indexOf('plateau'));
+  // Sağlık maddesi geri itilmemiş: ayarlanmış önceliği hâlâ 1.
+  const agri = yagKaybi.items.find(i => i.key === 'pain');
+  assert.equal(agri.adjustedPriority, 1);
+  assert.equal(agri.focusShift, 0);
+
+  const saglik = applyCoachFocus(maddeler, 'health');
+  assert.equal(saglik.items[0].key, 'pain');
+  assert.ok(PROTECTED_CATEGORIES.includes('recovery'));
+  assert.ok(describeFocus(saglik).includes('Sakatlıksız'));
+});
+
+test('koç maddelerinin anahtarları benzersiz', () => {
+  // Aynı anahtarla iki madde hem React listesini bozuyor hem de erteleme /
+  // kapatma / deftere yazma işlemlerinin ikisini birden vurmasına yol açıyor.
+  const maddeler = buildCoachActions({
+    plateauItem: { title: 'A geriliyor', detail: 'd', tone: 'warn' },
+    plateaus: [{ name: 'B', state: 'decline', advice: 'x' }],
+    weakLinkItem: { title: 'W', detail: 'd', tone: 'warn', muscle: 'Göğüs' },
+    scorecardItem: { title: 'S', detail: 'd', muscle: 'Kanat' },
+    anomalyItem: { title: 'An', detail: 'd' },
+    blockItem: { title: 'B', detail: 'd' },
+    ledgerItem: { title: 'L', detail: 'd', tone: 'info' },
+    driverItem: { title: 'D', detail: 'd' },
+    responseItem: { title: 'R', detail: 'd' },
+    roiItem: { title: 'Ro', detail: 'd' },
+    lockItem: { title: 'Lo', detail: 'd' },
+  });
+  const anahtarlar = maddeler.map(m => m.key);
+  assert.equal(new Set(anahtarlar).size, anahtarlar.length, `tekrar eden anahtar: ${anahtarlar}`);
+
+  // Yeni tarama varsa eski gerileme maddesi susuyor.
+  assert.ok(!anahtarlar.includes('plateau-decline'));
+
+  // Her anahtar bir odak kategorisine ve defter planına yerleşiyor: 'other'
+  // kalan bir anahtar, odağın o maddeyi hiç kaydıramaması demek.
+  maddeler.filter(m => m.key !== 'clear').forEach(m => {
+    assert.notEqual(categoryOf(m.key), 'other', `kategorisiz anahtar: ${m.key}`);
+  });
+});
+
+test('koç odağı dengeli modda sırayı değiştirmiyor', () => {
+  const maddeler = [
+    { key: 'volume', priority: 2 }, { key: 'protein', priority: 2 }, { key: 'plateau', priority: 2 },
+  ];
+  const r = applyCoachFocus(maddeler, 'balanced');
+  assert.deepEqual(r.items.map(i => i.key), ['volume', 'protein', 'plateau']);
+  assert.equal(r.shifted, 0);
+  assert.equal(findFocus('yok-boyle-odak').key, 'balanced');
+  assert.equal(Object.keys(COACH_FOCUSES).length, 6);
+});
+
+test('sessiz sinyaller ortanca ve MAD ile çalışıyor', () => {
+  // Sabit taban + son üç noktada belirgin düşüş.
+  const noktalar = Array.from({ length: 12 }, (_, i) => ({
+    date: gunEkle(TEMEL, i * 3),
+    value: i < 9 ? 10 + (i % 2) : 7,
+  }));
+  const r = scanSeries({ key: 't', label: 'Test', higherIsBetter: true, points: noktalar });
+  assert.equal(r.enough, true);
+  assert.equal(r.anomaly, true);
+  assert.equal(r.direction, 'down');
+  assert.equal(r.favorable, false);
+  assert.ok(describeFinding(r).includes('düştü'));
+
+  // Aynı düşüş ama taban zaten çok oynak: sıra dışı sayılmamalı.
+  const oynak = Array.from({ length: 12 }, (_, i) => ({
+    date: gunEkle(TEMEL, i * 3),
+    value: i < 9 ? [4, 16, 6, 14, 5, 15, 7, 13, 10][i] : 7,
+  }));
+  assert.equal(scanSeries(oynak.length ? { key: 'o', label: 'O', points: oynak } : {}).anomaly, false);
+
+  // Az nokta: hiç değerlendirilmiyor.
+  assert.equal(scanSeries({ key: 'a', label: 'A', points: noktalar.slice(0, 5) }).enough, false);
+});
+
+test('sessiz sinyaller tek bir aykırı noktadan tetiklenmiyor', () => {
+  const noktalar = Array.from({ length: 14 }, (_, i) => ({
+    date: gunEkle(TEMEL, i * 3),
+    value: i === 4 ? 40 : 10,
+  }));
+  assert.equal(scanSeries({ key: 't', label: 'T', points: noktalar }).anomaly, false);
+});
+
+test('sessiz sinyaller uygulama verisinden seri kuruyor', () => {
+  const workouts = gecmisUret({ hafta: 12 });
+  // Son üç seansta tekrar sayısı belirgin düşsün.
+  workouts.slice(-3).forEach(w => w.exercises.forEach(ex => {
+    ex.sets = ex.sets.map(s => ({ ...s, reps: '5' }));
+  }));
+
+  const seriler = buildAnomalySeries({ workouts });
+  assert.ok(seriler.some(s => s.key === 'reps'));
+  const r = buildAnomalyWatch({ workouts });
+  assert.equal(r.hasData, true);
+  const tekrarBulgusu = r.findings.find(f => f.key === 'reps');
+  assert.ok(tekrarBulgusu, 'tekrar düşüşü yakalanmadı');
+  assert.equal(tekrarBulgusu.direction, 'down');
+
+  const kart = anomalyCoachItem(r);
+  if (kart) assert.ok(kart.detail.includes('teşhis değil'));
+
+  // Sakin veride bulgu yok.
+  assert.equal(buildAnomalyWatch({ workouts: gecmisUret({ hafta: 12, artis: 0 }) }).quiet, true);
+});
+
+test('senaryo veri yoksa tahmin uydurmuyor', () => {
+  const r = buildScenario(
+    { muscle: 'Göğüs', deltaSets: 4 },
+    { current: { volume: 6, frequency: 1 }, landmarks: { mev: 8, mav: 16, mrv: 22 }, restSeconds: 120 });
+  assert.equal(r.to.volume, 10);
+  assert.equal(r.crossesBand, true);
+  assert.equal(r.to.band, 'mevMav');
+  assert.equal(r.evidence, null);
+  assert.ok(r.summary.includes('yeterli geçmiş verin yok'));
+  assert.ok(r.minutesPerWeek > 0);
+});
+
+test('senaryo kendi geçmişini kanıt olarak kullanıyor', () => {
+  const profil = { volumeBands: [
+    { key: 'mevMav', label: 'MEV–MAV', enough: true, observations: 12, gainPerSession: 1.2 },
+    { key: 'belowMev', label: 'Eşik altı', enough: true, observations: 9, gainPerSession: 0.3 },
+  ] };
+  const r = buildScenario(
+    { muscle: 'Göğüs', deltaSets: 4 },
+    { current: { volume: 6, frequency: 2 }, landmarks: { mev: 8, mav: 16, mrv: 22 }, profile: profil });
+  assert.equal(r.evidence.observations, 12);
+  assert.equal(r.evidence.compare.gainPerSession, 0.3);
+  assert.ok(r.summary.includes('tahmin değil'));
+});
+
+test('senaryo tavan aşımını ve tek güne yığılmayı uyarıyor', () => {
+  const tavan = buildScenario(
+    { muscle: 'Göğüs', deltaSets: 8 },
+    { current: { volume: 20, frequency: 2 }, landmarks: { mev: 8, mav: 16, mrv: 22 } });
+  assert.ok(tavan.warnings.some(w => w.includes('tavanın')));
+
+  const yigilma = buildScenario(
+    { muscle: 'Göğüs', deltaSets: 4 },
+    { current: { volume: 14, frequency: 1 }, landmarks: { mev: 8, mav: 16, mrv: 22 } });
+  assert.ok(yigilma.warnings.some(w => w.includes('ikiye bölmek')));
+});
+
+test('senaryo önerileri mevcut duruma göre üretiliyor', () => {
+  const durumlar = [
+    { muscle: 'Göğüs', volume: 5, frequency: 1, landmarks: { mev: 8, mav: 16, mrv: 22 } },
+    { muscle: 'Kanat', volume: 26, frequency: 2, landmarks: { mev: 10, mav: 18, mrv: 25 } },
+    { muscle: 'Bacak', volume: 0, frequency: 0, landmarks: { mev: 8, mav: 16, mrv: 22 } },
+  ];
+  const oneriler = suggestScenarios(durumlar, { restSeconds: 120 });
+  assert.ok(oneriler.some(o => o.muscle === 'Göğüs' && o.deltaSets > 0));
+  assert.ok(oneriler.some(o => o.muscle === 'Kanat' && o.deltaSets < 0));
+  // Hiç çalışılmayan kas için senaryo üretilmiyor: eklenecek bir şey yok.
+  assert.ok(!oneriler.some(o => o.muscle === 'Bacak'));
+  assert.equal(SCENARIO_KINDS.addSets.key, 'addSets');
+
+  const bedel = totalCost(oneriler);
+  assert.equal(typeof bedel.minutesPerWeek, 'number');
+});
 
 for (const { name, run } of tests) {
   try {

@@ -1,5 +1,5 @@
 import React, { memo, useState } from 'react';
-import { CalendarCheck, Moon, BrainCircuit, Flame, Dumbbell, HeartPulse, ChevronRight, ChevronDown, Clock3, BellOff } from 'lucide-react';
+import { CalendarCheck, Moon, BrainCircuit, Flame, Dumbbell, HeartPulse, ChevronRight, ChevronDown, Clock3, BellOff, CheckCheck, BookCheck } from 'lucide-react';
 
 const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
   <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 min-w-0">
@@ -11,7 +11,8 @@ const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
 );
 
 const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEnergy, onOpenWellness, onOpenCardio,
-  onSnooze, onDismiss, onRestoreCoach, hiddenCount = 0, conflictCount = 0 }) => {
+  onSnooze, onDismiss, onRestoreCoach, hiddenCount = 0, conflictCount = 0,
+  onApply, onReject, focus = null, onOpenLedger, ledgerOpenCount = 0 }) => {
   const [showAll, setShowAll] = useState(false);
   if (!data) return null;
   const planned = Boolean(data.workoutTemplate);
@@ -22,9 +23,18 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-[0.18em]">Bugünün Koçu</span>
           <h2 className="text-sm font-bold text-zinc-100 truncate">{data.dateLabel}</h2>
         </div>
-        <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded-lg border ${data.tone}`}>
-          {data.status}
-        </span>
+        <div className="flex items-center gap-1.5 shrink-0">
+          {/* Odak rozeti: sıranın neden bu olduğunu görünür kılıyor. Ayardan
+              seçilen bir şeyin etkisi görünmezse ayar unutuluyor. */}
+          {focus && focus.key !== 'balanced' && (
+            <span className="text-[8px] font-mono text-violet-300 border border-violet-900/60 bg-violet-950/25 px-1.5 py-1 rounded-lg">
+              {focus.label}
+            </span>
+          )}
+          <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded-lg border ${data.tone}`}>
+            {data.status}
+          </span>
+        </div>
       </div>
 
       <div className="p-4 space-y-3">
@@ -81,8 +91,19 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                 <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">{item.detail}</p>
                 {/* Erteleme ve kapatma: aynı maddeyi her gün aynı yerde görmek
                     bir süre sonra kartın tamamını görünmez yapıyordu. */}
-                {(onSnooze || onDismiss) && (
-                  <div className="flex gap-3 mt-1.5">
+                {(onSnooze || onDismiss || onApply) && (
+                  <div className="flex flex-wrap gap-3 mt-1.5">
+                    {/* "Uyguladım" ertelemeden önce geliyor: kartın asıl amacı
+                        tavsiyeyi susturmak değil uygulatmak, ve defter ancak
+                        bu dokunuşla dolabiliyor. */}
+                    {onApply && (
+                      <button
+                        onClick={() => onApply(item)}
+                        className="text-[9px] font-mono text-emerald-500 active:text-emerald-300 flex items-center gap-1"
+                      >
+                        <CheckCheck size={9} /> Uyguladım
+                      </button>
+                    )}
                     {onSnooze && (
                       <button
                         onClick={() => onSnooze(item.key)}
@@ -93,7 +114,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                     )}
                     {onDismiss && (
                       <button
-                        onClick={() => onDismiss(item.key)}
+                        onClick={() => { onReject?.(item); onDismiss(item.key); }}
                         className="text-[9px] font-mono text-zinc-500 active:text-zinc-200 flex items-center gap-1"
                       >
                         <BellOff size={9} /> Bir daha gösterme
@@ -127,6 +148,18 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
               </button>
             )}
           </div>
+        )}
+
+        {ledgerOpenCount > 0 && onOpenLedger && (
+          <button
+            onClick={onOpenLedger}
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950/70 px-3 py-2 text-left active:bg-zinc-900"
+          >
+            <span className="text-[9px] font-mono text-zinc-400 flex items-center gap-1.5">
+              <BookCheck size={10} className="text-emerald-500" />
+              Defterde ölçüm bekleyen {ledgerOpenCount} tavsiye var
+            </span>
+          </button>
         )}
 
         <div className="grid grid-cols-[1fr_auto_auto] gap-2">

@@ -6,6 +6,7 @@ import { EXPERIENCE_LEVELS, APP_VERSION } from '../utils/constants';
 import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plates';
 import { ratesForGoal } from '../utils/goals';
 import { TRAINING_GOALS, findTrainingGoal } from '../utils/trainingGoal';
+import { COACH_FOCUSES, findFocus } from '../utils/coachFocus';
 import { ACTIVITY_LEVELS } from '../utils/energyModel';
 
 const Toggle = ({ label, hint, checked, onChange }) => (
@@ -62,6 +63,8 @@ const SettingsModal = memo(({
   onToggleRestNotification,
   onTestRestAlert,
   notificationState = 'default',
+  coachFocus = 'balanced',
+  onChangeCoachFocus,
   trainingGoal = 'hypertrophy',
   onChangeTrainingGoal,
   onImportProgramCode,
@@ -182,6 +185,42 @@ const SettingsModal = memo(({
                   dinlenme süresi ve ilerleme kuralı. Hareket ya da şablon için
                   elle yazdığın değerler dokunulmadan kalıyor — mod denemek
                   ayarlarını silmek anlamına gelmemeli.
+                </p>
+              </div>
+            )}
+
+            {/* Koç odağı. Koç maddelerinin önceliği koda sabitlenmişti ve o
+                sabitler herkes için aynıydı; oysa kas kazanmaya çalışan biriyle
+                omzunu bir daha sakatlamamaya çalışan biri aynı sırayı
+                istemiyor. */}
+            {onChangeCoachFocus && (
+              <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
+                  Koç Odağı
+                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {Object.values(COACH_FOCUSES).map(f => {
+                    const secili = coachFocus === f.key;
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => onChangeCoachFocus(f.key)}
+                        aria-pressed={secili}
+                        className={`rounded-xl py-2 px-1 border text-[9px] font-bold transition-colors ${secili ? 'border-cyan-500 bg-cyan-950/30 text-cyan-200' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                      >
+                        {f.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+                  {findFocus(coachFocus).desc}
+                </p>
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  Odak maddeleri silmiyor, SIRALARINI kaydırıyor. Sağlık ve
+                  toparlanma maddeleri hiçbir odakta geri itilmiyor: bir tercih
+                  ekranının kullanıcıyı sakatlığa götürebilmesi kabul edilebilir
+                  bir tasarım değil.
                 </p>
               </div>
             )}

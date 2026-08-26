@@ -32,6 +32,11 @@ const HomeView = memo(({
   onSnoozeCoach,
   onDismissCoach,
   onRestoreCoach,
+  onApplyCoach,
+  onRejectCoach,
+  coachFocus = null,
+  onOpenLedger,
+  ledgerOpenCount = 0,
   coachHiddenCount = 0,
   coachConflictCount = 0,
   onCoachAction,
@@ -70,6 +75,11 @@ const HomeView = memo(({
         onSnooze={onSnoozeCoach}
         onDismiss={onDismissCoach}
         onRestoreCoach={onRestoreCoach}
+        onApply={onApplyCoach}
+        onReject={onRejectCoach}
+        focus={coachFocus}
+        onOpenLedger={onOpenLedger}
+        ledgerOpenCount={ledgerOpenCount}
         hiddenCount={coachHiddenCount}
         conflictCount={coachConflictCount}
         onAction={onCoachAction}
