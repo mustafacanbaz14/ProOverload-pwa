@@ -4,6 +4,8 @@ import TrendChart from './TrendChart';
 import ConsistencyCard from './ConsistencyCard';
 import TrainingCalendarCard from './TrainingCalendarCard';
 import RecordTimelineCard from './RecordTimelineCard';
+import WeakLinkCard from './WeakLinkCard';
+import FormCurveCard from './FormCurveCard';
 import SessionQualityCard from './SessionQualityCard';
 import CardioCoachCard from './CardioCoachCard';
 import StrengthStandardsCard from './StrengthStandardsCard';
@@ -37,6 +39,10 @@ const FREQ_TONE = {
 
 const AnalyticsView = memo(({
   recordTimeline = null,
+  weakLinks = null,
+  formCurve = null,
+  discovery = null,
+  onAction,
   analysisType,
   cardioReport = null,
   cardioSuggestion = null,
@@ -347,6 +353,47 @@ const AnalyticsView = memo(({
               soru. Biri "programı gerçekten uyguluyor muyum", diğeri "kuvvet
               kaslar arasında nasıl dağılmış". */}
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
+          <WeakLinkCard report={weakLinks} onAction={onAction} />
+
+          {/* Hareket keşfi: kütüphanede iki yüzden fazla hareket var ve
+              tipik kullanıcı yirmi otuzunu kullanıyor. Arama, ne aradığını
+              bilene yarıyor; bu ise geçmişindeki BOŞLUKTAN yola çıkıyor. */}
+          {discovery?.hasData && (
+            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline gap-2">
+                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+                  Denemediğin Hareketler
+                </h4>
+                <span className="text-[9px] font-mono text-zinc-600">
+                  {discovery.knownCount}/{discovery.poolSize} hareket biliniyor
+                </span>
+              </div>
+              <div className="divide-y divide-zinc-800/70">
+                {discovery.items.map(x => (
+                  <div key={x.name} className="px-4 py-2">
+                    <div className="flex justify-between items-baseline gap-2">
+                      <span className="text-[10px] font-bold text-zinc-200 truncate min-w-0">{x.name}</span>
+                      <span className="text-[9px] font-mono text-zinc-600 shrink-0">
+                        {x.muscle}{x.equipment ? ` · ${x.equipment}` : ''}
+                      </span>
+                    </div>
+                    <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">
+                      {x.reasons[0]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+              <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+                Öneriler rastgele değil: geçmişteki boşluklardan (eşik altı
+                hacim, tek harekete bağımlılık, gerilme hareketi eksikliği)
+                çıkıyor ve
+                {discovery.equipmentFiltered
+                  ? ' yalnızca fiilen kullandığın ekipmanlardan seçiliyor.'
+                  : ' henüz yeterli kayıt olmadığı için ekipman süzgeci uygulanmıyor.'}
+              </p>
+            </div>
+          )}
+          <FormCurveCard curve={formCurve} />
           <TrainingCalendarCard workouts={workouts} today={today} />
           <RecordTimelineCard timeline={recordTimeline} />
           <SessionQualityCard workouts={workouts} customExercises={customExercises} />

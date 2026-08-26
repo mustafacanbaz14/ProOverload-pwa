@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame, Volume2, VolumeX, RotateCcw, CheckCircle2, SlidersHorizontal, Minus, LifeBuoy } from 'lucide-react';
+import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame, Volume2, VolumeX, RotateCcw, CheckCircle2, SlidersHorizontal, Minus, LifeBuoy, Ghost, Hourglass } from 'lucide-react';
 import WorkoutTimer from './WorkoutTimer';
 import { FORM_RATINGS, SET_TYPES, SMALL_MUSCLE_GROUPS } from '../utils/constants';
 import {
@@ -28,6 +28,12 @@ const ActiveWorkoutView = memo(({
   onSetSide = null,
   pastNotesFor = null,
   sessionVolume = null,
+  ghostRace = null,
+  ghostTargetFor = null,
+  timeCrunchPlan = null,
+  onPreviewTimeCrunch = null,
+  onApplyTimeCrunch = null,
+  onCancelTimeCrunch = null,
   activeWorkout,
   setActiveWorkout,
   setIsEndWorkoutModalOpen,
@@ -210,6 +216,102 @@ const ActiveWorkoutView = memo(({
               </div>
             </div>
           </div>
+        )}
+
+        {/* Hayalet: geçen seferle canlı yarış. Seans sonu raporu bu
+            karşılaştırmayı seans BİTTİKTEN sonra veriyordu, oysa işe
+            yarayacağı an son sette bir tekrar daha yapma kararı. */}
+        {ghostRace?.hasGhost && ghostRace.status && (
+          <div className={`rounded-xl border px-3 py-2 space-y-1.5 ${
+            ghostRace.status.tone === 'ahead' ? 'border-emerald-900/50 bg-emerald-950/15'
+              : ghostRace.status.tone === 'behind' ? 'border-amber-900/50 bg-amber-950/15'
+                : 'border-zinc-800 bg-zinc-900'}`}>
+            <div className="flex justify-between items-baseline gap-2">
+              <span className={`text-[10px] font-bold ${
+                ghostRace.status.tone === 'ahead' ? 'text-emerald-300'
+                  : ghostRace.status.tone === 'behind' ? 'text-amber-300' : 'text-zinc-300'}`}>
+                <Ghost size={11} className="inline mr-1" />
+                {ghostRace.status.text}
+              </span>
+              <span className="text-[9px] font-mono text-zinc-500">
+                {formatDay(ghostRace.date, 'short')} · {ghostRace.doneSets}/{ghostRace.ghostSets} set
+              </span>
+            </div>
+            <div className="h-1 bg-zinc-950 rounded-full border border-zinc-800 overflow-hidden">
+              <div
+                className={`h-full rounded-full ${ghostRace.status.tone === 'behind' ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                style={{ width: `${ghostRace.progress}%` }}
+              />
+            </div>
+            {ghostRace.rows.filter(r => r.delta !== 0).length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {ghostRace.rows.filter(r => r.delta !== 0).slice(0, 5).map(r => (
+                  <span
+                    key={r.name}
+                    className={`text-[8px] font-mono px-1.5 py-0.5 rounded border ${r.delta > 0
+                      ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-300'
+                      : 'border-amber-900/50 bg-amber-950/20 text-amber-300'}`}
+                  >
+                    {r.name.length > 16 ? `${r.name.slice(0, 15)}…` : r.name} {r.delta > 0 ? '+' : ''}{r.delta}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Zaman sıkışması. Değişiklik önce gösteriliyor, sonra onaylanıyor:
+            sessizce hareket silen bir düğme neyi kaybettiğini bilmemek. */}
+        {onPreviewTimeCrunch && (
+          timeCrunchPlan ? (
+            <div className="rounded-xl border border-amber-900/50 bg-amber-950/15 px-3 py-2 space-y-2">
+              <span className="text-[10px] font-bold text-amber-300 block">{timeCrunchPlan.summary}</span>
+              {timeCrunchPlan.dropped.length > 0 && (
+                <div className="space-y-0.5">
+                  {timeCrunchPlan.dropped.map(d => (
+                    <p key={d.name} className="text-[9px] font-mono text-amber-200/80">
+                      − {d.name} <span className="text-zinc-500">({d.reason})</span>
+                    </p>
+                  ))}
+                </div>
+              )}
+              {timeCrunchPlan.trimmed.length > 0 && (
+                <p className="text-[9px] font-mono text-zinc-500">
+                  Kısılan: {timeCrunchPlan.trimmed.map(t => `${t.name} −${t.removed}`).join(' · ')}
+                </p>
+              )}
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={onCancelTimeCrunch}
+                  className="rounded-lg border border-zinc-800 bg-zinc-900 py-2 text-[9px] font-bold text-zinc-400 active:bg-zinc-800"
+                >
+                  Vazgeç
+                </button>
+                <button
+                  onClick={onApplyTimeCrunch}
+                  className="rounded-lg bg-amber-600 active:bg-amber-700 py-2 text-[9px] font-bold text-white uppercase tracking-wider"
+                >
+                  Uygula
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-2 flex items-center gap-2">
+              <Hourglass size={11} className="text-amber-400 shrink-0" />
+              <span className="text-[9px] font-mono text-zinc-500 shrink-0">Vaktim az:</span>
+              <div className="flex gap-1 flex-1">
+                {[30, 45, 60].map(dk => (
+                  <button
+                    key={dk}
+                    onClick={() => onPreviewTimeCrunch(dk)}
+                    className="flex-1 rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 text-[9px] font-bold text-zinc-400 active:text-amber-300"
+                  >
+                    {dk} dk
+                  </button>
+                ))}
+              </div>
+            </div>
+          )
         )}
 
         {/* Kalan hacim. Hacim tablosu haftayı BİTTİKTEN SONRA anlatıyordu;
@@ -705,6 +807,11 @@ const ActiveWorkoutView = memo(({
                     set.reps, set.rir);
                   const isNewRecord = e1rm > 0 && (!record || e1rm > record.e1rm);
                   const workingIndex = (ex.sets || []).slice(0, setIndex + 1).filter(isWorkingSet).length;
+                  // Geçen seferin aynı sıradaki seti. Hedef vermiyor, sadece
+                  // geçmişi hatırlatıyor — salonda asıl işe yarayan bilgi bu.
+                  const hayaletSet = !warmup && ghostTargetFor
+                    ? ghostTargetFor(ex.name, workingIndex - 1)
+                    : null;
 
                   const setBadgeText = set.setType === 'warmup' ? 'W' : set.setType === 'drop' ? 'D' : set.setType === 'failure' ? 'F' : set.setType === 'rest_pause' ? 'RP' : workingIndex;
 
@@ -755,6 +862,14 @@ const ActiveWorkoutView = memo(({
                         >
                           {setBadgeText}
                         </button>
+                      )}
+                      {hayaletSet && parseNumber(set.reps) === 0 && (
+                        <span
+                          title={`Geçen sefer ${hayaletSet.setIndex}. set: ${hayaletSet.weight} kg x ${hayaletSet.reps}`}
+                          className="absolute -top-1.5 right-2 text-[7px] font-mono text-zinc-500 bg-zinc-950 border border-zinc-800 rounded px-1 z-10"
+                        >
+                          geçen: {hayaletSet.weight}×{hayaletSet.reps}
+                        </span>
                       )}
                       <div className="col-span-3"><input type="number" inputMode="decimal" min={INPUT_LIMITS.weight.min} max={INPUT_LIMITS.weight.max} value={set.weight} onChange={(e) => updateSet(ex.id, set.id, 'weight', e.target.value)} onFocus={e => e.target.select()} onBlur={(e) => updateSet(ex.id, set.id, 'weight', clampNumber(e.target.value, INPUT_LIMITS.weight.min, INPUT_LIMITS.weight.max))} className={`w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 font-mono text-sm outline-none text-center focus:bg-zinc-800 h-10 transition-colors ${warmup ? 'text-orange-300/70' : 'text-cyan-400'}`} placeholder="0" /></div>
                       <div className="col-span-2">

@@ -2,6 +2,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { APP_VERSION, LATEST_RELEASE_NOTES, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { buildCoachActions } from '../src/utils/coach.js';
+import { pickGhost, buildGhostRace, ghostTargetFor } from '../src/utils/ghostSession.js';
+import { planTimeCrunch, describeTimeCrunch } from '../src/utils/timeCrunch.js';
+import { buildWeakLinks, weakLinkCoachItem } from '../src/utils/weakLink.js';
+import { buildFormCurve, formCoachItem, projectRest, sessionLoad } from '../src/utils/formCurve.js';
+import { buildAdaptations, applyAdaptation } from '../src/utils/autoAdapt.js';
+import { buildYearReview } from '../src/utils/yearReview.js';
+import { discoverExercises } from '../src/utils/exerciseDiscovery.js';
+import { restResponseFor, restProfileByMuscle } from '../src/utils/adaptiveRest.js';
+import { templateToCode, codeToTemplate, describeCodeError } from '../src/utils/programCode.js';
+import {
+  TRAINING_GOALS, findTrainingGoal, goalDefaults, applyTrainingGoal, auditGoalConsistency,
+} from '../src/utils/trainingGoal.js';
 import {
   buildWarmupLadder, applyWarmupLadder, removeWarmupSets, warmupTargetFor,
 } from '../src/utils/warmupSets.js';
@@ -4687,6 +4699,327 @@ test('takvim dosyası haftalık tekrarlı etkinlik üretiyor', () => {
   assert.ok(ics.text.trimEnd().endsWith('END:VCALENDAR'));
   // Antrenman yoksa dosya üretilmiyor.
   assert.equal(planToIcs({ days: {} }, templates), null);
+});
+
+
+// ---------------------------------------------------------------- 7.5
+
+const w75 = (kg, r, extra = {}) => ({ weight: kg, reps: r, rir: 1, setType: 'normal', ...extra });
+const bos75 = () => ({ weight: '', reps: '', rir: 2, setType: 'normal' });
+
+test('hayalet aynı şablonun son seansını seçiyor', () => {
+  const gecen = {
+    id: 'g', date: '2026-08-18', sourceTemplateId: 't1',
+    exercises: [{ name: 'Bench', sets: [w75(80, 10), w75(80, 9)] }],
+  };
+  const simdi = { id: 'a', date: '2026-08-25', sourceTemplateId: 't1', exercises: [{ name: 'Bench', sets: [bos75()] }] };
+  assert.equal(pickGhost(simdi, [gecen]).match, 'template');
+  // Şablon yoksa ortak hareketten eşleşiyor.
+  const serbest = { id: 'b', date: '2026-08-25', exercises: [{ name: 'Bench', sets: [bos75()] }] };
+  assert.equal(pickGhost(serbest, [{ ...gecen, sourceTemplateId: null }]).match, 'exercises');
+  assert.equal(pickGhost(simdi, []), null);
+});
+
+test('hayalet yalnızca iki tarafta yapılmış setleri kıyaslıyor', () => {
+  const gecen = {
+    id: 'g', date: '2026-08-18',
+    exercises: [{ name: 'Bench', sets: [w75(80, 10), w75(80, 10), w75(80, 10)] }],
+  };
+  const simdi = {
+    id: 'a', date: '2026-08-25',
+    exercises: [{ name: 'Bench', sets: [w75(85, 10), bos75(), bos75()] }],
+  };
+  const r = buildGhostRace(simdi, gecen);
+  const satir = r.rows[0];
+  // Yalnızca bir set girildi: sadece o kıyaslanıyor, kalan ikisi için
+  // "gerisin" denmiyor.
+  assert.equal(satir.compared, 1);
+  assert.equal(satir.volume, 850);
+  assert.equal(satir.ghostVolume, 800);
+  assert.equal(r.status.tone, 'ahead');
+  assert.equal(satir.remaining, 2);
+
+  // Hiç set girilmemişse durum yok: "0 kg öndesin" bilgi değil gürültü.
+  const bosSeans = { id: 'x', exercises: [{ name: 'Bench', sets: [bos75()] }] };
+  assert.equal(buildGhostRace(bosSeans, gecen).status, null);
+  assert.equal(buildGhostRace(simdi, null).hasGhost, false);
+});
+
+test('hayalet sıradaki setin geçmişini veriyor', () => {
+  const gecen = { id: 'g', date: '2026-08-18', exercises: [{ name: 'Bench', sets: [w75(80, 10), w75(80, 8)] }] };
+  assert.deepEqual(ghostTargetFor('Bench', 1, gecen), { weight: 80, reps: 8, rir: 1, setIndex: 2 });
+  assert.equal(ghostTargetFor('Bench', 5, gecen), null);
+  assert.equal(ghostTargetFor('Bench', 0, null), null);
+});
+
+const tcSets = (n) => Array.from({ length: n }, () => w75(50, 10, { rir: 2 }));
+
+test('zaman sıkışması bileşkeyi koruyup izolasyonu kısıyor', () => {
+  const seans = [
+    { name: 'Barbell Bench Press', sets: tcSets(4) },
+    { name: 'Incline Dumbbell Press', sets: tcSets(3) },
+    { name: 'Cable Fly (High to Low)', sets: tcSets(3) },
+    { name: 'Rope Pushdown', sets: tcSets(3) },
+  ];
+  // Zaten sığıyorsa dokunulmuyor.
+  const tam = planTimeCrunch(seans, 120);
+  assert.equal(tam.fits, true);
+  assert.equal(tam.dropped.length, 0);
+
+  const kisa = planTimeCrunch(seans, 25);
+  assert.ok(kisa.after < kisa.before);
+  assert.ok(kisa.setsAfter < kisa.setsBefore);
+  // Hiçbir hareket iki setin altına inmiyor.
+  kisa.plan.forEach(ex => assert.ok(ex.sets.length >= 2, `${ex.name} iki setin altına inmiş`));
+  // Bileşke korunuyor.
+  assert.ok(kisa.plan.some(ex => ex.name === 'Barbell Bench Press'));
+  assert.ok(describeTimeCrunch(kisa).includes('dk'));
+  // İç alan dışarı sızmıyor.
+  kisa.plan.forEach(ex => assert.equal(ex.__index, undefined));
+  assert.equal(planTimeCrunch([], 30).fits, true);
+});
+
+test('çok kısa sürede hareket çıkarılıyor ve sebebi yazılıyor', () => {
+  const seans = [
+    { name: 'Barbell Bench Press', sets: tcSets(4) },
+    { name: 'Incline Dumbbell Press', sets: tcSets(3) },
+    { name: 'Cable Fly (High to Low)', sets: tcSets(3) },
+    { name: 'Rope Pushdown', sets: tcSets(3) },
+    { name: 'Lateral Raise (Cable)', sets: tcSets(3) },
+  ];
+  const cok = planTimeCrunch(seans, 15);
+  assert.ok(cok.dropped.length > 0);
+  cok.dropped.forEach(d => assert.ok(d.reason, 'çıkarma sebebi yazılmalı'));
+});
+
+test('zayıf halka etki ve kesinliğe göre sıralıyor', () => {
+  const r = buildWeakLinks({
+    volumeStatuses: [{ muscle: 'Arka Omuz', volume: 4, mev: 8, mrv: 22, status: 'below' }],
+    selection: { findings: [{ muscle: 'Biseps', issues: [{ key: 'noStretch', severity: 'medium', title: 'Gerilmede yükleme yok', detail: '...' }] }] },
+  });
+  // Hacim eşiği seçim bulgusunun önünde: biri büyümeyi durduruyor.
+  assert.equal(r.items[0].area, 'Hacim');
+  assert.equal(r.items[0].impact, 'high');
+  assert.ok(r.total >= 2);
+  assert.ok(weakLinkCoachItem(r).title.includes('Zayıf halka'));
+  assert.equal(buildWeakLinks({}).hasData, false);
+  // Yalnızca düşük etkili bulgu varsa koç susuyor.
+  const dusuk = buildWeakLinks({
+    selection: { findings: [{ muscle: 'Biseps', issues: [{ key: 'noStretch', severity: 'medium', title: 'X', detail: '' }] }] },
+  });
+  assert.equal(weakLinkCoachItem(dusuk), null);
+});
+
+const formSeans = (date, setSayisi, rir) => ({
+  id: date, date,
+  exercises: [{ name: 'Bench', sets: Array.from({ length: setSayisi }, () => w75(80, 8, { rir })) }],
+});
+
+test('form eğrisi fitness ve yorgunluğu farklı hızda söndürüyor', () => {
+  const w = [];
+  for (let i = 0; i < 8; i += 1) {
+    const d = new Date('2026-06-01');
+    d.setDate(d.getDate() + i * 7);
+    w.push(formSeans(d.toISOString().slice(0, 10), 10, 2));
+  }
+  const c = buildFormCurve(w, { today: new Date('2026-07-21') });
+  assert.equal(c.hasData, true);
+  assert.ok(c.today.fitness > 0 && c.today.fatigue > 0);
+  // Dinlenmede yorgunluk fitness'tan hızlı sönüyor, yani form yükseliyor.
+  const tahmin = projectRest(c, { days: 7 });
+  assert.ok(tahmin[6].form > tahmin[0].form);
+  assert.ok(tahmin[6].fatigue < tahmin[0].fatigue);
+  // Efor yüksekse yük puanı da yüksek.
+  assert.ok(sessionLoad(formSeans('x', 10, 0)) > sessionLoad(formSeans('x', 10, 4)));
+});
+
+test('form eğrisi kısa pencerede model kurmuyor', () => {
+  const c = buildFormCurve([formSeans('2026-08-24', 10, 2)], { today: new Date('2026-08-25') });
+  assert.equal(c.hasData, false);
+  assert.equal(c.reason, 'insufficient');
+  assert.equal(formCoachItem(c), null);
+});
+
+test('uyarlama eşik altına set ekliyor, tavan üstünden kısıyor', () => {
+  let n = 0;
+  const gid = () => `s${++n}`;
+  const templates = [{
+    id: 't1', name: 'Push',
+    exercises: [
+      { name: 'Barbell Bench Press', sets: [{}, {}, {}, {}, {}, {}] },
+      { name: 'Cable Rear Delt Fly', sets: [{}, {}] },
+    ],
+  }];
+  const r = buildAdaptations({
+    volumeStatuses: [
+      { muscle: 'Arka Omuz', volume: 4, mev: 8, mrv: 22, status: 'below' },
+      { muscle: 'Göğüs', volume: 26, mev: 8, mrv: 22, status: 'over' },
+    ],
+  }, templates, { detectMuscle: detectMuscleFor72 });
+
+  const ekle = r.items.find(x => x.kind === 'addSets');
+  assert.ok(ekle);
+  const sonrasi = applyAdaptation(templates, ekle, gid);
+  const hedef = sonrasi[0].exercises.find(e => e.name === ekle.exercise);
+  assert.equal(hedef.sets.length, 2 + ekle.amount);
+
+  const cikar = r.items.find(x => x.kind === 'removeSets');
+  const kisilmis = applyAdaptation(templates, cikar, gid);
+  // İki setin altına inmiyor.
+  kisilmis[0].exercises.forEach(e => assert.ok(e.sets.length >= 2));
+  // Elle öneriler uygulanmıyor.
+  assert.equal(applyAdaptation(templates, { manual: true, templateId: 't1', kind: 'addSets' }, gid), templates);
+});
+
+test('aşırı yüklenmede hacim artışı erteleniyor', () => {
+  const templates = [{ id: 't1', name: 'Push', exercises: [{ name: 'Cable Rear Delt Fly', sets: [{}, {}] }] }];
+  const r = buildAdaptations({
+    volumeStatuses: [{ muscle: 'Arka Omuz', volume: 4, mev: 8, mrv: 22, status: 'below' }],
+    formCurve: { overreached: true },
+  }, templates, { detectMuscle: detectMuscleFor72 });
+  assert.equal(r.deferred, 1);
+  assert.equal(r.items.some(x => x.kind === 'addSets'), false);
+});
+
+test('yıl özeti oranla sıralıyor', () => {
+  const w = [];
+  for (let i = 0; i < 20; i += 1) {
+    const d = new Date('2026-02-01');
+    d.setDate(d.getDate() + i * 7);
+    w.push({
+      id: `w${i}`, date: d.toISOString().slice(0, 10), duration: 60,
+      exercises: [
+        { name: 'Barbell Bench Press', sets: [w75(100 + i, 8)] },
+        // 12 tekrar: 15 toplam tekrarın üstünde estimate1RM 0 döndürüyor
+        // ve o hareket hiç ölçülemiyor.
+        { name: 'Lateral Raise (Cable)', sets: [w75(10 + i, 12)] },
+      ],
+    });
+  }
+  const r = buildYearReview(w, { today: new Date('2026-08-25') });
+  assert.equal(r.hasData, true);
+  assert.equal(r.sessions, 20);
+  assert.ok(r.tonnage > 0);
+  // Küçük hareket oransal olarak daha çok gelişti; mutlak farkla sıralasaydık
+  // ağır hareket kazanırdı.
+  assert.equal(r.mostImproved[0].name, 'Lateral Raise (Cable)');
+  assert.ok(r.streakWeeks >= 19);
+  assert.equal(buildYearReview([]).hasData, false);
+});
+
+test('keşif boşluğa göre öneriyor ve kas başına sınırlı', () => {
+  const s5 = () => w75(50, 10);
+  const w = [{
+    id: '1', date: '2026-08-01',
+    exercises: [
+      { name: 'Barbell Bench Press', sets: [s5(), s5(), s5(), s5()] },
+      { name: 'Lat Pulldown', sets: [s5(), s5(), s5(), s5(), s5(), s5()] },
+      { name: 'Cable Lateral Raise', sets: [s5(), s5(), s5(), s5()] },
+      { name: 'Dumbbell Bench Press', sets: [s5(), s5(), s5()] },
+    ],
+  }];
+  const r = discoverExercises(w, {
+    volumeStatuses: [{ muscle: 'Arka Omuz', volume: 2, mev: 8, status: 'below' }],
+  });
+  assert.equal(r.hasData, true);
+  // Garanti şu: HER boşluk listede temsil ediliyor. Kas başına iki öneriden
+  // sonra kalan yuvalar puana göre dolduruluyor, ama önce her boşluğa yer
+  // ayrılıyor — sınır olmadan en büyük boşluk listenin tamamını yiyordu.
+  const kaslar = new Set(r.items.map(x => x.muscle));
+  const boslukKaslari = new Set(r.gaps.map(g => g.muscle));
+  boslukKaslari.forEach(k => assert.ok(kaslar.has(k), k + " boşluğu listede yok"));
+  assert.ok(kaslar.size >= 2, "birden fazla boşluk varken liste tek kasa yığılmamalı");
+  // Zaten yapılan hareket önerilmiyor.
+  assert.equal(r.items.some(x => x.name === 'Barbell Bench Press'), false);
+});
+
+test('dinlenme yanıtı aynı ağırlıktaki setleri kıyaslıyor', () => {
+  const seans = (d, dizi) => ({ id: d, date: d, exercises: [{ name: 'Barbell Bench Press', sets: dizi }] });
+  const w = [
+    seans('2026-08-01', [w75(80, 10), w75(80, 7, { restBefore: 60 }), w75(80, 5, { restBefore: 60 })]),
+    seans('2026-08-05', [w75(80, 10), w75(80, 9, { restBefore: 180 }), w75(80, 9, { restBefore: 180 })]),
+    seans('2026-08-09', [w75(80, 10), w75(80, 7, { restBefore: 55 }), w75(80, 9, { restBefore: 190 })]),
+    seans('2026-08-13', [w75(80, 10), w75(80, 6, { restBefore: 65 }), w75(80, 9, { restBefore: 200 })]),
+  ];
+  const r = restResponseFor('Barbell Bench Press', w);
+  assert.equal(r.hasData, true);
+  assert.ok(r.meaningful);
+  // Kısa dinlenmede kayıp büyük, uzunda küçük.
+  const kisa = r.buckets.find(b => b.key === 'short');
+  const uzun = r.buckets.find(b => b.key === 'long');
+  assert.ok(kisa.averageDrop > uzun.averageDrop);
+  assert.ok(r.recommended.averageRest > 100);
+  assert.ok(restProfileByMuscle(w).hasData);
+  assert.equal(restResponseFor('X', []).hasData, false);
+});
+
+test('program kodu yapıyı taşıyor, ağırlığı taşımıyor', () => {
+  let n = 0;
+  const gid = () => `id${++n}`;
+  const t = {
+    id: 't', name: 'Push Günü', emphasis: 'heavy',
+    exercises: [
+      {
+        name: 'Barbell Bench Press', supersetId: null,
+        repRange: { min: 4, max: 6 }, plannedTechnique: 'drop', backup: 'Machine Chest Press',
+        sets: [{ weight: 100, reps: 5 }, { weight: 100, reps: 5 }, { weight: 100, reps: 5 }],
+      },
+      { name: 'Cable Fly (High to Low)', supersetId: 'x', sets: [{}, {}] },
+      { name: 'Lateral Raise (Cable)', supersetId: 'x', sets: [{}, {}] },
+    ],
+  };
+  const kod = templateToCode(t);
+  assert.ok(kod.startsWith('PO1.'));
+  const geri = codeToTemplate(kod, gid);
+  assert.equal(geri.ok, true);
+  assert.equal(geri.template.name, 'Push Günü');
+  assert.equal(geri.template.emphasis, 'heavy');
+  assert.equal(geri.template.exercises.length, 3);
+  assert.deepEqual(geri.template.exercises[0].repRange, { min: 4, max: 6 });
+  assert.equal(geri.template.exercises[0].plannedTechnique, 'drop');
+  assert.equal(geri.template.exercises[0].backup, 'Machine Chest Press');
+  // Ağırlık taşınmıyor: başkasının yükü yanlış bir başlangıç değeri olurdu.
+  assert.equal(geri.template.exercises[0].sets[0].weight, '');
+  // Süperset bağı komşuluk olarak geri kuruluyor.
+  assert.equal(geri.template.exercises[1].supersetId, geri.template.exercises[2].supersetId);
+  assert.ok(geri.template.exercises[1].supersetId);
+});
+
+test('bozuk kod sessizce kabul edilmiyor', () => {
+  const gid = () => 'x';
+  assert.equal(codeToTemplate('', gid).reason, 'empty');
+  assert.equal(codeToTemplate('merhaba', gid).reason, 'prefix');
+  assert.equal(codeToTemplate('PO1.@@@@', gid).reason, 'decode');
+  assert.ok(describeCodeError('prefix').includes('PO1'));
+  assert.equal(templateToCode({ name: 'Boş', exercises: [] }), null);
+  // Türkçe karakterler bozulmuyor.
+  const kod = templateToCode({ name: 'Göğüs & Sırt', exercises: [{ name: 'Şınav', sets: [{}] }] });
+  assert.equal(codeToTemplate(kod, gid).template.name, 'Göğüs & Sırt');
+});
+
+test('hedef modu varsayılanı kaydırıyor, elle yazılanı ezmiyor', () => {
+  assert.equal(Object.keys(TRAINING_GOALS).length, 4);
+  assert.equal(findTrainingGoal('strength').repRange.max, 6);
+  assert.equal(findTrainingGoal('uyduruk').key, 'hypertrophy');
+
+  // Elle yazılan değer moddan üstün.
+  const karisim = goalDefaults('strength', { repRangeMin: 8, repRangeMax: 12 });
+  assert.equal(karisim.repRangeMin, 8);
+  assert.equal(karisim.restSeconds, 210);
+
+  // Mod uygulanınca hareket bazlı aralıklar korunuyor.
+  const s2 = applyTrainingGoal({ repRangeOverrides: { Bench: { min: 5, max: 8 } } }, 'endurance');
+  assert.equal(s2.trainingGoal, 'endurance');
+  assert.equal(s2.repRangeMin, 15);
+  assert.deepEqual(s2.repRangeOverrides, { Bench: { min: 5, max: 8 } });
+});
+
+test('mod ile ayar çelişkisi bildiriliyor', () => {
+  assert.equal(auditGoalConsistency({ trainingGoal: 'strength', repRangeMin: 3, repRangeMax: 6, restSeconds: 210 }).ok, true);
+  const c = auditGoalConsistency({ trainingGoal: 'strength', repRangeMin: 12, repRangeMax: 20, restSeconds: 60 });
+  assert.equal(c.ok, false);
+  assert.ok(c.findings.some(f => f.key === 'rep-range'));
+  assert.ok(c.findings.some(f => f.key === 'rest'));
 });
 
 

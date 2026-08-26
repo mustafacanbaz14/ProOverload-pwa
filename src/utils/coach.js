@@ -67,6 +67,9 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     exerciseOrderItem = null,
     frequencyPlanItem = null,
     sideBalanceItem = null,
+    weakLinkItem = null,
+    formItem = null,
+    adaptiveRestItem = null,
     waterItem = null,
   } = ctx;
 
@@ -142,6 +145,37 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'frequency-plan', priority: 4, tone: TONES.info, action: 'plan',
       title: frequencyPlanItem.title,
       detail: frequencyPlanItem.detail,
+    });
+  }
+
+  // Zayıf halka: beş analizin en üsttekini tek satırda söylüyor. Yüksek
+  // öncelikli çünkü "önce neyi düzelteyim" sorusunun cevabı bu.
+  if (weakLinkItem) {
+    ekle({
+      key: 'weak-link', priority: 2,
+      tone: weakLinkItem.tone === 'warn' ? TONES.warn : TONES.info,
+      action: weakLinkItem.action || 'analysis',
+      title: weakLinkItem.title,
+      detail: weakLinkItem.detail,
+    });
+  }
+
+  // Form modeli: aşırı yüklenme uyarısı ya da taze pencere bildirimi.
+  if (formItem) {
+    ekle({
+      key: formItem.key, priority: formItem.tone === 'warn' ? 2 : 5,
+      tone: formItem.tone === 'warn' ? TONES.warn : TONES.good,
+      action: 'analysis',
+      title: formItem.title,
+      detail: formItem.detail,
+    });
+  }
+
+  if (adaptiveRestItem) {
+    ekle({
+      key: 'adaptive-rest', priority: 7, tone: TONES.info, action: 'progress',
+      title: adaptiveRestItem.title,
+      detail: adaptiveRestItem.detail,
     });
   }
 

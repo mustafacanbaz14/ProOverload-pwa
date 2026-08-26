@@ -5,6 +5,7 @@ import { exportAppleHealthXML, exportGoogleFitJSON } from '../utils/healthSync';
 import { EXPERIENCE_LEVELS, APP_VERSION } from '../utils/constants';
 import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plates';
 import { ratesForGoal } from '../utils/goals';
+import { TRAINING_GOALS, findTrainingGoal } from '../utils/trainingGoal';
 import { ACTIVITY_LEVELS } from '../utils/energyModel';
 
 const Toggle = ({ label, hint, checked, onChange }) => (
@@ -61,7 +62,11 @@ const SettingsModal = memo(({
   onToggleRestNotification,
   onTestRestAlert,
   notificationState = 'default',
+  trainingGoal = 'hypertrophy',
+  onChangeTrainingGoal,
+  onImportProgramCode,
 }) => {
+  const [programCode, setProgramCode] = useState('');
   const [soundTest, setSoundTest] = useState(null);
   if (!isOpen) return null;
 
@@ -143,6 +148,78 @@ const SettingsModal = memo(({
             {/* CSV yedek değil ANALİZ içindir: JSON tek satırda tüm durumu
                 taşıyor ve elektronik tabloda açılamıyor. Burada her satır bir
                 set — pivot tablo kurmak için doğal biçim. */}
+            {/* Antrenman hedefi modu. Uygulamanın bütün varsayılanları
+                hipertrofiye göre ayarlıydı — doğru bir varsayılan ama tek
+                varsayılan. Mod değiştirince altı ayrı ayarı elle değiştirmek
+                gerekiyordu ve biri unutulduğunda sistem kendi içinde
+                çelişiyordu. */}
+            {onChangeTrainingGoal && (
+              <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
+                  Antrenman Hedefi
+                </span>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {Object.values(TRAINING_GOALS).map(g => {
+                    const secili = trainingGoal === g.key;
+                    return (
+                      <button
+                        key={g.key}
+                        onClick={() => onChangeTrainingGoal(g.key)}
+                        aria-pressed={secili}
+                        title={g.hint}
+                        className={`rounded-xl py-2 border text-[9px] font-bold transition-colors ${secili ? 'border-violet-500 bg-violet-950/30 text-violet-200' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                      >
+                        {g.short}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+                  {findTrainingGoal(trainingGoal).detail}
+                </p>
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  Mod yalnızca VARSAYILANLARI değiştiriyor: tekrar aralığı,
+                  dinlenme süresi ve ilerleme kuralı. Hareket ya da şablon için
+                  elle yazdığın değerler dokunulmadan kalıyor — mod denemek
+                  ayarlarını silmek anlamına gelmemeli.
+                </p>
+              </div>
+            )}
+
+            {/* Program kodu: şablonlar cihazda kilitliydi. QR yedeğin tamamını
+                taşıyor; tek bir programı vermek için bütün veriyi paylaşmak
+                makul değil. */}
+            {onImportProgramCode && (
+              <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
+                  Program Kodu İçe Aktar
+                </span>
+                <textarea
+                  value={programCode}
+                  onChange={(e) => setProgramCode(e.target.value)}
+                  rows="2"
+                  placeholder="PO1. ile başlayan kodu yapıştır"
+                  aria-label="Program kodu"
+                  className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 text-zinc-300 font-mono text-[10px] outline-none focus:border-cyan-500"
+                />
+                <button
+                  type="button"
+                  disabled={!programCode.trim()}
+                  onClick={() => { if (onImportProgramCode(programCode)) setProgramCode(''); }}
+                  className="w-full py-2.5 rounded-xl border border-cyan-900/60 bg-cyan-950/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider disabled:opacity-30"
+                >
+                  İçe Aktar
+                </button>
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  Kod programın YAPISINI taşıyor: hareketler, set sayıları,
+                  süperset bağları, tekrar aralıkları. Ağırlıklar taşınmıyor —
+                  başkasının yükünü senin programına yazmak yanlış bir
+                  başlangıç değeri önermek olurdu. Kendi programının kodunu
+                  şablon önizlemesindeki "Kod" düğmesinden alabilirsin.
+                </p>
+              </div>
+            )}
+
             {onExportCsv && (
               <div className="pt-2.5 border-t border-zinc-800 space-y-2">
                 <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">

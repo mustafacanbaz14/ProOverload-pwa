@@ -45,6 +45,16 @@ import { buildSessionVolume } from './utils/sessionVolume';
 import { dailyWaterTarget, addWater, waterSummary, waterCoachItem } from './utils/hydration';
 import { planToIcs } from './utils/calendarExport';
 import { buildRecordTimeline } from './utils/recordTimeline';
+import { pickGhost, buildGhostRace, ghostTargetFor } from './utils/ghostSession';
+import { planTimeCrunch, describeTimeCrunch } from './utils/timeCrunch';
+import { buildWeakLinks, weakLinkCoachItem } from './utils/weakLink';
+import { buildFormCurve, formCoachItem } from './utils/formCurve';
+import { buildAdaptations, applyAdaptation } from './utils/autoAdapt';
+import { buildYearReview } from './utils/yearReview';
+import { discoverExercises } from './utils/exerciseDiscovery';
+import { restProfileByMuscle, adaptiveRestCoachItem } from './utils/adaptiveRest';
+import { templateToCode, codeToTemplate, describeCodeError } from './utils/programCode';
+import { applyTrainingGoal, findTrainingGoal } from './utils/trainingGoal';
 import { pushVersion, restoreVersion, describeVersionDiff } from './utils/templateVersions';
 import { buildFrequencyPlan, frequencyPlanCoachItem } from './utils/frequencyPlanner';
 import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
@@ -133,6 +143,8 @@ const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
 const ExerciseMergeModal = lazy(() => import('./components/ExerciseMergeModal'));
 const VolumeTargetsModal = lazy(() => import('./components/VolumeTargetsModal'));
 const ExerciseCompareModal = lazy(() => import('./components/ExerciseCompareModal'));
+const AutoAdaptModal = lazy(() => import('./components/AutoAdaptModal'));
+const YearReviewModal = lazy(() => import('./components/YearReviewModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const CardioView = lazy(() => import('./components/CardioView'));
 
@@ -243,6 +255,8 @@ export default function App() {
   const [isMergeOpen, setIsMergeOpen] = useState(false);
   const [isVolumeTargetsOpen, setIsVolumeTargetsOpen] = useState(false);
   const [isCompareOpen, setIsCompareOpen] = useState(false);
+  const [isAutoAdaptOpen, setIsAutoAdaptOpen] = useState(false);
+  const [isYearReviewOpen, setIsYearReviewOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
@@ -2118,6 +2132,44 @@ export default function App() {
     }),
     [activeWorkout, sortedWorkouts, customExercises, settings.experienceLevel, settings.volumeTargets]);
 
+  // --- Hayalet seans: geçen seferle canlı yarış -------------------------
+  const ghost = useMemo(
+    () => pickGhost(activeWorkout, sortedWorkouts),
+    [activeWorkout, sortedWorkouts]);
+
+  const ghostRace = useMemo(
+    () => (ghost ? buildGhostRace(activeWorkout, ghost.workout, { resolveLoad: resolveSetLoad }) : null),
+    [activeWorkout, ghost, resolveSetLoad]);
+
+  const ghostTargetForSet = useCallback(
+    (name, index) => (ghost ? ghostTargetFor(name, index, ghost.workout, { resolveLoad: resolveSetLoad }) : null),
+    [ghost, resolveSetLoad]);
+
+  /**
+   * Zaman sıkışması: seansı verilen dakikaya sığdır.
+   *
+   * Değişiklik doğrudan uygulanmıyor; önce ne olacağı gösteriliyor ve
+   * kullanıcı onaylıyor. Sessizce hareket silen bir düğme, neyi kaybettiğini
+   * bilmemek demekti.
+   */
+  const [timeCrunchPlan, setTimeCrunchPlan] = useState(null);
+
+  const previewTimeCrunch = useCallback((minutes) => {
+    if (!activeWorkout?.exercises?.length) return;
+    const sonuc = planTimeCrunch(activeWorkout.exercises, minutes, {
+      restSeconds: settings.restSeconds,
+      customExercises,
+    });
+    setTimeCrunchPlan({ ...sonuc, summary: describeTimeCrunch(sonuc) });
+  }, [activeWorkout, settings.restSeconds, customExercises]);
+
+  const applyTimeCrunch = useCallback(() => {
+    if (!timeCrunchPlan?.plan) return;
+    setActiveWorkout(prev => (prev ? { ...prev, exercises: timeCrunchPlan.plan } : prev));
+    showToast(timeCrunchPlan.summary || 'Seans kısaltıldı.');
+    setTimeCrunchPlan(null);
+  }, [timeCrunchPlan, setActiveWorkout, showToast]);
+
   const handleUseBackupExercise = useCallback((exerciseId, backupName) => {
     if (!exerciseId || !backupName) return;
     setActiveWorkout(prev => {
@@ -3017,6 +3069,15 @@ export default function App() {
     () => buildConsistency(sortedWorkouts),
     [sortedWorkouts]);
 
+  const handleApplyAdaptation = useCallback((suggestion) => {
+    setTemplates(prev => {
+      const sonraki = applyAdaptation(prev, suggestion, generateId);
+      if (sonraki === prev) return prev;
+      return sonraki;
+    });
+    showToast(`Uygulandı: ${suggestion.title}`);
+  }, [setTemplates, showToast]);
+
   const adherenceReport = useMemo(
     () => buildAdherence(sortedWorkouts, weekPlanResult),
     [sortedWorkouts, weekPlanResult]);
@@ -3240,6 +3301,19 @@ export default function App() {
     showToast(`${ics.events.length} antrenman takvime aktarıldı.`);
   }, [activePlan, templates, settings.restSeconds, showToast]);
 
+  // --- 7.5 raporları --------------------------------------------------
+  const formCurve = useMemo(
+    () => buildFormCurve(sortedWorkouts),
+    [sortedWorkouts]);
+
+  const restProfile = useMemo(
+    () => restProfileByMuscle(sortedWorkouts, { customExercises }),
+    [sortedWorkouts, customExercises]);
+
+  const yearReview = useMemo(
+    () => buildYearReview(sortedWorkouts, { resolveLoad: resolveSetLoad, customExercises }),
+    [sortedWorkouts, resolveSetLoad, customExercises]);
+
   /** Rekor zaman çizelgesi: bütün rekorlar tek listede, yeniden eskiye. */
   const recordTimeline = useMemo(
     () => buildRecordTimeline(sortedWorkouts, { resolveLoad: resolveSetLoad, customExercises }),
@@ -3253,6 +3327,77 @@ export default function App() {
       experienceLevel: settings.experienceLevel,
     }),
     [activePlan, templates, customExercises, settings.experienceLevel, settings.volumeTargets]);
+
+  /**
+   * Zayıf halka: beş ayrı analizin tek sıralı listeye indirgenmiş hali.
+   * Hesap yapmıyor, yalnızca birleştirip sıralıyor — aynı hesabı ikinci kez
+   * yapmak iki farklı sayı üretme riski taşırdı.
+   */
+  const weakLinks = useMemo(() => buildWeakLinks({
+    volumeStatuses: weekPlanResult.statuses,
+    balance: strengthBalance,
+    standards: strengthStandards,
+    plateaus: plateauReport,
+    selection: selectionReport,
+    frequency: frequencyPlan,
+  }), [weekPlanResult.statuses, strengthBalance, strengthStandards,
+    plateauReport, selectionReport, frequencyPlan]);
+
+  /** Geçen haftanın dersini plana çeviren somut öneriler. */
+  const adaptations = useMemo(() => buildAdaptations({
+    volumeStatuses: weekPlanResult.statuses,
+    plateaus: plateauReport,
+    frequency: frequencyPlan,
+    formCurve,
+  }, templates, { customExercises, detectMuscle: detectMuscleGroup }),
+  [weekPlanResult.statuses, plateauReport, frequencyPlan, formCurve, templates, customExercises]);
+
+  const discovery = useMemo(
+    () => discoverExercises(sortedWorkouts, {
+      volumeStatuses: weekPlanResult.statuses,
+      customExercises,
+      allNames: allExercisesNames,
+    }),
+    [sortedWorkouts, weekPlanResult.statuses, customExercises, allExercisesNames]);
+
+  /**
+   * Şablonu paylaşılabilir koda çevirip panoya kopyalar.
+   *
+   * Setlerin ağırlık ve tekrar değerleri taşınmıyor: onlar kişinin kendi
+   * yükleri ve başkasının programına yazılması yanlış bir başlangıç değeri
+   * önermek olurdu.
+   */
+  const handleCopyTemplateCode = useCallback(async (template) => {
+    const kod = templateToCode(template);
+    if (!kod) {
+      showToast('Bu şablonda paylaşılacak hareket yok.', 'warning');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(kod);
+      showToast('Program kodu panoya kopyalandı.');
+    } catch {
+      // Pano izni yoksa kod yine de gösterilmeli; kullanıcı elle seçebilsin.
+      showToast(kod, 'info', { duration: 15000 });
+    }
+  }, [showToast]);
+
+  const handleImportTemplateCode = useCallback((kod) => {
+    const sonuc = codeToTemplate(kod, generateId);
+    if (!sonuc.ok) {
+      showToast(describeCodeError(sonuc.reason), 'warning');
+      return false;
+    }
+    setTemplates(prev => [sonuc.template, ...prev]);
+    showToast(`"${sonuc.template.name}" içe aktarıldı.`);
+    return true;
+  }, [setTemplates, showToast]);
+
+  /** Antrenman hedefi modu: varsayılanları tek yerden kaydırır. */
+  const handleSetTrainingGoal = useCallback((key) => {
+    setSettings(prev => applyTrainingGoal(prev, key));
+    showToast(`${findTrainingGoal(key).label} moduna geçildi.`);
+  }, [setSettings, showToast]);
 
   // Sıra denetimi: bugünkü seansın ya da planlanan şablonun hareket sırası.
   // Aynı hareket listesi farklı sırayla farklı sonuç veriyor.
@@ -3348,6 +3493,9 @@ export default function App() {
       techniqueItem: techniqueCoachItem(techniqueReport),
       frequencyPlanItem: frequencyPlanCoachItem(frequencyPlan),
       sideBalanceItem: sideBalanceCoachItem(sideBalance),
+      weakLinkItem: weakLinkCoachItem(weakLinks),
+      formItem: formCoachItem(formCurve),
+      adaptiveRestItem: adaptiveRestCoachItem(restProfile, settings.restSeconds),
       waterItem: waterCoachItem(waterReport),
       exerciseOrderItem: orderCoachItem(orderReport, {
         context: activeWorkout ? 'devam eden seans' : 'bugünkü plan',
@@ -3372,7 +3520,7 @@ export default function App() {
     weekProjection, prWatch, rirCalibration, lastSessionQuality,
     cardioReport, cardioSuggestion, restingHrReport, painScan, painRegions,
     plateauReport, restReport, timeOfDayReport, techniqueReport, orderReport, frequencyPlan,
-    sideBalance, waterReport,
+    sideBalance, waterReport, weakLinks, formCurve, restProfile, settings.restSeconds,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     profileGender, todayCycleSummary, activeCoachProtocol]);
 
@@ -3521,6 +3669,8 @@ export default function App() {
                 mergeExercises: () => setIsMergeOpen(true),
                 volumeTargets: () => setIsVolumeTargetsOpen(true),
                 compareExercises: () => setIsCompareOpen(true),
+                autoAdapt: () => setIsAutoAdaptOpen(true),
+                yearReview: () => setIsYearReviewOpen(true),
                 wizard: () => setIsWizardOpen(true),
                 coach: () => setIsCoachCenterOpen(true),
                 cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
@@ -3697,6 +3847,9 @@ export default function App() {
               }}
               analyticsProps={{
                 recordTimeline,
+                weakLinks,
+                formCurve,
+                discovery,
                 analysisType,
                 frequency: frequencyReport,
                 setAnalysisType,
@@ -3803,6 +3956,12 @@ export default function App() {
               onSetSide={handleSetSide}
               pastNotesFor={pastNotesForExercise}
               sessionVolume={sessionVolumeReport}
+              ghostRace={ghostRace}
+              ghostTargetFor={ghostTargetForSet}
+              timeCrunchPlan={timeCrunchPlan}
+              onPreviewTimeCrunch={previewTimeCrunch}
+              onApplyTimeCrunch={applyTimeCrunch}
+              onCancelTimeCrunch={() => setTimeCrunchPlan(null)}
               sessionPace={buildSessionPace(activeWorkout, (() => {
                 // Kronometrenin gösterdiği süre: biriken + çalışıyorsa aradan geçen.
                 const t = activeWorkout.timer || {};
@@ -3855,6 +4014,8 @@ export default function App() {
               mergeExercises: () => setIsMergeOpen(true),
               volumeTargets: () => setIsVolumeTargetsOpen(true),
               compareExercises: () => setIsCompareOpen(true),
+              autoAdapt: () => setIsAutoAdaptOpen(true),
+              yearReview: () => setIsYearReviewOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
@@ -3890,6 +4051,9 @@ export default function App() {
           onNormalizeBodyweight={handleNormalizeBodyweight}
           onToggleRestNotification={handleToggleRestNotification}
           onTestRestAlert={handleTestRestAlert}
+          trainingGoal={settings.trainingGoal}
+          onChangeTrainingGoal={handleSetTrainingGoal}
+          onImportProgramCode={handleImportTemplateCode}
           notificationState={notificationPermission()}
           onExportCsv={handleExportCsv}
           profileGender={profileGender}
@@ -3986,6 +4150,7 @@ export default function App() {
           }}
           onReplaceExercise={(t, name) => setSubstituteFor({ name, templateId: t.id })}
           nextTargets={nextSessionTargetsFor(previewTemplate)}
+          onCopyCode={() => handleCopyTemplateCode(previewTemplate)}
           versions={previewTemplate.versions || []}
           versionDiff={(v) => describeVersionDiff(v, previewTemplate)}
           onRestoreVersion={(index) => {
@@ -4142,6 +4307,19 @@ export default function App() {
           workouts={sortedWorkouts}
           exerciseNames={allExercisesNames}
           today={getLocalDateString()}
+        />}
+
+        {isAutoAdaptOpen && <AutoAdaptModal
+          isOpen={isAutoAdaptOpen}
+          onClose={() => setIsAutoAdaptOpen(false)}
+          report={adaptations}
+          onApply={handleApplyAdaptation}
+        />}
+
+        {isYearReviewOpen && <YearReviewModal
+          isOpen={isYearReviewOpen}
+          onClose={() => setIsYearReviewOpen(false)}
+          review={yearReview}
         />}
 
         {isCompareOpen && <ExerciseCompareModal
@@ -4312,6 +4490,8 @@ export default function App() {
               mergeExercises: () => setIsMergeOpen(true),
               volumeTargets: () => setIsVolumeTargetsOpen(true),
               compareExercises: () => setIsCompareOpen(true),
+              autoAdapt: () => setIsAutoAdaptOpen(true),
+              yearReview: () => setIsYearReviewOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),

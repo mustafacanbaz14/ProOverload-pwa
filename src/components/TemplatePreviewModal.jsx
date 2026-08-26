@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star, RefreshCw, History, SlidersHorizontal } from 'lucide-react';
+import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star, RefreshCw, History, SlidersHorizontal, Share2 } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { isWorkingSet } from '../utils/helpers';
@@ -30,6 +30,7 @@ const TemplatePreviewModal = memo(({
   versions = [],
   onRestoreVersion,
   versionDiff,
+  onCopyCode,
 }) => {
   if (!isOpen || !template) return null;
 
@@ -307,6 +308,16 @@ const TemplatePreviewModal = memo(({
             >
               <Star size={11} fill={template.favorite ? 'currentColor' : 'none'} /> {template.favorite ? 'Favoride' : 'Favori'}
             </button>
+            {onCopyCode && (
+              <button
+                type="button"
+                onClick={onCopyCode}
+                title="Programı paylaşılabilir kod olarak kopyala"
+                className="rounded-lg border border-zinc-800 py-2 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1"
+              >
+                <Share2 size={11} /> Kod
+              </button>
+            )}
             <button type="button" onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-2 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1">
               <Pencil size={11} /> Düzenle
             </button>

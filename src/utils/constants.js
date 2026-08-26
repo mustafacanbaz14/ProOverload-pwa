@@ -93,6 +93,10 @@ export const DEFAULT_SETTINGS = {
   // amaç günün toplamını bilmek.
   waterLog: {},
   waterHeatBonus: false,
+  // Antrenman hedefi modu: tekrar aralığı, dinlenme ve ilerleme
+  // varsayılanlarını tek yerden kaydırıyor. Elle yazılmış hareket ve şablon
+  // aralıkları moddan üstün kalıyor.
+  trainingGoal: 'hypertrophy',
   // Hareket adı → saniye. Yazılmayan hareketler akıllı/genel süreye düşer.
   exerciseRestOverrides: {},
   // Kardiyo hedefi: { preset, lowMinutes, highSessions }. Boş bırakılan
@@ -711,13 +715,53 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.4';
+export const APP_VERSION = '7.5';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.4',
-  date: '2026-08-25',
+  title: 'ProOverload 7.5',
+  date: '2026-08-26',
   items: [
+    {
+      title: 'Hayalet Seans: Geçen Seferle Canlı Yarış',
+      desc: 'Seans sonu raporu "geçen sefere göre ne değişti" sorusunu seans BİTTİKTEN sonra cevaplıyordu. Ama o cevabın işe yarayacağı an seansın içi: son sette bir tekrar daha yapıp yapmama kararı orada veriliyor ve o an elinde karşılaştırma yok. Artık aynı şablonun bir önceki seansı yanına konuyor ve set set ilerlerken "şu an öndesin / gerisin" yazıyor. Her boş setin üstünde geçen seferin aynı sıradaki seti görünüyor — hedef vermiyor, sadece hatırlatıyor. Karşılaştırma SET SIRASINA göre: aynı hareketin üçüncü seti üçüncü setle kıyaslanıyor, çünkü ortalama almak yanıltıcıydı; dört set yerine üç yapan biri "daha az tonaj" görünüp aslında her sette daha iyi olabiliyor. Yalnızca iki tarafta da yapılmış setler sayılıyor: henüz girilmemiş setler için "gerisin" demek haksız olurdu. Şablon yoksa aynı hareketleri en çok paylaşan seans hayalet oluyor, yani serbest çalışan da yarışabiliyor.'
+    },
+    {
+      title: 'Vaktim Az: Seansı Akıllıca Kısalt',
+      desc: '"Bugün sadece 30 dakikam var" durumunda iki seçenek vardı: seansı hiç yapmamak ya da rastgele hareket atlayıp neyi kaybettiğini bilmemek. İkincisi daha kötü, çünkü atlanan hep SONDAKİ hareketler oluyor ve programın sonunda bazen bir kasın tek hareketi duruyor. Artık 30/45/60 dakika seçiyorsun ve seans değere göre kısalıyor: bileşke hareketler, bir kasın tek hareketi ve gerilmede yükleyenler en son elden çıkıyor. ÖNCE set kısılıyor, sonra hareket atılıyor — üç seti ikiye indirmek bir hareketi tamamen atmaktan her zaman daha az kayıp. Hiçbir hareket iki setin altına inmiyor. Kısaltma tek harekete yığılmıyor, kayıp seansa yayılıyor. Ve değişiklik önce GÖSTERİLİYOR: neyin neden çıkarıldığı yazıyor, sen onaylıyorsun.'
+    },
+    {
+      title: 'Zayıf Halka: Önce Neyi Düzelteyim',
+      desc: 'Uygulama gelişimi beş ayrı pencereden anlatıyordu — kuvvet standartları, kas dengesi, hacim tablosu, durgunluk taraması, seçim denetimi. Hepsi doğru ama hiçbiri en önemli soruyu cevaplamıyordu: önce neyi düzelteyim. Kullanıcı beş ekranda beş ayrı uyarı görüyor ve hangisinin acil olduğunu bilmiyordu. Artık hepsi tek sıralı listede. Sıralama ETKİ × KESİNLİK: bir kasın koruma eşiğinin altında olması standartlarda geride olmasından daha büyük etki (biri büyümeyi durduruyor, diğeri yalnızca karşılaştırmalı bir konum), ve az veriye dayanan tahminler yüksek etkili olsalar bile aşağı iniyor. Modül yeni hesap YAPMIYOR: aynı hesabı ikinci kez yapmak iki farklı sayı üretme riski taşırdı.'
+    },
+    {
+      title: 'Form Eğrisi: Fitness ve Yorgunluk',
+      desc: 'Uygulama yükü tek bir sayı olarak görüyordu: bu haftanın hacmi. Ama antrenmanın etkisi iki zıt bileşenden oluşuyor ve ikisi FARKLI HIZDA sönüyor. Fitness yavaş birikip yavaş sönüyor (haftalar), yorgunluk hızlı birikip hızlı sönüyor (günler). Form ikisinin farkı — ağır bir haftadan sonra performansın neden düşük göründüğünü ve birkaç gün hafifleyince neden beklenenden yükseğe çıktığını açıklayan şey bu. Deload\'un neden işe yaradığının modeli. Üç eğri birlikte çiziliyor ve "kaç gün dinlenirsem toparlanırım" sorusuna sayı veriliyor. Bu bir kesin tahmin aracı değil: sabitler kişiye göre değişiyor ve burada literatürün yaygın değerleri kullanılıyor — işe yarayan taraf mutlak sayı değil eğilim.'
+    },
+    {
+      title: 'Programı Güncelle: Ölçümü Plana Uygula',
+      desc: 'Uygulama geçen haftanın ne söylediğini biliyordu ama bunu plana uygulamak tamamen elle yapılıyordu: beş ekranı gezip şablonları tek tek açıp set sayılarını değiştirmek. Pratikte kimse yapmıyor, yani ölçümlerin çoğu okunup unutuluyordu. Artık ölçümler somut önerilere çevriliyor: hangi şablonda hangi harekete kaç set eklenecek ya da çıkarılacak. Set eklenirken EN AZ seti olan hareket seçiliyor (hacmi tek harekete yığmak yerine dağıtmak daha iyi uyaran veriyor), çıkarılırken en çok seti olan. Haftada en fazla dört set ekleniyor — daha fazlası neyin işe yaradığını anlaşılmaz yapar. Form modeli yorgunluk birikimi gösteriyorsa hacim artışı önerileri otomatik gizleniyor. Hiçbiri kendiliğinden uygulanmıyor: sessizce değişen bir program güvenilmez bir programdır.'
+    },
+    {
+      title: 'Yıl Özeti',
+      desc: 'Uygulama her şeyi hafta ve blok ölçeğinde anlatıyordu; en uzun pencere on iki hafta. Ama bir yıl çalışmış birinin merak ettiği şey o ölçekte değil: kaç seans, ne kadar ağırlık, hangi hareket ne kadar ilerledi, en uzun seri neydi. Sayılar zaten kayıttaydı, hiçbir yerde toplanmıyordu. En çok gelişen hareketler ORANA göre sıralanıyor: 20 kiloluk bir hareketin 5 kg artması, 150 kiloluk bir hareketin 5 kg artmasından çok daha büyük bir gelişim; mutlak farkla sıralasaydık ağır hareketler her zaman kazanırdı. Takvim yılı değil bugünden geriye on iki ay — ocak ayında "bu yıl 3 seans yaptın" demek anlamsız olurdu.'
+    },
+    {
+      title: 'Hareket Keşfi',
+      desc: 'Kütüphanede iki yüzden fazla hareket var ve tipik kullanıcı yirmi otuzunu kullanıyor. Kalanı arama kutusunda duruyor ama kimse "bugün hiç denemediğim bir hareket bulayım" diye aramıyor — arama, ne aradığını bilene yarıyor. Bu kart tersini yapıyor: geçmişindeki BOŞLUKLARDAN yola çıkıp öneriyor. Üç tür boşluk arıyor: koruma eşiğinin altında kalan kaslar, hep aynı tek hareketle çalışılan kaslar (o hareket yapılamadığında o kasın haftası tamamen çöküyor) ve gerilmede yükleyen hareketi hiç olmayan kaslar. Öneriler yalnızca fiilen KULLANDIĞIN ekipmanlardan seçiliyor — barbell\'ı olmayan birine barbell hareketi önermek öneriyi çöpe atmak. Kas başına en fazla iki öneri: sınır olmadan en büyük boşluk bütün listeyi dolduruyordu.'
+    },
+    {
+      title: 'Ölçülmüş Dinlenme Süresi',
+      desc: 'Dinlenme süresi öneriliyordu ama açık döngüydü: önerinin işe yarayıp yaramadığı hiç ölçülmüyordu. 7.2\'den beri her set kendinden önceki gerçek beklemeyi taşıyor ve bu döngüyü kapatmayı mümkün kılıyor. Artık aynı harekette AYNI AĞIRLIKTA, farklı sürelerden sonra kaç tekrar yapıldığına bakılıp kişiye özel bir süre çıkarılıyor. Ölçüt tekrar kaybı: kaybın kabul edilebilir seviyeye indiği EN KISA süre aranıyor — daha uzun dinlenmek kaybı azaltmıyorsa yalnızca seansı uzatıyor. Kas grubu bazında hesaplanıyor çünkü hareket başına örneklem çoğu kullanıcıda yetersiz kalıyor.'
+    },
+    {
+      title: 'Program Paylaşım Kodu',
+      desc: 'Şablonlar cihazda kilitliydi. QR kodu yedeğin TAMAMINI taşıyor — bir arkadaşına tek bir programı vermek için bütün verini paylaşmak gerekiyordu, ki bu makul değil. Artık her şablonun kendi metin kodu var: mesajdan, nottan, e-postadan geçiyor. Kod programın YAPISINI taşıyor (hareketler, set sayıları, süperset bağları, tekrar aralıkları, planlanan teknikler) ama ağırlıkları taşımıyor: başkasının yükünü senin programına yazmak yanlış bir başlangıç değeri önermek olurdu. Kod sürümlü, yani biçim değişirse eski kodlar tanınmaya devam ediyor ve tanınmayan bir kod sessizce yanlış veri üretmek yerine açıkça reddediliyor — hatanın ne olduğu da yazıyor.'
+    },
+    {
+      title: 'Antrenman Hedefi Modu',
+      desc: 'Uygulamanın bütün varsayılanları hipertrofiye göre ayarlıydı: 6-10 tekrar, 120 saniye dinlenme, çift ilerleme. Doğru bir varsayılan ama tek varsayılan. Aynı kişi bir blok kuvvete, bir blok dayanıklılığa çalışabiliyor ve o zaman altı ayrı ayarı elle değiştirmesi gerekiyordu — biri unutulduğunda sistem kendi içinde çelişiyordu (5 tekrar hedefi ama 90 saniye dinlenme gibi). Artık dört mod var: Hipertrofi, Kuvvet (3-6 tekrar, 210 sn — uzun dinlenme burada tercih değil şart, sinir sistemi toparlanmazsa sonraki set yükü kaldıramıyor), Dayanıklılık (15-25 tekrar, 60 sn, hedef RIR 1) ve Koruma (RIR 3, sabit ilerleme — amaç ilerlemek değil kaybetmemek). Mod yalnızca VARSAYILANI değiştiriyor: hareket ya da şablon için elle yazdığın değerler dokunulmadan kalıyor, çünkü mod denemek ayarlarını silmek anlamına gelmemeli.'
+    },
     {
       title: 'Isınma Setlerini Tek Dokunuşla Ekle',
       desc: 'Isınma merdivenini hesaplayan kod uygulamada zaten vardı ama yalnızca plaka hesaplayıcısında kullanılıyordu: ağırlıkları görüyor, sonra setleri seansa elle giriyordun. Pratikte kimse girmiyor. Artık hareketin yanındaki düğme merdiveni doğrudan sete yazıyor. Setler ısınma tipiyle giriyor, yani hacme sayılmıyorlar ama kayıtta duruyorlar. Merdiven çalışma ağırlığına göre kuruluyor: önce bu seansta girilmiş sete, yoksa şablonda planlanana, o da yoksa geçmişteki son çalışma setine bakıyor. Bar ağırlığı yalnızca barbell hareketlerinde uygulanıyor — kabloya 20 kg taban koymak yan kaldırışta merdiveni tamamen boş bırakıyordu. Küçük kas gruplarında ve hafif yüklerde merdiven iki kademeye iniyor; yan kaldırışa dört kademe ısınma seansı uzatmaktan başka bir şey yapmıyor.'
