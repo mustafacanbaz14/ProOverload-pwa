@@ -186,6 +186,13 @@ import {
 import {
   buildTrendComparison, trendComparisonText, ANALYSIS_WINDOWS,
 } from '../src/utils/trendComparison.js';
+import {
+  buildOptimalVolumeProfile, buildVolumeRamp, optimalVolumeCoachItem,
+} from '../src/utils/optimalVolume.js';
+import {
+  PROGRAM_GOALS, PROGRAM_TIME_BUDGETS, buildProgramAudit,
+  rebalanceDraftVolume, spreadDraftWeekdays, trimDraftToTime,
+} from '../src/utils/programIntelligence.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
@@ -5781,6 +5788,172 @@ test('eş dönem analizi pratik eşik altındaki farkı anlamlı saymıyor', () 
   const protein = r.rows.find(row => row.key === 'protein');
   assert.equal(calories.meaningful, false);
   assert.equal(protein.meaningful, false);
+});
+
+/* --- 7.8 program zekâsı ve kişisel optimal hacim -------------------- */
+
+const optimalHistory = (values) => values.map((entry, index) => ({
+  weekStart: `2026-0${index + 1}-05`,
+  volume: typeof entry === 'number' ? entry : entry.volume,
+  recovered: typeof entry === 'number' ? true : entry.recovered,
+  evaluated: typeof entry === 'number' ? true : entry.evaluated,
+}));
+
+const auditDays = () => ([
+  {
+    uid: 'upper', name: 'Üst', weekday: 'mon', exercises: [
+      { uid: 'bench', name: 'Barbell Bench Press', sets: 3 },
+      { uid: 'row', name: 'Barbell Row', sets: 3 },
+    ],
+  },
+  {
+    uid: 'lower', name: 'Alt', weekday: 'tue', exercises: [
+      { uid: 'squat', name: 'Barbell Back Squat', sets: 3 },
+      { uid: 'rdl', name: 'Romanian Deadlift', sets: 3 },
+    ],
+  },
+]);
+
+test('optimal hacim az veride kişisel sayı uydurmuyor', () => {
+  const profile = buildOptimalVolumeProfile({
+    weeklyHistory: { Göğüs: optimalHistory([10, 12]) },
+    planStatuses: [{ muscle: 'Göğüs', volume: 10 }],
+  });
+  const chest = profile.rows.find(row => row.muscle === 'Göğüs');
+  assert.equal(chest.personalized, false);
+  assert.equal(chest.source, 'Başlangıç referansı');
+  assert.equal(chest.targetLow, 8);
+  assert.equal(chest.targetHigh, 16);
+});
+
+test('optimal hacim bilinmeyen haftayı toparlanma başarısızlığı saymıyor', () => {
+  const profile = buildOptimalVolumeProfile({
+    weeklyHistory: {
+      Göğüs: optimalHistory([
+        { volume: 10, recovered: true, evaluated: true },
+        { volume: 12, recovered: false, evaluated: false },
+        { volume: 11, recovered: true, evaluated: true },
+      ]),
+    },
+  });
+  const chest = profile.rows.find(row => row.muscle === 'Göğüs');
+  assert.equal(chest.evaluatedWeeks, 2);
+  assert.equal(chest.recoveredWeeks, 2);
+});
+
+test('optimal hacim yeterli tamamlanmış haftada kişiselleşiyor', () => {
+  const profile = buildOptimalVolumeProfile({
+    weeklyHistory: { Göğüs: optimalHistory([8, 10, 12, 11, 13, 12]) },
+    planStatuses: [{ muscle: 'Göğüs', volume: 12 }],
+  });
+  const chest = profile.rows.find(row => row.muscle === 'Göğüs');
+  assert.equal(chest.personalized, true);
+  assert.ok(chest.confidence >= 55);
+  assert.ok(chest.targetLow <= chest.targetHigh);
+  assert.equal(chest.status, 'aligned');
+});
+
+test('toparlanma ayarı düşük güvenle hacmi değiştirmiyor', () => {
+  const profile = buildOptimalVolumeProfile({
+    planStatuses: [{ muscle: 'Göğüs', volume: 10 }],
+    capacity: { score: 25, confidence: 40 },
+  });
+  const chest = profile.rows.find(row => row.muscle === 'Göğüs');
+  assert.equal(chest.recoveryAdjustment.applied, false);
+  assert.equal(chest.targetLow, chest.unadjustedLow);
+});
+
+test('yüksek güvenli düşük toparlanma geçici olarak en fazla iki set azaltıyor', () => {
+  const profile = buildOptimalVolumeProfile({
+    planStatuses: [{ muscle: 'Göğüs', volume: 10 }],
+    capacity: { score: 35, confidence: 80 },
+  });
+  const chest = profile.rows.find(row => row.muscle === 'Göğüs');
+  assert.equal(chest.recoveryAdjustment.sets, -2);
+  assert.equal(chest.targetLow, chest.unadjustedLow - 2);
+});
+
+test('plan üst bant fazlasını düşük getirili hacim adayı olarak ayırıyor', () => {
+  const profile = buildOptimalVolumeProfile({
+    weeklyHistory: { Göğüs: optimalHistory([8, 10, 11, 12, 10, 11]) },
+    planStatuses: [{ muscle: 'Göğüs', volume: 20 }],
+  });
+  const chest = profile.rows.find(row => row.muscle === 'Göğüs');
+  assert.equal(chest.status, 'over');
+  assert.ok(chest.lowValueCandidate >= 2);
+  const item = optimalVolumeCoachItem(profile);
+  assert.equal(item.key, 'optimal-volume');
+  assert.equal(item.muscle, 'Göğüs');
+});
+
+test('dört haftalık hacim rampası son haftayı boşaltma yapıyor', () => {
+  const ramp = buildVolumeRamp({ targetLow: 10, targetHigh: 14, planned: 10, recoveryAdjustment: { sets: 0 } });
+  assert.equal(ramp.length, 4);
+  assert.equal(ramp[3].label, 'Boşaltma');
+  assert.ok(ramp[3].sets < ramp[0].sets);
+});
+
+test('program amaçları ve süre bütçeleri eksiksiz', () => {
+  assert.deepEqual(Object.keys(PROGRAM_GOALS), ['growth', 'maintenance', 'recovery']);
+  assert.deepEqual(PROGRAM_TIME_BUDGETS, [45, 60, 75, 90]);
+});
+
+test('program denetimi beş boyutu ve kas-gün matrisini üretiyor', () => {
+  const audit = buildProgramAudit(auditDays(), { timeBudget: 60, restSeconds: 120 });
+  assert.equal(audit.hasData, true);
+  assert.equal(audit.dimensions.length, 5);
+  assert.equal(audit.dayRows.length, 2);
+  assert.ok(audit.muscleRows.some(row => row.muscle === 'Göğüs'));
+  assert.ok(audit.score >= 0 && audit.score <= 100);
+});
+
+test('program denetimi seçilen süreyi aşan günü açıkça işaretliyor', () => {
+  const days = auditDays();
+  days[0].exercises.forEach(exercise => { exercise.sets = 10; });
+  const audit = buildProgramAudit(days, { timeBudget: 20, restSeconds: 180 });
+  assert.equal(audit.dayRows[0].overBudget, true);
+  assert.ok(audit.findings.some(item => item.key === 'time-upper'));
+});
+
+test('otomatik dengeleme hareket eklemeden eksik kasa set ekliyor', () => {
+  const days = [{
+    uid: 'd', name: 'Göğüs', weekday: 'mon', exercises: [
+      { uid: 'bench', name: 'Barbell Bench Press', sets: 3 },
+    ],
+  }];
+  const result = rebalanceDraftVolume(days, { priorities: ['Göğüs'], goal: 'growth' });
+  assert.ok(result.changes.some(change => change.type === 'add' && change.muscle === 'Göğüs'));
+  assert.ok(result.days[0].exercises[0].sets > 3);
+  assert.equal(days[0].exercises[0].sets, 3);
+});
+
+test('süreye sığdırma hiçbir hareketi iki setin altına düşürmüyor', () => {
+  const days = auditDays();
+  days[0].exercises.forEach(exercise => { exercise.sets = 8; });
+  const result = trimDraftToTime(days, { timeBudget: 15, restSeconds: 180 });
+  assert.ok(result.changes.length > 0);
+  assert.ok(result.days[0].exercises.every(exercise => exercise.sets >= 2));
+  assert.equal(days[0].exercises[0].sets, 8);
+});
+
+test('günleri yayma sıra ve hareketleri koruyor', () => {
+  const days = [...auditDays(), { uid: 'arms', name: 'Kol', weekday: 'wed', exercises: [] }];
+  const spread = spreadDraftWeekdays(days);
+  assert.deepEqual(spread.map(day => day.weekday), ['mon', 'wed', 'fri']);
+  assert.equal(spread[0].exercises[0].name, 'Barbell Bench Press');
+  assert.notEqual(spread, days);
+});
+
+test('optimal hacim koç maddesi hacim kategorisine giriyor', () => {
+  assert.equal(categoryOf('optimal-volume'), 'volume');
+  const actions = buildCoachActions({
+    optimalVolumeItem: {
+      tone: 'warn', muscle: 'Göğüs', title: 'Göğüs hacmi', detail: 'İki set azaltıp karşılaştır.',
+    },
+  }, new Date('2026-08-26T12:00:00'));
+  const item = actions.find(action => action.key === 'optimal-volume');
+  assert.equal(item.action, 'plan');
+  assert.equal(item.muscle, 'Göğüs');
 });
 
 for (const { name, run } of tests) {

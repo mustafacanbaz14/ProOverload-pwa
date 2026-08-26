@@ -49,6 +49,7 @@ import { buildTimeOfDayReport, timeOfDayCoachItem } from './utils/timeOfDay';
 import { buildTechniqueReport, techniqueCoachItem } from './utils/setTechniques';
 import { auditExerciseOrder, orderCoachItem } from './utils/exerciseOrder';
 import { buildWeeklyVolumeHistory } from './utils/volumeTargets';
+import { buildOptimalVolumeProfile, optimalVolumeCoachItem } from './utils/optimalVolume';
 import { buildWarmupLadder, applyWarmupLadder, removeWarmupSets } from './utils/warmupSets';
 import { setExerciseNote, notesFor } from './utils/exerciseNotes';
 import { scanSideBalance, sideBalanceCoachItem } from './utils/unilateral';
@@ -3687,6 +3688,21 @@ export default function App() {
     (name) => painWarningFor(name, painRegions, { customExercises }),
     [painRegions, customExercises]);
 
+  // Kişisel hacim modeli iki aşamalı: koç maddesi toparlanma puanından önceki
+  // temel plan farkına dayanır; ekran ise koç kapasitesi hesaplandıktan sonra
+  // en fazla +1/−2 setlik geçici toparlanma ayarını da gösterir. Böylece koç
+  // kendi ürettiği puanı girdi olarak kullanıp döngüye girmez.
+  const optimalVolumeBase = useMemo(() => buildOptimalVolumeProfile({
+    weeklyHistory: weeklyVolumeHistory,
+    planStatuses: weekPlanResult.statuses,
+    currentVolume: dashboardStats.muscleVolume,
+    experienceLevel: settings.experienceLevel,
+  }), [weeklyVolumeHistory, weekPlanResult.statuses, dashboardStats.muscleVolume, settings.experienceLevel]);
+
+  const optimalVolumeItem = useMemo(
+    () => optimalVolumeCoachItem(optimalVolumeBase),
+    [optimalVolumeBase]);
+
   const coachActions = useMemo(() => {
     const bugun = getLocalDateString();
     const sonOlcum = sortedMetrics[0]?.date;
@@ -3757,6 +3773,7 @@ export default function App() {
       lockItem: readinessCoachItem(analysisLocks),
       blockItem: blockCoachItem(blockCompare),
       anomalyItem: anomalyCoachItem(anomalyWatch),
+      optimalVolumeItem,
       deload,
       deloadSuggestion,
       gender: profileGender,
@@ -3774,8 +3791,8 @@ export default function App() {
     sideBalance, waterReport, weakLinks, formCurve, restProfile, settings.restSeconds,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     ledgerReport, ledgerDue, performanceDrivers, responseProfile, exerciseRoi, muscleScorecard,
-    analysisLocks, blockCompare, anomalyWatch,
-    profileGender, todayCycleSummary, activeCoachProtocol]);
+    analysisLocks, blockCompare, anomalyWatch, optimalVolumeItem,
+    profileGender, todayCycleSummary, activeCoachProtocol, activeWorkout]);
 
   // Koç hafızası: ertelenen/kapatılan maddeler ve çelişki çözümü. Ham liste
   // yerine bu sonuç gösteriliyor.
@@ -3801,6 +3818,15 @@ export default function App() {
     formCurve,
     acwr: dashboardStats,
   }), [coachView.items, readiness, todayCoach, restingHrReport, painReport, formCurve, dashboardStats]);
+
+  const optimalVolumeProfile = useMemo(() => buildOptimalVolumeProfile({
+    weeklyHistory: weeklyVolumeHistory,
+    planStatuses: weekPlanResult.statuses,
+    currentVolume: dashboardStats.muscleVolume,
+    capacity: coachBriefing.capacity,
+    experienceLevel: settings.experienceLevel,
+  }), [weeklyVolumeHistory, weekPlanResult.statuses, dashboardStats.muscleVolume,
+    coachBriefing.capacity, settings.experienceLevel]);
 
   const coachCalibration = useMemo(
     () => buildCoachCalibration(coachLedger),
@@ -4150,10 +4176,13 @@ export default function App() {
                 analysisLocks,
                 coachBriefing,
                 coachCalibration,
+                optimalVolumeProfile,
                 sleepScores: sleepScoreByDay,
                 onAction: handleCoachAction,
                 onApplyCoach: handleApplyCoachItem,
                 onOpenLedger: () => setIsLedgerOpen(true),
+                onOpenPlan: () => setIsWeekPlanOpen(true),
+                onOpenVolumeTargets: () => setIsVolumeTargetsOpen(true),
                 analysisType,
                 frequency: frequencyReport,
                 setAnalysisType,
@@ -4550,6 +4579,7 @@ export default function App() {
           restSeconds={settings.restSeconds}
           experienceLevel={settings.experienceLevel}
           weightKg={latestWeight}
+          optimalProfile={optimalVolumeProfile}
           libraryProps={{
             allExerciseNames: allExercisesNames,
             getContributions: getExerciseContributions,

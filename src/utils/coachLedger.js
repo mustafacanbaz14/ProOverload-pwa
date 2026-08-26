@@ -48,7 +48,7 @@ export const LEDGER_VERDICTS = {
  * bitirirdi. Ölçülemeyenler de deftere giriyor ama isabet oranına sayılmıyor.
  */
 export const LEDGER_PLANS = {
-  volume: ['volume', 'weak-link', 'frequency', 'frequency-plan', 'no-week', 'selection', 'mesocycle', 'muscle-scorecard'],
+  volume: ['volume', 'weak-link', 'frequency', 'frequency-plan', 'no-week', 'selection', 'mesocycle', 'muscle-scorecard', 'optimal-volume'],
   progress: ['plateau', 'plateau-decline', 'rotation', 'order', 'exercise-order', 'pr-watch', 'standards', 'technique-overuse', 'rir', 'effort', 'exercise-roi', 'response-profile'],
   sessions: ['consistency', 'deload-return', 'coach-protocol'],
   recovery: ['deload', 'deload-running', 'acwr', 'readiness-low', 'sleep', 'resting-hr', 'form-overreach', 'form-fresh', 'block-compare'],

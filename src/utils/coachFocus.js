@@ -19,7 +19,7 @@
 
 // Koç maddesi anahtarı → konu başlığı. Anahtar listede yoksa 'other'.
 export const ITEM_CATEGORIES = {
-  volume: ['volume', 'no-week', 'frequency', 'frequency-plan', 'selection', 'weak-link', 'mesocycle', 'muscle-scorecard'],
+  volume: ['volume', 'no-week', 'frequency', 'frequency-plan', 'selection', 'weak-link', 'mesocycle', 'muscle-scorecard', 'optimal-volume'],
   progress: ['plateau', 'plateau-decline', 'pr-watch', 'standards', 'rotation', 'order', 'exercise-order', 'rir', 'effort', 'exercise-roi', 'response-profile', 'perf-driver', 'technique-overuse'],
   recovery: ['deload', 'deload-running', 'deload-return', 'readiness-low', 'sleep', 'sleep-missing', 'resting-hr', 'acwr', 'form-overreach', 'form-fresh', 'rest-quality', 'time-of-day', 'adaptive-rest', 'block-compare', 'anomaly'],
   health: ['joint', 'pain', 'pain-guard', 'side-balance', 'balance', 'cycle', 'cycle-upcoming'],

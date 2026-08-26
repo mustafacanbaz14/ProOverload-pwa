@@ -15,6 +15,7 @@ import AnalysisUnlockCard from './AnalysisUnlockCard';
 import CoachBriefingCard from './CoachBriefingCard';
 import PeriodComparisonCard from './PeriodComparisonCard';
 import CoachCalibrationCard from './CoachCalibrationCard';
+import OptimalVolumeCard from './OptimalVolumeCard';
 import SessionQualityCard from './SessionQualityCard';
 import CardioCoachCard from './CardioCoachCard';
 import StrengthStandardsCard from './StrengthStandardsCard';
@@ -59,9 +60,12 @@ const AnalyticsView = memo(({
   analysisLocks = null,
   coachBriefing = null,
   coachCalibration = null,
+  optimalVolumeProfile = null,
   sleepScores = {},
   onOpenLedger,
   onApplyCoach,
+  onOpenPlan,
+  onOpenVolumeTargets,
   onAction,
   analysisType,
   cardioReport = null,
@@ -369,6 +373,12 @@ const AnalyticsView = memo(({
             Her nokta bir haftanın toplam hacmi. Katkı ağırlıkları dahildir:
             birincil hedef 1, yardımcı 0.5, hafif 0.25 set sayılır.
           </p>
+
+          <OptimalVolumeCard
+            profile={optimalVolumeProfile}
+            onOpenPlan={onOpenPlan}
+            onOpenTargets={onOpenVolumeTargets}
+          />
 
           {/* Tutarlılık ve kuvvet dengesi: hacim grafiğinin yanıtlamadığı iki
               soru. Biri "programı gerçekten uyguluyor muyum", diğeri "kuvvet

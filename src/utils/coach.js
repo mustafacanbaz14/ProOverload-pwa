@@ -73,6 +73,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     waterItem = null,
     ledgerItem = null, driverItem = null, responseItem = null, roiItem = null,
     scorecardItem = null, lockItem = null, blockItem = null, anomalyItem = null,
+    optimalVolumeItem = null,
   } = ctx;
 
   const items = [];
@@ -290,6 +291,17 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
   }
 
   /* --- 2. öncelik: haftayı değiştirenler --- */
+
+  if (optimalVolumeItem) {
+    ekle({
+      key: 'optimal-volume', priority: 3,
+      tone: optimalVolumeItem.tone === 'warn' ? TONES.warn : TONES.info,
+      action: 'plan',
+      muscle: optimalVolumeItem.muscle || null,
+      title: optimalVolumeItem.title,
+      detail: optimalVolumeItem.detail,
+    });
+  }
 
   if (coachProtocol?.active) {
     ekle({

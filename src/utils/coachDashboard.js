@@ -178,6 +178,7 @@ const MODEL_KEYS = new Set([
   'acwr', 'form-overreach', 'form-overreached', 'form-fresh', 'form-peak',
   'perf-driver', 'response-profile', 'exercise-roi', 'muscle-scorecard',
   'block-compare', 'anomaly', 'weak-link',
+  'optimal-volume',
 ]);
 const TREND_KEYS = new Set([
   'plateau', 'plateau-decline', 'readiness-low', 'resting-hr', 'frequency',

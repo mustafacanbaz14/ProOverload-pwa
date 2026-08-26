@@ -19,6 +19,7 @@ import {
 import ExerciseLibraryModal from './ExerciseLibraryModal';
 import PlanningGuide from './PlanningGuide';
 import TemplateAssistantCard from './TemplateAssistantCard';
+import ProgramOptimizerCard from './ProgramOptimizerCard';
 
 const DAY_NAMES = ['1. Gün', '2. Gün', '3. Gün', '4. Gün', '5. Gün', '6. Gün', '7. Gün'];
 
@@ -44,6 +45,7 @@ const TemplateBuilderModal = memo(({
   restSeconds = 120,
   experienceLevel = 'intermediate',
   weightKg = 0,
+  optimalProfile = null,
   libraryProps = {},
 }) => {
   const [programName, setProgramName] = useState(editing?.name || initialDraft?.name || '');
@@ -288,6 +290,20 @@ const TemplateBuilderModal = memo(({
       <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
 
         <PlanningGuide mode="template" />
+
+        {/* 7.8 program zekâsı: taslağın tamamını amaç, kişisel hacim, süre,
+            sıklık ve gün dağılımıyla birlikte denetler. Düzeltmeler yalnız
+            kullanıcı dokunduğunda uygulanır; program sessizce değişmez. */}
+        {!editing && (
+          <ProgramOptimizerCard
+            days={days}
+            onChange={setDays}
+            customExercises={customExercises}
+            experienceLevel={experienceLevel}
+            restSeconds={restSeconds}
+            optimalProfile={optimalProfile}
+          />
+        )}
 
         {/* Gün özeti */}
         <div className="grid grid-cols-3 gap-2">

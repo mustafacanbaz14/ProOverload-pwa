@@ -159,13 +159,18 @@ export const buildWeeklyVolumeHistory = (workouts = [], {
       if (!out[muscle]) out[muscle] = [];
       const buGuc = parseNumber(hafta.strengthByMuscle[muscle]);
       const sonrakiGuc = parseNumber(sonraki?.strengthByMuscle?.[muscle]);
+      const evaluated = Boolean(sonraki && buGuc > 0 && sonrakiGuc > 0);
       out[muscle].push({
         weekStart: hafta.weekStart,
         volume: Math.round(volume * 4) / 4,
         // Sonraki hafta ya da güç verisi yoksa "toparlandı" DENMİYOR: iyimser
         // varsaymak, kullanıcıya toparlayamadığı bir hacmi hedef olarak
         // önermek olurdu.
-        recovered: Boolean(sonraki && buGuc > 0 && sonrakiGuc >= buGuc * 0.98),
+        recovered: Boolean(evaluated && sonrakiGuc >= buGuc * 0.98),
+        // Son haftanın ardından ölçüm yoksa false "toparlanamadı" anlamına
+        // gelmez. Yeni kişisel hacim modeli bu alanla bilinmeyeni başarısızdan
+        // ayırır; eski `recovered` alanı geriye uyumluluk için korunur.
+        evaluated,
       });
     });
   });

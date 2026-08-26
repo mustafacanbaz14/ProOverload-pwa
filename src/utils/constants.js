@@ -722,13 +722,77 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.7';
+export const APP_VERSION = '7.8';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.7',
+  title: 'ProOverload 7.8',
   date: '2026-08-26',
   items: [
+    {
+      title: 'Program Zekâsı ve Sağlık Skoru',
+      desc: 'Program oluşturucu taslağın tamamını hacim bandı, kas başına dağılım, seans süresi, gün dengesi ve temel hareket örüntüleriyle birlikte 0–100 arasında denetliyor. Skor tek başına hüküm değil: beş alt puan ve her kesintinin gerekçesi aynı kartta görünüyor. Bölgesel uzmanlaşma bilinçliyse düşük örüntü puanının hata olmadığı da açıkça yazıyor.'
+    },
+    {
+      title: 'Üç Program Amacı',
+      desc: 'Program yazarken Gelişim, Koruma veya Toparlanma amacı seçilebiliyor. Gelişim kişisel verimli bandı, Koruma daha düşük zaman maliyetli bir kestirimi, Toparlanma ise geçici azaltmayı kullanıyor. Koruma ve toparlanma sayıları kesin fizyolojik eşik diye değil, şeffaf planlama kestirimi olarak etiketleniyor.'
+    },
+    {
+      title: 'Üç Kasa Kadar Öncelik',
+      desc: 'Program oluşturucuda en fazla üç öncelikli kas seçiliyor. Otomatik dengeleme set eklerken bu kasları önce ele alıyor; süre kısaltırken onları taşıyan setleri en son azaltıyor. Sınır konmasının sebebi her kası öncelik yapmanın hiçbir kasa öncelik vermemekle aynı olması.'
+    },
+    {
+      title: 'Tek Dokunuşla Set Dengeleme',
+      desc: 'Mevcut hareketler korunarak kas hacimleri seçilen banda yaklaştırılıyor. Hareket eklenmiyor veya silinmiyor; bir harekette en fazla altı set, azaltmada en az iki set korunuyor. Eksik kasa uygun hareket yoksa sistem sessizce başka kasa set yazmak yerine hareket eklemek gerektiğini söylüyor.'
+    },
+    {
+      title: 'Seans Süresi Bütçesi',
+      desc: '45, 60, 75 veya 90 dakikalık üst sınır seçiliyor ve her gün gerçek dinlenme ayarına göre yeniden tahmin ediliyor. Bütçeyi aşan günün kaç dakika taştığı denetimde görünür; toplam set sayısının makul görünmesi artık uzun bir seansı gizlemiyor.'
+    },
+    {
+      title: 'Hareket Silmeden Süreye Sığdır',
+      desc: 'Süre düzeltme düğmesi düşük öncelikli setleri gün gün azaltıyor. Hiçbir hareket silinmiyor ve hiçbir hareket iki setin altına inmiyor. Buna rağmen süre aşımı sürüyorsa uygulama sayı uydurmak yerine hareket seçimini değiştirmek gerektiğini belirtiyor.'
+    },
+    {
+      title: 'Günleri Haftaya Eşit Yay',
+      desc: 'Program günleri tek dokunuşla toparlanma boşlukları bırakacak biçimde pazartesiden pazara yayılıyor. Gün sırası, hareket sırası, setler ve süpersetler değişmiyor; yalnız haftanın günleri yeniden atanıyor.'
+    },
+    {
+      title: 'Kas × Gün Dağılım Matrisi',
+      desc: 'Programın en çok çalıştırdığı kasların hangi günde kaç katkı seti aldığı tablo halinde gösteriliyor. Böylece haftalık toplam doğru olsa bile bütün hacmin tek güne yığıldığı durum, kas kas görünür hale geliyor.'
+    },
+    {
+      title: 'Kişisel Optimal Hacim Bandı',
+      desc: 'Analiz → Hacim ekranı popülasyon başlangıç aralığını, performansın korunduğu tamamlanmış haftalarla kişiselleştiriyor. Tek bir en iyi sayı üretilmiyor; alt ve üst sınır gösteriliyor. Dört haftadan az veya ölçülemeyen geçmişte sistem kişiselleşmiş gibi davranmıyor.'
+    },
+    {
+      title: 'Optimal Hacimde Veri Güveni',
+      desc: 'Her kas için kayıtlı hafta, gerçekten değerlendirilebilen hafta, toparlanan hafta ve güven yüzdesi ayrı gösteriliyor. Ardından performans ölçümü olmayan son hafta “toparlanamadı” sayılmıyor; bilinmeyen ile başarısız ilk kez veri modelinde ayrılıyor.'
+    },
+    {
+      title: 'Toparlanma Ayarlı Hacim',
+      desc: 'Koç kapasite verisinin güveni en az yüzde 60 ise kişisel banda geçici bir ayar uygulanıyor: güçlü durumda en fazla +1, düşük durumda en fazla −2 set. Düşük güvenli uyku veya hazır oluş verisi hacmi değiştirmiyor. Bu ayar kalıcı hedefleri ya da şablonu sessizce yazmıyor.'
+    },
+    {
+      title: 'Düşük Getirili Hacim Adayı',
+      desc: 'Aktif plan kişisel üst bandı geçtiğinde fazlalık “junk volume” diye kesin hükümle etiketlenmiyor. Bunun yerine azaltma deneyi için düşük getirili hacim adayı olarak gösteriliyor; kaç set olduğu ve kararın hangi güven düzeyine dayandığı açık kalıyor.'
+    },
+    {
+      title: 'Aktif Plan ve Optimal Bant Karşılaştırması',
+      desc: 'Her planlı kas için mevcut set, güncel hedef aralığı, eksik set veya üst sınır fazlası yan yana geliyor. Yalnız aktif plandaki kaslar sayılıyor; programın bilerek hedeflemediği on altı kasın tamamı uyarıya dönüşmüyor.'
+    },
+    {
+      title: 'Dört Haftalık Hacim Deneyi',
+      desc: 'Seçilen kas için başlangıç, kontrollü artış, üst sınır denemesi ve boşaltma haftasından oluşan dört adımlı rampa gösteriliyor. Toparlanma zayıfsa üçüncü hafta artmıyor. Bu bir otomatik uygulama değil; her adımın devam koşulu yazılı bir deney planı.'
+    },
+    {
+      title: 'Optimal Hacim Koç Entegrasyonu',
+      desc: 'Koç aktif plandaki en belirgin hacim açığını veya yüksek güvenli fazlalığı tek ölçülebilir madde olarak gösteriyor. Tavsiye Program ekranına gider, Hacim kategorisinde süzülür ve Uyguladım denirse karar defterinde üç hafta sonra ölçülebilir.'
+    },
+    {
+      title: 'Program Müdahaleleri Geri Alınabilir ve Görünür',
+      desc: 'Otomatik set dengeleme ve süre düzeltme kaç set eklediğini veya çıkardığını işlem sonrasında yazıyor. Program kaydedilene kadar değişiklik taslakta kalıyor; arka planda şablon, aktif plan veya localStorage kaydı değiştirilmiyor.'
+    },
     {
       title: 'Koç Karar Panosu',
       desc: 'Koçun onlarca ayrı maddesi artık tek bir karar panosunda üç soruya cevap veriyor: bugün kapasitem ne, önce ne yapmalıyım ve karar neye dayanıyor. Eski kartlar kaldırılmadı; derin analiz sekmesinde korunuyor. Yeni pano onların yerine ikinci bir hesap yapmıyor, mevcut sonuçları açıklanabilir bir sıraya sokuyor.'
