@@ -331,7 +331,7 @@ const ActiveWorkoutView = memo(({
               {sessionVolume.rows.slice(0, 8).map(r => (
                 <span
                   key={r.muscle}
-                  title={`${r.muscle}: hafta ${r.priorWeek} + bugün ${r.entered} girildi, ${r.planned} planlı → ${r.projected} (MEV ${r.mev} · MRV ${r.mrv})`}
+                  title={`${r.muscle}: hafta ${r.priorWeek} + bugün ${r.entered} girildi, ${r.planned} planlı → ${r.projected} (eşik ${r.mev} · tartışmalı sonu ${r.mrv})`}
                   className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
                     r.willExceedMrv ? 'border-red-900/60 bg-red-950/20 text-red-300'
                       : r.shortOfMev ? 'border-amber-900/60 bg-amber-950/20 text-amber-300'

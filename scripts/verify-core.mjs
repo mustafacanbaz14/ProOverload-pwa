@@ -128,7 +128,10 @@ import { buildConsistency, buildAdherence } from '../src/utils/consistency.js';
 import { auditWorkoutData, removeEmptyWorkouts } from '../src/utils/dataHealth.js';
 import { repRangeFor, setRepRangeOverride } from '../src/utils/exerciseTargets.js';
 import { toggleDraftSuperset } from '../src/utils/programDraft.js';
-import { mesocycleState, muscleTarget, weeklyTargets, targetInstructions, mesocycleCoachItem } from '../src/utils/mesocycle.js';
+import {
+  mesocycleState, muscleTarget, weeklyTargets, targetInstructions, mesocycleCoachItem,
+  PROGRESSION_MODES, findProgressionMode,
+} from '../src/utils/mesocycle.js';
 import { lengthBias, auditExerciseSelection } from '../src/utils/selectionAudit.js';
 import {
   buildProgram, instantiateProgram, EQUIPMENT_PROFILES,
@@ -193,6 +196,25 @@ import {
   PROGRAM_GOALS, PROGRAM_TIME_BUDGETS, buildProgramAudit,
   rebalanceDraftVolume, spreadDraftWeekdays, trimDraftToTime,
 } from '../src/utils/programIntelligence.js';
+
+import {
+  REFERENCE, SESSION_CEILING, VOLUME_BANDS, VOLUME_PHILOSOPHIES, LEVEL_SCALES,
+  bandsFor, bandOf, stimulusAt, marginalGain, setsForShare, targetFor,
+  sessionCeilingAudit, muscleScale, findPhilosophy as findVolPhilosophy,
+} from '../src/utils/doseResponse.js';
+import {
+  countWeeklySets, setWeight, describeGap, compareToReference, PHYSIQUE_REFERENCE, COUNTING_METHODS,
+} from '../src/utils/setCounting.js';
+import {
+  weightForRir, binaryEffectiveSets, gradedEffectiveSets, compareEffectiveSets, weightedSetCount,
+} from '../src/utils/effectiveSets.js';
+import {
+  targetForExercise, buildProximityReport, proximityCoachItem,
+  describeTarget as describeProximityTarget, PROXIMITY_TARGETS,
+} from '../src/utils/proximity.js';
+import { buildTrainingAge, trainingAgeCoachItem } from '../src/utils/trainingAge.js';
+import { EVIDENCE, evidenceByTopic, isContested, findEvidence } from '../src/utils/evidence.js';
+import { getVolumeTarget, getVolumeBand } from '../src/utils/constants.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
@@ -1736,40 +1758,76 @@ test('blok hafta indeksi tarihten yürür ve son hafta boşaltmadır', () => {
 });
 
 test('geri bildirim girilmemişse hafta başına varsayılan bir set eklenir', () => {
-  const t = (h) => muscleTarget('Göğüs', { baseline: 10, weekIndex: h, totalWeeks: 5 });
-  assert.equal(t(1).target, 10);
-  assert.equal(t(2).target, 11);
-  assert.equal(t(4).target, 13);
+  // Tavan artık verimli bandın üstü (göğüs için 11), eski MRV (22) değil:
+  // doğrudan denemeler o bandın ötesinde ek fayda bulamadı.
+  const t = (h) => muscleTarget('Göğüs', { baseline: 6, weekIndex: h, totalWeeks: 5 });
+  assert.equal(t(1).target, 6);
+  assert.equal(t(2).target, 7);
+  assert.equal(t(4).target, 9);
+});
+
+test('rampa verimli bandın üstünde durur, tartışmalı bölgeye sürüklenmez', () => {
+  const t = muscleTarget('Göğüs', { baseline: 10, weekIndex: 4, totalWeeks: 5 });
+  const { mav, mrv } = getVolumeLandmarks('Göğüs', 'intermediate');
+  assert.equal(t.ceiling, mav);
+  assert.equal(t.target, mav);
+  assert.equal(t.capped, true);
+  // Eski davranış buraya kadar çıkıyordu; artık çıkmıyor.
+  assert.ok(t.target < mrv);
+
+  // Yüksek hacim felsefesi seçilirse tavan yukarı taşınıyor.
+  const yuksek = muscleTarget('Göğüs', { baseline: 10, weekIndex: 4, totalWeeks: 5, philosophy: 'high' });
+  assert.ok(yuksek.ceiling > t.ceiling, `${yuksek.ceiling} > ${t.ceiling}`);
+});
+
+test('sabit hacim kipi blok boyunca hacmi değiştirmiyor', () => {
+  const feedback = { 1: { 'Göğüs': 'easy' }, 2: { 'Göğüs': 'easy' } };
+  [1, 2, 3, 4].forEach(h => {
+    const t = muscleTarget('Göğüs', { baseline: 8, weekIndex: h, totalWeeks: 5, mode: 'steady', feedback });
+    assert.equal(t.target, 8, `hafta ${h}`);
+    assert.equal(t.delta, 0);
+  });
+  // Boşaltma haftası sabit kipte de yarıya iniyor.
+  assert.equal(muscleTarget('Göğüs', { baseline: 8, weekIndex: 5, totalWeeks: 5, mode: 'steady' }).target, 4);
+  assert.equal(Object.keys(PROGRESSION_MODES).length, 2);
+  assert.equal(findProgressionMode('yok').key, 'ramp');
+});
+
+test('başlangıç zaten tavandaysa rampa boş blok üretmiyor', () => {
+  const t = muscleTarget('Göğüs', { baseline: 14, weekIndex: 2, totalWeeks: 5 });
+  assert.equal(t.stalled, true);
+  assert.equal(muscleTarget('Göğüs', { baseline: 6, weekIndex: 2, totalWeeks: 5 }).stalled, false);
 });
 
 test('artış geçen haftanın geri bildirimine göre değişir', () => {
   const feedback = { 1: { 'Göğüs': 'easy' }, 2: { 'Göğüs': 'hard' } };
-  // 1. hafta kolay geldi (+2), 2. hafta zorladı (+0).
-  assert.equal(muscleTarget('Göğüs', { baseline: 10, weekIndex: 2, totalWeeks: 5, feedback }).target, 12);
-  assert.equal(muscleTarget('Göğüs', { baseline: 10, weekIndex: 3, totalWeeks: 5, feedback }).target, 12);
-  assert.equal(muscleTarget('Göğüs', { baseline: 10, weekIndex: 4, totalWeeks: 5, feedback }).target, 13);
+  // 1. hafta kolay geldi (+2), 2. hafta zorladı (+0). Başlangıç tavanın
+  // altında seçildi ki test kırpmayı değil geri bildirim mantığını ölçsün.
+  assert.equal(muscleTarget('Göğüs', { baseline: 6, weekIndex: 2, totalWeeks: 5, feedback }).target, 8);
+  assert.equal(muscleTarget('Göğüs', { baseline: 6, weekIndex: 3, totalWeeks: 5, feedback }).target, 8);
+  assert.equal(muscleTarget('Göğüs', { baseline: 6, weekIndex: 4, totalWeeks: 5, feedback }).target, 9);
 });
 
-test('hedef MRV tavanını aşmaz', () => {
+test('hedef felsefe tavanını aşmaz', () => {
   const feedback = Object.fromEntries([1, 2, 3, 4].map(h => [h, { 'Bel': 'easy' }]));
-  const t = muscleTarget('Bel', { baseline: 8, weekIndex: 5, totalWeeks: 6, feedback });
-  const { mrv } = getVolumeLandmarks('Bel', 'intermediate');
-  assert.equal(t.target, mrv);
+  const t = muscleTarget('Bel', { baseline: 6, weekIndex: 5, totalWeeks: 6, feedback });
+  assert.equal(t.target, t.ceiling);
   assert.equal(t.capped, true);
 });
 
 test('boşaltma haftası son haftanın değil BAŞLANGICIN yarısıdır', () => {
   const feedback = Object.fromEntries([1, 2, 3].map(h => [h, { Kanat: 'easy' }]));
-  // 4. hafta 12 + 6 = 18 sete çıkmış olurdu; boşaltma yine de 6.
-  assert.equal(muscleTarget('Kanat', { baseline: 12, weekIndex: 4, totalWeeks: 5, feedback }).target, 18);
-  assert.equal(muscleTarget('Kanat', { baseline: 12, weekIndex: 5, totalWeeks: 5, feedback }).target, 6);
+  // 4. hafta 5 + 6 = 11 sete çıkıyor; boşaltma yine de başlangıcın yarısı (3),
+  // son haftanın yarısı (5.5) değil.
+  assert.equal(muscleTarget('Kanat', { baseline: 5, weekIndex: 4, totalWeeks: 5, feedback }).target, 11);
+  assert.equal(muscleTarget('Kanat', { baseline: 5, weekIndex: 5, totalWeeks: 5, feedback }).target, 3);
 });
 
 test('talimat en çok katkı veren harekete yazılır', () => {
-  const hedefler = weeklyTargets({ Kanat: 12 }, { weekIndex: 2, totalWeeks: 5 });
+  const hedefler = weeklyTargets({ Kanat: 6 }, { weekIndex: 2, totalWeeks: 5 });
   const [i] = targetInstructions(hedefler, [{
-    muscle: 'Kanat', volume: 12,
-    sources: [{ name: 'Lat Pulldown', volume: 8, dayLabel: 'Pazartesi' }],
+    muscle: 'Kanat', volume: 6,
+    sources: [{ name: 'Lat Pulldown', volume: 4, dayLabel: 'Pazartesi' }],
   }]);
   assert.equal(i.action, 'add');
   assert.equal(i.diff, 1);
@@ -1777,8 +1835,8 @@ test('talimat en çok katkı veren harekete yazılır', () => {
   assert.match(i.text, /Pazartesi/);
   // Hedefle mevcut eşitse dokunulmaz.
   const [h] = targetInstructions(
-    weeklyTargets({ Kanat: 12 }, { weekIndex: 1, totalWeeks: 5 }),
-    [{ muscle: 'Kanat', volume: 12, sources: [] }]);
+    weeklyTargets({ Kanat: 6 }, { weekIndex: 1, totalWeeks: 5 }),
+    [{ muscle: 'Kanat', volume: 6, sources: [] }]);
   assert.equal(h.action, 'hold');
 });
 
@@ -5591,7 +5649,7 @@ test('senaryo tavan aşımını ve tek güne yığılmayı uyarıyor', () => {
   const tavan = buildScenario(
     { muscle: 'Göğüs', deltaSets: 8 },
     { current: { volume: 20, frequency: 2 }, landmarks: { mev: 8, mav: 16, mrv: 22 } });
-  assert.ok(tavan.warnings.some(w => w.includes('tavanın')));
+  assert.ok(tavan.warnings.some(w => w.includes('kanıtsız bölgede')));
 
   const yigilma = buildScenario(
     { muscle: 'Göğüs', deltaSets: 4 },
@@ -5822,8 +5880,11 @@ test('optimal hacim az veride kişisel sayı uydurmuyor', () => {
   const chest = profile.rows.find(row => row.muscle === 'Göğüs');
   assert.equal(chest.personalized, false);
   assert.equal(chest.source, 'Başlangıç referansı');
-  assert.equal(chest.targetLow, 8);
-  assert.equal(chest.targetHigh, 16);
+  // Sabit sayı yerine türetilen banda göre: hacim modeli değiştiğinde bu test
+  // kırılmamalı, çünkü ölçtüğü şey "az veride kişiselleştirme yapılmıyor".
+  const chestBase = getVolumeLandmarks('Göğüs', 'intermediate');
+  assert.equal(chest.targetLow, chestBase.mev);
+  assert.equal(chest.targetHigh, chestBase.mav);
 });
 
 test('optimal hacim bilinmeyen haftayı toparlanma başarısızlığı saymıyor', () => {
@@ -5954,6 +6015,320 @@ test('optimal hacim koç maddesi hacim kategorisine giriyor', () => {
   const item = actions.find(action => action.key === 'optimal-volume');
   assert.equal(item.action, 'plan');
   assert.equal(item.muscle, 'Göğüs');
+});
+
+
+/* ---------------------------------------------------------------- 7.9 */
+
+const GOGUS = { mev: 8, mav: 16, mrv: 22 };
+
+test('doz-yanıt eğrisi monotonik ve azalan verimli', () => {
+  let onceki = 0;
+  let oncekiMarjinal = Infinity;
+  for (let v = 1; v <= 40; v += 1) {
+    const s = stimulusAt(v, GOGUS);
+    // Monotonik: hacim arttıkça pay hiç düşmüyor.
+    assert.ok(s.metaReg >= onceki, `${v} sette pay düştü`);
+    onceki = s.metaReg;
+    // Azalan verim: her ek setin getirisi bir öncekinden büyük olamaz.
+    // Tolerans, `marjinalGain`in ekranda gösterilecek biçimde 0.1 puana
+    // yuvarlanmasından: kuyrukta gerçek getiri 0.05 civarına indiğinde
+    // yuvarlama 0.1 / 0.0 / 0.1 diye salınıyor. Eğrinin kendisi monotonik,
+    // salınan şey gösterim hassasiyeti.
+    const m = marginalGain(v, GOGUS).metaReg;
+    assert.ok(m <= oncekiMarjinal + 0.1, `${v} sette marjinal kazanç arttı`);
+    oncekiMarjinal = m;
+  }
+  // Yuvarlamasız ham eğri: ikinci türev daima negatif (azalan verim).
+  let hamOnceki = Infinity;
+  for (let v = 1; v <= 40; v += 1) {
+    const ham = stimulusAt(v + 0.001, GOGUS).metaReg - stimulusAt(v, GOGUS).metaReg;
+    assert.ok(ham <= hamOnceki + 1e-9, `${v} sette ham eğim arttı`);
+    hamOnceki = ham;
+  }
+  // Platosuz: eğri hiçbir noktada tam olarak durmuyor.
+  assert.ok(stimulusAt(60, GOGUS).metaReg > stimulusAt(40, GOGUS).metaReg);
+});
+
+test('belirsizlik şeridi hiçbir hacimde ters dönmüyor', () => {
+  // Doğrudan denemeler hattı erken doyduğu için AYNI hacimde daima daha
+  // yüksek pay veriyor. Ters dönerse metinler yanlış cümle kurar.
+  for (let v = 0.5; v <= 50; v += 0.5) {
+    const s = stimulusAt(v, GOGUS);
+    assert.ok(s.directTrial >= s.metaReg, `${v} sette şerit ters döndü`);
+    assert.ok(s.spread >= 0);
+  }
+  // Şerit ORTADA en geniş, iki uçta dar — ve bu doğru şekil. Çok düşük
+  // hacimde iki hat da "az" diyor; çok yüksek hacimde ikisi de doyuma
+  // yaklaşıyor. Asıl anlaşmazlık tam da pratikte tartışılan yerde: "dokuz set
+  // yeterli mi" sorusunun sorulduğu bant.
+  const b = bandsFor(GOGUS);
+  const zirve = stimulusAt((b.threshold + b.effectiveEnd) / 2, GOGUS).spread;
+  assert.ok(zirve > stimulusAt(1, GOGUS).spread, 'şerit düşük hacimde daha geniş');
+  assert.ok(zirve > stimulusAt(b.contestedEnd, GOGUS).spread, 'şerit yüksek hacimde daralmıyor');
+});
+
+test('bant sınırları sıralı ve seviyeyle hem kayıyor hem genişliyor', () => {
+  const seviyeler = ['beginner', 'intermediate', 'advanced'].map(l => bandsFor(GOGUS, l));
+  seviyeler.forEach(b => {
+    assert.ok(b.threshold < b.effectiveEnd, 'eşik verimli bandın üstünden büyük');
+    assert.ok(b.effectiveEnd < b.contestedEnd, 'verimli bant tartışmalıyı aşıyor');
+  });
+  const [acemi, orta, ileri] = seviyeler;
+  // KAYMA: eşik ve üst sınır yukarı gidiyor.
+  assert.ok(acemi.threshold < orta.threshold && orta.threshold < ileri.threshold);
+  assert.ok(acemi.contestedEnd < orta.contestedEnd && orta.contestedEnd < ileri.contestedEnd);
+  // GENİŞLEME: verimli bandın genişliği artıyor.
+  const genislik = (b) => b.effectiveEnd - b.threshold;
+  assert.ok(genislik(acemi) < genislik(orta), 'acemide bant dar değil');
+  assert.ok(genislik(orta) < genislik(ileri), 'ileri seviyede bant genişlemiyor');
+  assert.equal(Object.keys(LEVEL_SCALES).length, 3);
+});
+
+test('setsForShare ile stimulusAt birbirinin tersi', () => {
+  [0.5, 0.7, 0.9].forEach(pay => {
+    const set = setsForShare(pay, GOGUS, 'intermediate', 'metaReg');
+    assert.ok(Math.abs(stimulusAt(set, GOGUS).metaReg - pay) < 0.02, `${pay} için ${set} set`);
+  });
+});
+
+test('felsefe hedefi kaydırıyor ama eşiği ve seans tavanını değiştirmiyor', () => {
+  const b = bandsFor(GOGUS);
+  const hedefler = ['minimal', 'balanced', 'high'].map(f => targetFor(GOGUS, 'intermediate', f));
+  const [min, dengeli, yuksek] = hedefler;
+  assert.ok(min < dengeli && dengeli < yuksek, JSON.stringify(hedefler));
+  // Minimum felsefe bile eşiğin ÜSTÜNDE kalıyor: eşik tartışmalı değil.
+  assert.ok(min > b.threshold);
+  // Eşik ve seans tavanı felsefeden bağımsız.
+  ['minimal', 'balanced', 'high'].forEach(f => {
+    assert.equal(bandsFor(GOGUS).threshold, b.threshold);
+    assert.equal(SESSION_CEILING, 11);
+    assert.ok(findVolPhilosophy(f).evidence.length > 20, `${f} için dayanak yazılmamış`);
+  });
+  assert.equal(findVolPhilosophy('yok-boyle').key, 'balanced');
+});
+
+test('bant sınıflaması eşik ve tartışmalı bölgeyi doğru ayırıyor', () => {
+  const b = bandsFor(GOGUS);
+  assert.equal(bandOf(0, GOGUS), 'none');
+  assert.equal(bandOf(b.threshold - 0.5, GOGUS), 'below');
+  assert.equal(bandOf(b.threshold + 0.5, GOGUS), 'effective');
+  assert.equal(bandOf(b.effectiveEnd + 1, GOGUS), 'contested');
+  assert.equal(bandOf(b.contestedEnd + 1, GOGUS), 'unevidenced');
+  assert.equal(VOLUME_BANDS.length, 4);
+  // Kanıtsız bölge UYARI tonunda değil: yüksek hacmin zararlı olduğu
+  // gösterilmedi, yalnızca karşılığı bilinmiyor.
+  assert.equal(VOLUME_BANDS.find(x => x.key === 'unevidenced').tone, 'muted');
+});
+
+test('kas ölçeği farkı koruyor ama sıkıştırıyor', () => {
+  const buyuk = muscleScale({ mav: 18 });
+  const kucuk = muscleScale({ mav: 8 });
+  assert.ok(buyuk > kucuk, 'kas farkı silinmiş');
+  // Ham oran 18/8 = 2.25; sıkıştırılmış oran belirgin daha küçük olmalı.
+  assert.ok(buyuk / kucuk < 1.8, `sıkıştırma çalışmıyor: ${buyuk / kucuk}`);
+  assert.equal(muscleScale(null), 1);
+});
+
+test('adaptör eski üç alanı eğriden türetiyor', () => {
+  // ALTIN ANAHTAR: model sessizce kaymasın diye beklenen değerler yazılı.
+  // 7.9'da tablo yerini eğriye bıraktı; bu satırlar yeni referans.
+  const beklenen = {
+    'Göğüs': { mev: 4, mav: 11, mrv: 33 },
+    'Kanat': { mev: 5, mav: 11, mrv: 35 },
+    'Quadriceps': { mev: 4, mav: 10, mrv: 31 },
+    'Bel': { mev: 3, mav: 8, mrv: 25 },
+  };
+  Object.entries(beklenen).forEach(([kas, b]) => {
+    const l = getVolumeLandmarks(kas, 'intermediate');
+    assert.equal(l.mev, b.mev, `${kas} eşik`);
+    assert.equal(l.mav, b.mav, `${kas} verimli bant üstü`);
+    assert.equal(l.mrv, b.mrv, `${kas} tartışmalı bant sonu`);
+    assert.ok(l.mev < l.mav && l.mav < l.mrv);
+  });
+  // Yardımcılar da aynı modelden okuyor.
+  assert.equal(getVolumeBand(2, 'Göğüs'), 'below');
+  assert.ok(getVolumeTarget('Göğüs', 'intermediate', 'high') > getVolumeTarget('Göğüs', 'intermediate', 'minimal'));
+});
+
+test('seans başı tavan aşımı yakalanıyor', () => {
+  const temiz = sessionCeilingAudit([{ muscle: 'Göğüs', sets: 8 }]);
+  assert.equal(temiz.ok, true);
+  const asan = sessionCeilingAudit([{ muscle: 'Göğüs', sets: 14 }, { muscle: 'Kanat', sets: 30 }]);
+  assert.equal(asan.ok, false);
+  // En çok aşan başta.
+  assert.equal(asan.items[0].muscle, 'Kanat');
+  assert.equal(asan.items[0].excess, 19);
+  // Bölünce tavanın altına inecekler işaretli; inemeyecekler değil.
+  assert.ok(asan.splittable.includes('Göğüs'));
+  assert.ok(!asan.splittable.includes('Kanat'));
+});
+
+test('üç sayım yöntemi aynı seanstan farklı sayı üretiyor', () => {
+  assert.equal(setWeight(1, 'direct'), 1);
+  assert.equal(setWeight(0.5, 'direct'), 0);
+  assert.equal(setWeight(0.5, 'fractional'), 0.5);
+  assert.equal(setWeight(0.5, 'total'), 1);
+  assert.equal(setWeight(0, 'total'), 0);
+
+  const bugun = new Date().toISOString().slice(0, 10);
+  const setler = Array.from({ length: 4 }, () => ({
+    weight: '100', reps: '8', rir: 2, setType: 'normal', completed: true,
+  }));
+  const r = countWeeklySets(
+    [{ date: bugun, exercises: [{ name: 'Barbell Bench Press', sets: setler }] }],
+    { weeks: 1 });
+
+  const gogus = r.byMuscle['Göğüs'];
+  const triseps = r.byMuscle['Triseps'];
+  // Bench göğse tam, tricepse yarım yazıyor: üç sayı da farklı olmalı.
+  assert.equal(gogus.direct, 4);
+  assert.equal(gogus.fractional, 4);
+  assert.equal(triseps.direct, 0);
+  assert.ok(triseps.fractional > 0 && triseps.fractional < triseps.total);
+  assert.equal(triseps.total, 4);
+
+  const satir = r.rows.find(x => x.muscle === 'Triseps');
+  assert.ok(satir.indirectRatio > 1.5);
+  assert.match(describeGap(satir), /dolaylı çalışmadan geliyor/);
+  assert.equal(Object.keys(COUNTING_METHODS).length, 3);
+});
+
+test('fizik sporcusu referansı birim uyarısıyla veriliyor', () => {
+  const satir = { muscle: 'Göğüs', total: 26, fractional: 14, reference: PHYSIQUE_REFERENCE['Göğüs'] };
+  const k = compareToReference(satir);
+  assert.equal(k.position, 'within');
+  assert.match(k.note, /Toplam sayımla/);
+  // Altında kalmak bir eksiklik olarak sunulmuyor.
+  assert.match(compareToReference({ ...satir, total: 8 }).note, /gerekli olduğunu gösteren doğrudan bir deneme yok/);
+  assert.equal(compareToReference({ muscle: 'Diğer', total: 5 }), null);
+});
+
+test('kademeli etkili set yakınlığa göre ağırlık veriyor', () => {
+  assert.equal(weightForRir(0), 1);
+  assert.equal(weightForRir(1), 1);
+  assert.ok(weightForRir(2) < 1 && weightForRir(2) > weightForRir(3));
+  assert.ok(weightForRir(3) > weightForRir(4));
+  assert.equal(weightForRir(9), 0);
+  // Ara değer: 2 ile 3 arasında kalıyor.
+  const ara = weightForRir(2.5);
+  assert.ok(ara < weightForRir(2) && ara > weightForRir(3));
+
+  const yap = (rir, adet) => ({
+    name: 'X',
+    sets: Array.from({ length: adet }, () => ({ weight: '50', reps: '10', rir, setType: 'normal', completed: true })),
+  });
+
+  // RIR 3'e yığılmış setler: ikili kural hepsini tam sayıyor, kademeli indiriyor.
+  const yigin = compareEffectiveSets([yap(3, 4)]);
+  assert.equal(yigin.binary, 4);
+  assert.ok(yigin.graded < 4);
+  assert.match(yigin.note, /RIR 2-3 bandında yığılmış/);
+
+  // RIR 5'teki setler: ikili kural sıfır sayıyor, kademeli kısmi değer veriyor.
+  const uzak = compareEffectiveSets([yap(5, 4)]);
+  assert.equal(uzak.binary, 0);
+  assert.ok(uzak.graded > 0);
+  assert.match(uzak.note, /ötesindeki setleri tamamen atıyordu/);
+
+  // RIR 1: iki ölçü aynı.
+  const yakin = compareEffectiveSets([yap(1, 3)]);
+  assert.equal(yakin.binary, yakin.graded);
+  assert.equal(binaryEffectiveSets([yap(1, 3)]), 3);
+  assert.equal(gradedEffectiveSets([yap(1, 3)]), 3);
+  assert.equal(weightedSetCount(yap(5, 2).sets, false), 2);
+  assert.ok(weightedSetCount(yap(5, 2).sets, true) < 2);
+});
+
+test('yakınlık hedefi hareket tipine göre değişiyor', () => {
+  assert.deepEqual(targetForExercise('Barbell Bench Press').rir, PROXIMITY_TARGETS.compound.rir);
+  assert.deepEqual(targetForExercise('Dumbbell Bicep Curl').rir, PROXIMITY_TARGETS.isolation.rir);
+  // Boşaltma ve kuvvet hedefi her şeyi eziyor.
+  assert.deepEqual(targetForExercise('Barbell Bench Press', { deload: true }).rir, PROXIMITY_TARGETS.deload.rir);
+  assert.deepEqual(targetForExercise('Barbell Bench Press', { goal: 'strength' }).rir, PROXIMITY_TARGETS.strength.rir);
+  // Elle yazılan hepsinden üstün.
+  const elle = targetForExercise('Barbell Bench Press', { overrides: { 'Barbell Bench Press': 0 }, deload: true });
+  assert.equal(elle.source, 'manual');
+  assert.deepEqual(elle.rir, [0, 0]);
+  assert.match(describeProximityTarget({ rir: [1, 2] }), /RIR 1-2/);
+  assert.match(describeProximityTarget({ rir: [0, 0] }), /RIR 0$/);
+});
+
+test('yakınlık raporu hedeften sapmayı ölçüyor ve tahmin uyarısı taşıyor', () => {
+  const bugun = new Date().toISOString().slice(0, 10);
+  const seans = (rir) => ({
+    date: bugun,
+    exercises: [{
+      name: 'Barbell Bench Press',
+      sets: Array.from({ length: 4 }, () => ({ weight: '100', reps: '8', rir, setType: 'normal', completed: true })),
+    }],
+  });
+  const uzak = buildProximityReport([seans(5)]);
+  assert.equal(uzak.hasData, true);
+  assert.equal(uzak.rows[0].status, 'far');
+  assert.ok(uzak.rows[0].gap > 0);
+  assert.match(uzak.caveat, /tahmin ediliyor/);
+
+  const hedefte = buildProximityReport([seans(2)]);
+  assert.equal(hedefte.rows[0].status, 'onTarget');
+
+  // Üç setin altı eğilim sayılmıyor.
+  const az = buildProximityReport([{
+    date: bugun,
+    exercises: [{ name: 'X', sets: [{ weight: '10', reps: '5', rir: 5, setType: 'normal', completed: true }] }],
+  }]);
+  assert.equal(az.hasData, false);
+
+  // Hacim eşiğin altındayken koç maddesi hiç üretilmiyor: önce eşik, sonra sertlik.
+  const cok = buildProximityReport([seans(5), { ...seans(5), exercises: [{ name: 'Lat Pulldown', sets: seans(5).exercises[0].sets }] }]);
+  assert.equal(proximityCoachItem(cok, { volumeBelowThreshold: true }), null);
+  const kart = proximityCoachItem(cok);
+  if (kart) assert.match(kart.detail, /tahmin ediliyor/);
+});
+
+test('antrenman yaşı öneriyor ama uygulamıyor', () => {
+  const gun = (o) => {
+    const d = new Date();
+    d.setDate(d.getDate() - o);
+    return d.toISOString().slice(0, 10);
+  };
+  // Az kayıt: hiç öneri yok.
+  assert.equal(buildTrainingAge([{ date: gun(1), exercises: [] }]).hasData, false);
+
+  const uzun = Array.from({ length: 90 }, (_, i) => ({
+    date: gun(400 - i * 4),
+    exercises: [{
+      name: 'Barbell Bench Press',
+      sets: [{ weight: String(80 + Math.floor(i / 10)), reps: '8', rir: 2, setType: 'normal', completed: true }],
+    }],
+  }));
+  const r = buildTrainingAge(uzun);
+  assert.equal(r.hasData, true);
+  assert.ok(['beginner', 'intermediate', 'advanced'].includes(r.suggestion));
+  assert.equal(r.reasons.length, 3);
+
+  // Öneri seçili seviyeyle aynıysa kart çıkmıyor.
+  assert.equal(trainingAgeCoachItem(r, r.suggestion), null);
+  // Düşük güvende de çıkmıyor.
+  assert.equal(trainingAgeCoachItem({ ...r, confidence: 'low', suggestion: 'advanced' }, 'beginner'), null);
+  const kart = trainingAgeCoachItem({ ...r, confidence: 'high', suggestion: 'advanced' }, 'beginner');
+  assert.match(kart.detail, /antrenman yaşını değil/);
+});
+
+test('kanıt defterinde her kaydın karşı görüşü var', () => {
+  assert.ok(EVIDENCE.length >= 8);
+  EVIDENCE.forEach(e => {
+    assert.ok(e.counterpoint && e.counterpoint.length > 30, `${e.key} karşı görüşsüz`);
+    assert.ok(e.source && e.sample && e.usedFor, `${e.key} eksik alan`);
+    assert.ok(['metaReg', 'directTrial', 'survey'].includes(e.line), `${e.key} hat yok`);
+  });
+  // Haftalık hacim konusu çelişkili işaretlenmeli: uygulamanın ana iddiası bu.
+  assert.equal(isContested('Haftalık hacim'), true);
+  // Tek hatlı bir konu çelişkili sayılmıyor.
+  assert.equal(isContested('Saha pratiği'), false);
+  assert.ok(evidenceByTopic().length >= 5);
+  assert.equal(findEvidence('equivalence-trial').line, 'directTrial');
+  assert.equal(findEvidence('yok'), null);
 });
 
 for (const { name, run } of tests) {

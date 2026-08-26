@@ -1,6 +1,6 @@
 import { parseNumber } from './number.js';
 import { dayKey, toLocalDate, formatRange } from './dates.js';
-import { MUSCLE_GROUPS, getVolumeLandmarks } from './constants.js';
+import { MUSCLE_GROUPS, getVolumeLandmarks, getVolumeTarget } from './constants.js';
 
 /**
  * Mezosiklik (blok) planlama.
@@ -84,7 +84,7 @@ const DEFAULT_STEP = 1;
 
 /** Boş/kapalı mezosiklik ayarı. */
 export const emptyMesocycle = () => ({
-  active: false, startDate: '', weeks: 5, baseline: {}, feedback: {},
+  active: false, startDate: '', weeks: 5, mode: 'ramp', baseline: {}, feedback: {},
 });
 
 /**
@@ -148,22 +148,70 @@ export const mesocycleState = (meso, today = dayKey(new Date())) => {
  * değildiyse `capped` işaretlenir, çünkü o noktadan sonra hacim eklemek
  * değil boşaltmaya geçmek gerekir.
  */
+/**
+ * Blok ilerleme kipi.
+ *
+ * `ramp` uygulamanın kuruluşundan beri tek seçenekti: her hafta set ekle.
+ * Ama bu şema doğrudan test edildi ve DESTEKLENMEDİ — Enes ve ark. hem
+ * antrenmanlı erkeklerde (MSSE 2024) hem antrenmanlı kadınlarda (J Sports Sci
+ * 2025) haftalık set artışını sabit hacimle karşılaştırdı ve kas boyutunda
+ * gruplar arası anlamlı fark bulamadı. Aynı ekibin 2024 çalışması mevcut
+ * hacmin üstüne set eklemenin, hacmi korumaktan daha iyi olmadığını gösterdi.
+ *
+ * Bu yüzden `steady` birinci sınıf bir seçenek: hacim sabit kalıyor, ilerleme
+ * yük / tekrar / yetmezliğe yakınlıktan geliyor. `ramp` kaldırılmıyor çünkü
+ * "fark yok" bulgusu "işe yaramıyor" demek değil; kullanıcı hangi kanıta
+ * dayandığını görerek seçiyor.
+ */
+export const PROGRESSION_MODES = {
+  ramp: {
+    key: 'ramp', label: 'Artan Hacim',
+    summary: 'Her hafta geri bildirime göre set eklenir.',
+    detail: 'Klasik hipertrofi bloğu. Doğrudan karşılaştırıldığında sabit hacme belirgin üstünlüğü gösterilemedi; yine de kuvvet tarafında küçük bir avantaj bildirildi.',
+  },
+  steady: {
+    key: 'steady', label: 'Sabit Hacim',
+    summary: 'Hacim blok boyunca sabit; ilerleme yük, tekrar ve yakınlıktan gelir.',
+    detail: 'Enes ve ark. (2024, 2025) haftalık set artışını sabit hacimle karşılaştırdı ve kas boyutunda anlamlı fark bulamadı. Daha az zaman, daha az yorgunluk, aynı ölçülen sonuç.',
+  },
+};
+
+export const findProgressionMode = (key) => PROGRESSION_MODES[key] || PROGRESSION_MODES.ramp;
+
 export const muscleTarget = (muscle, {
   baseline = 0,
   weekIndex = 1,
   totalWeeks = 5,
   experienceLevel = 'intermediate',
   feedback = {},
+  mode = 'ramp',
+  philosophy = 'balanced',
 } = {}) => {
   const { mev, mav, mrv } = getVolumeLandmarks(muscle, experienceLevel);
   const bas = Math.max(0, Math.round(parseNumber(baseline)));
   const isDeload = weekIndex >= totalWeeks;
 
+  // Tavan artık `mrv` DEĞİL. Yeni modelde `mrv` tartışmalı bandın sonu (25-35
+  // set) ve oraya kadar körlemesine rampa çıkmak, doğrudan denemelerin fayda
+  // bulamadığı bir bölgeye programı sürüklemek olurdu. Tavan seçilen felsefenin
+  // hedefi ile verimli bandın üstünden büyük olanı: kullanıcı yüksek hacim
+  // seçtiyse oraya çıkabiliyor, seçmediyse kanıtın güçlü olduğu yerde kalıyor.
+  const tavan = Math.max(mav, Math.round(getVolumeTarget(muscle, experienceLevel, philosophy)));
+
   if (isDeload) {
     // Boşaltma haftası bloğun BAŞLANGIÇ hacminin yarısı — son haftanın değil.
     // Son hafta zaten tavana yakındır; yarısı hâlâ yorucu bir hacim olurdu.
     const hedef = bas > 0 ? Math.max(2, Math.round(bas * 0.5)) : 0;
-    return { muscle, baseline: bas, target: hedef, delta: hedef - bas, mev, mav, mrv, capped: false, belowMev: false, phase: 'deload' };
+    return { muscle, baseline: bas, target: hedef, delta: hedef - bas, mev, mav, mrv, ceiling: tavan, capped: false, belowMev: false, phase: 'deload', mode };
+  }
+
+  // Sabit hacim kipinde hafta ne olursa olsun hedef başlangıç hacmi.
+  if (mode === 'steady') {
+    return {
+      muscle, baseline: bas, target: bas, delta: 0,
+      mev, mav, mrv, ceiling: tavan, capped: false,
+      belowMev: bas < mev, phase: 'accumulation', mode,
+    };
   }
 
   let hedef = bas;
@@ -172,11 +220,15 @@ export const muscleTarget = (muscle, {
     hedef += secim ? secim.step : DEFAULT_STEP;
   }
 
-  const capped = hedef >= mrv;
-  hedef = Math.min(hedef, mrv);
+  const capped = hedef >= tavan;
+  hedef = Math.min(hedef, tavan);
   return {
     muscle, baseline: bas, target: hedef, delta: hedef - bas,
-    mev, mav, mrv, capped, belowMev: hedef < mev, phase: 'accumulation',
+    mev, mav, mrv, ceiling: tavan, capped, belowMev: hedef < mev,
+    phase: 'accumulation', mode,
+    // Başlangıç zaten tavandaysa rampa bir set bile ekleyemiyor. Bunu sessizce
+    // yapmak, kullanıcıya hacim artırdığını sandıran boş bir blok verirdi.
+    stalled: bas >= tavan,
   };
 };
 
@@ -198,11 +250,13 @@ export const weeklyTargets = (baseline = {}, {
   totalWeeks = 5,
   experienceLevel = 'intermediate',
   feedback = {},
+  mode = 'ramp',
+  philosophy = 'balanced',
 } = {}) =>
   MUSCLE_GROUPS
     .filter(m => parseNumber(baseline[m]) >= TRACK_THRESHOLD)
     .map(m => muscleTarget(m, {
-      baseline: baseline[m], weekIndex, totalWeeks, experienceLevel, feedback,
+      baseline: baseline[m], weekIndex, totalWeeks, experienceLevel, feedback, mode, philosophy,
     }));
 
 /**

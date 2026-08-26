@@ -692,7 +692,15 @@ export const buildProgram = ({
       const secilen = [];
 
       if (gunBasi <= MAX_SETS_PER_EXERCISE && (ana || gerilme)) {
-        secilen.push({ name: gerilme || ana, sets: gunBasi });
+        // Tek hareket seçiliyorsa gerilme rolü varsayılan olarak kazanıyor —
+        // ama kullanıcının AÇIKÇA tercih ettiği bir hareket varsa o öne
+        // geçiyor. Eskiden `gerilme || ana` yazıyordu ve tercih edilen hareket
+        // `anchor` rolündeyse sessizce eleniyordu; tercih yalnızca hacim
+        // tamamlama yoluna düşen kaslarda işe yarıyordu. Günlük hedef küçüldükçe
+        // bu dal neredeyse her zaman çalıştığı için tercih pratikte hiç
+        // uygulanmaz hale geliyordu.
+        const tercihli = [gerilme, ana].filter(Boolean).find(ad => tercihEdilen.has(ad));
+        secilen.push({ name: tercihli || gerilme || ana, sets: gunBasi });
       } else {
         const parcalar = [ana, gerilme].filter(Boolean);
         if (parcalar.length === 0) return;

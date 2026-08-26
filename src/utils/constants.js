@@ -1,3 +1,5 @@
+import { bandsFor, bandOf, targetFor } from './doseResponse.js';
+
 export const FORM_RATINGS = Array.from({ length: 10 }, (_, i) => ({ value: i + 1, label: `${i + 1}/10` }));
 
 export const FAT_METHOD_LABELS = { skinfold: 'Kaliper Bazlı', navy: 'Mezura Bazlı', average: 'Ortalama', manual: 'Manuel' };
@@ -86,8 +88,21 @@ export const DEFAULT_SETTINGS = {
   // Varsayılan açık: kapalıyken uyarı ekran kapalıyken kaçabiliyor.
   restKeepAwake: true,
   // Kas bazında kişisel haftalık hacim hedefi: { 'Yan Omuz': { mev, mav, mrv } }.
-  // Yazılmayan kaslar literatür değerlerini kullanmaya devam ediyor.
+  // Yazılmayan kaslar doz-yanıt eğrisinden türetilen bantları kullanıyor.
   volumeTargets: {},
+  // Hacim felsefesi: 'minimal' | 'balanced' | 'high'. Literatür bölünmüş
+  // olduğu için tek bir sayı dayatmak yerine kullanıcı kanıt hattını seçiyor.
+  // Yalnızca HEDEFİ kaydırıyor; eşik ve seans tavanı değişmiyor.
+  volumePhilosophy: 'balanced',
+  // Deneyim seviyesi otomatik önerilse de kullanıcı elle seçtiyse öneri
+  // gösterilmiyor. Boş = henüz elle seçilmedi.
+  trainingAgeOverride: '',
+  // Etkili set ölçüsü: kapalıyken eski ikili kural (RIR ≤ 3), açıkken
+  // yetmezliğe yakınlığa göre kademeli ağırlık. Varsayılan kapalı çünkü
+  // geçmiş sayılarının bir gecede değişmesi kullanıcıyı şaşırtır.
+  gradedEffectiveSets: false,
+  // Hareket bazlı hedef RIR: { 'Barbell Bench Press': 1 }.
+  proximityTargets: {},
   // Su takibi: { '2026-08-24': 2300 } — gün başına toplam mililitre.
   // Her bardağı ayrı satır tutmak kimsenin sürdüremediği bir alışkanlık;
   // amaç günün toplamını bilmek.
@@ -547,29 +562,29 @@ export const MUSCLE_VOLUME_LANDMARKS = {
   'Bel': { mev: 4, mav: 8, mrv: 10 },
 };
 
-// Deneyim seviyesine göre hacim ölçeklemesi.
+// Deneyim seviyesi.
 //
-// Acemi bir lifter az hacimle büyür ama iş kapasitesi düşüktür; ileri seviyede
-// uyaran eşiği yükselirken toparlanma kapasitesi de artar. Çarpanlar temel
-// (orta seviye) tabloya uygulanır.
+// Çarpanlar artık burada DEĞİL: `doseResponse.LEVEL_SCALES` içinde ve üç sınıra
+// tek bir sayı uygulamak yerine bandı hem kaydırıyor hem genişletiyorlar.
+// Eskiden burada duran 0.7 / 1.0 / 1.2 üçlüsü seviyeler arasındaki farkı yanlış
+// modelliyordu: acemide eğri erken doyuyor, ileri seviyede verimli bant hem
+// yukarı kayıyor hem GENİŞLİYOR — çünkü o seviyede doğru cevabın nerede olduğu
+// daha belirsiz.
 export const EXPERIENCE_LEVELS = [
   {
     key: 'beginner',
     label: 'Yeni Başlayan',
-    hint: '0-1 yıl · Az hacimle hızlı gelişim, iş kapasitesi düşük',
-    mev: 0.7, mav: 0.7, mrv: 0.7,
+    hint: '0-1 yıl · Eğri erken doyuyor: az setle çok kazanç',
   },
   {
     key: 'intermediate',
     label: 'Orta',
-    hint: '1-3 yıl · Referans değerler bu seviyeye göre belirlendi',
-    mev: 1, mav: 1, mrv: 1,
+    hint: '1-3 yıl · Referans bant bu seviyeye göre kalibre edildi',
   },
   {
     key: 'advanced',
     label: 'İleri',
-    hint: '3+ yıl · Uyaran eşiği ve toparlanma kapasitesi yüksek',
-    mev: 1.2, mav: 1.2, mrv: 1.25,
+    hint: '3+ yıl · Bant hem yukarı kayıyor hem genişliyor',
   },
 ];
 
@@ -598,12 +613,27 @@ export const setVolumeTargetOverrides = (overrides) => {
 export const getVolumeTargetOverrides = () => volumeTargetOverrides;
 
 /**
- * Seçili deneyim seviyesine göre ölçeklenmiş hacim referansları.
- * Tam sayıya yuvarlanır; MEV<MAV<MRV sırası her koşulda korunur.
+ * Hacim referansları — artık doz-yanıt eğrisinden TÜRETİLİYOR.
  *
- * Kullanıcı o kas için kendi hedefini yazdıysa deneyim ölçeklemesi
- * UYGULANMIYOR: kişisel değer zaten o kişinin kendi kapasitesi, üstüne bir de
- * seviye çarpanı bindirmek onu kullanıcının yazmadığı bir sayıya taşırdı.
+ * Eskiden burada elle yazılmış bir MEV/MAV/MRV tablosu vardı. `doseResponse.js`
+ * neden bırakıldığını uzun uzun anlatıyor; özeti: literatürde evrensel
+ * MEV/MAV/MRV kesme noktaları belirlenmedi ve tavanın üstünü "zararlı" saymak
+ * için kanıt yok.
+ *
+ * Fonksiyon KALDIRILMADI çünkü uygulamanın altmış ayrı yerinden çağrılıyor.
+ * Artık bir ADAPTÖR: eğrinin bant sınırlarını eski üç alana eşliyor.
+ *   mev → eşik (minimum etkili doz)
+ *   mav → yüksek verim bandının üst ucu
+ *   mrv → tartışmalı bandın sonu (TAVAN DEĞİL: ötesinde ek fayda gösteren
+ *         doğrudan deneme olmadığı nokta)
+ *
+ * `MUSCLE_VOLUME_LANDMARKS` tablosu siliniyor değil, rolü değişiyor: artık bir
+ * hedef listesi değil, kaslar arası GÖRECELİ ölçek kaynağı. Böylece küçük
+ * kasların küçük, büyük kasların büyük kalması korunuyor ve göç sürprizsiz
+ * oluyor.
+ *
+ * Kullanıcı o kas için kendi hedefini yazdıysa eğri uygulanmıyor: kişisel değer
+ * zaten o kişinin kendi kapasitesi.
  */
 export const getVolumeLandmarks = (muscle, level = 'intermediate') => {
   const kisisel = volumeTargetOverrides[muscle];
@@ -614,15 +644,26 @@ export const getVolumeLandmarks = (muscle, level = 'intermediate') => {
     return { mev, mav, mrv, custom: true };
   }
 
-  const base = MUSCLE_VOLUME_LANDMARKS[muscle];
-  if (!base) return { mev: 6, mav: 16, mrv: 22 };
-
-  const scale = EXPERIENCE_LEVELS.find(l => l.key === level) || EXPERIENCE_LEVELS[1];
-  const mev = Math.max(1, Math.round(base.mev * scale.mev));
-  const mav = Math.max(mev + 1, Math.round(base.mav * scale.mav));
-  const mrv = Math.max(mav + 1, Math.round(base.mrv * scale.mrv));
-  return { mev, mav, mrv };
+  const base = MUSCLE_VOLUME_LANDMARKS[muscle] || { mev: 6, mav: 14, mrv: 22 };
+  const bant = bandsFor(base, level);
+  const mev = Math.max(1, Math.round(bant.threshold));
+  const mav = Math.max(mev + 1, Math.round(bant.effectiveEnd));
+  const mrv = Math.max(mav + 1, Math.round(bant.contestedEnd));
+  return { mev, mav, mrv, bands: bant };
 };
+
+/** Seçilen hacim felsefesinin o kas için hedefi (kesirli set/hafta). */
+export const getVolumeTarget = (muscle, level = 'intermediate', philosophy = 'balanced') => {
+  const kisisel = volumeTargetOverrides[muscle];
+  // Kişisel hedef varsa felsefe uygulanmıyor: kullanıcının yazdığı sayı
+  // hiçbir ayarla kaydırılmamalı.
+  if (kisisel && kisisel.mrv > 0) return Math.round(((kisisel.mev + kisisel.mav) / 2) * 2) / 2;
+  return targetFor(MUSCLE_VOLUME_LANDMARKS[muscle] || { mav: 14 }, level, philosophy);
+};
+
+/** Kasın doz-yanıt bandı — yeni kod bunu kullanıyor. */
+export const getVolumeBand = (volume, muscle, level = 'intermediate') =>
+  bandOf(volume, MUSCLE_VOLUME_LANDMARKS[muscle] || { mav: 14 }, level);
 
 /**
  * Haftalık hacmin hangi durumda olduğunu söyler.
@@ -704,12 +745,29 @@ export const ACWR_HINT = {
 /** ACWR'ın anlamlı sayılması için ilk kayıttan bu yana geçmesi gereken gün. */
 export const ACWR_MIN_DAYS = 21;
 
+/**
+ * Hacim durumu: etiketler, renkler ve doz-yanıt bandı karşılığı.
+ *
+ * Anahtarlar (`under`/`optimal`/`high`/`over`) geriye dönük uyumluluk için
+ * DURUYOR — uygulamanın yirmi beş yerinde bu dizeler karşılaştırılıyor ve
+ * hepsini yeniden adlandırmak, bir dalın sessizce yanlış tarafa düşmesi
+ * riskini taşırdı. Anahtarların ANLAMI ve kullanıcıya görünen her şeyi değişti;
+ * `band` alanı yeni kodun kullandığı gerçek isim.
+ *
+ * İki renk kararı bilinçli:
+ *  - "Tartışmalı bölge" turuncu değil cyan. Orada olmak bir hata değil;
+ *    yalnızca ek setlerin karşılığı belirsiz.
+ *  - "Kanıtsız bölge" kırmızı değil nötr gri. Kırmızı, ÖLÇÜLEN bir toparlanma
+ *    sorununa ayrıldı (hazır oluşluk, ACWR, form eğrisi). Yüksek hacmin
+ *    zararlı olduğu gösterilmedi; kırmızıyla göstermek kanıtın söylemediği
+ *    bir şeyi söylemekti.
+ */
 export const VOLUME_STATUS = {
-  none: { label: 'Çalışılmadı', chip: 'text-zinc-500 border-zinc-800 bg-zinc-950', bar: 'bg-zinc-700', text: 'text-zinc-500', hex: '#27272a' },
-  under: { label: 'Koruma altı', chip: 'text-amber-400 border-amber-900/40 bg-amber-950/40', bar: 'bg-amber-500', text: 'text-amber-400', hex: '#fbbf24' },
-  optimal: { label: 'Verimli', chip: 'text-emerald-400 border-emerald-900/40 bg-emerald-950/40', bar: 'bg-emerald-500', text: 'text-emerald-400', hex: '#34d399' },
-  high: { label: 'Yüksek', chip: 'text-orange-400 border-orange-900/40 bg-orange-950/40', bar: 'bg-orange-500', text: 'text-orange-400', hex: '#f97316' },
-  over: { label: 'Tavan üstü', chip: 'text-red-400 border-red-900/40 bg-red-950/40', bar: 'bg-red-500', text: 'text-red-400', hex: '#ef4444' },
+  none: { band: 'none', label: 'Çalışılmadı', chip: 'text-zinc-500 border-zinc-800 bg-zinc-950', bar: 'bg-zinc-700', text: 'text-zinc-500', hex: '#27272a' },
+  under: { band: 'below', label: 'Eşik altı', chip: 'text-amber-400 border-amber-900/40 bg-amber-950/40', bar: 'bg-amber-500', text: 'text-amber-400', hex: '#fbbf24' },
+  optimal: { band: 'effective', label: 'Yüksek verim', chip: 'text-emerald-400 border-emerald-900/40 bg-emerald-950/40', bar: 'bg-emerald-500', text: 'text-emerald-400', hex: '#34d399' },
+  high: { band: 'contested', label: 'Tartışmalı', chip: 'text-cyan-400 border-cyan-900/40 bg-cyan-950/40', bar: 'bg-cyan-500', text: 'text-cyan-400', hex: '#22d3ee' },
+  over: { band: 'unevidenced', label: 'Kanıtsız bölge', chip: 'text-zinc-400 border-zinc-700 bg-zinc-900', bar: 'bg-zinc-500', text: 'text-zinc-400', hex: '#71717a' },
 };
 
 /**
@@ -722,13 +780,57 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.8';
+export const APP_VERSION = '7.9';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.8',
+  title: 'ProOverload 7.9',
   date: '2026-08-26',
   items: [
+    {
+      title: 'Hacim Modeli Yenilendi: Kesin Sayı Yerine Belirsizlik Şeridi',
+      desc: 'Uygulama hacmi 2017 dönemi MEV/MAV/MRV üçlüsüyle modelliyordu: her kas için üç kesin sayı ve tavanın üstünde kırmızı bir bölge. Güncel literatür bu modelin üç varsayımını da desteklemiyor. Birincisi, evrensel MEV/MAV/MRV kesme noktaları hiçbir çalışmada belirlenmedi. İkincisi, tavanın üstünü "zararlı" saymak için kanıt yok; bilinen tek şey ek faydanın ölçülemez hale geldiği bir nokta olduğu. Üçüncüsü ve en önemlisi: HACİM KONUSUNDA LİTERATÜR BÖLÜNMÜŞ ve uygulama bu çelişkiden habersiz tek bir sayı gösteriyordu. Bir kanıt hattı (67 çalışmayı toplayan meta-regresyon) "daha fazla set daha fazla kas" diyor. Diğeri, aynı soruyu doğrudan test eden randomize denklik denemesi, haftada 9 kesirli set ile 36 kesirli set arasında fark bulamıyor. Artık eğri tek çizgi değil ŞERİT: alt kenarı meta-regresyon, üst kenarı doğrudan denemeler. Uygulama hangisinin doğru olduğunu bildiğini iddia etmiyor ve her hacim çıktısı aralıkla veriliyor.'
+    },
+    {
+      title: 'Dört Yeni Bant: Eşik, Yüksek Verim, Tartışmalı, Kanıtsız',
+      desc: 'MEV/MAV/MRV dili emekliye ayrıldı. Yerine gelen dört bant, kanıtın gerçekte ne söylediğini yansıtıyor. EŞİK ALTI: ölçülebilir uyaran için yetersiz — iki kanıt hattının da anlaştığı tek yer. YÜKSEK VERİM: set başına kazancın en yüksek olduğu bant. TARTIŞMALI BÖLGE: meta-regresyon küçük bir ek kazanç öngörüyor, doğrudan denemeler fark bulamadı. KANITSIZ BÖLGE: bu hacimde ek fayda gösteren doğrudan bir deneme yok. İki renk kararı bilinçli: tartışmalı bölge turuncu değil cyan, çünkü orada olmak bir hata değil; kanıtsız bölge kırmızı değil nötr gri, çünkü yüksek hacmin zararlı olduğu gösterilmedi. Kırmızı artık yalnızca ÖLÇÜLEN bir toparlanma sorununa ayrıldı.'
+    },
+    {
+      title: 'Set Sayımı: Aynı Seans, Üç Farklı Sayı',
+      desc: 'Kullanıcıların en çok kafasını karıştıran şey buydu ve uygulamanın hiçbir yerinde açıklanmıyordu. Bench press yapan biri göğsüne kaç set yazmış olur? Doğrudan sayımla 1, kesirli sayımla tricepse ayrıca 0.5, toplam sayımla tricepse de tam 1. Uygulama kesirli sayıyor ve bu tesadüf değil: meta-regresyon üç yöntemi de test etti ve kesirli yöntemin sonuçları en iyi açıkladığını buldu — yani uygulamanın yıllardır kullandığı katkı modeli (1 / 0.5 / 0.25) doğrulanmış durumda. Ama çevrimiçi tavsiyelerin çoğu TOPLAM sayıyor. "Haftada 30 set göğüs" diyen biriyle uygulamanın "14 set" demesi çelişki gibi görünüyor; çoğunlukla aynı programı iki farklı birimle ölçüyorlar. Artık üç sayı yan yana duruyor ve yanında yarışmacı fizik sporcularının bildirdiği aralık var — bir hedef olarak değil, birim uyarısıyla birlikte bir referans olarak.'
+    },
+    {
+      title: 'Kanıt Defteri',
+      desc: 'Uygulama onlarca sayı gösteriyor — eşik 4 set, seans tavanı 11 set, hedef RIR 1-2 — ve hiçbirinin nereden geldiği yazmıyordu. Kanıt defteri her sayının kaynağını, yılını, örneklem büyüklüğünü, çalışma tasarımını ve KARŞI GÖRÜŞÜNÜ listeliyor. Karşı görüş alanı hiçbir kayıtta boş bırakılmadı çünkü karşı görüşü olmayan bir bulgu ya gerçekten tartışmasızdır ya da eksik araştırılmıştır ve hangisi olduğunu yazmak okuyucunun hakkı. Çelişen konular ayrıca işaretleniyor: denklik denemesiyle meta-regresyon yan yana duruyor ve neden farklı sonuç verdikleri açıklanıyor. Defterdeki en zayıf kayıt açıkça belirtiliyor — deneyim seviyesinin hacim ihtiyacını ne kadar değiştirdiğini gösteren temiz bir doğrudan karşılaştırma yok.'
+    },
+    {
+      title: 'Hacim Felsefesi: Kanıt Hattını Sen Seç',
+      desc: 'Literatür bölünmüş olduğu için tek bir varsayılan dayatmak yerine üç seçenek var ve her biri kendi kanıtını gösteriyor. MİNİMUM ETKİLİ DOZ: az set, yetmezliğe yakın — dayanağı 9 ile 36 kesirli seti karşılaştıran denklik denemesi ve haftada iki-üç kez tek setin antrenmanlı erkeklerde anlamlı 1RM artışı ürettiğini bulan meta-analiz. DENGELİ: verimli bandın ortası, iki hattın kesiştiği yer. YÜKSEK HACİM: meta-regresyonun öngördüğü küçük ek kazancı hedefler, bedeli zaman ve yorgunluk. Felsefe yalnızca HEDEFİ kaydırıyor: eşik ve seans başı tavan değişmiyor, çünkü onlar tartışmalı değil.'
+    },
+    {
+      title: 'Seviye Modeli: Bandı Kaydır ve Genişlet',
+      desc: 'Deneyim seviyesi eskiden üç sınıra da tek bir çarpan uyguluyordu (0.7 / 1.0 / 1.2). Bu, seviyeler arasındaki farkı yanlış modelliyor. Acemide eğri erken doyuyor — az setle çok kazanç. İleri seviyede verimli bant hem yukarı kayıyor hem GENİŞLİYOR, ve genişleme dürüst bir ifade: o seviyede doğru cevabın nerede olduğu daha belirsiz. Ayrıca uygulama artık kayıt geçmişinden seviye ÖNERİYOR (aktif hafta sayısı, haftalık seans, tahmini 1RM ilerleme hızı). Öneri asla kendiliğinden uygulanmıyor ve sınırını kendi söylüyor: bu tahmin uygulamayı kullanma geçmişini ölçüyor, antrenman yaşını değil — on yıldır çalışan biri uygulamaya dün başlamış olabilir.'
+    },
+    {
+      title: 'Seans Başı Tavan: Uygulamanın Hiç Modellemediği Kısıt',
+      desc: 'Ayrı bir meta-regresyon, tek seansta kas başına yaklaşık 11 kesirli setten sonra ek faydanın ölçülemediğini buluyor (kuvvette bu sınır ~2 doğrudan set). Bu, haftalık hacimden BAĞIMSIZ bir kısıt: haftalık toplamın doğru olsa bile tek güne yığılınca kayboluyor. Uygulama bu kısıtı hiç modellemiyordu. Artık program sihirbazı, şablon düzenleyici ve günün planı bu tavanı denetliyor ve aşıldığında bölmeyi öneriyor — bölmenin tek başına yetmeyeceği durumları da ayrıca söylüyor. Tavan kas başına ölçeklenmiyor çünkü kaynak çalışma kas ayrımı yapmıyor; ölçekleseydik kaynakta olmayan bir kesinlik uydurmuş olurduk.'
+    },
+    {
+      title: 'Yetmezliğe Yakınlık: Artık Kaydedilmiyor, Hedefleniyor',
+      desc: 'Uygulama RIR\'ı setin yanına yazdırıyordu ama hiçbir yerde HEDEFLEMİYORDU. Bu boşluk hacim modeli değiştikten sonra kritik hale geldi: düşük hacimli çalışmanın bütün dayanağı "daha az set ama yetmezliğe daha yakın" ve hedef verilmeden hacim düşürülürse geriye yalnızca daha az iş kalır. Artık hareket tipine göre hedef RIR veriliyor: bileşkede 1-2, izolasyonda 0-1, boşaltmada 3-4. Kuvvet hedefi seçiliyse yakınlık gevşiyor, çünkü kuvvette yakınlıkla kazanç arasında anlamlı ilişki bulunmadı — zorlamanın karşılığı yok, yorgunluğu var. Kart uyarısını da taşıyor: RIR ölçülmüyor TAHMİN ediliyor ve insanlar yetmezliğe uzaklığını sistematik olarak fazla tahmin ediyor.'
+    },
+    {
+      title: 'Kademeli Etkili Set',
+      desc: 'Etkili set ikili bir kuralla sayılıyordu: RIR 3 veya altıysa 1, değilse 0. Bu kural iki yerde birden yanlış davranıyor. RIR 3 ile RIR 0\'ı aynı sayıyor, oysa yakınlık meta-regresyonu hipertrofinin yetmezliğe yaklaştıkça arttığını buluyor. Ve RIR 4\'ü hiç saymıyor, oysa dört tekrar kalarak biten bir set sıfır uyaran vermiyor — sadece daha az veriyor. Kademeli ölçü yakınlığa göre ağırlık veriyor. Bu özellikle düşük hacimli çalışan biri için önemli: az set ama yetmezliğe yakın çalışan birinin toplam uyaranı ikili kuralla "az set" görünüyordu. Varsayılan kapalı ve iki sayı yan yana gösteriliyor — geçmiş sayılarının bir gecede değişmesi kimseye yardımcı olmaz.'
+    },
+    {
+      title: 'Sabit Hacimli Blok',
+      desc: 'Mezosiklik kuruluşundan beri her hafta set ekliyordu. Ama bu şema doğrudan test edildi ve DESTEKLENMEDİ: Enes ve ark. hem antrenmanlı erkeklerde hem antrenmanlı kadınlarda haftalık set artışını sabit hacimle karşılaştırdı ve kas boyutunda gruplar arası anlamlı fark bulamadı. Aynı ekibin başka bir çalışması mevcut hacmin üstüne set eklemenin, hacmi korumaktan daha iyi olmadığını gösterdi. Artık "Sabit Hacim" birinci sınıf bir ilerleme kipi: hacim blok boyunca sabit kalıyor, ilerleme yük, tekrar ve yakınlıktan geliyor. Artan hacim kipi kaldırılmadı — "fark yok" bulgusu "işe yaramıyor" demek değil; kullanıcı hangi kanıta dayandığını görerek seçiyor. Ayrıca rampanın tavanı artık tartışmalı bandın sonu değil verimli bandın üstü: doğrudan denemelerin fayda bulamadığı bir bölgeye körlemesine tırmanmıyor.'
+    },
+    {
+      title: 'Koç Dili Kanıtla Hizalandı',
+      desc: 'Koç "tavanın üstündeki hacim uyaran eklemiyor, toparlanmadan çalıyor" diyordu. Bu cümle kanıtın söylediğinden fazlasını iddia ediyor. Artık "bu hacimde ek fayda gösteren doğrudan bir deneme yok; zararlı olduğu da gösterilmedi — kesin olan tek şey harcanan zaman" diyor. Zayıf halka analizinde bu maddenin ETKİ ve KESİNLİK puanları da düşürüldü: eskiden "tavanı aştın" diye listenin en üstüne çıkıyordu, oysa bu bir uyarı değil bir fırsat maliyeti. Buna karşılık eşik altı uyarısı olduğu gibi kaldı ve gerekçesi güçlendi — orası iki kanıt hattının da anlaştığı tek yer.'
+    },
     {
       title: 'Program Zekâsı ve Sağlık Skoru',
       desc: 'Program oluşturucu taslağın tamamını hacim bandı, kas başına dağılım, seans süresi, gün dengesi ve temel hareket örüntüleriyle birlikte 0–100 arasında denetliyor. Skor tek başına hüküm değil: beş alt puan ve her kesintinin gerekçesi aynı kartta görünüyor. Bölgesel uzmanlaşma bilinçliyse düşük örüntü puanının hata olmadığı da açıkça yazıyor.'

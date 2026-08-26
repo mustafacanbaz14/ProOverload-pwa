@@ -118,6 +118,10 @@ export const buildOptimalVolumeProfile = ({
     const adjustedLow = clamp(low + recoveryAdjustment.sets, Math.max(2, Math.round(base.mev * 0.5)), base.mrv);
     const adjustedHigh = clamp(high + recoveryAdjustment.sets, adjustedLow, base.mrv);
     const adjustedCenter = clamp(center + recoveryAdjustment.sets, adjustedLow, adjustedHigh);
+    // `base.mrv` artık bir toparlanma tavanı değil, tartışmalı bandın sonu.
+    // Eskiden buradaki kırpma popülasyon tablosunu kişisel modelin de üst
+    // sınırı yapıyordu: kullanıcı kendi verisiyle daha yüksek bir hacmi
+    // tolere ettiğini kanıtlasa bile tablonun tavanını geçemiyordu.
     const planned = roundQuarter(planMap.get(muscle)?.volume);
     const actual = roundQuarter(currentVolume?.[muscle]);
     const status = planned <= 0 ? 'unplanned'

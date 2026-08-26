@@ -26,6 +26,11 @@ import {
   snapshotDecision, logDecision, logRejection, dueEntries, settleDue, ledgerStats, ledgerCoachItem,
 } from './utils/coachLedger';
 import { applyCoachFocus, findFocus } from './utils/coachFocus';
+import { countWeeklySets } from './utils/setCounting';
+import { buildProximityReport, proximityCoachItem } from './utils/proximity';
+import { buildTrainingAge, trainingAgeCoachItem } from './utils/trainingAge';
+import { compareEffectiveSets } from './utils/effectiveSets';
+import { sessionCeilingAudit, findPhilosophy as findVolumePhilosophy } from './utils/doseResponse';
 import { buildPerformanceDrivers, driverCoachItem } from './utils/performanceDrivers';
 import { buildResponseProfile, responseProfileCoachItem } from './utils/responseProfile';
 import { buildExerciseRoi, roiCoachItem } from './utils/exerciseRoi';
@@ -161,6 +166,7 @@ const YearReviewModal = lazy(() => import('./components/YearReviewModal'));
 const CoachLedgerModal = lazy(() => import('./components/CoachLedgerModal'));
 const BlockCompareModal = lazy(() => import('./components/BlockCompareModal'));
 const ScenarioModal = lazy(() => import('./components/ScenarioModal'));
+const EvidenceModal = lazy(() => import('./components/EvidenceModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const CardioView = lazy(() => import('./components/CardioView'));
 
@@ -276,6 +282,7 @@ export default function App() {
   const [isLedgerOpen, setIsLedgerOpen] = useState(false);
   const [isBlockCompareOpen, setIsBlockCompareOpen] = useState(false);
   const [isScenarioOpen, setIsScenarioOpen] = useState(false);
+  const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
@@ -3056,9 +3063,12 @@ export default function App() {
         totalWeeks: mesocycle.totalWeeks,
         experienceLevel: settings.experienceLevel,
         feedback: settings.mesocycle?.feedback,
+        mode: settings.mesocycle?.mode || 'ramp',
+        philosophy: settings.volumePhilosophy,
       }),
       weekPlanResult.statuses);
-  }, [mesocycle, settings.mesocycle, settings.experienceLevel, settings.volumeTargets, weekPlanResult.statuses]);
+  }, [mesocycle, settings.mesocycle, settings.experienceLevel, settings.volumeTargets,
+    settings.volumePhilosophy, weekPlanResult.statuses]);
 
   const selectionReport = useMemo(
     () => auditExerciseSelection(weekPlanResult.statuses, { customExercises }),
@@ -3378,6 +3388,60 @@ export default function App() {
       allNames: allExercisesNames,
     }),
     [sortedWorkouts, weekPlanResult.statuses, customExercises, allExercisesNames]);
+
+  // --- 7.9 doz-yanıt ve yakınlık --------------------------------------
+
+  /** Üç sayım yöntemi yan yana: kesirli, toplam, doğrudan. */
+  const setCounts = useMemo(
+    () => countWeeklySets(sortedWorkouts, { customExercises, weeks: 4 }),
+    [sortedWorkouts, customExercises]);
+
+  /** Gerçekleşen yakınlık ile hedefin karşılaştırması. */
+  const proximityReport = useMemo(
+    () => buildProximityReport(sortedWorkouts, {
+      customExercises,
+      overrides: settings.proximityTargets,
+      goal: settings.trainingGoal,
+    }),
+    [sortedWorkouts, customExercises, settings.proximityTargets, settings.trainingGoal]);
+
+  /** Kayıt geçmişinden seviye önerisi — uygulanmıyor, öneriliyor. */
+  const trainingAge = useMemo(
+    () => buildTrainingAge(sortedWorkouts, { resolveLoad: resolveSetLoad }),
+    [sortedWorkouts, resolveSetLoad]);
+
+  /** İkili ve kademeli etkili set ölçüsünün son seanstaki farkı. */
+  const effectiveSetComparison = useMemo(() => {
+    const son = sortedWorkouts[0];
+    return son ? compareEffectiveSets(son.exercises) : null;
+  }, [sortedWorkouts]);
+
+  /**
+   * Seans başı tavan: haftalık hacim doğru olsa bile tek seansa yığılınca
+   * kayboluyor. Bugünkü plandaki her gün ayrı denetleniyor.
+   */
+  const sessionCeiling = useMemo(() => {
+    const gun = weekPlanResult.days?.find(d => d.isToday) || weekPlanResult.days?.[0];
+    const kaslar = new Map();
+    (gun?.workouts || []).forEach(w => (w.template?.exercises || []).forEach(ex => {
+      const adet = (ex.sets || []).length;
+      if (adet === 0) return;
+      const { contributions } = detectMuscleGroup(ex.name, customExercises);
+      Object.entries(contributions || {}).forEach(([kas, katki]) => {
+        kaslar.set(kas, (kaslar.get(kas) || 0) + adet * katki);
+      });
+    }));
+    return sessionCeilingAudit([...kaslar.entries()].map(([muscle, sets]) => ({ muscle, sets })));
+  }, [weekPlanResult.days, customExercises]);
+
+  const handleSetVolumePhilosophy = useCallback((key) => {
+    setSettings(prev => ({ ...prev, volumePhilosophy: key }));
+    showToast(`Hacim felsefesi: ${findVolumePhilosophy(key).label}.`);
+  }, [setSettings, showToast]);
+
+  const handleToggleGradedSets = useCallback(() => {
+    setSettings(prev => ({ ...prev, gradedEffectiveSets: !prev.gradedEffectiveSets }));
+  }, [setSettings]);
 
   // --- 7.6 koç ve analiz raporları -----------------------------------
 
@@ -3773,6 +3837,17 @@ export default function App() {
       lockItem: readinessCoachItem(analysisLocks),
       blockItem: blockCoachItem(blockCompare),
       anomalyItem: anomalyCoachItem(anomalyWatch),
+      proximityItem: proximityCoachItem(proximityReport, {
+        // Hacim eşiğin altındayken "daha sert çalış" demek yanlış sırayla
+        // müdahale etmek olurdu: önce eşiği geç, sonra yakınlığı ayarla.
+        volumeBelowThreshold: weekPlanResult.statuses?.some(x => x.status === 'under'),
+      }),
+      trainingAgeItem: trainingAgeCoachItem(trainingAge, settings.experienceLevel),
+      sessionCeilingItem: sessionCeiling.ok ? null : {
+        key: 'session-ceiling',
+        title: `${sessionCeiling.items[0].muscle} tek seansta ${sessionCeiling.items[0].sets} kesirli set`,
+        detail: `Seans başına ~${sessionCeiling.ceiling} kesirli setten sonra ek fayda ölçülemiyor — bu haftalık hacimden AYRI bir kısıt. Haftalık toplamın doğru olsa bile tek güne yığılınca kaybediliyor. ${sessionCeiling.splittable.includes(sessionCeiling.items[0].muscle) ? 'Aynı hacmi iki güne bölmek tavanın altına indirir.' : 'Bölmek bile tek başına yetmeyebilir; hacmi de gözden geçir.'}`,
+      },
       optimalVolumeItem,
       deload,
       deloadSuggestion,
@@ -3791,7 +3866,8 @@ export default function App() {
     sideBalance, waterReport, weakLinks, formCurve, restProfile, settings.restSeconds,
     strengthStandards, effortDistribution, rotationReport, bodyRatios, deloadReturn, periNutrition,
     ledgerReport, ledgerDue, performanceDrivers, responseProfile, exerciseRoi, muscleScorecard,
-    analysisLocks, blockCompare, anomalyWatch, optimalVolumeItem,
+    analysisLocks, blockCompare, anomalyWatch, proximityReport, trainingAge, sessionCeiling,
+    settings.experienceLevel, weekPlanResult.statuses, optimalVolumeItem,
     profileGender, todayCycleSummary, activeCoachProtocol, activeWorkout]);
 
   // Koç hafızası: ertelenen/kapatılan maddeler ve çelişki çözümü. Ham liste
@@ -3855,6 +3931,7 @@ export default function App() {
       coachLedger: () => setIsLedgerOpen(true),
       blockCompare: () => setIsBlockCompareOpen(true),
       scenario: () => setIsScenarioOpen(true),
+      evidence: () => setIsEvidenceOpen(true),
       wizard: () => setIsWizardOpen(true),
       coach: () => setIsCoachCenterOpen(true),
       cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
@@ -4174,6 +4251,12 @@ export default function App() {
                 responseProfile,
                 anomalyWatch,
                 analysisLocks,
+                setCounts,
+                proximityReport,
+                volumePhilosophy: settings.volumePhilosophy,
+                currentVolume: dashboardStats.muscleVolume,
+                restSeconds: settings.restSeconds,
+                onOpenEvidence: () => setIsEvidenceOpen(true),
                 coachBriefing,
                 coachCalibration,
                 optimalVolumeProfile,
@@ -4352,6 +4435,7 @@ export default function App() {
               coachLedger: () => setIsLedgerOpen(true),
               blockCompare: () => setIsBlockCompareOpen(true),
               scenario: () => setIsScenarioOpen(true),
+              evidence: () => setIsEvidenceOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
@@ -4387,6 +4471,12 @@ export default function App() {
           onNormalizeBodyweight={handleNormalizeBodyweight}
           onToggleRestNotification={handleToggleRestNotification}
           onTestRestAlert={handleTestRestAlert}
+          volumePhilosophy={settings.volumePhilosophy}
+          onChangeVolumePhilosophy={handleSetVolumePhilosophy}
+          gradedEffectiveSets={settings.gradedEffectiveSets}
+          onToggleGradedSets={handleToggleGradedSets}
+          effectiveSetComparison={effectiveSetComparison}
+          trainingAgeSuggestion={trainingAge}
           coachFocus={settings.coachFocus}
           onChangeCoachFocus={handleSetCoachFocus}
           trainingGoal={settings.trainingGoal}
@@ -4615,6 +4705,7 @@ export default function App() {
           statuses={weekPlanResult.statuses}
           muscleVolume={weekPlanResult.muscleVolume}
           experienceLevel={settings.experienceLevel}
+          volumePhilosophy={settings.volumePhilosophy}
         />}
 
         {isWizardOpen && <ProgramWizardModal
@@ -4668,6 +4759,11 @@ export default function App() {
           isOpen={isBlockCompareOpen}
           onClose={() => setIsBlockCompareOpen(false)}
           buildReport={blockCompareFor}
+        />}
+
+        {isEvidenceOpen && <EvidenceModal
+          isOpen={isEvidenceOpen}
+          onClose={() => setIsEvidenceOpen(false)}
         />}
 
         {isScenarioOpen && <ScenarioModal
@@ -4860,6 +4956,7 @@ export default function App() {
               coachLedger: () => setIsLedgerOpen(true),
               blockCompare: () => setIsBlockCompareOpen(true),
               scenario: () => setIsScenarioOpen(true),
+              evidence: () => setIsEvidenceOpen(true),
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),

@@ -76,10 +76,10 @@ export const buildScenario = (change = {}, context = {}) => {
 
   const uyarilar = [];
   if (sonrakiBand === 'overMrv') {
-    uyarilar.push(`${yeniHacim} set tavanın (${esikler.mrv}) üstünde. Tavanın üstündeki hacim uyaran eklemiyor, toparlanmadan alıyor — ve o toparlanma bütün kaslar için ortak.`);
+    uyarilar.push(`${yeniHacim} kesirli set kanıtsız bölgede. Bu hacimde ek fayda gösteren doğrudan bir deneme yok; zararlı olduğu da gösterilmedi. Kesin olan tek şey harcanan zaman.`);
   }
   if (sonrakiBand === 'belowMev') {
-    uyarilar.push(`${yeniHacim} set koruma eşiğinin (${esikler.mev}) altında. Bu hacimde büyüme değil ancak korunma bekleniyor.`);
+    uyarilar.push(`${yeniHacim} kesirli set eşiğin (${esikler.mev}) altında. Bu hacimde ölçülebilir bir uyaran beklenmiyor — iki kanıt hattı da burada anlaşıyor.`);
   }
   if (delta > 0 && yeniSiklik <= 1 && yeniHacim > esikler.mav) {
     uyarilar.push('Hacim tek güne yığılıyor. Protein sentezi yanıtı yaklaşık iki günde söndüğü için aynı hacmi ikiye bölmek toplamı hiç artırmadan daha iyi sonuç veriyor.');
@@ -156,13 +156,13 @@ export const suggestScenarios = (muscleStates = [], context = {}) => {
       oneriler.push({
         kind: 'addSets', muscle: m.muscle,
         deltaSets: Math.ceil(esikler.mev - hacim),
-        label: `${m.muscle}: koruma eşiğine çık`,
+        label: `${m.muscle}: eşiğin üstüne çık`,
       });
     } else if (hacim > esikler.mrv) {
       oneriler.push({
         kind: 'removeSets', muscle: m.muscle,
         deltaSets: -Math.ceil(hacim - esikler.mrv),
-        label: `${m.muscle}: tavanın altına in`,
+        label: `${m.muscle}: kanıtsız bölgeden in`,
       });
     } else if (hacim < esikler.mav) {
       oneriler.push({

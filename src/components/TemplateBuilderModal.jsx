@@ -345,7 +345,7 @@ const TemplateBuilderModal = memo(({
               {weekly.statuses.slice(0, 10).map(st => (
                 <span
                   key={st.muscle}
-                  title={`${st.muscle}: ${st.volume} set (MEV ${st.mev} · MAV ${st.mav} · MRV ${st.mrv})`}
+                  title={`${st.muscle}: ${st.volume} kesirli set (eşik ${st.mev} · verimli ${st.mav} · tartışmalı sonu ${st.mrv})`}
                   className={`text-[9px] font-mono px-1.5 py-0.5 rounded border ${
                     st.status === 'below' ? 'border-amber-900/60 bg-amber-950/20 text-amber-300'
                       : st.status === 'over' ? 'border-red-900/60 bg-red-950/20 text-red-300'

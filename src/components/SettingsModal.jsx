@@ -7,6 +7,7 @@ import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plate
 import { ratesForGoal } from '../utils/goals';
 import { TRAINING_GOALS, findTrainingGoal } from '../utils/trainingGoal';
 import { COACH_FOCUSES, findFocus } from '../utils/coachFocus';
+import { VOLUME_PHILOSOPHIES, findPhilosophy } from '../utils/doseResponse';
 import { ACTIVITY_LEVELS } from '../utils/energyModel';
 
 const Toggle = ({ label, hint, checked, onChange }) => (
@@ -63,6 +64,12 @@ const SettingsModal = memo(({
   onToggleRestNotification,
   onTestRestAlert,
   notificationState = 'default',
+  volumePhilosophy = 'balanced',
+  onChangeVolumePhilosophy,
+  gradedEffectiveSets = false,
+  onToggleGradedSets,
+  effectiveSetComparison = null,
+  trainingAgeSuggestion = null,
   coachFocus = 'balanced',
   onChangeCoachFocus,
   trainingGoal = 'hypertrophy',
@@ -180,11 +187,87 @@ const SettingsModal = memo(({
                 <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
                   {findTrainingGoal(trainingGoal).detail}
                 </p>
+                {trainingAgeSuggestion?.hasData && trainingAgeSuggestion.confidence !== 'low' && (
+                  <p className="text-[9px] font-mono text-cyan-400/80 leading-relaxed">
+                    Kayıtlarına göre deneyim seviyen{' '}
+                    {{ beginner: 'Yeni Başlayan', intermediate: 'Orta', advanced: 'İleri' }[trainingAgeSuggestion.suggestion]}
+                    {' '}görünüyor ({trainingAgeSuggestion.reasons.join(', ')}). Bu tahmin uygulamayı
+                    kullanma geçmişini ölçüyor, antrenman yaşını değil.
+                  </p>
+                )}
                 <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
                   Mod yalnızca VARSAYILANLARI değiştiriyor: tekrar aralığı,
                   dinlenme süresi ve ilerleme kuralı. Hareket ya da şablon için
                   elle yazdığın değerler dokunulmadan kalıyor — mod denemek
                   ayarlarını silmek anlamına gelmemeli.
+                </p>
+              </div>
+            )}
+
+            {/* Hacim felsefesi. Literatür bölünmüş: bir kanıt hattı "daha
+                fazla set daha fazla kas" diyor, diğeri doğrudan test edince
+                fark bulamıyor. Tek bir sayı dayatmak yerine kullanıcı hangi
+                hatta yaslanacağını seçiyor. */}
+            {onChangeVolumePhilosophy && (
+              <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
+                  Hacim Felsefesi
+                </span>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {Object.values(VOLUME_PHILOSOPHIES).map(f => {
+                    const secili = volumePhilosophy === f.key;
+                    return (
+                      <button
+                        key={f.key}
+                        onClick={() => onChangeVolumePhilosophy(f.key)}
+                        aria-pressed={secili}
+                        className={`rounded-xl py-2 px-1 border text-[9px] font-bold transition-colors ${secili ? 'border-cyan-500 bg-cyan-950/30 text-cyan-200' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                      >
+                        {f.short}
+                      </button>
+                    );
+                  })}
+                </div>
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+                  {findPhilosophy(volumePhilosophy).summary}
+                </p>
+                <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
+                  <span className="text-zinc-600">Dayanak: </span>
+                  {findPhilosophy(volumePhilosophy).evidence}
+                </p>
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  Felsefe yalnızca HEDEFİ kaydırıyor. Eşik (altında ölçülebilir
+                  uyaran beklenmeyen hacim) ve seans başı tavan değişmiyor —
+                  onlar tartışmalı değil, iki kanıt hattı da orada anlaşıyor.
+                </p>
+              </div>
+            )}
+
+            {/* Kademeli etkili set. Eski ikili kural RIR 0 ile RIR 3'ü aynı
+                sayıyor, RIR 4'ü hiç saymıyordu. Yakınlık meta-regresyonu
+                hipertrofinin yetmezliğe yaklaştıkça arttığını buluyor. */}
+            {onToggleGradedSets && (
+              <div className="pt-2.5 border-t border-zinc-800 space-y-2">
+                <button
+                  onClick={onToggleGradedSets}
+                  aria-pressed={gradedEffectiveSets}
+                  className={`w-full rounded-xl py-2.5 border text-[10px] font-bold uppercase tracking-wider transition-colors ${gradedEffectiveSets ? 'border-emerald-600 bg-emerald-950/25 text-emerald-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                >
+                  Kademeli Etkili Set {gradedEffectiveSets ? '(açık)' : '(kapalı)'}
+                </button>
+                {effectiveSetComparison?.hasData && (
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+                    Son seansında ikili kural <strong className="text-zinc-200">{effectiveSetComparison.binary}</strong> etkili
+                    set sayıyor, kademeli ölçü <strong className="text-emerald-300">{effectiveSetComparison.graded}</strong>.
+                    {' '}{effectiveSetComparison.note}
+                  </p>
+                )}
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  İkili kural RIR 0 ile RIR 3'ü aynı sayıyor ve RIR 4'ü hiç
+                  saymıyordu. Kademeli ölçü yetmezliğe yakınlığa göre ağırlık
+                  veriyor. Ağırlıklar eğrinin şeklinden geliyor, ölçülmüş
+                  katsayılar değil. Varsayılan kapalı: geçmiş sayılarının bir
+                  gecede değişmesi kimseye yardımcı olmaz.
                 </p>
               </div>
             )}
@@ -863,7 +946,7 @@ const SettingsModal = memo(({
             <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
               <span className="text-zinc-200 text-[11px] font-bold block">Antrenman Deneyimi</span>
               <span className="text-zinc-500 text-[10px] font-mono block mt-0.5 mb-2 leading-snug">
-                Haftalık hacim hedeflerini (MEV / MAV / MRV) ölçekler.
+                Hacim bandını kaydırır ve genişletir.
               </span>
               <div className="grid grid-cols-3 gap-2">
                 {EXPERIENCE_LEVELS.map(l => (
@@ -882,7 +965,7 @@ const SettingsModal = memo(({
               <p className="text-[9px] font-mono text-zinc-600 mt-1.5 leading-relaxed border-t border-zinc-900 pt-1.5">
                 Emin değilsen <strong className="text-zinc-400">Orta</strong> seç: referans değerler bu
                 seviyeye göre belirlendi ve çoğu kişi için en güvenli başlangıç.
-                Seviye ne olursa olsun hedef, MEV ile MAV arasında kalıp haftadan haftaya
+                Seviye ne olursa olsun hedef, eşik ile verimli bandın üstü arasında kalıp haftadan haftaya
                 hacmi yavaşça artırmak.
               </p>
             </div>

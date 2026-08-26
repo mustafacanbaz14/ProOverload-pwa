@@ -6,7 +6,8 @@ import { targetsFor, setVolumeTarget, suggestVolumeTarget, VOLUME_TARGET_LIMITS 
 /**
  * Kas bazında kişisel haftalık hacim hedefi.
  *
- * MEV/MAV/MRV literatür ortalaması ve deneyim seviyesine göre ölçekleniyor —
+ * Bant sınırları doz-yanıt eğrisinden türetiliyor ve deneyim seviyesine göre
+ * ölçekleniyor —
  * doğru bir başlangıç ama kişisel değil. Aynı seviyedeki iki kişinin aynı
  * kastaki toparlanma kapasitesi belirgin farklı olabiliyor ve kişi bunu
  * birkaç blok sonra kendi verisinden öğreniyor.
@@ -39,9 +40,9 @@ const SatirDuzenleyici = memo(({ muscle, current, suggestion, onSave, onReset })
   return (
     <div className="px-3 py-2.5 space-y-2 bg-zinc-950/40">
       <div className="flex gap-2">
-        {alan(mev, setMev, 'MEV')}
-        {alan(mav, setMav, 'MAV')}
-        {alan(mrv, setMrv, 'MRV')}
+        {alan(mev, setMev, 'Eşik')}
+        {alan(mav, setMav, 'Verimli')}
+        {alan(mrv, setMrv, 'Tartışmalı')}
       </div>
 
       {suggestion && (
@@ -112,11 +113,12 @@ const VolumeTargetsModal = memo(({
 
       <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
         <p className="text-[9px] font-mono text-zinc-500 leading-relaxed bg-zinc-900 border border-zinc-800 rounded-xl p-3">
-          MEV/MAV/MRV değerleri literatür ortalaması ve deneyim seviyene göre
+          Bant sınırları doz-yanıt eğrisinden ve deneyim seviyene göre
           ölçekleniyor — doğru bir başlangıç ama kişisel değil. Aynı seviyedeki
           iki kişinin aynı kastaki toparlanma kapasitesi belirgin farklı
           olabiliyor. Değiştirdiğin kas kendi değerini kullanır, dokunmadığın
-          kaslar literatürde kalır. Kişisel değere deneyim çarpanı UYGULANMAZ:
+          kaslar eğriden türetilen bandı kullanmaya devam eder. Kişisel değere
+          deneyim çarpanı UYGULANMAZ:
           yazdığın sayı zaten senin kapasiten.
           {kisiselSayisi > 0 && ` Şu an ${kisiselSayisi} kasta kendi hedefin var.`}
         </p>
@@ -168,7 +170,7 @@ const VolumeTargetsModal = memo(({
         </div>
 
         <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
-          Sıralama bozulursa (örneğin MRV, MEV altında kalırsa) değerler
+          Sıralama bozulursa (örneğin tartışmalı sınır eşiğin altında kalırsa) değerler
           sessizce düzeltilir: sıralamayı bozan bir hedef, hacim
           çözümleyicisinde anlamsız sonuç üretirdi.
         </p>

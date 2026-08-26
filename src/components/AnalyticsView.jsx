@@ -12,6 +12,9 @@ import PerformanceDriversCard from './PerformanceDriversCard';
 import ResponseProfileCard from './ResponseProfileCard';
 import AnomalyCard from './AnomalyCard';
 import AnalysisUnlockCard from './AnalysisUnlockCard';
+import DoseResponseCard from './DoseResponseCard';
+import SetCountingCard from './SetCountingCard';
+import ProximityCard from './ProximityCard';
 import CoachBriefingCard from './CoachBriefingCard';
 import PeriodComparisonCard from './PeriodComparisonCard';
 import CoachCalibrationCard from './CoachCalibrationCard';
@@ -58,6 +61,12 @@ const AnalyticsView = memo(({
   responseProfile = null,
   anomalyWatch = null,
   analysisLocks = null,
+  setCounts = null,
+  proximityReport = null,
+  volumePhilosophy = 'balanced',
+  currentVolume = {},
+  restSeconds = 120,
+  onOpenEvidence,
   coachBriefing = null,
   coachCalibration = null,
   optimalVolumeProfile = null,
@@ -360,9 +369,13 @@ const AnalyticsView = memo(({
           <TrendChart data={muscleWeeks} color="#a78bfa" unit=" set" />
 
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 grid grid-cols-3 gap-2 text-center">
-            {['mev', 'mav', 'mrv'].map(k => (
+            {[
+              { k: 'mev', label: 'Eşik' },
+              { k: 'mav', label: 'Verimli' },
+              { k: 'mrv', label: 'Tartışmalı' },
+            ].map(({ k, label }) => (
               <div key={k} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2">
-                <span className="text-[9px] font-mono text-zinc-500 uppercase block">{k}</span>
+                <span className="text-[9px] font-mono text-zinc-500 uppercase block">{label}</span>
                 <span className="text-sm font-mono font-bold text-zinc-200">
                   {getVolumeLandmarks(muscleKey, experienceLevel)[k]}
                 </span>
@@ -383,9 +396,19 @@ const AnalyticsView = memo(({
           {/* Tutarlılık ve kuvvet dengesi: hacim grafiğinin yanıtlamadığı iki
               soru. Biri "programı gerçekten uyguluyor muyum", diğeri "kuvvet
               kaslar arasında nasıl dağılmış". */}
+          {/* Doz-yanıt en üstte: altındaki bütün hacim kartları bu modelden
+              türüyor ve model artık tek bir sayı değil, belirsizlik şeridi. */}
+          <DoseResponseCard
+            muscle={muscleKey}
+            currentVolume={currentVolume}
+            experienceLevel={experienceLevel}
+            philosophy={volumePhilosophy}
+            restSeconds={restSeconds}
+            onOpenEvidence={onOpenEvidence}
+          />
+          <SetCountingCard report={setCounts} onOpenEvidence={onOpenEvidence} />
           <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
-          {/* Karne en üstte: "göğsüm iyi gidiyor mu" sorusunun cevabı, altındaki
-              on kartın hepsinden önce gelir. */}
+          {/* Karne: "göğsüm iyi gidiyor mu" sorusunun cevabı. */}
           <MuscleScorecardCard report={muscleScorecard} />
           <WeakLinkCard report={weakLinks} onAction={onAction} />
           <ExerciseRoiCard report={exerciseRoi} />
@@ -650,7 +673,10 @@ const AnalyticsView = memo(({
                 </div>
               </div>
 
-              <PerformanceDriversCard report={performanceDrivers} />
+              {/* Yakınlık koç sekmesinin başında: hacim modeli değiştikten sonra
+              az set çalışan biri için hacmin yerine geçen kaldıraç bu. */}
+          <ProximityCard report={proximityReport} />
+          <PerformanceDriversCard report={performanceDrivers} />
               <ResponseProfileCard profile={responseProfile} />
               <AnomalyCard report={anomalyWatch} />
 

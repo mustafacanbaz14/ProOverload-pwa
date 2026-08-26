@@ -74,6 +74,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
     ledgerItem = null, driverItem = null, responseItem = null, roiItem = null,
     scorecardItem = null, lockItem = null, blockItem = null, anomalyItem = null,
     optimalVolumeItem = null,
+    proximityItem = null, trainingAgeItem = null, sessionCeilingItem = null,
   } = ctx;
 
   const items = [];
@@ -349,8 +350,8 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       const kalan = (eksik.length + hic.length) - liste.length;
       ekle({
         key: 'volume', priority: 2, tone: TONES.warn, action: 'plan',
-        title: `${liste.join(', ')}${kalan > 0 ? ` +${kalan}` : ''} koruma eşiğinin altında`,
-        detail: `Haftanın ${gun}. günündesin. Bu kaslar MEV'in altında kalırsa hafta büyüme değil koruma haftası olur; kalan günlere 2-3 set eklemek yeterli.`,
+        title: `${liste.join(', ')}${kalan > 0 ? ` +${kalan}` : ''} eşiğin altında`,
+        detail: `Haftanın ${gun}. günündesin. Eşiğin altı, hacim tartışmasının tartışmasız olan tek ucu: bu hacmin altında ölçülebilir uyaran beklenmiyor. Kalan günlere 2-3 set eklemek yeterli.`,
       });
     }
   }
@@ -591,6 +592,39 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
       key: 'metric', priority: 3, tone: TONES.info, action: 'metrics',
       title: `${daysSinceMetric} gündür ölçüm yok`,
       detail: 'Gerçek günlük harcama (adaptif TDEE) kilo eğiliminden hesaplanıyor; ölçüm girilmezse kalori hedefleri formül tahmininde kalıyor.',
+    });
+  }
+
+  /* --- 7.9: doz-yanıt ve yakınlık --- */
+
+  // Seans başı tavan 2. öncelik: BUGÜNÜN planını değiştiren bir kısıt ve
+  // haftalık hacimden bağımsız. Haftalık toplam doğru olsa bile tek güne
+  // yığılınca kaybediliyor.
+  if (sessionCeilingItem) {
+    ekle({
+      key: 'session-ceiling', priority: 2, tone: TONES.info, action: 'plan',
+      title: sessionCeilingItem.title,
+      detail: sessionCeilingItem.detail,
+    });
+  }
+
+  // Yakınlık 3. öncelik: hacim eklemeden kullanılabilecek bir kaldıraç ama
+  // acil değil. Hacim eşiğin altındayken bu madde hiç üretilmiyor — önce
+  // eşiği geçmek gerekiyor, sonra sertliği ayarlamak.
+  if (proximityItem) {
+    ekle({
+      key: 'proximity', priority: 3, tone: TONES.info, action: 'analysis',
+      title: proximityItem.title,
+      detail: proximityItem.detail,
+    });
+  }
+
+  // Seviye önerisi en düşük öncelik: bir ayarı değiştiriyor, bugünü değil.
+  if (trainingAgeItem) {
+    ekle({
+      key: 'training-age', priority: 4, tone: TONES.info, action: 'settings',
+      title: trainingAgeItem.title,
+      detail: trainingAgeItem.detail,
     });
   }
 

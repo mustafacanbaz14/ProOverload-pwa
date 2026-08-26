@@ -60,8 +60,8 @@ export const buildWeakLinks = (sources = {}, { limit = 5 } = {}) => {
       muscle: s.muscle,
       impact: 'high',
       confidence: 'high',
-      title: `${s.muscle} koruma eşiğinin altında`,
-      detail: `Haftalık ${s.volume} set, koruma eşiği ${s.mev}. Bu hacimde kas büyümesi değil ancak korunma bekleniyor. Eksik ${Math.max(0, Math.round((s.mev - s.volume) * 4) / 4)} set — bunu kapatmak listedeki her şeyden önce gelir.`,
+      title: `${s.muscle} eşiğin altında`,
+      detail: `Haftalık ${s.volume} kesirli set, eşik ${s.mev}. Bu, iki kanıt hattının da anlaştığı tek yer: bu hacmin altında ölçülebilir bir uyaran beklenmiyor. Eksik ${Math.max(0, Math.round((s.mev - s.volume) * 4) / 4)} set — bunu kapatmak listedeki her şeyden önce gelir.`,
       action: 'plan',
     }));
 
@@ -73,10 +73,14 @@ export const buildWeakLinks = (sources = {}, { limit = 5 } = {}) => {
       key: `overvolume-${s.muscle}`,
       area: 'Hacim',
       muscle: s.muscle,
-      impact: 'high',
-      confidence: 'high',
-      title: `${s.muscle} tavanın üstünde`,
-      detail: `Haftalık ${s.volume} set, tavan ${s.mrv}. Tavanın üstündeki hacim uyaran eklemiyor, toparlanmadan çalıyor — ve o toparlanma bütün kaslar için ortak.`,
+      // Etki ve kesinlik DÜŞÜRÜLDÜ. Eskiden bu madde "tavanı aştın" diye
+      // yüksek etkiyle en üste çıkıyordu; oysa yüksek hacmin zararlı olduğunu
+      // gösteren doğrudan bir kanıt yok. Bilinen tek şey ek faydanın
+      // ölçülemez hale geldiği — bu bir uyarı değil, bir fırsat maliyeti.
+      impact: 'low',
+      confidence: 'low',
+      title: `${s.muscle} kanıtsız bölgede`,
+      detail: `Haftalık ${s.volume} kesirli set. Bu hacimde ek fayda gösteren doğrudan bir deneme yok; zararlı olduğu da gösterilmedi. Setlerin karşılığını alamıyor olabilirsin — ama bunu kesin bilen kimse yok. Zamanı başka bir kasa ya da yakınlığa yatırmak daha kesin bir kazanç.`,
       action: 'plan',
     }));
 

@@ -121,8 +121,8 @@ const StarterProgramModal = memo(({ isOpen, onClose, onInstall, onCustomize, exi
         })}
 
         <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
-          Set sayıları, her kasın haftalık toplamı koruma eşiğinin (MEV) üstünde
-          ve toparlanma sınırının (MRV) altında kalacak şekilde seçildi. Kurduktan
+          Set sayıları, her kasın haftalık toplamı eşiğin üstünde ve tartışmalı
+          bandın sonunun altında kalacak şekilde seçildi. Kurduktan
           sonra Haftalık Program ekranındaki kas dökümünden kendi gözünle
           doğrulayabilirsin.
         </p>

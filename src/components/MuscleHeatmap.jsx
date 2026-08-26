@@ -31,7 +31,7 @@ function getMuscleColor(count, muscle, level) {
 function getMuscleStatus(count, muscle, level) {
   const { mev, mav, mrv } = getVolumeLandmarks(muscle, level);
   const key = volumeStatusOf(count, muscle, level);
-  const suffix = { none: '', under: ` · MEV ${mev}`, optimal: ` · MAV ${mav}`, high: ` · MRV ${mrv}`, over: ` · MRV ${mrv}` };
+  const suffix = { none: '', under: ` · eşik ${mev}`, optimal: ` · bandın üstü ${mav}`, high: ` · tartışmalı sonu ${mrv}`, over: ` · tartışmalı sonu ${mrv}` };
   return VOLUME_STATUS[key].label + suffix[key];
 }
 
@@ -242,9 +242,9 @@ const MuscleHeatmap = memo(({
             />
           </div>
           <div className="grid grid-cols-3 gap-1 text-center text-[9px] font-mono">
-            <span className="text-amber-400">MEV {activeLandmarks.mev}</span>
-            <span className="text-emerald-400">MAV {activeLandmarks.mav}</span>
-            <span className="text-red-400">MRV {activeLandmarks.mrv}</span>
+            <span className="text-amber-400">eşik {activeLandmarks.mev}</span>
+            <span className="text-emerald-400">verimli {activeLandmarks.mav}</span>
+            <span className="text-zinc-400">tartışmalı {activeLandmarks.mrv}</span>
           </div>
         </div>
 

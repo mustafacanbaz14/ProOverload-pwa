@@ -53,9 +53,9 @@ const MuscleDetailModal = memo(({ isOpen, onClose, muscle, total = 0, breakdown 
             </div>
             <div className="grid grid-cols-3 gap-2 text-center">
               {[
-                { label: 'MEV', value: landmark.mev, hint: 'Koruma' },
-                { label: 'MAV', value: landmark.mav, hint: 'Verimli tavan' },
-                { label: 'MRV', value: landmark.mrv, hint: 'Toparlanma sınırı' },
+                { label: 'Eşik', value: landmark.mev, hint: 'Altında ölçülebilir uyaran yok' },
+                { label: 'Verimli', value: landmark.mav, hint: 'Yüksek verim bandının üstü' },
+                { label: 'Tartışmalı', value: landmark.mrv, hint: 'Ötesinde doğrudan kanıt yok' },
               ].map(l => (
                 <div key={l.label} className="bg-zinc-900 border border-zinc-800 rounded-xl py-2">
                   <span className="text-[9px] font-mono text-zinc-500 block">{l.label}</span>

@@ -128,7 +128,7 @@ export const buildFrequencyReport = (workouts = [], {
       advice = 'Yalnızca başka hareketlerin yan katkısını alıyor; doğrudan hedefleyen bir hareket yok.';
     } else if (haftalikHacim < mev) {
       verdict = 'low-volume';
-      advice = `Haftalık hacim koruma eşiğinin (MEV ${mev}) altında; sıklıktan önce hacim gerekiyor.`;
+      advice = `Haftalık hacim eşiğin (${mev} kesirli set) altında; sıklıktan önce hacim gerekiyor.`;
     } else if (enBuyukSeans > SETS_PER_SESSION_CEILING && seansHafta < onerilen) {
       verdict = 'concentrated';
       advice = `En yoğun seansta ${Math.round(enBuyukSeans)} set birikmiş. Aynı hacmi ${onerilen} seansa bölmek son setlerin kalitesini korur — sıklığın kendisi küçük bir fark, asıl kazanç setlerin yığılmaması.`;

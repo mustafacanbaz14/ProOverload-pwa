@@ -5,6 +5,7 @@ import {
 import {
   MESOCYCLE_PRESETS, RECOVERY_FEEDBACK, emptyMesocycle,
   mesocycleState, weeklyTargets, targetInstructions,
+  PROGRESSION_MODES, findProgressionMode,
 } from '../utils/mesocycle';
 import { dayKey } from '../utils/dates';
 
@@ -30,10 +31,12 @@ const MesocycleModal = memo(({
   statuses = [],
   muscleVolume = {},
   experienceLevel = 'intermediate',
+  volumePhilosophy = 'balanced',
   today = dayKey(new Date()),
 }) => {
   const meso = mesocycle || emptyMesocycle();
   const [weeks, setWeeks] = useState(meso.weeks || 5);
+  const [mode, setMode] = useState(meso.mode || 'ramp');
 
   const state = useMemo(() => mesocycleState(meso, today), [meso, today]);
 
@@ -44,9 +47,11 @@ const MesocycleModal = memo(({
         totalWeeks: state.totalWeeks,
         experienceLevel,
         feedback: meso.feedback,
+        mode: meso.mode || 'ramp',
+        philosophy: volumePhilosophy,
       })
       : []),
-    [state, meso.baseline, meso.feedback, experienceLevel]);
+    [state, meso.baseline, meso.feedback, meso.mode, experienceLevel, volumePhilosophy]);
 
   const instructions = useMemo(
     () => targetInstructions(targets, statuses),
@@ -61,7 +66,7 @@ const MesocycleModal = memo(({
       const n = Math.round(hacim);
       if (n > 0) baseline[kas] = n;
     });
-    onChange({ active: true, startDate: today, weeks, baseline, feedback: {} });
+    onChange({ active: true, startDate: today, weeks, mode, baseline, feedback: {} });
   };
 
   const bitir = () => onChange(emptyMesocycle());
@@ -129,6 +134,36 @@ const MesocycleModal = memo(({
                     <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">{p.detail}</p>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+              <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
+                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">İlerleme Kipi</h4>
+              </div>
+              {/* Her hafta set eklemek uygulamanın kuruluşundan beri tek
+                  seçenekti; ama bu şema doğrudan test edildi ve sabit hacme
+                  belirgin üstünlüğü gösterilemedi. İki seçenek de kendi
+                  kanıtıyla birlikte sunuluyor. */}
+              <div className="p-3 space-y-2">
+                <div className="grid grid-cols-2 gap-1.5">
+                  {Object.values(PROGRESSION_MODES).map(m => (
+                    <button
+                      key={m.key}
+                      onClick={() => setMode(m.key)}
+                      aria-pressed={mode === m.key}
+                      className={`rounded-xl py-2 px-2 border text-[10px] font-bold transition-colors ${mode === m.key ? 'border-cyan-600 bg-cyan-950/25 text-cyan-200' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                    >
+                      {m.label}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+                  {findProgressionMode(mode).summary}
+                </p>
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  {findProgressionMode(mode).detail}
+                </p>
               </div>
             </div>
 

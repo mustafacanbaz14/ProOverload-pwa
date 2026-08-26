@@ -309,7 +309,7 @@ const ProgramWizardModal = memo(({
                         </span>
                         {built.belowMev.length > 0 && (
                           <span className="text-[8px] font-mono text-amber-300 bg-amber-950/25 border border-amber-900/50 rounded-lg px-1.5 py-1">
-                            {built.belowMev.length} kas MEV altı
+                            {built.belowMev.length} kas eşik altı
                           </span>
                         )}
                       </div>
@@ -470,7 +470,7 @@ const ProgramWizardModal = memo(({
             </div>
 
             <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
-              Deneyim seviyesi ayarlardan alınıyor; hacim referansları (MEV/MAV)
+              Deneyim seviyesi ayarlardan alınıyor; hacim bandı (eşik / verimli)
               ona göre ölçekleniyor.
             </p>
           </>
@@ -624,7 +624,7 @@ const ProgramWizardModal = memo(({
               <div className="bg-emerald-950/20 border border-emerald-900/40 rounded-2xl p-3.5 flex items-start gap-2.5">
                 <Check size={15} className="text-emerald-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] font-mono text-emerald-200 leading-relaxed">
-                  Her kas koruma eşiğinin (MEV) üstünde, tavanın (MRV) altında ve
+                  Her kas eşiğin üstünde, tartışmalı bandın sonunun altında ve
                   gerilmede yükleyen en az bir harekete sahip. Bu, iddia değil
                   ölçüm: program kurulmadan önce uygulamanın kendi hacim
                   çözümleyicisinden geçirildi.
@@ -782,7 +782,7 @@ const ProgramWizardModal = memo(({
                       <strong className={r.belowMev ? 'text-amber-400' : r.aboveMrv ? 'text-red-400' : 'text-zinc-100'}>
                         {r.volume}
                       </strong>
-                      <span className="text-zinc-600"> · MEV {r.mev} / MAV {r.mav}</span>
+                      <span className="text-zinc-600"> · eşik {r.mev} / verimli {r.mav}</span>
                     </span>
                   </div>
                 ))}
@@ -826,8 +826,8 @@ const ProgramWizardModal = memo(({
                       <AlertTriangle size={9} className="inline mr-1" />
                       {comparison.warnings.map(r => (
                         r.crossesBelowMev
-                          ? `${r.muscle} koruma eşiğinin altına düşüyor (${r.current}→${r.next}, MEV ${r.mev})`
-                          : `${r.muscle} tavanı aşıyor (${r.current}→${r.next}, MRV ${r.mrv})`
+                          ? `${r.muscle} eşiğin altına düşüyor (${r.current}→${r.next}, eşik ${r.mev})`
+                          : `${r.muscle} kanıtsız bölgeye çıkıyor (${r.current}→${r.next}, tartışmalı sonu ${r.mrv})`
                       )).join(' · ')}
                     </p>
                   </div>

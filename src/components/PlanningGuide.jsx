@@ -19,7 +19,7 @@ const CONTENT = {
       'Aynı kası ağır çalıştıran günler arasında çoğunlukla 48 saat bırak.',
       'Bacak antrenmanı ile sert koşuyu aynı güne koyacaksan araya en az 6 saat koy; önceliğin olanı önce yap.',
       'Yürüyüş ve aktif toparlanma off day durumunu bozmaz; HIIT ve maç temposu bozar.',
-      'Isı haritasında MEV altı eksik uyaran, MRV üstü toparlanma riski işaretidir; kişisel performans trendi son karardır.',
+      'Isı haritasında eşik altı, ölçülebilir uyaran için yetersiz demek. Tartışmalı bandın ötesi "zararlı" değil: o hacimde ek fayda gösteren doğrudan bir deneme yok, o kadar. Kişisel performans trendi son karardır.',
     ],
   },
 };

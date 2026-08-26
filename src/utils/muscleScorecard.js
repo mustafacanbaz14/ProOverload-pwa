@@ -229,10 +229,10 @@ export const adviceFor = (kas, sinirlayan, hacim, esikler, siklik) => {
   if (!sinirlayan) return '';
   if (sinirlayan.key === 'volume') {
     if (hacim < esikler.mev) {
-      return `Haftalık ${hacim} set, koruma eşiği ${esikler.mev}. Notun asıl sebebi bu — ${Math.ceil(esikler.mev - hacim)} set eklemek diğer iki bileşeni de yukarı çeker.`;
+      return `Haftalık ${hacim} kesirli set, eşik ${esikler.mev}. Notun asıl sebebi bu — ${Math.ceil(esikler.mev - hacim)} set eklemek diğer iki bileşeni de yukarı çeker.`;
     }
     if (hacim > esikler.mrv) {
-      return `Haftalık ${hacim} set, tavan ${esikler.mrv}. Fazlası uyaran eklemiyor, toparlanmadan alıyor; ${Math.ceil(hacim - esikler.mrv)} set çıkarmak notu yükseltir.`;
+      return `Haftalık ${hacim} kesirli set — kanıtsız bölge. Bu hacimde ek fayda gösteren doğrudan deneme yok; ${Math.ceil(hacim - esikler.mrv)} set çıkarmak notu yükseltir ve zamanı serbest bırakır.`;
     }
     return `Hacim aralıkta ama optimuma (${esikler.mav} set) uzak.`;
   }

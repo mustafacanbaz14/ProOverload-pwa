@@ -81,7 +81,7 @@ export const buildAdaptations = (sources = {}, templates = [], {
         exercise: hedef.exercise,
         amount: eksik,
         title: `${hedef.exercise}: +${eksik} set`,
-        detail: `${s.muscle} haftalık ${s.volume} set ile koruma eşiğinin (${s.mev}) altında. En az seti olan harekete ekleniyor; hacmi tek harekete yığmak yerine dağıtmak daha iyi uyaran veriyor. Bir haftada en fazla ${MAX_ADD_PER_WEEK} set ekleniyor — daha fazlası neyin işe yaradığını anlaşılmaz yapar.`,
+        detail: `${s.muscle} haftalık ${s.volume} kesirli set ile eşiğin (${s.mev}) altında — bu, iki kanıt hattının da anlaştığı tek bölge. En az seti olan harekete ekleniyor; hacmi tek harekete yığmak yerine dağıtmak daha iyi uyaran veriyor. Bir haftada en fazla ${MAX_ADD_PER_WEEK} set ekleniyor — daha fazlası neyin işe yaradığını anlaşılmaz yapar.`,
       });
     });
 
@@ -104,7 +104,7 @@ export const buildAdaptations = (sources = {}, templates = [], {
         exercise: hedef.exercise,
         amount: cikarilabilir,
         title: `${hedef.exercise}: ${cikarilabilir} set çıkar`,
-        detail: `${s.muscle} haftalık ${s.volume} set ile tavanın (${s.mrv}) üstünde. Tavanın üstündeki hacim uyaran eklemiyor, toparlanmadan çalıyor. En çok seti olan hareketten kısılıyor ve hiçbir hareket iki setin altına inmiyor.`,
+        detail: `${s.muscle} haftalık ${s.volume} kesirli set — bu hacimde ek fayda gösteren doğrudan bir deneme yok. Zararlı olduğu gösterilmedi; ama o setlerin karşılığı belirsiz ve zamanı kesin. En çok seti olan hareketten kısılıyor ve hiçbir hareket iki setin altına inmiyor.`,
       });
     });
 

@@ -283,7 +283,7 @@ const TemplatePreviewModal = memo(({
               </p>
               {overMav.length > 0 && (
                 <p className="text-[10px] font-mono text-orange-300 leading-relaxed">
-                  Tek seansta haftalık MAV hedefini aşan bölge: {overMav.join(', ')}.
+                  Tek seansta haftalık verimli bandın üstünü aşan bölge: {overMav.join(', ')}.
                   Hacmi haftaya yaymak toparlanma açısından daha verimli.
                 </p>
               )}

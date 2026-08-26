@@ -241,7 +241,7 @@ const HomeView = memo(({
         {showMuscleVolume && (
         <>
         <div className="px-4 py-2 border-y border-zinc-800 bg-zinc-950/40">
-          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">MEV / MAV / MRV</span>
+          <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">Eşik / Verimli / Tartışmalı</span>
         </div>
 
         {/* 16 kas grubu tek listede uzun kalıyor; bölgelere ayrılıyor. */}
@@ -270,7 +270,7 @@ const HomeView = memo(({
                       </span>
                       <span className="text-[10px] text-zinc-400 font-mono shrink-0">
                         <strong className="text-zinc-100">{vol}</strong>/{landmark.mav}
-                        <span className="text-zinc-600"> (MEV {landmark.mev})</span>
+                        <span className="text-zinc-600"> (eşik {landmark.mev})</span>
                       </span>
                     </div>
                     {personal && (

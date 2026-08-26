@@ -3,7 +3,7 @@ import {
   Merge, Target, ArrowLeftRight,
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
   Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
-  Layers3, Wand2, Activity, Stethoscope, ShieldCheck, BookCheck, GitCompareArrows, FlaskConical,
+  Layers3, Wand2, Activity, Stethoscope, ShieldCheck, BookCheck, GitCompareArrows, FlaskConical, BookOpen,
 } from 'lucide-react';
 
 /**
@@ -56,12 +56,13 @@ const GROUPS = [
       { key: 'weeklyReview', label: 'Haftalık Gözden Geçirme', hint: 'Haftayı kapat, gelecek hafta için ayar al', icon: ClipboardCheck, color: 'text-emerald-400' },
       { key: 'dataHealth', label: 'Veri Sağlığı', hint: 'Aykırı değer, yarım kalmış set ve kopya kayıt taraması', icon: Stethoscope, color: 'text-emerald-400' },
       { key: 'mergeExercises', label: 'Hareket Birleştir', hint: 'Aynı hareketin iki kaydını tek isimde topla, geçmişi aktar', icon: Merge, color: 'text-amber-400' },
-      { key: 'volumeTargets', label: 'Hacim Hedefleri', hint: 'Kas başına kendi MEV/MAV/MRV değerlerini yaz', icon: Target, color: 'text-cyan-400' },
+      { key: 'volumeTargets', label: 'Hacim Hedefleri', hint: 'Kas başına kendi hacim bandını yaz', icon: Target, color: 'text-cyan-400' },
       { key: 'compareExercises', label: 'Hareket Karşılaştır', hint: 'İki hareketin ilerlemesini yan yana koy', icon: ArrowLeftRight, color: 'text-cyan-400' },
       { key: 'autoAdapt', label: 'Programı Güncelle', hint: 'Geçen haftanın ölçümlerini plana uygula', icon: Wand2, color: 'text-violet-400' },
       { key: 'yearReview', label: 'Yıl Özeti', hint: 'Son on iki ayın tamamı tek ekranda', icon: Trophy, color: 'text-yellow-400' },
       { key: 'blockCompare', label: 'Blok Karşılaştırma', hint: 'Son iki blok: ne değişti, ne üretti', icon: GitCompareArrows, color: 'text-cyan-400' },
       { key: 'scenario', label: 'Senaryo', hint: '"Şu kasa iki set eklesem ne olur" sorusunun cevabı', icon: FlaskConical, color: 'text-violet-400' },
+      { key: 'evidence', label: 'Kanıt Defteri', hint: 'Uygulamanın kullandığı her sayı, kaynağı ve karşı görüşü', icon: BookOpen, color: 'text-cyan-400' },
       { key: 'report', label: 'Gelişim Raporu', hint: 'Rekorlar ve dönem özeti', icon: Trophy, color: 'text-yellow-400' },
     ],
   },
