@@ -85,6 +85,7 @@ import { computeWeekPlan, findPlan } from './utils/weekPlan';
 import { removeTemplateFromPlans } from './utils/planMigration';
 import { buildPersonalVolumeGuidance } from './utils/personalization';
 import { buildCoachActions } from './utils/coach';
+import { buildCoachBriefing, buildCoachCalibration } from './utils/coachDashboard';
 import { activateCoachProtocol, archiveCoachProtocol, isCoachProtocolActive } from './utils/coachProtocol';
 import { effectiveLoad } from './utils/bodyweight';
 import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/bodyweightAudit';
@@ -3786,6 +3787,55 @@ export default function App() {
     return { ...hafiza, items: odak.items, focus: odak.focus, focusShifted: odak.shifted };
   }, [coachActions, settings.coachMemory, settings.coachFocus]);
 
+  /**
+   * 7.7 karar panosu. Koç maddelerini yeniden hesaplamıyor; görünür listedeki
+   * maddelere zaman ufku ve kanıt açıklaması ekliyor. Kapasite puanında eksik
+   * sinyaller sıfır sayılmadığı için veri girmemek sahte bir kötü gün üretmez.
+   */
+  const coachBriefing = useMemo(() => buildCoachBriefing({
+    actions: coachView.items,
+    readiness,
+    sleep: todayCoach?._signals?.sleep || null,
+    restingHr: restingHrReport,
+    painReport,
+    formCurve,
+    acwr: dashboardStats,
+  }), [coachView.items, readiness, todayCoach, restingHrReport, painReport, formCurve, dashboardStats]);
+
+  const coachCalibration = useMemo(
+    () => buildCoachCalibration(coachLedger),
+    [coachLedger]);
+
+  /** Koç ve analiz kartlarının kullandığı tek yönlendirme tablosu. */
+  const handleCoachAction = useCallback((hedef) => {
+    const action = ({
+      workout: () => handleStartRequest(todayCoach?.workoutTemplate || null),
+      cardio: () => setIsCardioOpen(true),
+      nutrition: () => handleChangeView('nutrition'),
+      wellness: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
+      metrics: () => { setProgressTab('body'); handleChangeView('progress'); },
+      progress: () => { setProgressTab('analysis'); setAnalysisType('1rm'); handleChangeView('progress'); },
+      analysis: () => { setProgressTab('analysis'); handleChangeView('progress'); },
+      plan: () => setIsWeekPlanOpen(true),
+      deload: () => setIsDeloadOpen(true),
+      mesocycle: () => setIsMesocycleOpen(true),
+      pain: () => setIsPainOpen(true),
+      dataHealth: () => setIsDataHealthOpen(true),
+      mergeExercises: () => setIsMergeOpen(true),
+      volumeTargets: () => setIsVolumeTargetsOpen(true),
+      compareExercises: () => setIsCompareOpen(true),
+      autoAdapt: () => setIsAutoAdaptOpen(true),
+      yearReview: () => setIsYearReviewOpen(true),
+      coachLedger: () => setIsLedgerOpen(true),
+      blockCompare: () => setIsBlockCompareOpen(true),
+      scenario: () => setIsScenarioOpen(true),
+      wizard: () => setIsWizardOpen(true),
+      coach: () => setIsCoachCenterOpen(true),
+      cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
+    })[hedef];
+    action?.();
+  }, [handleStartRequest, todayCoach, handleChangeView]);
+
   const handleSnoozeCoach = useCallback((key) => {
     setSettings(prev => ({ ...prev, coachMemory: snoozeCoachItem(prev.coachMemory, key) }));
     showToast('Bir hafta ertelendi.');
@@ -3902,6 +3952,7 @@ export default function App() {
               readiness={readiness}
               personalVolume={personalVolume}
               todayCoach={todayCoach}
+              coachBriefing={coachBriefing}
               coachActions={coachView.items}
               // Her koç maddesi doğrudan ilgili ekranı açar; kullanıcı uyarıyı
               // okuyup nereye gideceğini ayrıca aramasın.
@@ -3915,30 +3966,7 @@ export default function App() {
               ledgerOpenCount={ledgerReport.open}
               coachHiddenCount={coachView.hiddenCount}
               coachConflictCount={coachView.conflictCount}
-              onCoachAction={(hedef) => ({
-                workout: () => handleStartRequest(todayCoach?.workoutTemplate || null),
-                cardio: () => setIsCardioOpen(true),
-                nutrition: () => handleChangeView('nutrition'),
-                wellness: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
-                metrics: () => { setProgressTab('body'); handleChangeView('progress'); },
-                analysis: () => { setProgressTab('analysis'); handleChangeView('progress'); },
-                plan: () => setIsWeekPlanOpen(true),
-                deload: () => setIsDeloadOpen(true),
-                mesocycle: () => setIsMesocycleOpen(true),
-                pain: () => setIsPainOpen(true),
-                dataHealth: () => setIsDataHealthOpen(true),
-                mergeExercises: () => setIsMergeOpen(true),
-                volumeTargets: () => setIsVolumeTargetsOpen(true),
-                compareExercises: () => setIsCompareOpen(true),
-                autoAdapt: () => setIsAutoAdaptOpen(true),
-                yearReview: () => setIsYearReviewOpen(true),
-                coachLedger: () => setIsLedgerOpen(true),
-                blockCompare: () => setIsBlockCompareOpen(true),
-                scenario: () => setIsScenarioOpen(true),
-                wizard: () => setIsWizardOpen(true),
-                coach: () => setIsCoachCenterOpen(true),
-                cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
-              })[hedef]?.()}
+              onCoachAction={handleCoachAction}
               onOpenEnergy={() => setIsEnergyDetailOpen(true)}
               onOpenWellness={() => { setWellnessTab('sleep'); setIsWellnessOpen(true); }}
               onOpenCardio={() => setIsCardioOpen(true)}
@@ -4120,6 +4148,12 @@ export default function App() {
                 responseProfile,
                 anomalyWatch,
                 analysisLocks,
+                coachBriefing,
+                coachCalibration,
+                sleepScores: sleepScoreByDay,
+                onAction: handleCoachAction,
+                onApplyCoach: handleApplyCoachItem,
+                onOpenLedger: () => setIsLedgerOpen(true),
                 analysisType,
                 frequency: frequencyReport,
                 setAnalysisType,
@@ -4710,6 +4744,9 @@ export default function App() {
           nutritionGoal={settings.nutritionGoal}
           activeProtocol={activeCoachProtocol}
           history={settings.coachHistory || []}
+          briefing={coachBriefing}
+          onCoachAction={handleCoachAction}
+          onApplyCoach={handleApplyCoachItem}
           onActivate={handleActivateCoachProtocol}
           onDeactivate={handleDeactivateCoachProtocol}
         />}

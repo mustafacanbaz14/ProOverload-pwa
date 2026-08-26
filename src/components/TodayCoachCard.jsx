@@ -12,7 +12,7 @@ const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
 
 const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEnergy, onOpenWellness, onOpenCardio,
   onSnooze, onDismiss, onRestoreCoach, hiddenCount = 0, conflictCount = 0,
-  onApply, onReject, focus = null, onOpenLedger, ledgerOpenCount = 0 }) => {
+  onApply, onReject, focus = null, onOpenLedger, ledgerOpenCount = 0, briefing = null }) => {
   const [showAll, setShowAll] = useState(false);
   if (!data) return null;
   const planned = Boolean(data.workoutTemplate);
@@ -42,6 +42,29 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           <p className="text-[12px] font-bold text-zinc-100 leading-snug">{data.headline}</p>
           <p className="text-[10px] font-mono text-zinc-500 leading-relaxed mt-1">{data.detail}</p>
         </div>
+
+        {briefing?.capacity && (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 flex items-center gap-3">
+            <div className="text-center shrink-0">
+              <strong className={`text-lg font-mono block leading-none ${briefing.capacity.zone.tone}`}>
+                {briefing.capacity.score === null ? '—' : briefing.capacity.score}
+              </strong>
+              <span className="text-[7px] font-mono text-zinc-600">kapasite</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex justify-between gap-2">
+                <span className={`text-[9px] font-bold ${briefing.capacity.zone.tone}`}>{briefing.capacity.zone.label}</span>
+                <span className="text-[8px] font-mono text-zinc-600">güven %{briefing.capacity.confidence}</span>
+              </div>
+              <div className="h-1 rounded-full bg-zinc-900 overflow-hidden mt-1">
+                <div className={`h-full ${briefing.capacity.zone.bar}`} style={{ width: `${briefing.capacity.score ?? 0}%` }} />
+              </div>
+              <p className="text-[8px] font-mono text-zinc-600 truncate mt-1">
+                {briefing.capacity.concerns[0]?.detail || briefing.capacity.positives[0]?.detail || 'Yeni kayıtlarla karar güveni artar.'}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-2">
           <Metric icon={<Moon size={10} className="mr-1 text-indigo-400" />} label="Uyku" value={data.sleepLabel} tone={data.sleepTone} />

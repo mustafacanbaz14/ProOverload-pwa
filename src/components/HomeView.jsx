@@ -28,6 +28,7 @@ const HomeView = memo(({
   showMuscleVolume = false,
   onToggleMuscleVolume,
   todayCoach,
+  coachBriefing = null,
   coachActions = [],
   onSnoozeCoach,
   onDismissCoach,
@@ -71,6 +72,7 @@ const HomeView = memo(({
 
       <TodayCoachCard
         data={todayCoach}
+        briefing={coachBriefing}
         actions={coachActions}
         onSnooze={onSnoozeCoach}
         onDismiss={onDismissCoach}

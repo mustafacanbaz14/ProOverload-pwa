@@ -179,6 +179,13 @@ import {
   buildAnomalyWatch, scanSeries, buildAnomalySeries, anomalyCoachItem, describeFinding,
 } from '../src/utils/anomalyWatch.js';
 import { buildScenario, suggestScenarios, totalCost, SCENARIO_KINDS } from '../src/utils/whatIf.js';
+import {
+  buildDailyCapacity, enrichCoachActions, buildCoachBriefing,
+  buildCoachCalibration, coachBriefingText,
+} from '../src/utils/coachDashboard.js';
+import {
+  buildTrendComparison, trendComparisonText, ANALYSIS_WINDOWS,
+} from '../src/utils/trendComparison.js';
 
 const tests = [];
 const test = (name, run) => tests.push({ name, run });
@@ -5600,6 +5607,180 @@ test('senaryo önerileri mevcut duruma göre üretiliyor', () => {
 
   const bedel = totalCost(oneriler);
   assert.equal(typeof bedel.minutesPerWeek, 'number');
+});
+
+/* ------------------------------------------------------------------ *
+ * 7.7 — Koç karar panosu ve eş dönem analizi
+ * ------------------------------------------------------------------ */
+
+test('günlük kapasite eksik veriyi sıfır puan saymıyor', () => {
+  const bos = buildDailyCapacity();
+  assert.equal(bos.score, null);
+  assert.equal(bos.confidence, 0);
+  assert.equal(bos.zone.key, 'unknown');
+  assert.equal(bos.missing.length, bos.total);
+
+  const tek = buildDailyCapacity({
+    readiness: { seri: [{ date: '2026-08-25', score: 82 }] },
+  });
+  // Yalnız hazır oluşluk varsa ham skor korunur; beş eksik sinyal puanı
+  // aşağı çekmez ama güven düşük olduğu için karar puanı gösterilmez.
+  assert.equal(tek.rawScore, 82);
+  assert.equal(tek.score, null);
+  assert.ok(tek.confidence < 40);
+});
+
+test('günlük kapasite çoklu olumlu sinyalde açıklanabilir puan üretir', () => {
+  const r = buildDailyCapacity({
+    readiness: { seri: [{ date: '2026-08-25', score: 84 }] },
+    sleep: { score: 88 },
+    restingHr: { baseline: 58, latest: { bpm: 57 }, delta: -1 },
+    painReport: { hasData: true, regions: [] },
+    formCurve: { hasData: true, readyForHeavy: true, overreached: false, trend: { direction: 'rising' } },
+    acwr: { hasEnoughData: true, acwr: 1.05 },
+  });
+  assert.ok(r.score >= 80);
+  assert.equal(r.zone.key, 'ready');
+  assert.equal(r.confidence, 100);
+  assert.ok(r.positives.length >= 4);
+});
+
+test('süren ağrı günlük kapasitede diğer sinyaller içinde kaybolmuyor', () => {
+  const r = buildDailyCapacity({
+    readiness: { seri: [{ date: '2026-08-25', score: 90 }] },
+    sleep: { score: 90 },
+    painReport: { hasData: true, regions: [{ label: 'Omuz', average: 8, persistent: true, high: true }] },
+    formCurve: { hasData: true, readyForHeavy: true, overreached: false, trend: { direction: 'rising' } },
+  });
+  const pain = r.signals.find(s => s.key === 'pain');
+  assert.ok(pain.score <= 15);
+  assert.equal(pain.tone, 'risk');
+  assert.ok(r.concerns.some(s => s.key === 'pain'));
+});
+
+test('koç eylemleri zaman ufku, konu ve kanıt kaynağı kazanıyor', () => {
+  const rows = enrichCoachActions([
+    { key: 'pain', priority: 1, title: 'Omuz', action: 'pain', tone: { key: 'warn' } },
+    { key: 'volume', priority: 4, title: 'Set ekle', action: 'plan', tone: { key: 'info' } },
+    { key: 'perf-driver', priority: 7, title: 'Uyku bağı', action: 'analysis', tone: { key: 'info' } },
+  ]);
+  assert.equal(rows[0].horizon, 'today');
+  assert.equal(rows[0].category, 'health');
+  assert.equal(rows[0].evidence.key, 'direct');
+  assert.equal(rows[1].horizon, 'week');
+  assert.equal(rows[2].horizon, 'watch');
+  assert.equal(rows[2].evidence.key, 'model');
+});
+
+test('koç panosu en fazla üç farklı önceliği göreve çeviriyor', () => {
+  const briefing = buildCoachBriefing({
+    actions: [
+      { key: 'pain', priority: 1, title: 'Ağrıyı kontrol et', action: 'pain', tone: { key: 'warn' } },
+      { key: 'volume', priority: 2, title: 'Hacmi düzelt', action: 'plan', tone: { key: 'info' } },
+      { key: 'protein', priority: 3, title: 'Proteini tamamla', action: 'nutrition', tone: { key: 'info' } },
+      { key: 'plateau', priority: 4, title: 'Platoyu incele', action: 'progress', tone: { key: 'warn' } },
+    ],
+    readiness: { seri: [{ date: '2026-08-25', score: 70 }] },
+    sleep: { score: 70 },
+    painReport: { hasData: true, regions: [] },
+  });
+  assert.equal(briefing.missions.length, 3);
+  assert.equal(briefing.horizons.today.length, 2);
+  assert.ok(coachBriefingText(briefing).includes('Öncelikler'));
+});
+
+test('koç kalibrasyonu az örneklemde isabet yüzdesi göstermiyor', () => {
+  const ledger = Array.from({ length: 4 }, (_, i) => ({
+    id: `l-${i}`, key: 'volume', decision: 'applied',
+    outcome: { complianceMet: true, verdict: i < 3 ? 'worked' : 'flat', deltaPct: i < 3 ? 3 : 0 },
+  }));
+  const r = buildCoachCalibration(ledger);
+  assert.equal(r.overallRate, null);
+  assert.equal(r.needed, 1);
+  assert.equal(r.byCategory[0].hitRate, 75);
+});
+
+test('koç kalibrasyonu uygulama oranını sonuç isabetinden ayırıyor', () => {
+  const tested = Array.from({ length: 6 }, (_, i) => ({
+    id: `ok-${i}`, key: i < 3 ? 'volume' : 'plateau', decision: 'applied',
+    outcome: { complianceMet: true, verdict: i < 4 ? 'worked' : 'flat', deltaPct: i < 4 ? 3 : 0 },
+  }));
+  const notApplied = Array.from({ length: 2 }, (_, i) => ({
+    id: `no-${i}`, key: 'volume', decision: 'applied',
+    outcome: { complianceMet: false, verdict: 'not-applied', deltaPct: 0 },
+  }));
+  const r = buildCoachCalibration([...tested, ...notApplied]);
+  assert.equal(r.overallRate, 67);
+  assert.equal(r.complianceRate, 75);
+  assert.equal(r.tested, 6);
+});
+
+const trendSet = (weight = 100, reps = 8, rir = 2) => ({
+  id: `${weight}-${reps}-${rir}`, weight: String(weight), reps: String(reps), rir: String(rir), setType: 'normal',
+});
+const trendWorkout = (date, sets = 3) => ({
+  id: `w-${date}`, date, duration: 60, readiness: { score: 70 },
+  exercises: [{ id: `e-${date}`, name: 'Barbell Bench Press', sets: Array.from({ length: sets }, () => trendSet()) }],
+  cardio: [],
+});
+const trendNutrition = (date, calories, protein) => ({
+  id: `n-${date}`, date,
+  meals: [{ id: `m-${date}`, name: 'Toplam', calories, protein, carbs: 250, fats: 70 }],
+});
+
+test('eş dönem analizi aynı uzunlukta ardışık iki pencere kuruyor', () => {
+  assert.deepEqual(ANALYSIS_WINDOWS, [7, 28, 84]);
+  const r = buildTrendComparison({ days: 7, today: new Date('2026-08-26T12:00:00') });
+  assert.equal(r.ranges.current.startKey, '2026-08-20');
+  assert.equal(r.ranges.current.endKey, '2026-08-26');
+  assert.equal(r.ranges.previous.startKey, '2026-08-13');
+  assert.equal(r.ranges.previous.endKey, '2026-08-19');
+});
+
+test('eş dönem analizi antrenman ve beslenme değişimini ayrı ölçüyor', () => {
+  const workouts = [
+    trendWorkout('2026-08-14', 2),
+    trendWorkout('2026-08-20', 3), trendWorkout('2026-08-22', 3), trendWorkout('2026-08-25', 3),
+  ];
+  const nutrition = [
+    trendNutrition('2026-08-15', 2200, 130),
+    trendNutrition('2026-08-20', 2500, 160), trendNutrition('2026-08-21', 2500, 160),
+  ];
+  const r = buildTrendComparison({ workouts, nutrition, days: 7, today: new Date('2026-08-26T12:00:00') });
+  assert.equal(r.current.sessions, 3);
+  assert.equal(r.previous.sessions, 1);
+  assert.equal(r.current.effectiveSets, 9);
+  assert.equal(r.previous.effectiveSets, 2);
+  assert.equal(r.current.calories, 2500);
+  assert.equal(r.previous.calories, 2200);
+  assert.ok(r.meaningful.some(row => row.key === 'sessions'));
+  assert.ok(r.meaningful.some(row => row.key === 'calories'));
+});
+
+test('eş dönem analizi veri kapsamını ve en zayıf kaydı gösteriyor', () => {
+  const r = buildTrendComparison({
+    workouts: [trendWorkout('2026-08-25')],
+    sleepScores: { '2026-08-25': 80 },
+    days: 7,
+    today: new Date('2026-08-26T12:00:00'),
+  });
+  assert.equal(r.hasData, true);
+  assert.ok(r.coverage.score < 60);
+  assert.ok(r.coverage.gaps.length >= 2);
+  assert.equal(r.rhythm.reduce((sum, day) => sum + day.count, 0), 1);
+  assert.ok(trendComparisonText(r).includes('Veri kapsamı'));
+});
+
+test('eş dönem analizi pratik eşik altındaki farkı anlamlı saymıyor', () => {
+  const r = buildTrendComparison({
+    nutrition: [trendNutrition('2026-08-15', 2400, 150), trendNutrition('2026-08-22', 2450, 155)],
+    days: 7,
+    today: new Date('2026-08-26T12:00:00'),
+  });
+  const calories = r.rows.find(row => row.key === 'calories');
+  const protein = r.rows.find(row => row.key === 'protein');
+  assert.equal(calories.meaningful, false);
+  assert.equal(protein.meaningful, false);
 });
 
 for (const { name, run } of tests) {

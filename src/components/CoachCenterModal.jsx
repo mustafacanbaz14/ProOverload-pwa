@@ -5,6 +5,8 @@ import {
 } from 'lucide-react';
 import { buildWeeklyReview } from '../utils/weeklyReview';
 import { buildCoachProtocol, COACH_PROTOCOL_MODES, isCoachProtocolActive } from '../utils/coachProtocol';
+import CoachBriefingCard from './CoachBriefingCard';
+import { APP_VERSION } from '../utils/constants';
 
 const MODE_STYLE = {
   recovery: 'border-amber-900/60 bg-amber-950/20 text-amber-300',
@@ -26,6 +28,7 @@ const CoachCenterModal = memo(({
   workouts = [], customExercises = [], experienceLevel = 'intermediate',
   planDays = [], wellness = [], energyWeeks = [], nutritionGoal = 'maintain',
   activeProtocol = null, history = [], onActivate, onDeactivate,
+  briefing = null, onCoachAction, onApplyCoach,
 }) => {
   const review = useMemo(() => buildWeeklyReview({
     workouts, customExercises, experienceLevel, planDays, wellness, energyWeeks, nutritionGoal,
@@ -46,7 +49,7 @@ const CoachCenterModal = memo(({
     <div className="fixed inset-0 bg-zinc-950 z-[96] flex flex-col h-[100dvh] max-w-[440px] mx-auto">
       <header className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
         <div>
-          <span className="text-[8px] font-mono text-cyan-500 uppercase tracking-[0.18em]">ProOverload 6.0</span>
+          <span className="text-[8px] font-mono text-cyan-500 uppercase tracking-[0.18em]">ProOverload {APP_VERSION}</span>
           <h3 className="text-[13px] font-black text-zinc-100 uppercase tracking-wider flex items-center gap-2">
             <BrainCircuit size={16} className="text-cyan-400" /> Koç Merkezi
           </h3>
@@ -57,6 +60,13 @@ const CoachCenterModal = memo(({
       </header>
 
       <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+        <CoachBriefingCard
+          briefing={briefing}
+          compact
+          onAction={onCoachAction}
+          onApply={onApplyCoach}
+        />
+
         {active && (
           <section className="rounded-2xl border border-emerald-800/60 bg-emerald-950/20 p-3.5">
             <div className="flex items-start justify-between gap-3">

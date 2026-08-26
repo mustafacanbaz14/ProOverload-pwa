@@ -722,13 +722,65 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '7.6';
+export const APP_VERSION = '7.7';
 
 export const LATEST_RELEASE_NOTES = {
   version: APP_VERSION,
-  title: 'ProOverload 7.6',
+  title: 'ProOverload 7.7',
   date: '2026-08-26',
   items: [
+    {
+      title: 'Koç Karar Panosu',
+      desc: 'Koçun onlarca ayrı maddesi artık tek bir karar panosunda üç soruya cevap veriyor: bugün kapasitem ne, önce ne yapmalıyım ve karar neye dayanıyor. Eski kartlar kaldırılmadı; derin analiz sekmesinde korunuyor. Yeni pano onların yerine ikinci bir hesap yapmıyor, mevcut sonuçları açıklanabilir bir sıraya sokuyor.'
+    },
+    {
+      title: 'Çoklu Sinyalli Günlük Kapasite',
+      desc: 'Hazır oluşluk, uyku, dinlenme nabzı, ağrı günlüğü, fitness–yorgunluk eğrisi ve yakın dönem yükü aynı başlangıç kartında birleşiyor. Tek bir kötü gece veya tek bir yüksek sayı otomatik hüküm vermiyor. Ağrı ise daha yüksek ağırlıkla değerlendirilerek diğer iyi sinyallerin içinde kaybolmuyor. Bu bir tıbbi skor değil; antrenman kararını başlatan şeffaf bir özet.'
+    },
+    {
+      title: 'Veri Güveni ve Eksik Veriyi Cezalandırmama',
+      desc: 'Kapasite puanının yanında ayrı bir veri güveni yüzdesi var. Girilmemiş uyku ya da nabız sıfır puan sayılmıyor; o sinyal hesap dışı bırakılıyor ve güven düşüyor. Kullanılabilir ağırlığın %40 altındaysa uygulama sahte bir kesin sayı göstermek yerine “Veri Az” diyor. Böylece kayıt eksikliği kötü toparlanma gibi görünmüyor.'
+    },
+    {
+      title: 'Koç Sinyal Dökümü',
+      desc: 'Kapasite puanına dokununca onu oluşturan altı sinyal tek tek açılıyor: değer, renk, kısa yorum ve kaynağın öz bildirim mi, doğrudan ölçüm mü, yoksa tahmin modeli mi olduğu görünür. Kullanıcı bir toplam puana inanmak zorunda kalmıyor; hangi parçaya katılmadığını görebiliyor.'
+    },
+    {
+      title: 'Bugün / Bu Hafta / İzle Zaman Ufukları',
+      desc: 'Koç maddeleri artık tek uzun listede değil. Bugünü değiştiren ağrı ve toparlanma kararları “Bugün”, program ve hacim düzenlemeleri “Bu Hafta”, düşük aciliyetli örüntüler “İzle” altında. Her ufukta kaç madde olduğu yazıyor; uzun vadeli bir gözlemin acil uyarı gibi görünmesi engelleniyor.'
+    },
+    {
+      title: 'Konu Süzgeci ve Üç Öncelik',
+      desc: 'Sağlık, toparlanma, hacim, ilerleme, beslenme, düzen ve kardiyo başlıkları tek dokunuşla süzülebiliyor. Panonun üstünde ayrıca en fazla üç uygulanabilir görev var. Saf bilgi ve olumlu durumlar görev yapılmıyor; yapılacak bir eylemi olmayan karta “görev” demek yalnızca baskı üretirdi.'
+    },
+    {
+      title: 'Neden Bu Öneri?',
+      desc: 'Her koç maddesi artık dayanağını açıyor: doğrudan kayıt, çoklu kayıt eğilimi, tahmin modeli veya uygulama kuralı. Güven sınıfı ve yorumun sınırı da yanında. Model çıktısı teşhis gibi, tek kayıt da uzun dönem kanıtı gibi sunulmuyor. İlgili ekrana geçiş ve “Uyguladım” kaydı aynı satırda korunuyor.'
+    },
+    {
+      title: '7 / 28 / 84 Günlük Eş Dönem Karşılaştırması',
+      desc: 'Analiz → Koç → Dönem ekranı seçilen son 7, 28 veya 84 günü hemen öncesindeki AYNI uzunlukla karşılaştırıyor. Takvim ayları kullanılmıyor; 31 günlük ayı 28 günlük ayla kıyaslayıp pencere farkını gelişim sanmak engelleniyor. İki dönemin tarih aralıkları açıkça yazıyor.'
+    },
+    {
+      title: 'Dört Alanda Tek Karşılaştırma',
+      desc: 'Antrenman (seans, etkili set, tonaj, süre, kardiyo, hareket çeşitliliği), toparlanma (hazır oluşluk, uyku, dinlenme nabzı), beslenme (kalori, protein, kayıtlı gün) ve vücut (kilo, bel, yağ oranı) aynı yöntemle yan yana geliyor. Alanlar ayrı sekmelerde; işlev kaybolmadan ekran kalabalığı azaltıldı.'
+    },
+    {
+      title: 'Anlamlı Değişim Süzgeci',
+      desc: 'Her küçük fark renkli ok almıyor. Set ve tonajda yüzdesel, uyku ve hazır oluşlukta puan, kalori ve protein gibi alanlarda pratik mutlak eşikler var. “Yalnızca anlamlı değişimler” seçildiğinde günlük gürültü saklanıyor. Yönü hedefe bağlı olan kilo, kalori ve hacim otomatik iyi/kötü diye etiketlenmiyor.'
+    },
+    {
+      title: 'Veri Kapsamı ve Darboğaz',
+      desc: 'Dönem analizinin üstünde hazır oluşluk, uyku, beslenme ve vücut ölçümünün kapsama oranı var. En zayıf alan ayrıca belirtiliyor. Örneğin kalori yalnızca iki gün girildiyse dönem farkının bir kısmının kayıt sıklığından gelebileceği açıkça yazıyor; eksik veri sessizce kesin sonuca dönüşmüyor.'
+    },
+    {
+      title: 'Antrenman Ritmi ve Kopyalanabilir Özet',
+      desc: 'Seansların pazartesiden pazara hangi günlere yığıldığı yedi sütunlu ritim görünümünde gösteriliyor. Hem dönem analizi hem koç özeti tek dokunuşla düz metin olarak kopyalanabiliyor; antrenörle paylaşmak veya notlara almak için ekran görüntüsü gerekmiyor.'
+    },
+    {
+      title: 'Koç Kalibrasyonu',
+      desc: 'Karar defteri artık yalnız genel isabeti değil uygulama oranını, konu bazlı isabeti, son beş tavsiyenin önceki beşe göre yönünü ve iki kez ters sonuç veren tavsiyeyi de gösteriyor. Beş ölçümden önce genel oran, üç ölçümden önce konu oranı yazılmıyor. Uygulanmayan tavsiye yine başarısız sayılmıyor; koçun doğruluğu ile kullanıcının uygulaması birbirine karıştırılmıyor.'
+    },
     {
       title: 'Koç Karar Defteri: Tavsiye İşe Yaradı mı',
       desc: 'Koç her gün tavsiye veriyordu ama hiçbiri geri dönüp kontrol edilmiyordu. Kullanıcı "göğsüne iki set ekle" tavsiyesini uyguluyor, üç hafta geçiyor ve ne olduğunu kimse bilmiyor. Bu, koçu yanlış olamayan bir şeye çeviriyordu — ve yanlış olamayan bir tavsiye doğru da olamaz. Artık koç kartındaki her maddede "Uyguladım" var: dokunduğunda o anki haftalık hacim ve tahmini 1RM not ediliyor, üç hafta sonra tekrar ölçülüyor. Defter iki şeyi AYRI takip ediyor ve karıştırmıyor: tavsiye edilen şey gerçekten yapıldı mı (uygulama) ve sonuç ne oldu (tahmini 1RM). Ayrı tutulmalarının sebebi şu: uygulanmamış bir tavsiye BAŞARISIZ değildir, sadece denenmemiştir. İsabet oranı yalnızca gerçekten uygulanmış tavsiyelerden hesaplanıyor — denenmemişleri saymak, oranı koçun değil kullanıcının davranışının ölçüsü yapardı. Beş ölçümün altında oran hiç yazılmıyor: iki denemenin biri tutunca çıkan "%50 isabet" bir bilgi değil. Ölçüm penceresi üç hafta: daha kısası antrenman gürültüsünü sonuç sanmak, daha uzunu tavsiyenin etkisini araya giren on başka değişikliğe karıştırmak.'

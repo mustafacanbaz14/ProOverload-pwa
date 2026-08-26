@@ -12,6 +12,9 @@ import PerformanceDriversCard from './PerformanceDriversCard';
 import ResponseProfileCard from './ResponseProfileCard';
 import AnomalyCard from './AnomalyCard';
 import AnalysisUnlockCard from './AnalysisUnlockCard';
+import CoachBriefingCard from './CoachBriefingCard';
+import PeriodComparisonCard from './PeriodComparisonCard';
+import CoachCalibrationCard from './CoachCalibrationCard';
 import SessionQualityCard from './SessionQualityCard';
 import CardioCoachCard from './CardioCoachCard';
 import StrengthStandardsCard from './StrengthStandardsCard';
@@ -54,6 +57,11 @@ const AnalyticsView = memo(({
   responseProfile = null,
   anomalyWatch = null,
   analysisLocks = null,
+  coachBriefing = null,
+  coachCalibration = null,
+  sleepScores = {},
+  onOpenLedger,
+  onApplyCoach,
   onAction,
   analysisType,
   cardioReport = null,
@@ -91,6 +99,7 @@ const AnalyticsView = memo(({
   const [showAverage, setShowAverage] = useState(true);
   const [exerciseQuery, setExerciseQuery] = useState('');
   const [nutritionMetric, setNutritionMetric] = useState('calories');
+  const [coachPanel, setCoachPanel] = useState('decision');
 
   const hidden1RMSet = useMemo(() => new Set(hidden1RMExercises), [hidden1RMExercises]);
 
@@ -562,50 +571,97 @@ const AnalyticsView = memo(({
             </p>
           </div>
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-            <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
-              <TrendingDown size={14} className="text-amber-400" />
-              <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Plato Taraması</h4>
-            </div>
-            <div className="p-3 space-y-2">
-              {coachInsights.plateaus.length === 0 ? (
-                <p className="text-[10px] font-mono text-emerald-400 leading-relaxed py-2 text-center">
-                  4+ seans ve 21+ günlük veride belirgin bir plato görünmüyor.
-                </p>
-              ) : coachInsights.plateaus.map(item => (
-                <div key={item.name} className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                  <div className="flex justify-between gap-2">
-                    <strong className="text-[11px] text-zinc-200 truncate">{item.name}</strong>
-                    <span className={`text-[10px] font-mono shrink-0 ${item.state === 'decline' ? 'text-red-400' : 'text-amber-400'}`}>
-                      {item.change > 0 ? '+' : ''}{item.change}%
-                    </span>
-                  </div>
-                  <p className="text-[9px] font-mono text-zinc-500 mt-1 leading-relaxed">{item.sessions} seans · {item.advice}</p>
+          {/* Koç ekranı üç soruya ayrılıyor: şimdi ne yapmalıyım, dönem nasıl
+              değişti, bunun arkasındaki derin analiz ne. Bütün kartları tek
+              uzun sayfaya yığmak doğru içgörüyü bulmayı zorlaştırıyordu. */}
+          <div className="grid grid-cols-3 gap-1 rounded-2xl border border-zinc-800 bg-zinc-900 p-1">
+            {[
+              { key: 'decision', label: 'Karar' },
+              { key: 'trend', label: 'Dönem' },
+              { key: 'deep', label: 'Derin' },
+            ].map(panel => (
+              <button
+                key={panel.key}
+                type="button"
+                onClick={() => setCoachPanel(panel.key)}
+                className={`rounded-xl py-2.5 text-[9px] font-bold uppercase ${coachPanel === panel.key ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+              >
+                {panel.label}
+              </button>
+            ))}
+          </div>
+
+          {coachPanel === 'decision' && (
+            <>
+              <CoachBriefingCard
+                briefing={coachBriefing}
+                onAction={onAction}
+                onApply={onApplyCoach}
+              />
+              <CoachCalibrationCard report={coachCalibration} onOpenLedger={onOpenLedger} />
+            </>
+          )}
+
+          {coachPanel === 'trend' && (
+            <PeriodComparisonCard
+              workouts={workouts}
+              metrics={metricsHistory}
+              nutrition={nutritionHistory}
+              sleepScores={sleepScores}
+              restingHrLog={settings.restingHrLog || []}
+              resolveLoad={resolveLoad}
+              today={today}
+            />
+          )}
+
+          {coachPanel === 'deep' && (
+            <>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
+                  <TrendingDown size={14} className="text-amber-400" />
+                  <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Plato Taraması</h4>
                 </div>
-              ))}
-            </div>
-          </div>
+                <div className="p-3 space-y-2">
+                  {coachInsights.plateaus.length === 0 ? (
+                    <p className="text-[10px] font-mono text-emerald-400 leading-relaxed py-2 text-center">
+                      4+ seans ve 21+ günlük veride belirgin bir plato görünmüyor.
+                    </p>
+                  ) : coachInsights.plateaus.map(item => (
+                    <div key={item.name} className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
+                      <div className="flex justify-between gap-2">
+                        <strong className="text-[11px] text-zinc-200 truncate">{item.name}</strong>
+                        <span className={`text-[10px] font-mono shrink-0 ${item.state === 'decline' ? 'text-red-400' : 'text-amber-400'}`}>
+                          {item.change > 0 ? '+' : ''}{item.change}%
+                        </span>
+                      </div>
+                      <p className="text-[9px] font-mono text-zinc-500 mt-1 leading-relaxed">{item.sessions} seans · {item.advice}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          <PerformanceDriversCard report={performanceDrivers} />
-          <ResponseProfileCard profile={responseProfile} />
-          <AnomalyCard report={anomalyWatch} />
+              <PerformanceDriversCard report={performanceDrivers} />
+              <ResponseProfileCard profile={responseProfile} />
+              <AnomalyCard report={anomalyWatch} />
 
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Utensils size={14} className="text-emerald-400" />
-              <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Beslenme × Performans</h4>
-            </div>
-            <p className="text-[11px] font-bold text-zinc-200">
-              {coachInsights.nutrition.label || 'Henüz yeterli eşleşen veri yok'}
-            </p>
-            <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1.5">
-              {coachInsights.nutrition.message} · {coachInsights.nutrition.samples} eşleşen gün
-            </p>
-          </div>
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-2">
+                  <Utensils size={14} className="text-emerald-400" />
+                  <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Beslenme × Performans</h4>
+                </div>
+                <p className="text-[11px] font-bold text-zinc-200">
+                  {coachInsights.nutrition.label || 'Henüz yeterli eşleşen veri yok'}
+                </p>
+                <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1.5">
+                  {coachInsights.nutrition.message} · {coachInsights.nutrition.samples} eşleşen gün
+                </p>
+              </div>
 
-          {/* Kilitler en altta: "bu kart neden boş" sorusunun cevabı, ama
-              açılmış analizlerin önüne geçmemeli. */}
-          <AnalysisUnlockCard report={analysisLocks} />
+              {/* Kilitler en altta: "bu kart neden boş" sorusunun cevabı, ama
+                  açılmış analizlerin önüne geçmemeli. */}
+              <AnalysisUnlockCard report={analysisLocks} />
+            </>
+          )}
         </div>
       )}
 
