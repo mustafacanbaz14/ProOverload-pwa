@@ -21,7 +21,7 @@ import { buildStrengthBalance, strengthBalanceCoachItem } from './utils/strength
 import { buildConsistency, buildAdherence, consistencyCoachItem } from './utils/consistency';
 import { buildPlanExecution, planExecutionCoachItem } from './utils/planExecution';
 import { auditWorkoutData, removeEmptyWorkouts, dataHealthCoachItem } from './utils/dataHealth';
-import { repRangeFor, setRepRangeOverride } from './utils/exerciseTargets';
+import { loadStepFor, repRangeFor, setRepRangeOverride } from './utils/exerciseTargets';
 import { applyCoachMemory, snoozeCoachItem, dismissCoachItem, restoreCoachItem } from './utils/coachMemory';
 import {
   snapshotDecision, logDecision, logRejection, dueEntries, settleDue, ledgerStats, ledgerCoachItem,
@@ -48,6 +48,10 @@ import { buildRestingHrReport, upsertRestingHr, restingHrCoachItem } from './uti
 import { buildCardioRecords } from './utils/cardioRecords';
 import { activePainRegions, scanSessionForPain, painGuardCoachItem, painWarningFor, exercisesLoadingPain } from './utils/painGuard';
 import { progressionFor, setProgressionRule, buildNextSessionTargets, PROGRESSION_RULES } from './utils/progression';
+import {
+  activeProgressionBlocks, applyProgressionPrescription, buildProgressionBlockReport,
+  normalizeProgressionPlan, progressionPlanDefaults,
+} from './utils/progressionBlock';
 import { scanPlateaus, plateauCoachItem } from './utils/plateau';
 import { repRecordsFor, isRepRecord } from './utils/repRecords';
 import { buildRestReport, restCoachItem } from './utils/restQuality';
@@ -991,6 +995,53 @@ export default function App() {
     [profileExercise, sortedWorkouts, templates, customExercises, settings, resolveSetLoad],
   );
 
+  const profileRepRange = useMemo(() => profileExercise ? repRangeFor(profileExercise, {
+    overrides: settings.repRangeOverrides,
+    customExercises,
+    globalMin: settings.repRangeMin,
+    globalMax: settings.repRangeMax,
+  }) : null, [profileExercise, settings.repRangeOverrides, settings.repRangeMin,
+    settings.repRangeMax, customExercises]);
+
+  const profileProgressionPlan = profileExercise
+    ? settings.progressionPlans?.[profileExercise] || null
+    : null;
+  const progressionBlockReport = useMemo(() => (
+    profileExercise && profileProgressionPlan
+      ? buildProgressionBlockReport(profileExercise, profileProgressionPlan, sortedWorkouts, {
+        today: getLocalDateString(),
+        resolveLoad: resolveSetLoad,
+      })
+      : null
+  ), [profileExercise, profileProgressionPlan, sortedWorkouts, resolveSetLoad]);
+  const progressionBlockDefaults = useMemo(() => (
+    profileExercise && profileRepRange
+      ? progressionPlanDefaults(
+        profileExercise,
+        exerciseProfile,
+        profileRepRange,
+        loadStepFor(profileExercise, customExercises),
+      )
+      : null
+  ), [profileExercise, exerciseProfile, profileRepRange, customExercises]);
+
+  const progressionBlocks = useMemo(() => activeProgressionBlocks(
+    settings.progressionPlans,
+    sortedWorkouts,
+    { today: getLocalDateString(), resolveLoad: resolveSetLoad },
+  ), [settings.progressionPlans, sortedWorkouts, resolveSetLoad]);
+
+  /** Etkin bloktan o güne ait, geçmişe dondurulacak reçeteyi üretir. */
+  const progressionPrescriptionFor = useCallback((exerciseName, runtime = {}) => {
+    const plan = settings.progressionPlans?.[exerciseName];
+    if (!plan?.active) return null;
+    return buildProgressionBlockReport(exerciseName, plan, sortedWorkouts, {
+      today: getLocalDateString(),
+      resolveLoad: resolveSetLoad,
+      ...runtime,
+    })?.nextPrescription || null;
+  }, [settings.progressionPlans, sortedWorkouts, resolveSetLoad]);
+
   // Rekor kontrolü set güncellenirken yapılıyor; o an güncel tabloyu okumak
   // için ref kullanılır, yoksa bağımlılık zinciri her tuşta yeniden kurulurdu.
   const personalRecordsRef = useRef(personalRecords);
@@ -1257,15 +1308,22 @@ export default function App() {
       if (!prev) return prev;
       const newExerciseId = generateId();
       const initialSet = { id: generateId(), weight: '', reps: '', rir: 2, tempo: '', formRating: 8, setType: 'normal' };
+      const prescription = progressionPrescriptionFor(exerciseName, { readiness: prev.readiness });
+      const exercise = {
+        id: newExerciseId,
+        name: exerciseName,
+        sets: [initialSet],
+        ...(prescription ? { progressionPrescription: prescription } : {}),
+      };
       return {
         ...prev,
         activeExerciseId: newExerciseId,
-        exercises: [...(prev?.exercises || []), { id: newExerciseId, name: exerciseName, sets: [initialSet] }]
+        exercises: [...(prev?.exercises || []), exercise]
       };
     });
     setIsExerciseModalOpen(false);
     setExerciseSearchQuery('');
-  }, [setActiveWorkout]);
+  }, [setActiveWorkout, progressionPrescriptionFor]);
 
   const addSet = useCallback((exerciseId) => {
     setActiveWorkout(prev => ({
@@ -1384,6 +1442,20 @@ export default function App() {
   const removeSet = useCallback((exerciseId, setId) => {
     setActiveWorkout(prev => ({ ...prev, exercises: (prev?.exercises || []).map(ex => ex.id === exerciseId ? { ...ex, sets: (ex.sets || []).filter(s => s.id !== setId) } : ex) }));
   }, [setActiveWorkout]);
+
+  const handleApplyProgressionPrescription = useCallback((exerciseId) => {
+    const current = activeWorkoutRef.current?.exercises?.find(exercise => exercise.id === exerciseId);
+    if (!current?.progressionPrescription) return;
+    setActiveWorkout(prev => prev ? {
+      ...prev,
+      activeExerciseId: exerciseId,
+      exercises: (prev.exercises || []).map(exercise => {
+        if (exercise.id !== exerciseId || !exercise.progressionPrescription) return exercise;
+        return applyProgressionPrescription(exercise, exercise.progressionPrescription, generateId);
+      }),
+    } : prev);
+    showToast('Reçete boş setlere uygulandı; girilmiş veriler korunuyor.');
+  }, [setActiveWorkout, showToast]);
 
   // Sıralı liste üzerinden gezilir: sırasız bir dizide ilk eşleşme en eski seans olur
   // ve "geçen antrenman" bilgisi ile progresyon önerisi yanlış çıkardı.
@@ -1529,7 +1601,14 @@ export default function App() {
     const sessionTemplate = useAdaptedPlan ? adaptation.template : template;
 
     // Süperset bağları ve set yapısı şablondan aynen taşınır.
-    const initialExercises = sessionTemplate ? templateToExercises(sessionTemplate, generateId) : [];
+    const templateExercises = sessionTemplate ? templateToExercises(sessionTemplate, generateId) : [];
+    const initialExercises = templateExercises.map(exercise => {
+      const prescription = progressionPrescriptionFor(exercise.name, {
+        readiness: readinessSnapshot,
+        deloadActive: Boolean(deload?.active),
+      });
+      return prescription ? { ...exercise, progressionPrescription: prescription } : exercise;
+    });
 
     const sourceTemplateId = template?.id && templates.some(item => item.id === template.id)
       ? template.id
@@ -3739,6 +3818,39 @@ export default function App() {
     showToast(`${exerciseName}: ${PROGRESSION_RULES[key]?.label || 'Çift İlerleme'}`);
   }, [setSettings, showToast]);
 
+  const handleSaveProgressionBlock = useCallback((exerciseName, draft) => {
+    const now = new Date().toISOString();
+    const current = settings.progressionPlans?.[exerciseName] || null;
+    const restart = Boolean(draft?.restart);
+    const planId = restart ? generateId() : current?.id || generateId();
+    const normalized = normalizeProgressionPlan(exerciseName, {
+      ...draft,
+      id: planId,
+      active: true,
+      startDate: restart ? getLocalDateString() : current?.startDate || getLocalDateString(),
+      createdAt: restart ? now : current?.createdAt || now,
+    }, {
+      today: getLocalDateString(),
+      id: planId,
+      updatedAt: now,
+    });
+    if (!normalized) return;
+    setSettings(prev => ({
+      ...prev,
+      progressionPlans: { ...(prev.progressionPlans || {}), [exerciseName]: normalized },
+    }));
+    showToast(`${exerciseName}: ${restart ? 'yeni döngü başlatıldı' : `${normalized.weeks} haftalık ilerleme bloğu kaydedildi`}.`);
+  }, [settings.progressionPlans, setSettings, showToast]);
+
+  const handleRemoveProgressionBlock = useCallback((exerciseName) => {
+    setSettings(prev => {
+      const plans = { ...(prev.progressionPlans || {}) };
+      delete plans[exerciseName];
+      return { ...prev, progressionPlans: plans };
+    });
+    showToast(`${exerciseName} ilerleme bloğu kaldırıldı.`);
+  }, [setSettings, showToast]);
+
   /** Seansa başlamadan önce şablonun tamamı için hedef kartı. */
   const nextSessionTargetsFor = useCallback((template) => buildNextSessionTargets(template, sortedWorkouts, {
     repRangeFor: (ad) => repRangeFor(ad, {
@@ -4151,6 +4263,8 @@ export default function App() {
               recentWorkout={recentStrengthWorkout}
               interfaceMode={settings.interfaceMode}
               recommendation={templateRecommendation}
+              progressionBlocks={progressionBlocks}
+              onOpenExercise={setProfileExercise}
               onStart={handleStartRequest}
               onRepeat={handleRepeatWorkout}
               onLibrary={() => setIsLibraryOpen(true)}
@@ -4354,6 +4468,7 @@ export default function App() {
               customExercises={customExercises}
               settings={settings}
               updateSet={updateSet}
+              onApplyProgressionPrescription={handleApplyProgressionPrescription}
               addSet={addSet}
               removeSet={removeSet}
               repsOnFocusRef={repsOnFocusRef}
@@ -4639,18 +4754,18 @@ export default function App() {
           pinned={pinnedExerciseNames.has(profileExercise)}
           onTogglePinned={() => handleTogglePinnedExercise(profileExercise)}
           onEdit={() => { setProfileExercise(null); setEditorExercise(profileExercise); }}
-          repRange={repRangeFor(profileExercise, {
-            overrides: settings.repRangeOverrides,
-            customExercises,
-            globalMin: settings.repRangeMin,
-            globalMax: settings.repRangeMax,
-          })}
+          repRange={profileRepRange}
           onChangeRepRange={(min, max) => setSettings(prev => ({
             ...prev,
             repRangeOverrides: setRepRangeOverride(prev.repRangeOverrides, profileExercise, min, max),
           }))}
           progressionRule={progressionFor(profileExercise, settings.progressionRules)}
           onChangeProgression={(key) => handleSetProgressionRule(profileExercise, key)}
+          progressionBlock={profileProgressionPlan}
+          progressionBlockReport={progressionBlockReport}
+          progressionBlockDefaults={progressionBlockDefaults}
+          onSaveProgressionBlock={(draft) => handleSaveProgressionBlock(profileExercise, draft)}
+          onRemoveProgressionBlock={() => handleRemoveProgressionBlock(profileExercise)}
           repRecords={repRecordsForExercise(profileExercise)}
           plateau={plateauReport.items.find(x => x.name === profileExercise) || null}
           onStart={() => {

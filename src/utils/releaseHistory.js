@@ -9,7 +9,28 @@ const release = (version, date, title, items) => ({ version, date, title, items 
  * "yeni" diye gösteriyordu. Burada sürümler gerçek gruplar halinde ve yalnız
  * bu pencere açıldığında indirilen ayrı parçada tutulur.
  */
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverload 8.1', [
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverload 8.2', [
+  item('Hareket İlerleme Blokları', 'Her hareket için başlangıç yükü, hedef, hafta, seans sıklığı, set, tekrar bandı ve RIR içeren ayrı bir çok haftalı blok kurulabiliyor.'),
+  item('Beş Yükleme Modeli', 'Çift ilerleme, RIR oto-regülasyon, tepe set + geri çekme, ağır–orta–hafif dalga ve teknik/sabit yük modelleri ayrı reçeteler üretiyor.'),
+  item('Seans Seans Blok Takvimi', 'Üç ila on iki haftalık takvimde her seansın set, yük, tekrar, RIR ve fazı önceden görülebiliyor.'),
+  item('Geçmişten Güvenli Başlangıç', 'Blok formu son tamamlanan performansı ve harekete özel tekrar bandını başlangıç önerisi olarak kullanıyor; vücut ağırlıklı harekette ek yük ile toplam yük karıştırılmıyor.'),
+  item('Özel Mikro Yük Adımı', 'Hareket başına 0,25–20 kg artış adımı seçilebiliyor ve bütün reçeteler kullanılabilir yük adımına yuvarlanıyor.'),
+  item('Somut Performans Hedefi', 'Hedef kilo, tekrar ve RIR birlikte saklanıyor; ETA hesabı bu birleşik hedefin tahmini 1RM karşılığına göre çalışıyor.'),
+  item('Eğilimden ETA ve Güven', 'En az dört ölçümlü seans olduğunda doğrusal e1RM eğiliminden tahmini hedef tarihi ve düşük/orta/yüksek güven düzeyi çıkarılıyor; veri yetmiyorsa tarih uydurulmuyor.'),
+  item('Tepe Set ve Back-off Reçetesi', 'Bir ağır tepe setinin ardından seçilebilir yüzdeyle hafifleyen hacim setleri tek reçetede gösteriliyor.'),
+  item('İsteğe Bağlı Hafifletme Haftası', 'Son hafta tam antrenman kesintisi dayatmak yerine yaklaşık yüzde 10 yük ve yüzde 50 set azaltımı seçilebiliyor.'),
+  item('Kaçırılan Hedef Toparlama Merdiveni', 'Tek kötü seans alarm veya yük düşüşü üretmiyor; hedef bir kez tekrarlanıyor, iki ardışık belirgin kaçırmada yük yalnız yüzde 5 geri çekiliyor.'),
+  item('RIR ile Gerçek Oto-regülasyon', 'RIR modelinde son seansın ortalama yedek tekrarı hedefle karşılaştırılıyor; anlamlı farkta yük bir adım artıyor veya azalıyor.'),
+  item('Hazır Oluşa Özel Günlük Ayar', 'Kritik/orta hazır oluş ve etkin deload yalnız o günün reçetesini değiştiriyor; blok takvimi ve geçmiş hedefleri yeniden yazılmıyor.'),
+  item('Aktif Antrenmanda Donmuş Reçete', 'Seans başlarken o güne ait hedef hareket kaydına donduruluyor. Plan daha sonra değişse bile geçmişte ne hedeflendiği korunuyor.'),
+  item('Boş Setlere Tek Dokunuş', 'Reçete yalnız boş çalışma setlerinin kilo ve RIR alanlarını dolduruyor, eksik set yuvalarını ekliyor; girilmiş kilo, tekrar ve tamamlanmış setleri ezmiyor.'),
+  item('Canlı ve Tarihsel Uyum', 'Aktif seansta kaç hedef setin tutulduğu canlı izleniyor; kaydedilen seanslardan blok uyum yüzdesi, tam/kısmi/kaçan hedef dağılımı üretiliyor.'),
+  item('Merkezi Blok Panosu', 'Antrenman Merkezi bütün etkin blokları sıradaki reçete, tamamlanan seans ve uyum oranıyla tek listede gösteriyor; satıra dokununca hareket profili açılıyor.'),
+  item('Geçmişi Korumalı Yeni Döngü', 'Tamamlanan veya değiştirilecek blok tek dokunuşla yeni kimlik ve bugünün tarihiyle yeniden başlatılabiliyor; eski seans reçeteleri geçmişte kalıyor.'),
+  item('Yedek ve İçe Aktarma Koruması', 'Plan reçetesi ve set hedef anlık görüntüsü localStorage ile yedekte korunuyor; bozuk dış veriler güvenli biçime normalleştiriliyor.'),
+]);
+
+const RELEASE_8_1 = release('8.1', '2026-08-27', 'Antrenman Sihirbazı ve Sıra Motoru', [
   item('Mevcut Şablona Sihirbaz', 'Şablon kütüphanesi ve önizlemeden “Sihirbazla İyileştir” açılıyor. Eski şablonun hareket, set, süperset, teknik ve tekrar aralığı alanları düzenlemeye taşınıyor.'),
   item('Ayrı Hareket Sırası Adımı', 'Yeni program sihirbazına Düzen, Ekipman ve Öncelikten ayrı bir Sıra adımı eklendi. Hareket seçimiyle sıra kararı birbirine karıştırılmıyor.'),
   item('Yedi Sıralama Profili', 'Performans, kas önceliği, itiş–çekiş dönüşümü, üst–alt dönüşümü, uzun-boy yükleme, bilinen hareketler ve bilinçli ön yorgunluk ayrı seçenekler oldu.'),
@@ -45,6 +66,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_1,
   RELEASE_8_0,
   release('7.9', '2026-08-26', 'Doz–Yanıt Hacim Modeli', [
     item('Belirsizlik şeritleri', 'Kesin MEV/MAV/MRV hükmü yerine eşik, yüksek verim, tartışmalı ve kanıtsız hacim bölgeleri getirildi.'),

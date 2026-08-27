@@ -56,6 +56,12 @@ import { detectMuscleGroup as detectMuscleFor72, estimate1RM as estimate1RMFor72
 import {
   nextTargetByRule, setProgressionRule, progressionFor, buildNextSessionTargets, PROGRESSION_RULES,
 } from '../src/utils/progression.js';
+import {
+  PROGRESSION_BLOCK_MODEL_KEYS, activeProgressionBlocks,
+  applyProgressionPrescription, buildProgressionBlockReport,
+  estimateProgressionEta, evaluatePrescription, normalizeProgressionPlan,
+  prescriptionForSession, roundToLoadStep,
+} from '../src/utils/progressionBlock.js';
 import { assessExercise, scanPlateaus, plateauCoachItem, exerciseTrend } from '../src/utils/plateau.js';
 import { repRecordsFor, isRepRecord, REP_BANDS } from '../src/utils/repRecords.js';
 import { buildRestReport, restCoachItem } from '../src/utils/restQuality.js';
@@ -6506,6 +6512,154 @@ test('plan gerçekleşmesi plansız durumda sayı uydurmuyor', () => {
   assert.equal(report.score, null);
   assert.equal(report.confidence, 0);
   assert.equal(planExecutionCoachItem(report), null);
+});
+
+test('ilerleme bloğu beş modeli aynı güvenli plan biçiminden üretiyor', () => {
+  const base = normalizeProgressionPlan('Barbell Bench Press', {
+    id: 'bench-block', startDate: '2026-08-01', weeks: 6, sessionsPerWeek: 2,
+    sets: 3, repMin: 6, repMax: 10, startWeight: 100, targetWeight: 115,
+    targetReps: 8, targetRir: 2, increment: 2.5, backoffPercent: 10,
+  }, { today: '2026-08-01', updatedAt: '2026-08-01T00:00:00.000Z' });
+  assert.equal(base.weeks, 6);
+  assert.equal(base.targetWeight, 115);
+  assert.equal(roundToLoadStep(101.2, 2.5), 100);
+  assert.equal(PROGRESSION_BLOCK_MODEL_KEYS.length, 5);
+
+  PROGRESSION_BLOCK_MODEL_KEYS.forEach(mode => {
+    const prescription = prescriptionForSession({ ...base, mode }, 2, { today: '2026-08-08' });
+    assert.equal(prescription.planId, 'bench-block');
+    assert.ok(prescription.sets.length >= 1);
+    assert.ok(prescription.sets.every(set => Number.isFinite(set.weight) && set.reps > 0));
+  });
+  const top = prescriptionForSession({ ...base, mode: 'topBackoff' }, 0);
+  assert.equal(top.sets[0].kind, 'top');
+  assert.equal(top.sets[1].kind, 'backoff');
+  assert.ok(top.sets[1].weight < top.sets[0].weight);
+  const waveHeavy = prescriptionForSession({ ...base, mode: 'wave' }, 0);
+  const waveLight = prescriptionForSession({ ...base, mode: 'wave' }, 2);
+  assert.ok(waveHeavy.sets[0].weight > waveLight.sets[0].weight);
+  assert.ok(waveHeavy.sets[0].reps < waveLight.sets[0].reps);
+});
+
+test('planlı hafifletme tam bırakmak yerine yükü ve seti azaltıyor', () => {
+  const plan = normalizeProgressionPlan('Back Squat', {
+    id: 'sq', startDate: '2026-08-01', mode: 'double', weeks: 4,
+    sessionsPerWeek: 1, sets: 4, repMin: 5, repMax: 8,
+    startWeight: 120, targetWeight: 130, targetReps: 8, targetRir: 2,
+    increment: 2.5, deloadLastWeek: true,
+  }, { today: '2026-08-01', updatedAt: '2026-08-01T00:00:00.000Z' });
+  const normal = prescriptionForSession({ ...plan, deloadLastWeek: false }, 3);
+  const light = prescriptionForSession(plan, 3);
+  assert.equal(light.adaptation, 'planned-deload');
+  assert.equal(light.sets.length, 2);
+  assert.ok(light.sets[0].weight < normal.sets[0].weight);
+  assert.ok(light.sets[0].rir > normal.sets[0].rir);
+});
+
+test('reçete yalnız boş setleri dolduruyor ve kullanıcı verisini ezmiyor', () => {
+  const plan = normalizeProgressionPlan('Bench', {
+    id: 'b', startDate: '2026-08-01', mode: 'double', weeks: 4,
+    sessionsPerWeek: 1, sets: 3, repMin: 6, repMax: 10,
+    startWeight: 100, targetWeight: 110, targetReps: 10, targetRir: 2, increment: 2.5,
+  }, { today: '2026-08-01', updatedAt: '2026-08-01T00:00:00.000Z' });
+  const prescription = prescriptionForSession(plan, 0);
+  const exercise = {
+    name: 'Bench',
+    sets: [
+      { id: 'warm', setType: 'warmup', weight: '40', reps: '8' },
+      { id: 'done', setType: 'normal', weight: '97.5', reps: '7', rir: 1, completed: true },
+      { id: 'blank', setType: 'normal', weight: '', reps: '', rir: 2 },
+    ],
+  };
+  let seq = 0;
+  const applied = applyProgressionPrescription(exercise, prescription, () => `new-${++seq}`);
+  assert.equal(applied.sets[1].weight, '97.5');
+  assert.equal(applied.sets[1].reps, '7');
+  assert.equal(applied.sets[2].weight, '100');
+  assert.equal(applied.sets[2].reps, '');
+  assert.equal(applied.sets.length, 4);
+  assert.equal(applied.sets[3].reps, '');
+  assert.equal(applied.progressionPrescription.planId, 'b');
+  assert.equal(evaluatePrescription(prescription, applied).status, 'partial');
+});
+
+test('blok reçetesi yedek normalizasyonunda korunuyor, bozuk plan koleksiyonu sıfırlanıyor', () => {
+  const prescription = {
+    planId: 'safe-plan', exerciseName: 'Bench', mode: 'double', modelLabel: 'Çift',
+    sessionIndex: 1, totalSessions: 8, weekIndex: 1, withinWeek: 0,
+    phase: 'Tekrar', increment: 2.5, createdFor: '2026-08-27',
+    sets: [{ kind: 'work', weight: 100, reps: 8, rir: 2 }],
+  };
+  const workout = mergeWorkout({
+    id: 'rx-workout', date: '2026-08-27',
+    exercises: [{
+      name: 'Bench', progressionPrescription: prescription,
+      sets: [{ weight: '100', reps: '8', rir: 2, plannedTarget: { ...prescription.sets[0], planId: 'safe-plan', sessionIndex: 1 } }],
+    }],
+  });
+  assert.equal(workout.exercises[0].progressionPrescription.planId, 'safe-plan');
+  assert.equal(workout.exercises[0].sets[0].plannedTarget.reps, 8);
+  assert.deepEqual(mergeSettings({ progressionPlans: [] }).progressionPlans, {});
+});
+
+test('tek kötü seans hedefi tekrar ediyor, iki belirgin kaçırma küçük reset yapıyor', () => {
+  const plan = normalizeProgressionPlan('Bench', {
+    id: 'recovery', startDate: '2026-08-01', mode: 'double', weeks: 6,
+    sessionsPerWeek: 1, sets: 2, repMin: 6, repMax: 10,
+    startWeight: 100, targetWeight: 115, targetReps: 10, targetRir: 2, increment: 2.5,
+  }, { today: '2026-08-01', updatedAt: '2026-08-01T00:00:00.000Z' });
+  const missedWorkout = (id, date, index) => ({
+    id, date,
+    exercises: [{
+      name: 'Bench',
+      progressionPrescription: prescriptionForSession(plan, index, { today: date }),
+      sets: [
+        { weight: '60', reps: '3', rir: 0, setType: 'normal', completed: true },
+        { weight: '60', reps: '3', rir: 0, setType: 'normal', completed: true },
+      ],
+    }],
+  });
+  const empty = {
+    id: 'empty', date: '2026-08-02',
+    exercises: [{
+      name: 'Bench', progressionPrescription: prescriptionForSession(plan, 0),
+      sets: [{ weight: '100', reps: '', rir: 2, setType: 'normal' }],
+    }],
+  };
+  assert.equal(buildProgressionBlockReport('Bench', plan, [empty]).completedSessions, 0);
+  const first = buildProgressionBlockReport('Bench', plan, [missedWorkout('w1', '2026-08-03', 0)], { today: '2026-08-10' });
+  assert.equal(first.missedStreak, 1);
+  assert.equal(first.nextPrescription.recoveryAction, 'repeat');
+  assert.equal(first.nextPrescription.sets[0].weight, 100);
+
+  const second = buildProgressionBlockReport('Bench', plan, [
+    missedWorkout('w1', '2026-08-03', 0),
+    missedWorkout('w2', '2026-08-10', 1),
+  ], { today: '2026-08-17' });
+  assert.equal(second.missedStreak, 2);
+  assert.equal(second.nextPrescription.recoveryAction, 'reset');
+  assert.equal(second.nextPrescription.sets[0].weight, 95);
+  assert.equal(second.adherence, 28);
+});
+
+test('blok ETA ve merkez özeti veri yokken kesin tarih uydurmuyor', () => {
+  const plan = normalizeProgressionPlan('Bench', {
+    id: 'eta', startDate: '2026-07-01', mode: 'double', weeks: 8,
+    sessionsPerWeek: 1, sets: 1, repMin: 5, repMax: 8,
+    startWeight: 80, targetWeight: 100, targetReps: 5, targetRir: 1, increment: 2.5,
+  }, { today: '2026-07-01', updatedAt: '2026-07-01T00:00:00.000Z' });
+  assert.equal(estimateProgressionEta(plan, []).status, 'insufficient');
+  const history = [80, 82, 84, 86].map((weight, index) => ({
+    id: `w${index}`, date: `2026-07-${String(1 + index * 7).padStart(2, '0')}`,
+    exercises: [{ name: 'Bench', sets: [{ weight: String(weight), reps: '5', rir: 1, setType: 'normal', completed: true }] }],
+  }));
+  const report = buildProgressionBlockReport('Bench', plan, history, { today: '2026-07-25' });
+  assert.equal(report.eta.status, 'projected');
+  assert.ok(report.eta.days > 0);
+  assert.equal(report.adherence, null);
+  const summary = activeProgressionBlocks({ Bench: plan }, history, { today: '2026-07-25' });
+  assert.equal(summary.length, 1);
+  assert.equal(summary[0].plan.exerciseName, 'Bench');
 });
 
 test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {

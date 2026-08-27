@@ -66,6 +66,11 @@ export const DEFAULT_SETTINGS = {
   // Yazılmayan hareketler çift ilerleme kullanıyor; varsayılanı da yazmak
   // ayarları her hareket için bir satırla şişirirdi.
   progressionRules: {},
+  // Hareket bazlı çok haftalı bloklar. Her anahtar hareket adı; reçete
+  // başlangıç yükünü, modeli, hedefi ve takvimi taşır. Antrenman başladığında
+  // o günün reçetesi ayrıca seansa dondurulur; ayarı sonradan değiştirmek
+  // geçmiş uyum hesabını geriye dönük değiştirmez.
+  progressionPlans: {},
   // Dinlenme bitince sistem bildirimi. Varsayılan kapalı: izin isteği
   // kullanıcı açıkça istediğinde sorulmalı.
   restNotification: false,
@@ -780,7 +785,7 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '8.1';
+export const APP_VERSION = '8.2';
 
 /*
  * 7.9 ve öncesindeki tek parça sürüm notu arşivi. Artık çalıştırılabilir

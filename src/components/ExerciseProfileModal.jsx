@@ -4,6 +4,7 @@ import {
   Pin, Play, Settings, Dumbbell, Bookmark, Repeat2, RotateCcw, AlertTriangle,
 } from 'lucide-react';
 import TrendChart from './TrendChart';
+import ProgressionBlockCard from './ProgressionBlockCard';
 import { formatDay } from '../utils/dates';
 import { PROGRESSION_RULES } from '../utils/progression';
 
@@ -87,6 +88,11 @@ const ExerciseProfileModal = memo(({
   onChangeRepRange,
   progressionRule = null,
   onChangeProgression,
+  progressionBlock = null,
+  progressionBlockReport = null,
+  progressionBlockDefaults = null,
+  onSaveProgressionBlock,
+  onRemoveProgressionBlock,
   repRecords = null,
   plateau = null,
 }) => {
@@ -230,6 +236,18 @@ const ExerciseProfileModal = memo(({
               {progressionRule.detail}
             </p>
           </section>
+        )}
+
+        {progressionBlockDefaults && onSaveProgressionBlock && (
+          <ProgressionBlockCard
+            key={`${profile.name}-${progressionBlock?.updatedAt || 'new'}`}
+            exerciseName={profile.name}
+            plan={progressionBlock}
+            report={progressionBlockReport}
+            defaults={progressionBlockDefaults}
+            onSave={onSaveProgressionBlock}
+            onRemove={onRemoveProgressionBlock}
+          />
         )}
 
         {/* Tekrar bandı rekorları: tek bir tahmini 1RM yerine gerçekten

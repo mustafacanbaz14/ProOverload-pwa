@@ -198,6 +198,48 @@ export const mergeNutrition = (data) => ({
  * (string, null) gelebiliyor; hacim ve tonaj hesapları bu alanların varlığına
  * güveniyor.
  */
+const mergePlannedTarget = (value) => {
+  if (!value || typeof value !== 'object' || !value.planId) return null;
+  return {
+    planId: String(value.planId),
+    sessionIndex: Math.max(0, Math.round(parseNumber(value.sessionIndex))),
+    kind: typeof value.kind === 'string' ? value.kind : 'work',
+    weight: Math.max(0, parseNumber(value.weight)),
+    reps: Math.max(1, Math.round(parseNumber(value.reps) || 1)),
+    rir: Math.max(0, Math.min(5, Math.round(parseNumber(value.rir)))),
+  };
+};
+
+const mergeProgressionPrescription = (value) => {
+  if (!value || typeof value !== 'object' || !value.planId || !Array.isArray(value.sets)) return null;
+  const sets = value.sets.map(set => ({
+    kind: typeof set?.kind === 'string' ? set.kind : 'work',
+    weight: Math.max(0, parseNumber(set?.weight)),
+    reps: Math.max(1, Math.round(parseNumber(set?.reps) || 1)),
+    rir: Math.max(0, Math.min(5, Math.round(parseNumber(set?.rir)))),
+  })).slice(0, 12);
+  if (sets.length === 0) return null;
+  return {
+    planId: String(value.planId),
+    exerciseName: typeof value.exerciseName === 'string' ? value.exerciseName : '',
+    mode: typeof value.mode === 'string' ? value.mode : 'double',
+    modelLabel: typeof value.modelLabel === 'string' ? value.modelLabel : 'İlerleme Bloğu',
+    sessionIndex: Math.max(0, Math.round(parseNumber(value.sessionIndex))),
+    totalSessions: Math.max(1, Math.round(parseNumber(value.totalSessions) || 1)),
+    weekIndex: Math.max(0, Math.round(parseNumber(value.weekIndex))),
+    withinWeek: Math.max(0, Math.round(parseNumber(value.withinWeek))),
+    phase: typeof value.phase === 'string' ? value.phase : '',
+    increment: Math.max(0.25, parseNumber(value.increment) || 2.5),
+    sets,
+    createdFor: typeof value.createdFor === 'string' ? value.createdFor : '',
+    adaptation: typeof value.adaptation === 'string' ? value.adaptation : '',
+    adaptationReason: typeof value.adaptationReason === 'string' ? value.adaptationReason : '',
+    ...(value.recoveryAction === 'repeat' || value.recoveryAction === 'reset'
+      ? { recoveryAction: value.recoveryAction }
+      : {}),
+  };
+};
+
 const mergeSet = (set) => ({
   id: set?.id || generateId(),
   weight: set?.weight ?? '',
@@ -215,6 +257,9 @@ const mergeSet = (set) => ({
   // eskisi gibi tek kayıt olarak duruyor; ayrı bir set tipi açılmadı ki geçmiş
   // bozulmasın ve takip yalnızca istenen harekette kullanılsın.
   ...(set?.side === 'left' || set?.side === 'right' ? { side: set.side } : {}),
+  ...(mergePlannedTarget(set?.plannedTarget)
+    ? { plannedTarget: mergePlannedTarget(set.plannedTarget) }
+    : {}),
 });
 
 const mergeExercise = (ex) => ({
@@ -224,6 +269,9 @@ const mergeExercise = (ex) => ({
   id: ex?.id || generateId(),
   sets: Array.isArray(ex?.sets) ? ex.sets.map(mergeSet) : [],
   ...(ex?.supersetId ? { supersetId: ex.supersetId } : {}),
+  ...(mergeProgressionPrescription(ex?.progressionPrescription)
+    ? { progressionPrescription: mergeProgressionPrescription(ex.progressionPrescription) }
+    : {}),
 });
 
 const mergePlannedTemplate = (plan) => {
@@ -554,6 +602,9 @@ export const mergeSettings = (saved = {}) => {
   merged.restAlertVolume = Math.max(0.2, Math.min(1, parseNumber(merged.restAlertVolume) || 0.85));
   if (![0, 5, 10, 15].includes(Number(merged.restPreAlertSeconds))) merged.restPreAlertSeconds = 10;
   if (!merged.weekPlan || typeof merged.weekPlan !== 'object') merged.weekPlan = {};
+  if (!merged.progressionPlans || typeof merged.progressionPlans !== 'object' || Array.isArray(merged.progressionPlans)) {
+    merged.progressionPlans = {};
+  }
   // Tek programdan çoklu program listesine göç. Idempotent: yeni biçim aynen
   // geçer, eski `weekPlan` nesnesi ilk programa dönüşür.
   const { plans, activeId } = migrateWeekPlans(merged);

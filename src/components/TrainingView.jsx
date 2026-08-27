@@ -3,6 +3,7 @@ import {
   Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play,
   ChevronRight, ChevronDown, Copy, Wand2, Sparkles, Search, Star, Trash2,
   RotateCcw, SlidersHorizontal, Target, AlertTriangle, ShieldCheck,
+  TrendingUp,
 } from 'lucide-react';
 import { estimateDuration } from '../utils/templates';
 import { estimateLiftingCalories } from '../utils/cardio';
@@ -16,6 +17,8 @@ const TrainingView = memo(({
   recentWorkout = null,
   interfaceMode = 'simple',
   recommendation = null,
+  progressionBlocks = [],
+  onOpenExercise,
   onStart,
   onRepeat,
   onLibrary,
@@ -108,6 +111,59 @@ const TrainingView = memo(({
           </span>
           <Play size={15} className="text-emerald-400 shrink-0" />
         </button>
+      )}
+
+      {progressionBlocks.length > 0 && (
+        <section className="overflow-hidden rounded-2xl border border-cyan-900/55 bg-cyan-950/15">
+          <div className="flex items-center justify-between border-b border-cyan-900/35 bg-zinc-950/55 px-3.5 py-3">
+            <span>
+              <strong className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-cyan-300">
+                <TrendingUp size={12} /> Etkin İlerleme Blokları
+              </strong>
+              <span className="mt-0.5 block text-[8px] font-mono text-zinc-600">{progressionBlocks.length} hareket · hedef ve uyum tek yerde</span>
+            </span>
+            <span className="rounded-lg border border-cyan-900/50 bg-cyan-950/30 px-2 py-1 text-[9px] font-mono text-cyan-300">
+              {progressionBlocks.filter(block => !block.complete).length} sürüyor
+            </span>
+          </div>
+          <div className="divide-y divide-cyan-900/25">
+            {progressionBlocks.slice(0, 6).map(block => {
+              const next = block.nextPrescription;
+              const first = next?.sets?.[0];
+              return (
+                <button
+                  key={block.plan.id}
+                  onClick={() => onOpenExercise?.(block.plan.exerciseName)}
+                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left active:bg-cyan-950/25"
+                >
+                  <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border ${block.complete ? 'border-emerald-900/50 bg-emerald-950/20 text-emerald-400' : block.missedStreak >= 2 ? 'border-amber-900/50 bg-amber-950/20 text-amber-400' : 'border-cyan-900/50 bg-cyan-950/25 text-cyan-300'}`}>
+                    {block.complete ? <Target size={14} /> : <TrendingUp size={14} />}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <strong className="block truncate text-[10px] text-zinc-200">{block.plan.exerciseName}</strong>
+                    <span className="mt-0.5 block truncate text-[8px] font-mono text-zinc-500">
+                      {block.complete
+                        ? 'blok tamamlandı'
+                        : `${block.completedSessions + 1}/${block.totalSessions}. seans · ${first?.weight > 0 ? `${first.weight} kg × ` : ''}${first?.reps || '—'} tekrar`}
+                    </span>
+                  </span>
+                  <span className="shrink-0 text-right">
+                    <strong className={`block text-[10px] font-mono ${block.adherence === null ? 'text-zinc-600' : block.adherence >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      {block.adherence === null ? '—' : `%${block.adherence}`}
+                    </strong>
+                    <span className="text-[7px] font-bold uppercase text-zinc-700">uyum</span>
+                  </span>
+                  <ChevronRight size={13} className="shrink-0 text-zinc-700" />
+                </button>
+              );
+            })}
+          </div>
+          {progressionBlocks.length > 6 && (
+            <p className="border-t border-cyan-900/25 px-3.5 py-2 text-center text-[8px] font-mono text-zinc-600">
+              İlk 6 blok gösteriliyor; diğerleri hareket profillerinde duruyor.
+            </p>
+          )}
+        </section>
       )}
 
       <section className="luxury-feature-card rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">

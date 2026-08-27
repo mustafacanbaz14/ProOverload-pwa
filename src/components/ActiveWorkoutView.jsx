@@ -15,6 +15,7 @@ import { repRangeFor } from '../utils/exerciseTargets';
 import { applyEmphasis } from '../utils/undulation';
 import { TECHNIQUE_GUIDE } from '../utils/setTechniques';
 import { SIDES, isUnilateralName, sideSummary } from '../utils/unilateral';
+import { evaluatePrescription } from '../utils/progressionBlock';
 
 const ActiveWorkoutView = memo(({
   deloadReturn = null,
@@ -43,6 +44,7 @@ const ActiveWorkoutView = memo(({
   customExercises,
   settings,
   updateSet,
+  onApplyProgressionPrescription,
   addSet,
   removeSet,
   repsOnFocusRef,
@@ -450,6 +452,10 @@ const ActiveWorkoutView = memo(({
             readiness: activeWorkout.readiness,
             deload,
           }) : null;
+          const blockPrescription = ex.progressionPrescription || null;
+          const blockEvaluation = blockPrescription
+            ? evaluatePrescription(blockPrescription, ex, { requireCompleted: true })
+            : null;
           const record = personalRecords.get(ex.name);
           const setupNote = exerciseSetupNote(ex.name, customExercises);
           const bodyweightInfo = bodyweightInfoFor?.(ex.name) || null;
@@ -718,7 +724,45 @@ const ActiveWorkoutView = memo(({
                 </div>
               )}
 
-              {target && (
+              {blockPrescription && (
+                <div className="border-b border-cyan-900/45 bg-cyan-950/25 px-3 py-2.5">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className="flex items-center text-[10px] font-bold uppercase tracking-widest text-cyan-300">
+                        <TrendingUp size={11} className="mr-1.5" /> İlerleme Bloğu
+                      </span>
+                      <span className="mt-0.5 block text-[9px] font-mono text-cyan-300/75">
+                        {blockPrescription.modelLabel} · {blockPrescription.sessionIndex + 1}/{blockPrescription.totalSessions}. seans · {blockPrescription.phase}
+                      </span>
+                    </div>
+                    {onApplyProgressionPrescription && (
+                      <button
+                        onClick={() => onApplyProgressionPrescription(ex.id)}
+                        className="shrink-0 rounded-lg border border-cyan-700 bg-cyan-900/40 px-2.5 py-1.5 text-[8px] font-black uppercase text-cyan-200 active:bg-cyan-800/50"
+                      >
+                        Boş Setlere Uygula
+                      </button>
+                    )}
+                  </div>
+                  <div className="mt-2 flex gap-1.5 overflow-x-auto hide-scrollbar">
+                    {blockPrescription.sets.map((planned, index) => (
+                      <span key={`${planned.kind}-${index}`} className="shrink-0 rounded-lg border border-zinc-800 bg-zinc-950/80 px-2 py-1 text-[9px] font-mono text-zinc-300">
+                        {index + 1}. {planned.weight > 0 ? `${planned.weight} kg × ` : ''}{planned.reps} · RIR {planned.rir}
+                      </span>
+                    ))}
+                  </div>
+                  {blockPrescription.adaptationReason && (
+                    <p className="mt-1.5 text-[9px] font-mono leading-relaxed text-amber-300/85">{blockPrescription.adaptationReason}</p>
+                  )}
+                  {blockEvaluation?.status !== 'pending' && (
+                    <p className={`mt-1.5 text-[9px] font-bold ${blockEvaluation.status === 'met' ? 'text-emerald-400' : 'text-amber-400'}`}>
+                      Canlı uyum: %{blockEvaluation.score} · {blockEvaluation.metSets}/{blockEvaluation.plannedSets} hedef set
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {target && !blockPrescription && (
                 <div className="bg-emerald-950/25 px-3 py-2 border-b border-emerald-900/40">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-500 flex items-center">
@@ -895,7 +939,7 @@ const ActiveWorkoutView = memo(({
                             }
                           }}
                           className={`w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 font-mono text-sm outline-none text-center focus:bg-zinc-800 h-10 transition-colors ${warmup ? 'text-zinc-500' : 'text-zinc-100'}`}
-                          placeholder="0" />
+                          placeholder={set.plannedTarget?.reps ? String(set.plannedTarget.reps) : '0'} />
                       </div>
                       <div className="col-span-2"><input type="number" inputMode="decimal" step="0.5" min={INPUT_LIMITS.rir.min} max={INPUT_LIMITS.rir.max} value={set.rir} onChange={(e) => updateSet(ex.id, set.id, 'rir', e.target.value)} onFocus={e => e.target.select()} onBlur={(e) => updateSet(ex.id, set.id, 'rir', clampNumber(e.target.value, INPUT_LIMITS.rir.min, INPUT_LIMITS.rir.max))} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-zinc-300 font-mono text-xs outline-none text-center focus:bg-zinc-800 h-10 transition-colors" placeholder="0" /></div>
                       <div className="col-span-2"><input type="text" maxLength="4" value={set.tempo || ''} onChange={(e) => updateSet(ex.id, set.id, 'tempo', e.target.value)} onFocus={e => e.target.select()} className="w-full bg-zinc-900 border border-zinc-800 rounded-lg p-2 text-zinc-400 font-mono text-[11px] outline-none text-center focus:bg-zinc-800 h-10 transition-colors" placeholder="TUT" /></div>
