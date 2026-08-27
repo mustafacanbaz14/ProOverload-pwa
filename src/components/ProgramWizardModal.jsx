@@ -2,6 +2,7 @@ import React, { useState, useMemo, memo } from 'react';
 import {
   X, Wand2, ChevronLeft, ChevronRight, Check, AlertTriangle, CalendarRange,
   Layers, Dumbbell, Target, Pencil, Lock, Unlock, RefreshCw, Ban, Clock, ArrowRight,
+  ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, RotateCcw,
 } from 'lucide-react';
 import {
   buildProgram, SPLIT_DAY_OPTIONS, EQUIPMENT_PROFILES, PRIORITY_MUSCLES, MAX_PRIORITY,
@@ -9,7 +10,8 @@ import {
   scheduleFromWeekdays, auditSchedule,
 } from '../utils/programBuilder';
 import { compareWithActivePlan } from '../utils/programCompare';
-import { suggestSubstitutes } from '../utils/substitution';
+import { SUBSTITUTION_GOALS, suggestSubstitutesByGoal } from '../utils/substitution';
+import { ORDER_PROFILES, suggestOrderByProfile } from '../utils/exerciseOrder';
 import { WEEKDAYS } from '../utils/weekPlan';
 import { lengthBias, LENGTH_BIAS_LABEL } from '../utils/selectionAudit';
 
@@ -27,7 +29,8 @@ import { lengthBias, LENGTH_BIAS_LABEL } from '../utils/selectionAudit';
  * sorusunu cevaplamak zor; kurulmadan önce cevaplamak kolay.
  */
 
-const ADIMLAR = ['Düzen', 'Ekipman', 'Öncelik', 'Takvim', 'Kontrol'];
+const ADIMLAR = ['Düzen', 'Ekipman', 'Öncelik', 'Sıra', 'Takvim', 'Kontrol'];
+const ORDER_PROFILE_KEYS = ['performance', 'priority', 'alternate', 'upperLower', 'stretch', 'familiar', 'preExhaust'];
 const EMPTY_PERFORMED = new Set();
 const EMPTY_LIST = [];
 const EMPTY_LOCKS = {};
@@ -67,6 +70,11 @@ const ProgramWizardModal = memo(({
   const [swapping, setSwapping] = useState(null);
   // Elle yapılan tekil değişimler: { 'Gün Adı::Eski Ad': 'Yeni Ad' }.
   const [swaps, setSwaps] = useState(EMPTY_LOCKS);
+  // Hareket sırası ayrı bir karar: aynı hareket ve set listesi farklı amaçlarla
+  // farklı dizilebilir. Elle taşıma yapılınca yalnız o günün ad sırası saklanır.
+  const [orderProfile, setOrderProfile] = useState('performance');
+  const [manualOrders, setManualOrders] = useState(EMPTY_LOCKS);
+  const [substitutionGoal, setSubstitutionGoal] = useState('closest');
 
   const splitOptions = useMemo(() => getSplitOptions(daysPerWeek), [daysPerWeek]);
 
@@ -83,7 +91,7 @@ const ProgramWizardModal = memo(({
     return out;
   }, [locked, swaps]);
 
-  const built = useMemo(
+  const generated = useMemo(
     () => (isOpen ? buildProgram({
       daysPerWeek,
       splitId,
@@ -102,6 +110,37 @@ const ProgramWizardModal = memo(({
     [isOpen, daysPerWeek, splitId, equipment, experienceLevel, priority, preferPerformed,
       performedNames, customExercises, excluded, effectiveLocks, sessionLength, regenSeed]);
 
+  const built = useMemo(() => {
+    if (!generated) return null;
+    const priorityMuscle = priority[0] || '';
+    return {
+      ...generated,
+      days: generated.days.map(day => {
+        const suggested = suggestOrderByProfile(day.exercises, {
+          profile: orderProfile === 'manual' ? 'performance' : orderProfile,
+          priorityMuscle,
+          customExercises,
+          performedNames,
+        });
+        const reasonByName = new Map(suggested.order.map((exercise, index) => [exercise.name, suggested.reasons[index]]));
+        const requested = manualOrders[day.name] || [];
+        const byName = new Map(suggested.order.map(exercise => [exercise.name, exercise]));
+        const manual = requested.map(name => byName.get(name)).filter(Boolean);
+        const used = new Set(manual.map(exercise => exercise.name));
+        const order = requested.length
+          ? [...manual, ...suggested.order.filter(exercise => !used.has(exercise.name))]
+          : suggested.order;
+        return {
+          ...day,
+          exercises: order.map(exercise => ({
+            ...exercise,
+            orderReason: requested.length ? 'Elle belirlenen sıra' : reasonByName.get(exercise.name),
+          })),
+        };
+      }),
+    };
+  }, [generated, orderProfile, priority, customExercises, performedNames, manualOrders]);
+
   const schedule = useMemo(
     () => (built ? scheduleFromWeekdays(built.split, weekdays) : {}),
     [built, weekdays]);
@@ -116,9 +155,14 @@ const ProgramWizardModal = memo(({
 
   const swapOptions = useMemo(() => {
     if (!swapping) return [];
-    return suggestSubstitutes(swapping.name, allExerciseNames, { customExercises, limit: 6 })
+    return suggestSubstitutesByGoal(swapping.name, allExerciseNames, {
+      customExercises,
+      performed: performedNames,
+      goal: substitutionGoal,
+      limit: 6,
+    })
       .filter(o => !excluded.includes(o.name));
-  }, [swapping, allExerciseNames, customExercises, excluded]);
+  }, [swapping, allExerciseNames, customExercises, performedNames, substitutionGoal, excluded]);
 
   if (!isOpen) return null;
 
@@ -155,6 +199,10 @@ const ProgramWizardModal = memo(({
       ...prev,
       [gunAdi]: (prev[gunAdi] || []).filter(x => x !== eskiAd),
     }));
+    setManualOrders(prev => ({
+      ...prev,
+      [gunAdi]: (prev[gunAdi] || []).map(name => (name === eskiAd ? yeniAd : name)),
+    }));
     setSwapping(null);
   };
 
@@ -171,6 +219,31 @@ const ProgramWizardModal = memo(({
       // Bölmenin gün sayısı kadar seçilebilir; fazlası en eskiyi düşürür.
       return [...prev, key].slice(-daysPerWeek);
     });
+  };
+
+  const sirayiElleDegistir = (gunAdi, hareketAdi, target) => {
+    const day = built?.days?.find(item => item.name === gunAdi);
+    if (!day) return;
+    const names = day.exercises.map(exercise => exercise.name);
+    const index = names.indexOf(hareketAdi);
+    if (index < 0) return;
+    const to = target === 'top' ? 0
+      : target === 'bottom' ? names.length - 1
+        : Math.max(0, Math.min(names.length - 1, index + target));
+    if (to === index) return;
+    const [moved] = names.splice(index, 1);
+    names.splice(to, 0, moved);
+    setOrderProfile('manual');
+    setManualOrders(prev => ({ ...prev, [gunAdi]: names }));
+  };
+
+  const sirayiSifirla = (gunAdi = null) => {
+    if (!gunAdi) setManualOrders(EMPTY_LOCKS);
+    else setManualOrders(prev => {
+      const { [gunAdi]: _removed, ...remaining } = prev;
+      return remaining;
+    });
+    if (orderProfile === 'manual') setOrderProfile('performance');
   };
 
   const sonAdim = adim === ADIMLAR.length - 1;
@@ -476,7 +549,7 @@ const ProgramWizardModal = memo(({
           </>
         )}
 
-        {adim === 3 && built && (
+        {adim === 4 && built && (
           <>
             <p className="text-[10px] font-mono text-zinc-500 leading-relaxed px-1">
               Hangi günler gelebiliyorsun? Bölmenin hazır takvimi Pazartesi'den
@@ -583,7 +656,71 @@ const ProgramWizardModal = memo(({
           </>
         )}
 
-        {adim === 4 && built && (
+        {adim === 3 && built && (
+          <>
+            <p className="text-[10px] font-mono text-zinc-500 leading-relaxed px-1">
+              Hareket seçimi aynı kalır; yalnız seans içindeki sıra değişir.
+              Tek bir evrensel doğru yok: ağır performans, kas önceliği ve
+              yorgunluk dağılımı farklı sıralar gerektirir.
+            </p>
+
+            <div className="grid grid-cols-2 gap-2">
+              {ORDER_PROFILE_KEYS.map(key => {
+                const item = ORDER_PROFILES[key];
+                const selected = orderProfile === key;
+                const disabled = key === 'familiar' && performedNames.size === 0;
+                return (
+                  <button
+                    type="button"
+                    key={key}
+                    disabled={disabled}
+                    onClick={() => { setOrderProfile(key); setManualOrders(EMPTY_LOCKS); }}
+                    aria-pressed={selected}
+                    className={`rounded-2xl border p-3 text-left disabled:opacity-35 ${selected ? 'border-fuchsia-500 bg-fuchsia-950/30' : 'border-zinc-800 bg-zinc-900'}`}
+                  >
+                    <strong className={`text-[10px] block ${selected ? 'text-fuchsia-200' : 'text-zinc-300'}`}>{item.label}</strong>
+                    <span className="text-[8px] font-mono text-zinc-600 leading-relaxed block mt-1">{item.detail}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {(orderProfile === 'priority' || orderProfile === 'preExhaust') && priority.length === 0 && (
+              <div className="rounded-xl border border-amber-900/40 bg-amber-950/15 p-2.5 flex gap-2">
+                <AlertTriangle size={11} className="text-amber-400 shrink-0 mt-0.5" />
+                <p className="text-[9px] font-mono text-amber-200/85 leading-relaxed">
+                  Bu sıra için Öncelik adımında en az bir kas seçmelisin. Seçmezsen performans sırası kullanılır.
+                </p>
+              </div>
+            )}
+
+            {ORDER_PROFILES[orderProfile]?.caution && (
+              <p className="rounded-xl border border-amber-900/40 bg-amber-950/15 p-2.5 text-[9px] font-mono text-amber-200/85 leading-relaxed">
+                Ön yorgunluk seçili kası daha erken hissettirebilir fakat sonraki bileşke harekette kaldırılan yükü veya tekrarı düşürebilir. Uygulama bunu “daha iyi” diye etiketlemez.
+              </p>
+            )}
+
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+              <div className="px-3 py-2 border-b border-zinc-800 bg-zinc-950/50 flex justify-between items-center">
+                <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest">Örnek · {built.days[0]?.name}</span>
+                <span className="text-[8px] font-mono text-zinc-600">ilk {Math.min(8, built.days[0]?.exercises.length || 0)} hareket</span>
+              </div>
+              {(built.days[0]?.exercises || []).slice(0, 8).map((exercise, index) => (
+                <div key={exercise.name} className="px-3 py-1.5 border-b border-zinc-800/70 last:border-0 flex gap-2 items-center">
+                  <span className="text-[8px] font-mono text-fuchsia-400 w-3 shrink-0">{index + 1}</span>
+                  <span className="text-[9px] text-zinc-300 truncate flex-1">{exercise.name}</span>
+                  <span className="text-[7px] font-mono text-zinc-600 shrink-0">{exercise.orderReason}</span>
+                </div>
+              ))}
+            </div>
+
+            <p className="text-[8px] font-mono text-zinc-700 leading-relaxed px-1">
+              Kontrol adımında her hareketi tek basamak, en üste veya en alta da taşıyabilirsin. Elle değişiklik yalnız seçili güne uygulanır.
+            </p>
+          </>
+        )}
+
+        {adim === 5 && built && (
           <>
             <div className="grid grid-cols-3 gap-2">
               {[
@@ -642,12 +779,24 @@ const ProgramWizardModal = memo(({
                     korunuyor; üretici aynı kurallarla farklı ama eşdeğer bir
                     seçim kuruyor. Aynı varyant numarası her zaman aynı
                     programı verdiği için ileri geri gezinilebiliyor. */}
-                <button
-                  onClick={() => { setRegenSeed(v => v + 1); setSwapping(null); }}
-                  className="shrink-0 flex items-center gap-1 bg-zinc-900 border border-zinc-700 text-zinc-300 px-2 py-1 rounded-lg text-[9px] font-bold active:bg-zinc-800"
-                >
-                  <RefreshCw size={10} /> Yeniden Üret
-                </button>
+                <span className="shrink-0 flex items-center gap-1">
+                  {Object.keys(manualOrders).length > 0 && (
+                    <button
+                      onClick={() => sirayiSifirla()}
+                      title="Elle yapılan bütün sıra değişikliklerini sıfırla"
+                      aria-label="Bütün manuel sıraları sıfırla"
+                      className="p-1.5 rounded-lg border border-zinc-800 text-zinc-500 active:text-cyan-300"
+                    >
+                      <RotateCcw size={10} />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => { setRegenSeed(v => v + 1); setSwapping(null); }}
+                    className="flex items-center gap-1 bg-zinc-900 border border-zinc-700 text-zinc-300 px-2 py-1 rounded-lg text-[9px] font-bold active:bg-zinc-800"
+                  >
+                    <RefreshCw size={10} /> Yeniden Üret
+                  </button>
+                </span>
               </div>
               {(Object.values(effectiveLocks).some(l => l.length > 0) || excluded.length > 0) && (
                 <div className="px-4 py-2 bg-zinc-950/40 border-b border-zinc-800 flex flex-wrap gap-1.5">
@@ -672,7 +821,8 @@ const ProgramWizardModal = memo(({
               <div className="divide-y divide-zinc-800/70">
                 {built.days.map((gun, i) => {
                   const acik = openDay === i;
-                  const gunKey = Object.entries(built.split.schedule).find(([, idx]) => idx === i)?.[0];
+                  const previewSchedule = weekdays.length === daysPerWeek ? schedule : built.split.schedule;
+                  const gunKey = Object.entries(previewSchedule).find(([, idx]) => idx === i)?.[0];
                   const gunAdi = WEEKDAYS.find(w => w.key === gunKey)?.label || '';
                   const setler = gun.exercises.reduce((t, e) => t + e.sets, 0);
                   return (
@@ -692,7 +842,7 @@ const ProgramWizardModal = memo(({
                       </button>
                       {acik && (
                         <div className="px-4 pb-3 pt-0.5 space-y-1 bg-zinc-950/50">
-                          {gun.exercises.map(ex => {
+                          {gun.exercises.map((ex, exIndex) => {
                             const kilit = kilitliMi(gun.name, ex.name);
                             const degistiriliyor = swapping?.day === gun.name && swapping?.name === ex.name;
                             return (
@@ -715,7 +865,10 @@ const ProgramWizardModal = memo(({
                                       {kilit ? <Lock size={11} /> : <Unlock size={11} />}
                                     </button>
                                     <button
-                                      onClick={() => setSwapping(degistiriliyor ? null : { day: gun.name, name: ex.name })}
+                                      onClick={() => {
+                                        setSubstitutionGoal('closest');
+                                        setSwapping(degistiriliyor ? null : { day: gun.name, name: ex.name });
+                                      }}
                                       title="Bu hareketi değiştir"
                                       aria-label={`${ex.name} hareketini değiştir`}
                                       aria-expanded={degistiriliyor}
@@ -733,22 +886,44 @@ const ProgramWizardModal = memo(({
                                     </button>
                                   </span>
                                 </div>
+                                <div className="flex items-center gap-1 pl-0.5">
+                                  <span className="text-[7px] font-mono text-zinc-700 truncate flex-1">{ex.orderReason}</span>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 'top')} disabled={exIndex === 0} title="En üste taşı" aria-label={`${ex.name} en üste taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ChevronsUp size={10} /></button>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, -1)} disabled={exIndex === 0} title="Yukarı taşı" aria-label={`${ex.name} yukarı taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ArrowUp size={10} /></button>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 1)} disabled={exIndex === gun.exercises.length - 1} title="Aşağı taşı" aria-label={`${ex.name} aşağı taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ArrowDown size={10} /></button>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 'bottom')} disabled={exIndex === gun.exercises.length - 1} title="En alta taşı" aria-label={`${ex.name} en alta taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ChevronsDown size={10} /></button>
+                                </div>
                                 {degistiriliyor && (
                                   <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/10 p-2 space-y-1.5">
-                                    <span className="text-[9px] font-mono text-emerald-400/80 block">
-                                      Aynı katkı profiline en yakın alternatifler
+                                    <div className="flex gap-1 overflow-x-auto hide-scrollbar pb-1">
+                                      {Object.values(SUBSTITUTION_GOALS).map(goal => (
+                                        <button
+                                          type="button"
+                                          key={goal.key}
+                                          onClick={() => setSubstitutionGoal(goal.key)}
+                                          aria-pressed={substitutionGoal === goal.key}
+                                          title={goal.detail}
+                                          className={`shrink-0 rounded-lg border px-2 py-1 text-[8px] font-bold ${substitutionGoal === goal.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-900 text-zinc-600'}`}
+                                        >
+                                          {goal.label}
+                                        </button>
+                                      ))}
+                                    </div>
+                                    <span className="text-[8px] font-mono text-emerald-400/70 block">
+                                      {SUBSTITUTION_GOALS[substitutionGoal]?.detail}
                                     </span>
-                                    <div className="flex flex-wrap gap-1">
+                                    <div className="space-y-1">
                                       {swapOptions.length === 0 ? (
                                         <span className="text-[9px] font-mono text-zinc-600">Uygun alternatif bulunamadı.</span>
                                       ) : swapOptions.map(o => (
                                         <button
                                           key={o.name}
                                           onClick={() => hareketDegistir(gun.name, ex.name, o.name)}
-                                          title={`%${Math.round(o.similarity * 100)} örtüşme · ${o.equipment?.label || ''}`}
-                                          className="bg-zinc-900 border border-emerald-900/50 text-emerald-300 px-2 py-1 rounded-lg text-[9px] font-bold active:bg-emerald-950/40"
+                                          title={`%${Math.round(o.similarity * 100)} örtüşme · ${o.note}`}
+                                          className="w-full text-left bg-zinc-900 border border-emerald-900/50 px-2 py-1.5 rounded-lg active:bg-emerald-950/40"
                                         >
-                                          {o.name}
+                                          <strong className="text-[9px] text-emerald-300 block truncate">{o.name}</strong>
+                                          <span className="text-[7px] font-mono text-zinc-600 block truncate">%{Math.round(o.similarity * 100)} · {o.note}</span>
                                         </button>
                                       ))}
                                     </div>
@@ -892,7 +1067,13 @@ const ProgramWizardModal = memo(({
         {sonAdim ? (
           <>
             <button
-              onClick={() => onCustomize?.(built)}
+              onClick={() => onCustomize?.({
+                ...built,
+                split: {
+                  ...built.split,
+                  schedule: weekdays.length === daysPerWeek ? schedule : built.split.schedule,
+                },
+              })}
               className="flex-1 py-3 rounded-2xl border border-violet-800/60 bg-violet-950/30 active:bg-violet-900/40 text-violet-300 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1"
             >
               <Pencil size={13} /> Önce Düzenle

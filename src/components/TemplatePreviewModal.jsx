@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star, RefreshCw, History, SlidersHorizontal, Share2 } from 'lucide-react';
+import { X, Zap, Clock, Layers, Link2, Flame, Pencil, Trash2, Star, RefreshCw, History, SlidersHorizontal, Share2, Wand2 } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { isWorkingSet } from '../utils/helpers';
@@ -20,6 +20,7 @@ const TemplatePreviewModal = memo(({
   weightKg = 0,
   gender = 'male',
   onEdit,
+  onWizardEdit,
   onDelete,
   onToggleFavorite,
   // Şablonu düzenleyiciye götürmeden hareketi değiştirmek için. Tek bir
@@ -300,6 +301,15 @@ const TemplatePreviewModal = memo(({
         </div>
 
         <div className="p-3 border-t border-zinc-800 bg-zinc-950 shrink-0 pb-safe space-y-2">
+          {onWizardEdit && (
+            <button
+              type="button"
+              onClick={() => onWizardEdit(template)}
+              className="w-full rounded-xl border border-violet-800/60 bg-violet-950/25 py-2.5 text-[9px] font-bold text-violet-300 flex items-center justify-center gap-1.5 active:bg-violet-950/45"
+            >
+              <Wand2 size={12} /> Sihirbazla İyileştir
+            </button>
+          )}
           <div className="grid grid-cols-3 gap-1.5">
             <button
               type="button"

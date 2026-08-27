@@ -39,7 +39,10 @@ import {
 import {
   pushVersion, restoreVersion, describeVersionDiff, snapshotTemplate, sameStructure, MAX_VERSIONS,
 } from '../src/utils/templateVersions.js';
-import { suggestOrder } from '../src/utils/exerciseOrder.js';
+import {
+  applySupersetOpportunity, suggestOrder, suggestOrderByProfile,
+  suggestSupersetOpportunity, trimSessionToMinutes,
+} from '../src/utils/exerciseOrder.js';
 import {
   targetsFor, setVolumeTarget, normalizeVolumeTarget, suggestVolumeTarget,
   buildWeeklyVolumeHistory, customTargetMuscles,
@@ -73,7 +76,7 @@ import { regionsLoadedBy, activePainRegions, painWarningFor, scanSessionForPain 
 import { buildSessionPace, compareSessions, findComparableSessions } from '../src/utils/sessionPace.js';
 import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, templatesForActivity, applyCardioTemplate, describeCardioTemplate } from '../src/utils/cardioTemplates.js';
 import { cardioToCsv } from '../src/utils/csvExport.js';
-import { suggestSubstitutes } from '../src/utils/substitution.js';
+import { suggestSubstitutes, suggestSubstitutesByGoal } from '../src/utils/substitution.js';
 import { analyzeDayConflicts } from '../src/utils/interference.js';
 import { computeWeekPlan } from '../src/utils/weekPlan.js';
 import { findActivity } from '../src/utils/cardio.js';
@@ -1147,6 +1150,29 @@ test('ikame listesi hareketin kendisini önermez ve alakasızı eler', () => {
 
 test('kas eşlemesi olmayan harekete öneri üretilmez', () => {
   assert.deepEqual(suggestSubstitutes('Zzz Bilinmeyen Hareket', DEFAULT_EXERCISES), []);
+});
+
+test('ikame amaçları aynı işi gören adayları farklı ve açıklanabilir sıralıyor', () => {
+  const performed = new Set(['Dumbbell Bench Press']);
+  const familiar = suggestSubstitutesByGoal('Barbell Bench Press', DEFAULT_EXERCISES, {
+    goal: 'familiar', performed, limit: 8,
+  });
+  assert.ok(familiar.length > 0);
+  assert.equal(familiar[0].isKnown, true);
+  assert.match(familiar[0].note, /Geçmişinde var/);
+
+  const novel = suggestSubstitutesByGoal('Barbell Bench Press', DEFAULT_EXERCISES, {
+    goal: 'novel', performed, limit: 8,
+  });
+  assert.ok(novel.length > 0);
+  assert.equal(novel[0].isKnown, false);
+
+  const controlled = suggestSubstitutesByGoal('Barbell Bench Press', DEFAULT_EXERCISES, {
+    goal: 'controlled', limit: 8,
+  });
+  assert.ok(controlled[0].equipment);
+  assert.ok((controlled[0].equipment?.order ?? 9) <= (controlled.at(-1).equipment?.order ?? 9));
+  assert.ok(controlled.every(item => item.similarity >= 0.5));
 });
 
 /* ------------------------------------------------------------------ *
@@ -4550,7 +4576,7 @@ test('önerilen sıra bileşkeleri öne alıyor', () => {
   assert.equal(suggestOrder(['A', 'B']).changed, false);
 });
 
-test('süpersetli hareketler sıralamada yerinde kalıyor', () => {
+test('süpersetli hareketler sıralamada tek blok olarak komşu kalıyor', () => {
   const liste = [
     { name: 'Cable Fly (High to Low)' },
     { name: 'Barbell Bench Press', supersetId: 'x' },
@@ -4559,9 +4585,59 @@ test('süpersetli hareketler sıralamada yerinde kalıyor', () => {
   ];
   const r = suggestOrder(liste);
   assert.equal(r.locked, 2);
-  // Bağlı çift hâlâ 2. ve 3. sırada ve komşu: bağ komşuluk demek.
-  assert.equal(r.order[1].supersetId, 'x');
-  assert.equal(r.order[2].supersetId, 'x');
+  const indices = r.order.map((exercise, index) => exercise.supersetId === 'x' ? index : -1).filter(index => index >= 0);
+  assert.equal(indices.length, 2);
+  assert.equal(indices[1] - indices[0], 1);
+});
+
+test('sıralama profilleri amaçlarına göre farklı sonuç üretiyor', () => {
+  const list = [
+    { uid: 'fly', name: 'Cable Fly (High to Low)', sets: 3 },
+    { uid: 'row', name: 'Barbell Row', sets: 3 },
+    { uid: 'bench', name: 'Barbell Bench Press', sets: 3 },
+    { uid: 'curl', name: 'Cable Curl', sets: 3 },
+    { uid: 'leg', name: 'Leg Press', sets: 3 },
+  ];
+  const performance = suggestOrderByProfile(list, { profile: 'performance' });
+  assert.notEqual(performance.order[0].name, 'Cable Fly (High to Low)');
+
+  const priority = suggestOrderByProfile(list, { profile: 'priority', priorityMuscle: 'Göğüs' });
+  assert.ok(['Barbell Bench Press', 'Cable Fly (High to Low)'].includes(priority.order[0].name));
+
+  const preExhaust = suggestOrderByProfile(list, { profile: 'preExhaust', priorityMuscle: 'Göğüs' });
+  assert.equal(preExhaust.order[0].name, 'Cable Fly (High to Low)');
+  assert.equal(preExhaust.caution, true);
+
+  const familiar = suggestOrderByProfile(list, {
+    profile: 'familiar', performedNames: new Set(['Cable Curl']),
+  });
+  assert.equal(familiar.order[0].name, 'Cable Curl');
+
+  const alternating = suggestOrderByProfile(list, { profile: 'alternate' });
+  assert.equal(alternating.order.length, list.length);
+  assert.ok(alternating.reasons.every(Boolean));
+});
+
+test('seans sihirbazı süreyi hareket silmeden kısaltıyor ve süperset öneriyor', () => {
+  const list = [
+    { uid: 'bench', name: 'Barbell Bench Press', sets: 4 },
+    { uid: 'row', name: 'Barbell Row', sets: 4 },
+    { uid: 'curl', name: 'Cable Curl', sets: 4 },
+    { uid: 'push', name: 'Rope Pushdown', sets: 4 },
+  ];
+  const trim = trimSessionToMinutes(list, { targetMinutes: 20, restSeconds: 120 });
+  assert.ok(trim.changes.length > 0);
+  assert.equal(trim.exercises.length, list.length);
+  assert.ok(trim.exercises.every(exercise => exercise.sets >= 2));
+  assert.ok(trim.afterMinutes < trim.beforeMinutes);
+
+  const opportunity = suggestSupersetOpportunity(list);
+  assert.ok(opportunity);
+  const applied = applySupersetOpportunity(list, opportunity);
+  const first = applied.findIndex(exercise => exercise.uid === opportunity.firstUid);
+  const second = applied.findIndex(exercise => exercise.uid === opportunity.secondUid);
+  assert.equal(second - first, 1);
+  assert.equal(applied[first].superset, true);
 });
 
 

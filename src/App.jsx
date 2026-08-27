@@ -263,6 +263,7 @@ export default function App() {
   const [isBuilderOpen, setIsBuilderOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
   const [builderDraft, setBuilderDraft] = useState(null);
+  const [builderWizardMode, setBuilderWizardMode] = useState(false);
   const [isCardioOpen, setIsCardioOpen] = useState(false);
   const [cardioContext, setCardioContext] = useState(null);
   const [isEnergyDetailOpen, setIsEnergyDetailOpen] = useState(false);
@@ -4056,11 +4057,11 @@ export default function App() {
               setDeleteConfirm={setDeleteConfirm}
               onSelectMuscle={setDetailMuscle}
               onPreviewTemplate={setPreviewTemplate}
-              onEditTemplate={(t) => { setEditingTemplate(t); setIsBuilderOpen(true); }}
+              onEditTemplate={(t) => { setBuilderWizardMode(false); setEditingTemplate(t); setIsBuilderOpen(true); }}
               customExercises={customExercises}
               restSeconds={settings.restSeconds}
               experienceLevel={settings.experienceLevel}
-              onOpenTemplateBuilder={() => setIsBuilderOpen(true)}
+              onOpenTemplateBuilder={() => { setBuilderWizardMode(false); setIsBuilderOpen(true); }}
               onOpenTools={() => setIsToolsOpen(true)}
               readiness={readiness}
               personalVolume={personalVolume}
@@ -4153,14 +4154,15 @@ export default function App() {
               onStart={handleStartRequest}
               onRepeat={handleRepeatWorkout}
               onLibrary={() => setIsLibraryOpen(true)}
-              onBuilder={() => setIsBuilderOpen(true)}
+              onBuilder={() => { setBuilderWizardMode(false); setIsBuilderOpen(true); }}
               onWizard={() => setIsWizardOpen(true)}
               onStarter={() => setIsStarterOpen(true)}
               onWeekPlan={() => setIsWeekPlanOpen(true)}
               onCardio={() => setIsCardioOpen(true)}
               onCoach={() => setIsCoachCenterOpen(true)}
               onPreview={setPreviewTemplate}
-              onEdit={(template) => { setEditingTemplate(template); setIsBuilderOpen(true); }}
+              onEdit={(template) => { setBuilderWizardMode(false); setEditingTemplate(template); setIsBuilderOpen(true); }}
+              onWizardEdit={(template) => { setBuilderWizardMode(true); setEditingTemplate(template); setIsBuilderOpen(true); }}
               onDuplicate={handleDuplicateTemplate}
               onDelete={(template) => setDeleteConfirm({ isOpen: true, type: 'template', id: template.id })}
               onToggleFavorite={handleToggleTemplateFavorite}
@@ -4581,7 +4583,8 @@ export default function App() {
           weightKg={latestWeight}
           gender={profileGender}
           onStart={(t) => handleStartRequest(t)}
-          onEdit={(t) => { setPreviewTemplate(null); setEditingTemplate(t); setIsBuilderOpen(true); }}
+          onEdit={(t) => { setPreviewTemplate(null); setBuilderWizardMode(false); setEditingTemplate(t); setIsBuilderOpen(true); }}
+          onWizardEdit={(t) => { setPreviewTemplate(null); setBuilderWizardMode(true); setEditingTemplate(t); setIsBuilderOpen(true); }}
           onDelete={(t) => { setPreviewTemplate(null); setDeleteConfirm({ isOpen: true, type: 'template', id: t.id }); }}
           onToggleFavorite={(t) => {
             handleToggleTemplateFavorite(t);
@@ -4669,9 +4672,9 @@ export default function App() {
 
         {/* PROGRAM OLUŞTURUCU */}
         {isBuilderOpen && <TemplateBuilderModal
-          key={editingTemplate?.id || builderDraft?.key || 'new'}
+          key={`${editingTemplate?.id || builderDraft?.key || 'new'}-${builderWizardMode ? 'wizard' : 'plain'}`}
           isOpen={isBuilderOpen}
-          onClose={() => { setIsBuilderOpen(false); setEditingTemplate(null); setBuilderDraft(null); }}
+          onClose={() => { setIsBuilderOpen(false); setEditingTemplate(null); setBuilderDraft(null); setBuilderWizardMode(false); }}
           onSave={handleSaveProgram}
           onUpdate={handleUpdateTemplate}
           editing={editingTemplate}
@@ -4681,6 +4684,7 @@ export default function App() {
           experienceLevel={settings.experienceLevel}
           weightKg={latestWeight}
           optimalProfile={optimalVolumeProfile}
+          wizardMode={builderWizardMode}
           libraryProps={{
             allExerciseNames: allExercisesNames,
             getContributions: getExerciseContributions,
@@ -4728,6 +4732,7 @@ export default function App() {
             if (!draft) return;
             setBuilderDraft({ ...draft, key: generateId() });
             setIsWizardOpen(false);
+            setBuilderWizardMode(true);
             setIsBuilderOpen(true);
           }}
           experienceLevel={settings.experienceLevel}
@@ -4834,6 +4839,8 @@ export default function App() {
             const draft = draftFromStarterProgram(findStarterProgram(key), generateId);
             if (!draft) return;
             setBuilderDraft({ ...draft, key: generateId() });
+            setIsStarterOpen(false);
+            setBuilderWizardMode(true);
             setIsBuilderOpen(true);
           }}
           existingTemplateCount={templates.length}
@@ -4945,7 +4952,7 @@ export default function App() {
           onSelect={(key) => {
             const ac = {
               library: () => setIsLibraryOpen(true),
-              builder: () => setIsBuilderOpen(true),
+              builder: () => { setBuilderWizardMode(false); setIsBuilderOpen(true); },
               weekPlan: () => setIsWeekPlanOpen(true),
               plates: () => setPlateCalc({ weight: 0 }),
               cardio: () => setIsCardioOpen(true),

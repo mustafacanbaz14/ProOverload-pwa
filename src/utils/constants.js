@@ -780,7 +780,7 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '8.0';
+export const APP_VERSION = '8.1';
 
 /*
  * 7.9 ve öncesindeki tek parça sürüm notu arşivi. Artık çalıştırılabilir

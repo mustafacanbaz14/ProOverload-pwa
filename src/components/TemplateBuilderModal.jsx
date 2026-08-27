@@ -1,10 +1,9 @@
 import React, { useState, useMemo, memo } from 'react';
-import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Flame, Copy, RefreshCw, Link2, MoveRight, AlertTriangle, CheckCircle2, LifeBuoy, Zap, Wand2, SlidersHorizontal } from 'lucide-react';
+import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Flame, Copy, RefreshCw, Link2, MoveRight, AlertTriangle, CheckCircle2, LifeBuoy, Zap, SlidersHorizontal } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
 import { generateId } from '../utils/helpers';
-import { suggestSubstitutes } from '../utils/substitution';
-import { suggestOrder, auditExerciseOrder } from '../utils/exerciseOrder';
+import { SUBSTITUTION_GOALS, suggestSubstitutes, suggestSubstitutesByGoal } from '../utils/substitution';
 import { EMPHASIS_MODES, findEmphasis } from '../utils/undulation';
 import { PLANNABLE_TECHNIQUES } from '../utils/constants';
 import { TECHNIQUE_GUIDE } from '../utils/setTechniques';
@@ -20,6 +19,7 @@ import ExerciseLibraryModal from './ExerciseLibraryModal';
 import PlanningGuide from './PlanningGuide';
 import TemplateAssistantCard from './TemplateAssistantCard';
 import ProgramOptimizerCard from './ProgramOptimizerCard';
+import SessionDesignCard from './SessionDesignCard';
 
 const DAY_NAMES = ['1. Gün', '2. Gün', '3. Gün', '4. Gün', '5. Gün', '6. Gün', '7. Gün'];
 
@@ -47,6 +47,7 @@ const TemplateBuilderModal = memo(({
   weightKg = 0,
   optimalProfile = null,
   libraryProps = {},
+  wizardMode = false,
 }) => {
   const [programName, setProgramName] = useState(editing?.name || initialDraft?.name || '');
   const [days, setDays] = useState(() => editing
@@ -91,6 +92,7 @@ const TemplateBuilderModal = memo(({
   const [moveTarget, setMoveTarget] = useState(null);
   // Hareket başına plan paneli (yedek hareket, teknik, tekrar aralığı).
   const [planTarget, setPlanTarget] = useState(null);
+  const [replaceGoal, setReplaceGoal] = useState('closest');
 
   // Haftalık toplam: gün gün bakarak program yazan biri, her günü makul görünen
   // ama haftalık toplamı MEV altında kalan bir program üretebiliyordu. Hook
@@ -104,10 +106,17 @@ const TemplateBuilderModal = memo(({
     if (pickerMode?.type !== 'replace') return [];
     const hedef = (days[activeDay]?.exercises || []).find(ex => ex.uid === pickerMode.uid);
     if (!hedef) return [];
-    return suggestSubstitutes(hedef.name, libraryProps.allExerciseNames || [], {
-      customExercises, limit: 6,
-    }).map(o => ({ name: o.name, reason: `%${Math.round(o.similarity * 100)} örtüşme · ${o.equipment?.label || ''}` }));
-  }, [pickerMode, days, activeDay, libraryProps.allExerciseNames, customExercises]);
+    return suggestSubstitutesByGoal(hedef.name, libraryProps.allExerciseNames || [], {
+      customExercises,
+      performed: libraryProps.performedNames || new Set(),
+      goal: replaceGoal,
+      limit: 6,
+    }).map(o => ({
+      name: o.name,
+      reason: `%${Math.round(o.similarity * 100)} örtüşme · ${o.note}`,
+    }));
+  }, [pickerMode, days, activeDay, libraryProps.allExerciseNames,
+    libraryProps.performedNames, customExercises, replaceGoal]);
 
   if (!isOpen) return null;
 
@@ -135,14 +144,6 @@ const TemplateBuilderModal = memo(({
     [list[index], list[to]] = [list[to], list[index]];
     updateDay({ exercises: list });
   };
-  const orderReport = auditExerciseOrder(day.exercises, { customExercises });
-  const orderSuggestion = suggestOrder(day.exercises, { customExercises });
-
-  const applySuggestedOrder = () => {
-    if (!orderSuggestion.changed) return;
-    updateDay({ exercises: orderSuggestion.order });
-  };
-
   /** Hareketin plan alanlarını (yedek, teknik, aralık) günceller. */
   const setExercisePlan = (uid, patch) => updateDay({
     exercises: day.exercises.map(ex => (ex.uid === uid ? { ...ex, ...patch } : ex)),
@@ -205,6 +206,7 @@ const TemplateBuilderModal = memo(({
 
   const openReplacePicker = (uid) => {
     setSelectedExercises(new Set());
+    setReplaceGoal('closest');
     setPickerMode({ type: 'replace', uid });
   };
 
@@ -215,7 +217,7 @@ const TemplateBuilderModal = memo(({
 
       <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
         <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Calendar size={15} className="mr-2 text-cyan-400" /> {editing ? 'Şablonu Düzenle' : 'Program Oluştur'}
+          <Calendar size={15} className="mr-2 text-cyan-400" /> {wizardMode ? 'Şablon Sihirbazı' : editing ? 'Şablonu Düzenle' : 'Program Oluştur'}
         </h3>
         <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
           <X size={20} />
@@ -403,6 +405,16 @@ const TemplateBuilderModal = memo(({
           onAddSuggested={addSuggested}
         />
 
+        <SessionDesignCard
+          key={day.uid}
+          exercises={day.exercises}
+          onChange={(exercises) => updateDay({ exercises })}
+          customExercises={customExercises}
+          performedNames={libraryProps.performedNames || new Set()}
+          restSeconds={restSeconds}
+          defaultOpen={wizardMode}
+        />
+
         {/* Gün vurgusu. Uygulamanın ilerleme modeli haftalıktı; haftanın
             İÇİNDE bir yapı yoktu ve aynı kası iki kez çalışan kişi iki seansı
             da aynı aralıkta yapıyordu. */}
@@ -430,34 +442,6 @@ const TemplateBuilderModal = memo(({
             {findEmphasis(day.emphasis).detail}
           </p>
         </div>
-
-        {/* Sıra denetimi ve tek dokunuşla düzeltme. */}
-        {(orderReport.hasIssues || orderSuggestion.changed) && (
-          <div className="rounded-2xl border border-amber-900/40 bg-amber-950/15 p-3 space-y-2">
-            <span className="text-[10px] font-bold text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
-              <AlertTriangle size={11} /> Hareket Sırası
-            </span>
-            {orderReport.findings.slice(0, 2).map(f => (
-              <p key={f.key + f.index} className="text-[9px] font-mono text-amber-200/85 leading-relaxed">
-                {f.detail}
-              </p>
-            ))}
-            {orderSuggestion.changed && (
-              <button
-                onClick={applySuggestedOrder}
-                className="w-full rounded-lg border border-amber-800/60 bg-amber-950/30 py-2 text-[10px] font-bold text-amber-200 active:bg-amber-900/30 flex items-center justify-center gap-1.5"
-              >
-                <Wand2 size={11} /> Sırayı Düzelt
-              </button>
-            )}
-            {orderSuggestion.locked > 0 && (
-              <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
-                Süpersetli {orderSuggestion.locked} hareket yerinde kalır: bağ komşuluk
-                demek ve sıralamayı değiştirmek onu koparırdı.
-              </p>
-            )}
-          </div>
-        )}
 
         {/* Hareketler */}
         <div className="space-y-2">
@@ -820,6 +804,10 @@ const TemplateBuilderModal = memo(({
         selectMode
         multiSelect={pickerMode?.type === 'add'}
         suggestions={replaceSuggestions}
+        suggestionsLabel={SUBSTITUTION_GOALS[replaceGoal]?.detail || 'Aynı kası çalıştıran alternatifler'}
+        suggestionModes={Object.values(SUBSTITUTION_GOALS)}
+        suggestionMode={replaceGoal}
+        onSuggestionModeChange={setReplaceGoal}
         selectedNames={selectedExercises}
         disabledNames={pickerMode?.type === 'add'
           ? new Set(day.exercises.map(ex => ex.name))

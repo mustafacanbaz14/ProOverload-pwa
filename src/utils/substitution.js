@@ -1,4 +1,14 @@
 import { detectMuscleGroup, foldForSearch } from './helpers.js';
+import { lengthBias } from './selectionAudit.js';
+
+export const SUBSTITUTION_GOALS = {
+  closest: { key: 'closest', label: 'En Yakın', detail: 'Kas katkısı en çok örtüşenler.' },
+  familiar: { key: 'familiar', label: 'Bildiğim', detail: 'Daha önce yaptıkların öne gelir.' },
+  novel: { key: 'novel', label: 'Yeni', detail: 'Geçmişinde olmayan eşdeğerler öne gelir.' },
+  controlled: { key: 'controlled', label: 'Kontrollü', detail: 'Makine ve kablo gibi hareket yolu daha belirli adaylar öne gelir; ağrısızlık garantisi değildir.' },
+  stretch: { key: 'stretch', label: 'Gerilme', detail: 'Uzun kas boyunda yükleme adayı olan eşdeğerler öne gelir.' },
+  isolation: { key: 'isolation', label: 'İzole', detail: 'Yardımcı kas katkısını azaltan izolasyonlar öne gelir.' },
+};
 
 /**
  * Hareket ikamesi — "bunu yapamıyorum, yerine ne?"
@@ -186,4 +196,51 @@ export const jointFriendlySubstitutes = (name, allNames = [], opts = {}) => {
   return hepsi
     .filter(x => x.equipment && (!kaynakEkipman || x.equipment.order < kaynakEkipman.order))
     .slice(0, opts.limit || 5);
+};
+
+/**
+ * Aynı ikame havuzunu farklı karar amaçlarına göre yeniden sıralar.
+ * Benzerlik eşiği korunur; “çeşitlilik” alakasız hareket önermek anlamına gelmez.
+ */
+export const suggestSubstitutesByGoal = (name, allNames = [], {
+  goal = 'closest', customExercises = [], performed = new Set(), equipment = null, limit = 6,
+} = {}) => {
+  const candidates = suggestSubstitutes(name, allNames, {
+    customExercises, performed, equipment, limit: 40,
+  }).map(candidate => ({
+    ...candidate,
+    stretch: lengthBias(candidate.name) === 'stretch',
+    isolation: candidate.mechanics === 'Isolation',
+  }));
+
+  const similarity = (a, b) => b.similarity - a.similarity
+    || (a.equipment?.order ?? 9) - (b.equipment?.order ?? 9);
+  let ranked = [...candidates];
+  if (goal === 'familiar') {
+    ranked.sort((a, b) => Number(b.isKnown) - Number(a.isKnown) || similarity(a, b));
+  } else if (goal === 'novel') {
+    ranked.sort((a, b) => Number(a.isKnown) - Number(b.isKnown) || similarity(a, b));
+  } else if (goal === 'controlled') {
+    ranked.sort((a, b) => (a.equipment?.order ?? 9) - (b.equipment?.order ?? 9) || similarity(a, b));
+  } else if (goal === 'stretch') {
+    ranked.sort((a, b) => Number(b.stretch) - Number(a.stretch) || similarity(a, b));
+  } else if (goal === 'isolation') {
+    ranked.sort((a, b) => Number(b.isolation) - Number(a.isolation) || similarity(a, b));
+  } else {
+    ranked.sort(similarity);
+  }
+
+  return ranked.slice(0, limit).map(candidate => ({
+    ...candidate,
+    goal,
+    note: goal === 'familiar' && candidate.isKnown
+      ? `Geçmişinde var · ${candidate.note}`
+      : goal === 'novel' && !candidate.isKnown
+        ? `Yeni varyasyon · ${candidate.note}`
+        : goal === 'stretch' && candidate.stretch
+          ? `Uzun boyda yükleme adayı · ${candidate.note}`
+          : goal === 'isolation' && candidate.isolation
+            ? `İzolasyon · ${candidate.note}`
+            : candidate.note,
+  }));
 };

@@ -9,7 +9,25 @@ const release = (version, date, title, items) => ({ version, date, title, items 
  * "yeni" diye gösteriyordu. Burada sürümler gerçek gruplar halinde ve yalnız
  * bu pencere açıldığında indirilen ayrı parçada tutulur.
  */
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverload 8.0', [
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverload 8.1', [
+  item('Mevcut Şablona Sihirbaz', 'Şablon kütüphanesi ve önizlemeden “Sihirbazla İyileştir” açılıyor. Eski şablonun hareket, set, süperset, teknik ve tekrar aralığı alanları düzenlemeye taşınıyor.'),
+  item('Ayrı Hareket Sırası Adımı', 'Yeni program sihirbazına Düzen, Ekipman ve Öncelikten ayrı bir Sıra adımı eklendi. Hareket seçimiyle sıra kararı birbirine karıştırılmıyor.'),
+  item('Yedi Sıralama Profili', 'Performans, kas önceliği, itiş–çekiş dönüşümü, üst–alt dönüşümü, uzun-boy yükleme, bilinen hareketler ve bilinçli ön yorgunluk ayrı seçenekler oldu.'),
+  item('Ön Yorgunluk Takası', 'İzolasyonu bileşkeden önce koyan profil artık açıkça performans takası olarak etiketleniyor; uygulama bunu evrensel olarak daha iyi göstermiyor.'),
+  item('Manuel Sıra İnce Ayarı', 'Sihirbaz önizlemesinde hareketler tek basamak yukarı/aşağı taşınabiliyor. Değişiklik yalnız ilgili günün sırasına uygulanıyor.'),
+  item('En Üste ve En Alta Taşıma', 'Uzun seanslarda art arda dokunmak yerine hareketi tek dokunuşla listenin başına veya sonuna alma seçenekleri eklendi.'),
+  item('Sıra Gerekçeleri', 'Her hareketin yanında neden o konuma geldiği gösteriliyor: bileşkelik, seçili kas, dönüşüm, gerilmede yükleme veya geçmişte yapılmış olma.'),
+  item('Süperset Blok Koruması', 'Otomatik sıralama süperset eşlerini ayırmıyor; zinciri tek blok olarak birlikte taşıyor.'),
+  item('Seans Tasarım Sihirbazı', 'Şablon düzenleyicide hedef sıra, öncelikli kas, süre bütçesi ve uygulanabilir öneriler tek kartta toplandı.'),
+  item('Hareket Silmeden Süreye Sığdırma', 'Seans süre hedefini aşıyorsa düşük öncelikli setler azaltılıyor; hiçbir hareket silinmiyor ve hiçbir hareket iki setin altına indirilmiyor.'),
+  item('Basit Süperset Önerisi', 'Farklı kasların uygun izolasyonları için zaman kazandırabilecek bir çift öneriliyor; ağır bileşkeler otomatik eşlenmiyor.'),
+  item('Önce–Sonra Özeti', 'Sihirbaz açıldığı andaki ve güncel hareket, set ve tahmini süre değerleri yan yana gösteriliyor.'),
+  item('Sihirbazı Sıfırlama', 'Sıra, set ve öneri uygulamaları tek dokunuşla sihirbazın açıldığı ilk hale döndürülebiliyor.'),
+  item('Altı İkame Amacı', 'Hareket alternatifleri artık en yakın, bildiğim, yeni, kontrollü ekipman, gerilmede yükleme ve izolasyon amaçlarına göre yeniden sıralanabiliyor.'),
+  item('Takvim Seçimini Koruma', 'Sihirbazdan ayrıntılı düzenleyiciye geçerken seçilen antrenman günleri artık kaybolmuyor.'),
+]);
+
+const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürüm Arşivi', [
   item('Plan Gerçekleşme Skoru', 'Aktif programın uygulanması; seans katılımı, planlı setler, planlı hareketler, gün kayması ve süre doğruluğuyla 0–100 arasında özetleniyor. Eksik ölçümler sıfır yazılmıyor.'),
   item('Ayrı Veri Güveni', 'Skorun yanında kaç tam hafta, kaç anlık şablon kaydı ve ne kadar plan kapsaması bulunduğu gösteriliyor. Geçmişte aktif plan sürümünün saklanmadığı dönemlerde kesinlik özellikle sınırlanıyor.'),
   item('Sekiz Haftalık Uyum Eğilimi', 'Her haftanın tarih aralığı, eşleşen/planlanan seans sayısı, planlı set tamamlama oranı ve plansız ek seansları ayrı satırda gösteriliyor.'),
@@ -27,6 +45,7 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverl
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_0,
   release('7.9', '2026-08-26', 'Doz–Yanıt Hacim Modeli', [
     item('Belirsizlik şeritleri', 'Kesin MEV/MAV/MRV hükmü yerine eşik, yüksek verim, tartışmalı ve kanıtsız hacim bölgeleri getirildi.'),
     item('Kanıt ve set sayımı', 'Kanıt defteri, doğrudan/kesirli/toplam set karşılaştırması ve seçilebilir hacim felsefesi eklendi.'),

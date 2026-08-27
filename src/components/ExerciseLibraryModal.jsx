@@ -45,6 +45,9 @@ const ExerciseLibraryModal = memo(({
   // aratmak, değiştirme özelliğini pratikte kullanılmaz yapıyordu.
   suggestions = [],
   suggestionsLabel = 'Aynı kası çalıştıran alternatifler',
+  suggestionModes = [],
+  suggestionMode = '',
+  onSuggestionModeChange,
 }) => {
   const [query, setQuery] = useState('');
   const [muscleFilter, setMuscleFilter] = useState('Tümü');
@@ -105,6 +108,28 @@ const ExerciseLibraryModal = memo(({
             </button>
           ))}
         </div>
+
+        {suggestionModes.length > 0 && (
+          <div className="space-y-1.5">
+            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest block">
+              Alternatif amacı
+            </span>
+            <div className="flex gap-1 overflow-x-auto hide-scrollbar pb-1">
+              {suggestionModes.map(mode => (
+                <button
+                  type="button"
+                  key={mode.key}
+                  onClick={() => onSuggestionModeChange?.(mode.key)}
+                  aria-pressed={suggestionMode === mode.key}
+                  title={mode.detail}
+                  className={`shrink-0 rounded-lg border px-2 py-1.5 text-[8px] font-bold ${suggestionMode === mode.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-900 text-zinc-600'}`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {suggestions.length > 0 && (
           <div className="rounded-xl border border-emerald-900/40 bg-emerald-950/10 p-2 space-y-1.5">

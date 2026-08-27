@@ -27,6 +27,7 @@ const TrainingView = memo(({
   onCoach,
   onPreview,
   onEdit,
+  onWizardEdit,
   onDuplicate,
   onDelete,
   onToggleFavorite,
@@ -244,7 +245,8 @@ const TrainingView = memo(({
                     <button onClick={() => onStart?.(template)} aria-label={`${template.name} başlat`} className="w-9 h-9 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-900 flex items-center justify-center shrink-0"><Play size={14} /></button>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-1.5 pl-10">
+                  <div className="grid grid-cols-4 gap-1.5 pl-10">
+                    <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-1.5 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:bg-violet-950/35"><Wand2 size={10} /> Sihirbaz</button>
                     <button onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Pencil size={10} /> Düzenle</button>
                     <button onClick={() => onDuplicate?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Copy size={10} /> Kopyala</button>
                     <button onClick={() => onDelete?.(template)} className="rounded-lg border border-red-950/70 py-1.5 text-[8px] font-bold text-red-500/80 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
