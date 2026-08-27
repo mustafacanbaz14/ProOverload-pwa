@@ -1,8 +1,16 @@
-import React, { memo } from 'react';
+import React, { lazy, memo, Suspense } from 'react';
 import { Scale, LineChart, CalendarDays } from 'lucide-react';
-import MetricsView from './MetricsView';
-import AnalyticsView from './AnalyticsView';
-import CycleView from './CycleView';
+
+const MetricsView = lazy(() => import('./MetricsView'));
+const AnalyticsView = lazy(() => import('./AnalyticsView'));
+const CycleView = lazy(() => import('./CycleView'));
+
+const EmbeddedLoading = () => (
+  <div className="h-full p-4 animate-pulse space-y-3" role="status" aria-label="Gelişim ekranı yükleniyor">
+    <div className="h-24 rounded-2xl bg-zinc-950 border border-zinc-900" />
+    <div className="h-40 rounded-2xl bg-zinc-950 border border-zinc-900" />
+  </div>
+);
 
 const ProgressHubView = memo(({ tab, setTab, metricsProps, analyticsProps, gender = 'male', cycleProps }) => {
   const visibleTab = gender === 'female' ? tab : tab === 'cycle' ? 'body' : tab;
@@ -24,11 +32,13 @@ const ProgressHubView = memo(({ tab, setTab, metricsProps, analyticsProps, gende
       </div>
     </div>
     <div className="flex-1 min-h-0">
-      {visibleTab === 'body'
-        ? <MetricsView {...metricsProps} embedded />
-        : visibleTab === 'cycle'
-          ? <CycleView {...cycleProps} embedded />
-          : <AnalyticsView {...analyticsProps} embedded />}
+      <Suspense fallback={<EmbeddedLoading />}>
+        {visibleTab === 'body'
+          ? <MetricsView {...metricsProps} embedded />
+          : visibleTab === 'cycle'
+            ? <CycleView {...cycleProps} embedded />
+            : <AnalyticsView {...analyticsProps} embedded />}
+      </Suspense>
     </div>
   </div>
 });

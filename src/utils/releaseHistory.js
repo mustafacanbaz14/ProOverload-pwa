@@ -9,7 +9,7 @@ const release = (version, date, title, items) => ({ version, date, title, items 
  * "yeni" diye gösteriyordu. Burada sürümler gerçek gruplar halinde ve yalnız
  * bu pencere açıldığında indirilen ayrı parçada tutulur.
  */
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverload 8.2', [
+const RELEASE_8_2 = release('8.2', '2026-08-27', 'Hareket İlerleme Blokları', [
   item('Hareket İlerleme Blokları', 'Her hareket için başlangıç yükü, hedef, hafta, seans sıklığı, set, tekrar bandı ve RIR içeren ayrı bir çok haftalı blok kurulabiliyor.'),
   item('Beş Yükleme Modeli', 'Çift ilerleme, RIR oto-regülasyon, tepe set + geri çekme, ağır–orta–hafif dalga ve teknik/sabit yük modelleri ayrı reçeteler üretiyor.'),
   item('Seans Seans Blok Takvimi', 'Üç ila on iki haftalık takvimde her seansın set, yük, tekrar, RIR ve fazı önceden görülebiliyor.'),
@@ -28,6 +28,23 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverl
   item('Merkezi Blok Panosu', 'Antrenman Merkezi bütün etkin blokları sıradaki reçete, tamamlanan seans ve uyum oranıyla tek listede gösteriyor; satıra dokununca hareket profili açılıyor.'),
   item('Geçmişi Korumalı Yeni Döngü', 'Tamamlanan veya değiştirilecek blok tek dokunuşla yeni kimlik ve bugünün tarihiyle yeniden başlatılabiliyor; eski seans reçeteleri geçmişte kalıyor.'),
   item('Yedek ve İçe Aktarma Koruması', 'Plan reçetesi ve set hedef anlık görüntüsü localStorage ile yedekte korunuyor; bozuk dış veriler güvenli biçime normalleştiriliyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverload 8.3', [
+  item('İlk Açılış Paketi %26 Küçüldü', 'Ana uygulama parçası yaklaşık 1,12 MB’tan 0,82 MB’a indirildi. Ağır ekran kodları artık uygulama ilk açılırken değerlendirilmek zorunda değil.'),
+  item('Sekme Bazlı Kod Bölme', 'Antrenman, beslenme, gelişim ve arşiv ekranları ayrı parçalara ayrıldı; yalnız kullanıcı ilgili sekmeye geçtiğinde çalıştırılıyor.'),
+  item('Analizleri İkinci Kez Bölme', 'Gelişim Merkezi içindeki vücut, ayrıntılı analiz ve kadın döngüsü ekranları da birbirinden ayrıldı. Analiz ekranını açmak diğer iki ekranı gereksiz yere çalıştırmıyor.'),
+  item('Seyrek Araçları Geç Yükleme', 'Hızlı Kayıt ve Hazır Programlar pencereleri ilk açılış paketinden çıkarıldı; yalnız gerçekten açıldıklarında yükleniyor.'),
+  item('Kesintisiz Yükleme İskeleti', 'Ayrı parçalar indirilirken boş veya donmuş ekran yerine temaya uyumlu hafif bir hazırlık görünümü gösteriliyor.'),
+  item('Hareket Kütüphanesi Kademeli Render', '252 hareketi aynı anda DOM’a basmak yerine ilk 40 hareket gösteriliyor; sonraki gruplar tek dokunuşla ekleniyor. Arama ve kas filtreleri tam veri üzerinde çalışmaya devam ediyor.'),
+  item('Şablon Kütüphanesi Kademeli Render', 'Büyük program arşivlerinde ilk 12 şablon çiziliyor; arama, favoriler ve düzenleme özellikleri korunarak sonraki şablonlar isteğe göre açılıyor.'),
+  item('Build Performans Bütçesi', 'İlk JavaScript, gzip, CSS ve en büyük geç yüklenen parça için sınırlar eklendi. Gelecek bir değişiklik paketi yeniden şişirirse yayın derlemesi artık otomatik olarak duruyor.'),
+  item('Makine Tarafından Okunabilir Rapor', 'Her üretim derlemesi dist/performance-report.json dosyasına gerçek ilk yük, gzip ve parça ölçülerini yazıyor.'),
+  item('PWA Önbellek Bakımı', 'Eski Workbox önbellekleri otomatik temizleniyor; ekran parçaları çevrimdışı kullanım için önbellekte korunurken büyük barkod motoru kontrollü çalışma zamanı önbelleğinde tutuluyor.'),
+  item('Çekirdek Antrenman Yolu Korundu', 'Ana sayfa ve aktif antrenman ekranı çekirdek pakette bırakıldı. İkincil bir ekran indirilirken devam eden seansın görünürlüğü veya set kaydı askıya alınmıyor.'),
+  item('Gerçek İlk Yük Bağımlılık Hesabı', 'Bütçe kontrolü yalnız index dosyasına bakmıyor; Vite manifest üzerinden React ve ikon gibi statik bağımlılıkları da ilk yük toplamına katıyor.'),
+  item('Gerçek Gzip Ölçümü', 'Sıkıştırılmış bütçe dosya boyutundan tahmin edilmiyor; üretilen her ilk-yük dosyası gzip ile yeniden sıkıştırılıp toplam ağ boyutu ölçülüyor.'),
+  item('Çevrimdışı Navigasyon Güvencesi', 'Yeni ekran parçaları varken doğrudan açılan PWA yolları index uygulama kabuğuna düşüyor ve eski sürüm önbellekleri yükseltme sonrasında temizleniyor.'),
 ]);
 
 const RELEASE_8_1 = release('8.1', '2026-08-27', 'Antrenman Sihirbazı ve Sıra Motoru', [
@@ -66,6 +83,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_2,
   RELEASE_8_1,
   RELEASE_8_0,
   release('7.9', '2026-08-26', 'Doz–Yanıt Hacim Modeli', [

@@ -14,6 +14,8 @@ export default defineConfig({
       injectRegister: null,
       includeAssets: ['apple-touch-icon-v5.png', 'pwa-v5-192x192.png', 'pwa-v5-512x512.png'],
       workbox: {
+        cleanupOutdatedCaches: true,
+        navigateFallback: 'index.html',
         // Mobil dinlenme bildiriminin üzerine dokununca kurulu PWA'ya dön.
         importScripts: ['sw-notification.js'],
         // Barkod tarayıcı (zxing) ~450 KB ve zaten çevrimiçi ürün sorgusuyla
@@ -23,7 +25,10 @@ export default defineConfig({
         runtimeCaching: [{
           urlPattern: /\/assets\/BarcodeScannerModal-.*\.js$/,
           handler: 'CacheFirst',
-          options: { cacheName: 'barcode-scanner' }
+          options: {
+            cacheName: 'barcode-scanner',
+            expiration: { maxEntries: 2, maxAgeSeconds: 30 * 24 * 60 * 60 },
+          }
         }]
       },
       manifest: {
@@ -56,6 +61,7 @@ export default defineConfig({
     })
   ],
   build: {
+    manifest: true,
     target: 'esnext',
     cssCodeSplit: true,
     chunkSizeWarningLimit: 1000,

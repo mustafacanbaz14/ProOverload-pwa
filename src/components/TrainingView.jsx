@@ -10,6 +10,8 @@ import { estimateLiftingCalories } from '../utils/cardio';
 import { formatDay } from '../utils/dates';
 import { organizeTemplates } from '../utils/templateLibrary';
 
+const TEMPLATE_BATCH = 12;
+
 const TrainingView = memo(({
   templates = [],
   restSeconds = 120,
@@ -37,6 +39,7 @@ const TrainingView = memo(({
 }) => {
   const [query, setQuery] = useState('');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [templateLimit, setTemplateLimit] = useState(TEMPLATE_BATCH);
   // Kullanıcı bu ekranda elle açıp kapatana kadar Ayarlar'daki bilgi yoğunluğunu
   // canlı izler. Böylece Basit/Detaylı değişikliği sayfa yenilemeden uygulanır.
   const [plannerOverride, setPlannerOverride] = useState(null);
@@ -47,6 +50,7 @@ const TrainingView = memo(({
     () => organizeTemplates(templates, { query, favoritesOnly }),
     [templates, query, favoritesOnly],
   );
+  const displayedTemplates = visibleTemplates.slice(0, templateLimit);
 
   return (
     <div className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
@@ -249,15 +253,15 @@ const TrainingView = memo(({
               <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
               <input
                 value={query}
-                onChange={event => setQuery(event.target.value)}
+                onChange={event => { setQuery(event.target.value); setTemplateLimit(TEMPLATE_BATCH); }}
                 placeholder="Şablon veya hareket ara…"
                 aria-label="Şablon ara"
                 className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-8 pr-3 py-2.5 text-[10px] text-zinc-200 outline-none focus:border-cyan-600"
               />
             </div>
             <div className="grid grid-cols-2 gap-1 rounded-xl bg-zinc-950 border border-zinc-800 p-1">
-              <button onClick={() => setFavoritesOnly(false)} className={`rounded-lg py-1.5 text-[9px] font-bold ${!favoritesOnly ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>Tümü ({templates.length})</button>
-              <button onClick={() => setFavoritesOnly(true)} className={`rounded-lg py-1.5 text-[9px] font-bold ${favoritesOnly ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>Favoriler ({favoriteCount})</button>
+              <button onClick={() => { setFavoritesOnly(false); setTemplateLimit(TEMPLATE_BATCH); }} className={`rounded-lg py-1.5 text-[9px] font-bold ${!favoritesOnly ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>Tümü ({templates.length})</button>
+              <button onClick={() => { setFavoritesOnly(true); setTemplateLimit(TEMPLATE_BATCH); }} className={`rounded-lg py-1.5 text-[9px] font-bold ${favoritesOnly ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>Favoriler ({favoriteCount})</button>
             </div>
           </div>
         )}
@@ -269,11 +273,11 @@ const TrainingView = memo(({
         ) : visibleTemplates.length === 0 ? (
           <div className="p-6 text-center space-y-2">
             <p className="text-[10px] font-mono text-zinc-500">Bu filtreye uyan şablon yok.</p>
-            <button onClick={() => { setQuery(''); setFavoritesOnly(false); }} className="text-[9px] font-bold text-cyan-400">Filtreyi Temizle</button>
+            <button onClick={() => { setQuery(''); setFavoritesOnly(false); setTemplateLimit(TEMPLATE_BATCH); }} className="text-[9px] font-bold text-cyan-400">Filtreyi Temizle</button>
           </div>
         ) : (
           <div className="divide-y divide-zinc-800">
-            {visibleTemplates.map(template => {
+            {displayedTemplates.map(template => {
               const minutes = estimateDuration(template.exercises || [], restSeconds);
               const kcal = estimateLiftingCalories(minutes, weightKg);
               return (
@@ -310,6 +314,15 @@ const TrainingView = memo(({
                 </article>
               );
             })}
+            {displayedTemplates.length < visibleTemplates.length && (
+              <button
+                type="button"
+                onClick={() => setTemplateLimit(limit => limit + TEMPLATE_BATCH)}
+                className="w-full py-3 text-[9px] font-bold text-cyan-400 active:bg-zinc-900"
+              >
+                Sonraki {Math.min(TEMPLATE_BATCH, visibleTemplates.length - displayedTemplates.length)} şablonu göster
+              </button>
+            )}
           </div>
         )}
       </section>

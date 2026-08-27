@@ -1,13 +1,14 @@
 {
   "name": "prooverload-tracker",
   "private": true,
-  "version": "8.2",
+  "version": "8.3",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "verify": "node scripts/verify-muscles.mjs && node scripts/verify-core.mjs",
     "verify:core": "node scripts/verify-core.mjs",
-    "build": "npm run verify && vite build",
+    "build": "npm run verify && vite build && npm run check:performance",
+    "check:performance": "node scripts/check-performance.mjs",
     "lint": "eslint .",
     "preview": "vite preview"
   },

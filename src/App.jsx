@@ -111,7 +111,6 @@ import { buildPlateauInsights } from './utils/insights';
 import { buildFrequencyReport, frequencyCoachItem } from './utils/frequency';
 import { workoutsToCsv, metricsToCsv, nutritionToCsv } from './utils/csvExport';
 import { findStarterProgram, instantiateStarterProgram } from './utils/starterPrograms';
-import StarterProgramModal from './components/StarterProgramModal';
 import { analyzeDayConflicts } from './utils/interference';
 import { averageDailyExercise, dayEnergyBreakdown, ACTIVITY_LEVELS, estimateMacrosForTef, thermicEffect, neatOptsForDay, buildEnergySeries, groupByWeek } from './utils/energyModel';
 import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
@@ -148,11 +147,6 @@ import {
 import Navbar from './components/Navbar';
 import HomeView from './components/HomeView';
 import ActiveWorkoutView from './components/ActiveWorkoutView';
-import HistoryView from './components/HistoryView';
-import NutritionView from './components/NutritionView';
-import TrainingView from './components/TrainingView';
-import ProgressHubView from './components/ProgressHubView';
-import QuickCaptureModal from './components/QuickCaptureModal';
 import { formatDay, formatDayRelative } from './utils/dates';
 import { emptyWellnessDay, mergeWellnessDay, dayMindCalories, computeSleepScore } from './utils/wellness';
 import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
@@ -174,6 +168,12 @@ const ScenarioModal = lazy(() => import('./components/ScenarioModal'));
 const EvidenceModal = lazy(() => import('./components/EvidenceModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
 const CardioView = lazy(() => import('./components/CardioView'));
+const TrainingView = lazy(() => import('./components/TrainingView'));
+const NutritionView = lazy(() => import('./components/NutritionView'));
+const ProgressHubView = lazy(() => import('./components/ProgressHubView'));
+const HistoryView = lazy(() => import('./components/HistoryView'));
+const QuickCaptureModal = lazy(() => import('./components/QuickCaptureModal'));
+const StarterProgramModal = lazy(() => import('./components/StarterProgramModal'));
 
 // Kaçan dinlenme uyarısı en fazla bu kadar gecikmeyle telafi edilir. Ötesinde
 // ses çalmak, kullanıcının çoktan geçtiği bir ana ait uyarıyı bağırmak olur.
@@ -210,6 +210,20 @@ const ModalLoadingFallback = () => (
     <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-5 py-4 text-center shadow-2xl">
       <span className="w-7 h-7 rounded-full border-2 border-zinc-700 border-t-cyan-400 animate-spin block mx-auto" />
       <span className="text-[10px] font-mono text-zinc-400 block mt-2">Ekran hazırlanıyor…</span>
+    </div>
+  </div>
+);
+
+const ViewLoadingFallback = () => (
+  <div className="luxury-screen h-full bg-black p-4" role="status" aria-label="Sayfa yükleniyor">
+    <div className="animate-pulse space-y-4">
+      <div className="h-3 w-24 rounded-full bg-zinc-900" />
+      <div className="h-7 w-52 rounded-xl bg-zinc-900" />
+      <div className="h-28 rounded-3xl border border-zinc-900 bg-zinc-950" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="h-24 rounded-2xl bg-zinc-950" />
+        <div className="h-24 rounded-2xl bg-zinc-950" />
+      </div>
     </div>
   </div>
 );
@@ -4208,6 +4222,7 @@ export default function App() {
             />
           )}
 
+          <Suspense fallback={<ViewLoadingFallback />}>
           {view === 'training' && (
             <div className="luxury-screen h-full flex flex-col bg-black">
               <div className="px-4 pt-4 pb-2 shrink-0">
@@ -4455,6 +4470,7 @@ export default function App() {
               energyForRecord={energyForNutritionRecord}
             />
           )}
+          </Suspense>
 
           {/* ACTIVE WORKOUT OVERLAY */}
           {activeWorkout && (
@@ -4527,14 +4543,14 @@ export default function App() {
           <Navbar view={view} setView={handleChangeView} />
         )}
 
-        <QuickCaptureModal
+        <Suspense fallback={<ModalLoadingFallback />}>
+        {isQuickCaptureOpen && <QuickCaptureModal
           isOpen={isQuickCaptureOpen}
           onClose={() => setIsQuickCaptureOpen(false)}
           onSelect={handleQuickCapture}
           status={quickCaptureStatus}
-        />
+        />}
 
-        <Suspense fallback={<ModalLoadingFallback />}>
         {isGlobalSearchOpen && <GlobalSearchModal
           isOpen={isGlobalSearchOpen}
           onClose={() => setIsGlobalSearchOpen(false)}
@@ -4946,7 +4962,7 @@ export default function App() {
         />}
 
         {/* HAZIR PROGRAMLAR */}
-        <StarterProgramModal
+        {isStarterOpen && <StarterProgramModal
           isOpen={isStarterOpen}
           onClose={() => setIsStarterOpen(false)}
           onInstall={handleInstallStarter}
@@ -4959,7 +4975,7 @@ export default function App() {
             setIsBuilderOpen(true);
           }}
           existingTemplateCount={templates.length}
-        />
+        />}
 
         {/* DELOAD */}
         {/* SEANS RAPORU */}

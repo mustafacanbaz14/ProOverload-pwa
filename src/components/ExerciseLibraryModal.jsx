@@ -10,6 +10,7 @@ const chip = (w) =>
       : 'text-zinc-500 border-zinc-800 bg-zinc-900';
 
 const suffix = (w) => (w === 0.5 ? ' ½' : w === 0.25 ? ' ¼' : '');
+const LIST_BATCH = 40;
 
 /**
  * Hareket kütüphanesi: tüm hareketleri görüntüleme, kas eşlemesini düzenleme,
@@ -53,6 +54,7 @@ const ExerciseLibraryModal = memo(({
   const [muscleFilter, setMuscleFilter] = useState('Tümü');
   const [onlyMine, setOnlyMine] = useState(false);
   const [onlyPerformed, setOnlyPerformed] = useState(false);
+  const [visibleLimit, setVisibleLimit] = useState(LIST_BATCH);
 
   const list = useMemo(() => {
     const q = foldForSearch(query).trim();
@@ -69,6 +71,7 @@ const ExerciseLibraryModal = memo(({
     const sorted = sortExercisesForMuscle(filtered, muscleFilter, getContributions);
     return sorted.sort((a, b) => Number(pinnedNames.has(b)) - Number(pinnedNames.has(a)));
   }, [allExerciseNames, query, muscleFilter, onlyMine, onlyPerformed, performedNames, pinnedNames, getContributions, isUserAdded]);
+  const visibleList = list.slice(0, visibleLimit);
 
   if (!isOpen) return null;
 
@@ -91,7 +94,7 @@ const ExerciseLibraryModal = memo(({
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => { setQuery(e.target.value); setVisibleLimit(LIST_BATCH); }}
             placeholder="Hareket ara..."
             className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-3 text-zinc-100 outline-none font-mono text-xs h-11 focus:border-cyan-500 transition-colors"
           />
@@ -101,7 +104,7 @@ const ExerciseLibraryModal = memo(({
           {['Tümü', ...MUSCLE_GROUPS].map(m => (
             <button
               key={m}
-              onClick={() => setMuscleFilter(m)}
+              onClick={() => { setMuscleFilter(m); setVisibleLimit(LIST_BATCH); }}
               className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide border transition-colors ${muscleFilter === m ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20' : 'border-zinc-800 text-zinc-500'}`}
             >
               {m}
@@ -155,21 +158,23 @@ const ExerciseLibraryModal = memo(({
         <div className="flex items-center justify-between gap-2">
           <div className="flex gap-1.5 min-w-0 overflow-x-auto hide-scrollbar">
             <button
-              onClick={() => setOnlyMine(v => !v)}
+              onClick={() => { setOnlyMine(v => !v); setVisibleLimit(LIST_BATCH); }}
               className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase border transition-colors flex items-center gap-1 ${onlyMine ? 'border-amber-600 text-amber-400 bg-amber-950/20' : 'border-zinc-800 text-zinc-500'}`}
             >
               <Star size={11} fill={onlyMine ? 'currentColor' : 'none'} /> Benimkiler
             </button>
             {selectMode && performedNames.size > 0 && (
               <button
-                onClick={() => setOnlyPerformed(v => !v)}
+                onClick={() => { setOnlyPerformed(v => !v); setVisibleLimit(LIST_BATCH); }}
                 className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase border transition-colors flex items-center gap-1 ${onlyPerformed ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20' : 'border-zinc-800 text-zinc-500'}`}
               >
                 <History size={11} /> Yaptıklarım
               </button>
             )}
           </div>
-          <span className="text-[10px] font-mono text-zinc-600">{list.length} hareket</span>
+          <span className="text-[10px] font-mono text-zinc-600">
+            {visibleList.length < list.length ? `${visibleList.length}/${list.length}` : list.length} hareket
+          </span>
         </div>
         {muscleFilter !== 'Tümü' && (
           <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
@@ -192,7 +197,7 @@ const ExerciseLibraryModal = memo(({
           <div className="text-center py-12 text-zinc-600 text-[11px] font-mono">Eşleşen hareket yok.</div>
         )}
 
-        {list.map(name => {
+        {visibleList.map(name => {
           const contributions = getContributions(name) || {};
           const parts = Object.entries(contributions).sort((a, b) => b[1] - a[1]);
           const mine = isUserAdded(name);
@@ -292,6 +297,16 @@ const ExerciseLibraryModal = memo(({
             </div>
           );
         })}
+
+        {visibleList.length < list.length && (
+          <button
+            type="button"
+            onClick={() => setVisibleLimit(limit => limit + LIST_BATCH)}
+            className="mx-4 my-4 w-[calc(100%_-_2rem)] rounded-xl border border-zinc-800 bg-zinc-900 py-3 text-[10px] font-bold text-cyan-400 active:bg-zinc-800"
+          >
+            Sonraki {Math.min(LIST_BATCH, list.length - visibleList.length)} hareketi göster
+          </button>
+        )}
       </div>
 
       {selectMode && multiSelect && (
