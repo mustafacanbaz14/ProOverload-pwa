@@ -199,6 +199,7 @@ const GlobalSearchModal = lazy(() => import('./components/GlobalSearchModal'));
 const OnboardingModal = lazy(() => import('./components/OnboardingModal'));
 const ReleaseNotesModal = lazy(() => import('./components/ReleaseNotesModal'));
 const BackupImportPreviewModal = lazy(() => import('./components/BackupImportPreviewModal'));
+const StoreReadinessModal = lazy(() => import('./components/StoreReadinessModal'));
 
 const ModalLoadingFallback = () => (
   <div className="fixed inset-0 z-[119] bg-black/70 backdrop-blur-sm flex items-center justify-center" role="status" aria-label="Ekran yükleniyor">
@@ -252,7 +253,11 @@ export default function App() {
   const [isEndWorkoutModalOpen, setIsEndWorkoutModalOpen] = useState(false);
   const [readinessForm, setReadinessForm] = useState(DEFAULT_READINESS);
 
-  const [view, setView] = useState('home');
+  const [view, setView] = useState(() => {
+    if (typeof window === 'undefined') return 'home';
+    const requested = new URLSearchParams(window.location.search).get('view');
+    return ['home', 'training', 'nutrition', 'progress', 'history'].includes(requested) ? requested : 'home';
+  });
   const [historyTab, setHistoryTab] = useState('workouts');
   const [analysisType, setAnalysisType] = useState('body');
   const [progressTab, setProgressTab] = useState('body');
@@ -313,6 +318,7 @@ export default function App() {
     && initial.metricsHistory.length === 0
     && initial.nutritionHistory.length === 0);
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false);
+  const [isStoreReadinessOpen, setIsStoreReadinessOpen] = useState(false);
   const [pendingImport, setPendingImport] = useState(null);
 
   useEffect(() => {
@@ -4445,6 +4451,7 @@ export default function App() {
           lastBackupDate={lastBackupDate}
           onOpenOnboarding={() => setIsOnboardingOpen(true)}
           onOpenReleaseNotes={() => setIsReleaseNotesOpen(true)}
+          onOpenStoreReadiness={() => setIsStoreReadinessOpen(true)}
           bodyweightAudit={bodyweightAudit}
           onNormalizeBodyweight={handleNormalizeBodyweight}
           onToggleRestNotification={handleToggleRestNotification}
@@ -4469,6 +4476,13 @@ export default function App() {
         {isReleaseNotesOpen && <ReleaseNotesModal
           isOpen={isReleaseNotesOpen}
           onClose={() => setIsReleaseNotesOpen(false)}
+        />}
+
+        {isStoreReadinessOpen && <StoreReadinessModal
+          isOpen={isStoreReadinessOpen}
+          onClose={() => setIsStoreReadinessOpen(false)}
+          checklist={settings.storeChecklist}
+          onChangeChecklist={(storeChecklist) => setSettings(prev => ({ ...prev, storeChecklist }))}
         />}
 
         {pendingImport && <BackupImportPreviewModal

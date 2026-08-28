@@ -36,6 +36,9 @@ export const DEFAULT_SETTINGS = {
   // Biri "aktif" seçilir ve ana ekrandaki teorik hesaplar onu kullanır.
   weekPlans: [],
   activePlanId: '',
+  // Mağaza hazırlık merkezi yalnız geliştiricinin elle doğruladığı adımları
+  // saklar. Kodla doğrulanan maddeler bu nesneye yazılmaz.
+  storeChecklist: {},
   // Eski tek program biçimi (gün -> şablon kimliği). Yalnızca göç için
   // duruyor; yazma artık weekPlans üzerinden yapılıyor.
   weekPlan: {},
@@ -785,7 +788,7 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '8.5';
+export const APP_VERSION = '8.6';
 
 /*
  * 7.9 ve öncesindeki tek parça sürüm notu arşivi. Artık çalıştırılabilir

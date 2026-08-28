@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "appVersion": "8.6",
+  "identity": {
+    "name": "ProOverload Tracker",
+    "developerDisplayName": "AFACAN TECH",
+    "primaryCategory": "Health & Fitness",
+    "iosBundleId": "tech.afacan.prooverload",
+    "androidPackageName": "tech.afacan.prooverload"
+  },
+  "urls": {
+    "productionOrigin": "",
+    "privacyPath": "/privacy.html",
+    "supportPath": "/support.html",
+    "termsPath": "/terms.html",
+    "repository": "https://github.com/mustafacanbaz14/ProOverload-pwa"
+  },
+  "apple": {
+    "name": "ProOverload Tracker",
+    "subtitle": "Antrenman ve Gelişim Koçu",
+    "keywords": "antrenman,fitness,beslenme,gelişim,hipertrofi,kardiyo,kalori,vücut,koç",
+    "promotionalText": "Antrenman, beslenme, toparlanma ve gelişim verilerini açıklanabilir analizlerle tek yerde takip et.",
+    "description": "ProOverload Tracker; ağırlık antrenmanlarını, kardiyoyu, beslenmeyi, vücut ölçülerini ve toparlanmayı tek yerde takip eder. Program sihirbazı, hareket bazlı progresyon blokları, hacim analizi, hazır oluş değerlendirmesi, enerji dengesi, hedef takibi ve kişisel koç çıktıları sunar. Veriler mevcut sürümde öncelikle cihazında tutulur; hesap açmak gerekmez. JSON yedeğiyle kayıtlarını kendin taşıyabilirsin. Hesaplamalar fitness takibi içindir; tıbbi tanı veya tedavi sunmaz.",
+    "copyright": "2026 AFACAN TECH"
+  },
+  "googlePlay": {
+    "appName": "ProOverload Tracker",
+    "shortDescription": "Antrenman, beslenme, kardiyo ve gelişimini cihazında tek yerde takip et.",
+    "fullDescription": "ProOverload Tracker, antrenman ve vücut gelişimi kararlarını dağınık notlardan çıkarıp tek bir kişisel takip sisteminde birleştirir.\n\n• Set, tekrar, ağırlık, RIR ve dinlenme kaydı\n• Program sihirbazı ve haftalık rutin planlama\n• Hareket bazlı progresyon blokları ve hedef aralıkları\n• Kas hacmi, sıklık, denge ve performans analizi\n• Kardiyo, nabız bölgesi ve enerji harcaması takibi\n• Beslenme, makro, su ve enerji dengesi\n• Vücut ölçümleri, hedefler ve istatistiksel ilerleme tahminleri\n• Uyku, hazır oluş, ağrı ve toparlanma kayıtları\n• Yerel veri saklama, JSON yedekleme ve çevrimdışı PWA desteği\n\nProOverload tıbbi cihaz değildir; tanı, tedavi veya profesyonel sağlık hizmeti sunmaz. Hesaplanan kalori, hacim, toparlanma ve hedef tarihleri tahmindir."
+  },
+  "submission": {
+    "recommendedWrapper": "Capacitor",
+    "iosBuildRequirement": "Xcode 26 ve iOS 26 SDK veya üzeri",
+    "androidTargetApi": 36,
+    "publicSupportEmail": "",
+    "notes": "productionOrigin ve publicSupportEmail mağaza kaydı açılmadan önce doldurulmalıdır."
+  }
+}

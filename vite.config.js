@@ -12,10 +12,16 @@ export default defineConfig({
       // Kayıt main.jsx'te elle yapılıyor (yeni sürümde otomatik yenileme için);
       // eklenti de enjekte ederse çift kayıt olurdu.
       injectRegister: null,
+      // PNG uzantıları varsayılan Workbox globuna girmiyor; ikonlar burada.
+      // HTML/CSS yasal sayfalar glob tarafından zaten alınır, buraya da yazmak
+      // aynı URL'yi iki kez precache listesine eklerdi.
       includeAssets: ['apple-touch-icon-v5.png', 'pwa-v5-192x192.png', 'pwa-v5-512x512.png'],
       workbox: {
         cleanupOutdatedCaches: true,
         navigateFallback: 'index.html',
+        // Yasal ve destek sayfaları React kabuğuna düşmemeli. Mağaza
+        // inceleme ekibi uygulama verisi olmadan doğrudan URL'yi açabilmeli.
+        navigateFallbackDenylist: [/^\/privacy(?:\.html)?$/, /^\/support(?:\.html)?$/, /^\/terms(?:\.html)?$/],
         // Mobil dinlenme bildiriminin üzerine dokununca kurulu PWA'ya dön.
         importScripts: ['sw-notification.js'],
         // Barkod tarayıcı (zxing) ~450 KB ve zaten çevrimiçi ürün sorgusuyla
@@ -32,13 +38,24 @@ export default defineConfig({
         }]
       },
       manifest: {
+        id: '/',
         name: 'ProOverload Tracker',
         short_name: 'ProOverload',
-        description: 'Advanced Workout and Nutrition Tracker',
+        description: 'Antrenman, beslenme, vücut gelişimi ve toparlanmayı cihazında takip eden kişisel fitness koçu.',
         lang: 'tr',
+        start_url: '/?source=pwa',
+        scope: '/',
         theme_color: '#080806',
         background_color: '#080806',
         display: 'standalone',
+        orientation: 'portrait-primary',
+        categories: ['health', 'fitness', 'lifestyle'],
+        prefer_related_applications: false,
+        shortcuts: [
+          { name: 'Antrenman', short_name: 'Antrenman', description: 'Antrenman merkezini aç', url: '/?view=training&source=shortcut', icons: [{ src: 'pwa-v5-192x192.png', sizes: '192x192' }] },
+          { name: 'Beslenme', short_name: 'Beslenme', description: 'Bugünün beslenmesini aç', url: '/?view=nutrition&source=shortcut', icons: [{ src: 'pwa-v5-192x192.png', sizes: '192x192' }] },
+          { name: 'Gelişim', short_name: 'Gelişim', description: 'Gelişim ve analiz ekranını aç', url: '/?view=progress&source=shortcut', icons: [{ src: 'pwa-v5-192x192.png', sizes: '192x192' }] },
+        ],
         icons: [
           {
             src: 'pwa-v5-192x192.png',

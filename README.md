@@ -95,3 +95,22 @@ Ayarlar → *Antrenman Sırasında* bölümünden kapatılabilir.
 Veri yalnızca cihazda. iOS, uzun süre açılmayan sitelerin verisini temizleyebilir.
 Uygulama 7 günden uzun süre yedek alınmadıysa ana ekranda uyarı gösterir —
 o uyarıyı gördüğünde **İndir**'e bas.
+
+## App Store ve Google Play hazırlığı
+
+Sürüm 8.6 ile Ayarlar → **Gizlilik & Mağaza → Mağaza Hazırlık Merkezi**
+içinde web temeli, iOS ve Android adımları ayrı ayrı izlenir. Kamuya açık
+sayfalar doğrudan da açılabilir:
+
+- `/privacy.html` — gizlilik ve veri akışı
+- `/support.html` — destek ve sorun giderme
+- `/terms.html` — kullanım/tıbbi sınırlar
+
+Mağaza metinleri ve native yayın sırası [`store/`](store/) klasöründedir.
+`npm run check:store` sürüm, manifest, ikon, yasal sayfa ve metin sınırlarını
+denetler; bu kontrol `npm run build` zincirine de dahildir.
+
+PWA tek başına iOS App Store paketi değildir. Önerilen sonraki teknik aşama,
+aynı React kodunu Capacitor kabuğuna alıp iOS'ta Xcode, Android'de imzalı AAB
+üretmektir. Mevcut PWA verisinin native WebView'e kendiliğinden taşınacağı
+varsayılmamalı; JSON yedek/geri yükleme kabul testine dahil edilmelidir.

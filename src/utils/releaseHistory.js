@@ -47,7 +47,7 @@ const RELEASE_8_3 = release('8.3', '2026-08-27', 'İlk Açılış Performansı v
   item('Çevrimdışı Navigasyon Güvencesi', 'Yeni ekran parçaları varken doğrudan açılan PWA yolları index uygulama kabuğuna düşüyor ve eski sürüm önbellekleri yükseltme sonrasında temizleniyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-28', 'Güven Aralıklı İlerleme ve Tarihsel Veri Güveni', [
+const RELEASE_8_5 = release('8.5', '2026-08-28', 'Güven Aralıklı İlerleme ve Tarihsel Veri Güveni', [
   item('Aykırı Değere Dayanıklı Eğilim', 'Hedef tahmini tek bir sıra dışı seansın çizgiyi sürüklemesini azaltan Theil–Sen eğilimiyle hesaplanıyor.'),
   item('Asgari Veri Eşiği', 'Uygulama artık en az altı geçerli seans ve 21 günlük zaman açıklığı olmadan hedef tarihi uydurmuyor.'),
   item('Üç Ayrı Hedef Senaryosu', 'İyimser, mevcut eğilim ve temkinli senaryolar tek kesin tarih yerine başlangıç–bitiş aralığı üretiyor.'),
@@ -67,6 +67,29 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-28', 'Güven A
   item('Olay Bazlı Kod Bölme', 'Program kurucu, CSV, takvim ve program kodu araçları yalnız ilgili düğmeye basıldığında yükleniyor.'),
   item('Daha Sıkı Performans Bütçesi', 'Ölçülen yeni ilk yük temel alınarak JavaScript sınırı 900 KB’den 820 KB’ye, gzip sınırı 305 KB’den 285 KB’ye indirildi.'),
   item('İstatistiksel Sınırların Açıklanması', 'Hedef aralığı ve hata değeri tahmin olarak etiketleniyor; uygulama sonucu garanti eden bir tarih göstermiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-28', 'Mağaza Hazırlığı ve Ürün Güveni', [
+  item('Mağaza Hazırlık Merkezi', 'Ayarlar içinde web temeli, Apple App Store ve Google Play adımları ayrı ilerleme oranlarıyla izleniyor.'),
+  item('Kalıcı Hazırlık Kontrolü', 'Geliştirici hesabı, paketleme, ekran görüntüsü ve mağaza beyanı gibi elle tamamlanan maddeler cihazda saklanıyor; otomatik maddeler değiştirilemiyor.'),
+  item('Yanlış Hazır İddiası Yok', 'PWA yayını mağaza yayını gibi gösterilmiyor. iOS native paket, Xcode build’i veya Android AAB yoksa merkez bunu açık engel olarak tutuyor.'),
+  item('Uygulama İçi Gizlilik', 'Gizlilik politikası Ayarlar’dan tek dokunuşla ve uygulamadan bağımsız doğrudan URL ile açılıyor.'),
+  item('Veri Akışı Envanteri', 'Antrenman, beslenme, vücut, uyku, ağrı ve adet döngüsü verilerinin cihazda tutulduğu; dışarı giden işlemlerin hangileri olduğu açıklandı.'),
+  item('Kamera ve Barkod Şeffaflığı', 'Kamera karelerinin saklanmadığı, yalnız barkodun çözüldüğü ve sorgunun Open Food Facts’e gönderildiği politika metnine eklendi.'),
+  item('Destek Merkezi', 'Yedekleme, PWA güncellemesi, bildirim sesi, kamera izni ve güvenli hata bildirme adımları ayrı destek sayfasında toplandı.'),
+  item('Kullanım Koşulları', 'Kalori, NEAT, vücut kompozisyonu, hacim ve hedef tarihi sonuçlarının tahmin olduğu; uygulamanın tıbbi cihaz olmadığı açıkça sınırlandı.'),
+  item('Doğrudan Yasal Bağlantılar', 'Gizlilik, destek ve koşullar React durumu ya da localStorage çalışmasa bile statik sayfa olarak erişilebilir.'),
+  item('Temel Web Güvenlik Başlıkları', 'İçerik türü koklama ve başka sayfada çerçeveleme engellendi; kamera yalnız aynı kökene açılırken mikrofon ve konum kapalı tutuluyor.'),
+  item('Zengin PWA Kimliği', 'Manifest artık sabit kimlik, başlangıç adresi, kapsam, portre yönü ve Health/Fitness/Lifestyle kategorileri içeriyor.'),
+  item('Uygulama Kısayolları', 'Destekleyen Android ana ekranlarında Antrenman, Beslenme ve Gelişim ekranları doğrudan açılabiliyor.'),
+  item('Erişilebilir Yakınlaştırma', 'Viewport içindeki kullanıcı yakınlaştırmasını engelleyen maximum-scale ve user-scalable kısıtları kaldırıldı.'),
+  item('İkon Boyutu Doğrulaması', '192, 512 ve Apple 180 piksel ikonları üretimden önce PNG başlığından makineyle kontrol ediliyor.'),
+  item('Mağaza Build Kapısı', 'Sürüm eşleşmesi, manifest alanları, yasal sayfalar, açıklama sınırları, ikonlar ve yönlendirmeler bozulursa yayın derlemesi duruyor.'),
+  item('Türkçe Mağaza Metin Paketi', 'App Store ve Google Play için ad, alt başlık, kısa/uzun açıklama, anahtar kelime ve ürün kimlikleri sürüm kontrollü dosyada hazırlandı.'),
+  item('Veri Güvenliği Taslağı', 'Apple App Privacy, Google Data Safety ve Health Apps beyanında incelenecek veri yolları ve belirsiz noktalar kayıt altına alındı.'),
+  item('Native Yayın Yol Haritası', 'Capacitor, iOS Bundle ID, Android paket adı, Xcode 26, API 36, imzalama, TestFlight ve kapalı test adımları sıralandı.'),
+  item('Sabit Platform Kimliği', 'iOS ve Android için tech.afacan.prooverload kimliği tek ürün kaynağında tanımlandı; mağaza kaydı açılmadan önce değiştirilmesi gerekiyorsa tek noktadan görülüyor.'),
+  item('Kamu İletişimi Engeli', 'Destek e-postası bilinmediği için uydurulmadı. Mağaza hazırlık merkezi ve metadata bunu başvuru öncesi zorunlu manuel adım olarak gösteriyor.'),
 ]);
 
 const RELEASE_8_1 = release('8.1', '2026-08-27', 'Antrenman Sihirbazı ve Sıra Motoru', [
@@ -105,6 +128,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_5,
   RELEASE_8_3,
   RELEASE_8_2,
   RELEASE_8_1,

@@ -176,6 +176,10 @@ import {
 import {
   duplicateTemplate, markTemplateUsed, organizeTemplates, toggleTemplateFavorite,
 } from '../src/utils/templateLibrary.js';
+import {
+  buildStoreReadiness, normalizeStoreChecklist, STORE_IDENTIFIERS,
+  STORE_READINESS_GROUPS, storeUrls,
+} from '../src/utils/storeReadiness.js';
 
 import {
   snapshotDecision, logDecision, logRejection, dueEntries, settleEntry, settleDue,
@@ -6784,6 +6788,31 @@ test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {
   assert.equal(new Set(RELEASE_HISTORY.map(entry => entry.version)).size, RELEASE_HISTORY.length);
   assert.ok(RELEASE_HISTORY.every(entry => entry.date && entry.title && entry.items.length > 0));
   assert.ok(!LATEST_RELEASE_NOTES.items.some(entry => /Doz.?Yanıt Hacim Modeli/.test(entry.title)));
+});
+
+test('mağaza hazırlığı otomatik ve manuel kanıtı birbirine karıştırmıyor', () => {
+  const empty = buildStoreReadiness({ publicContact: false, sahte: true });
+  assert.equal(empty.groups.foundation.done, 8);
+  assert.equal(empty.groups.foundation.total, 9);
+  assert.equal(empty.groups.ios.done, 0);
+  assert.equal(empty.groups.android.done, 0);
+  assert.equal(empty.storeReady, false);
+  assert.equal(empty.next.key, 'publicContact');
+
+  const manualKeys = Object.values(STORE_READINESS_GROUPS)
+    .flatMap(group => group.checks)
+    .filter(check => !check.automatic)
+    .map(check => check.key);
+  const complete = buildStoreReadiness(Object.fromEntries(manualKeys.map(key => [key, true])));
+  assert.equal(complete.storeReady, true);
+  assert.equal(complete.done, complete.total);
+  assert.deepEqual(normalizeStoreChecklist({ yes: true, no: false, text: 'true' }), { yes: true });
+  assert.equal(STORE_IDENTIFIERS.iosBundleId, 'tech.afacan.prooverload');
+  assert.deepEqual(storeUrls('https://example.com/'), {
+    privacy: 'https://example.com/privacy.html',
+    support: 'https://example.com/support.html',
+    terms: 'https://example.com/terms.html',
+  });
 });
 
 for (const { name, run } of tests) {

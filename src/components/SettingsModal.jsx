@@ -1,6 +1,6 @@
 import { REST_ALERT_INTENSITIES, REST_ALERT_TONES } from '../lockScreen';
 import React, { memo, useState } from 'react';
-import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles, Volume2, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles, Volume2, CheckCircle2, AlertTriangle, ShieldCheck, ExternalLink } from 'lucide-react';
 import { exportAppleHealthXML, exportGoogleFitJSON } from '../utils/healthSync';
 import { EXPERIENCE_LEVELS, APP_VERSION } from '../utils/constants';
 import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plates';
@@ -56,6 +56,7 @@ const SettingsModal = memo(({
   lastBackupDate,
   onOpenOnboarding,
   onOpenReleaseNotes,
+  onOpenStoreReadiness,
   profileGender = 'male',
   // Vücut ağırlıklı kayıtların yazım biçimi denetimi; null = hesaplanmadı.
   bodyweightAudit = null,
@@ -1087,6 +1088,41 @@ const SettingsModal = memo(({
                 <Download size={12} className="text-blue-400" /> Google Fit
               </button>
             </div>
+          </Group>
+
+          {/* Mağaza politikaları uygulamanın içinde kolay erişilebilir olmalı.
+              Bağlantılar statik sayfaya gider; uygulama durumu veya localStorage
+              bozulsa bile politika ve destek içeriği açılabilir. */}
+          <Group icon={<ShieldCheck size={12} className="text-emerald-400" />} title="Gizlilik & Mağaza">
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { href: '/privacy.html', label: 'Gizlilik' },
+                { href: '/support.html', label: 'Destek' },
+                { href: '/terms.html', label: 'Koşullar' },
+              ].map(link => (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="bg-zinc-950 border border-zinc-800 text-zinc-300 active:bg-zinc-800 font-bold py-2.5 rounded-xl flex items-center justify-center gap-1 uppercase tracking-wider text-[9px]"
+                >
+                  {link.label} <ExternalLink size={10} />
+                </a>
+              ))}
+            </div>
+            {onOpenStoreReadiness && (
+              <button
+                type="button"
+                onClick={() => { onClose(); onOpenStoreReadiness(); }}
+                className="w-full bg-emerald-950/30 border border-emerald-900/50 text-emerald-300 active:bg-emerald-900/40 font-bold py-3 rounded-xl flex items-center justify-center gap-2 uppercase tracking-wider text-[10px]"
+              >
+                <ShieldCheck size={14} /> Mağaza Hazırlık Merkezi
+              </button>
+            )}
+            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+              Sağlık hesapları tahmindir; uygulama tıbbi cihaz değildir ve tanı veya tedavi sunmaz.
+            </p>
           </Group>
 
           {/* --- SÜRÜM BİLGİSİ --- */}
