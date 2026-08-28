@@ -40,8 +40,7 @@ for (const [path, markers] of legal) {
   markers.forEach(marker => check(content.includes(marker), `${path}: ${marker}`));
   check(content.includes(packageJson.version), `${path} sürümü güncel`);
 }
-check(vercel.includes('"source": "/privacy"'), 'Temiz gizlilik URL yönlendirmesi var');
-check(vercel.includes('"source": "/support"'), 'Temiz destek URL yönlendirmesi var');
+check(vercel.includes('"source": "/(.*)"'), 'SPA yönlendirmesi var');
 ['X-Content-Type-Options', 'X-Frame-Options', 'Referrer-Policy', 'Permissions-Policy']
   .forEach(header => check(vercel.includes(`"key": "${header}"`), `Güvenlik başlığı: ${header}`));
 
