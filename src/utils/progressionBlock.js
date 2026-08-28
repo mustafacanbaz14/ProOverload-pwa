@@ -44,8 +44,65 @@ const isoDay = value => {
   const date = value ? new Date(value) : null;
   return date && Number.isFinite(date.getTime()) ? date.toISOString().slice(0, 10) : '';
 };
+const round2 = value => Math.round(parseNumber(value) * 100) / 100;
+const median = values => {
+  const sorted = (values || []).filter(Number.isFinite).sort((a, b) => a - b);
+  if (sorted.length === 0) return 0;
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 ? sorted[middle] : (sorted[middle - 1] + sorted[middle]) / 2;
+};
 const isWorking = set => set?.setType !== 'warmup';
 const isCompleted = set => isWorking(set) && parseNumber(set?.reps) > 0;
+
+const PREDICTION_HISTORY_LIMIT = 36;
+const PREDICTION_STATUSES = new Set(['projected', 'reached']);
+const CONFIDENCE_LEVELS = new Set(['low', 'medium', 'high']);
+
+const normalizeScenario = (scenario, fallbackKey = '') => {
+  if (!scenario || typeof scenario !== 'object') return null;
+  const key = ['optimistic', 'current', 'conservative'].includes(scenario.key)
+    ? scenario.key : fallbackKey;
+  if (!key) return null;
+  return {
+    key,
+    label: typeof scenario.label === 'string' ? scenario.label : key,
+    days: Math.max(0, Math.round(parseNumber(scenario.days))),
+    date: isoDay(scenario.date),
+    weeklySlope: round2(scenario.weeklySlope),
+  };
+};
+
+/** LocalStorage/yedekte yalnız küçük ve denetlenebilir ETA anlık görüntüleri tutulur. */
+export const normalizePredictionHistory = value => (Array.isArray(value) ? value : [])
+  .map(entry => {
+    if (!entry || typeof entry !== 'object' || !PREDICTION_STATUSES.has(entry.status)) return null;
+    const asOf = isoDay(entry.asOf || entry.capturedAt);
+    if (!asOf) return null;
+    return {
+      asOf,
+      capturedAt: typeof entry.capturedAt === 'string' ? entry.capturedAt : `${asOf}T12:00:00.000Z`,
+      status: entry.status,
+      targetE1RM: round1(entry.targetE1RM),
+      targetWeight: round1(entry.targetWeight),
+      targetReps: Math.max(0, Math.round(parseNumber(entry.targetReps))),
+      date: isoDay(entry.date),
+      rangeStart: isoDay(entry.rangeStart),
+      rangeEnd: isoDay(entry.rangeEnd),
+      confidence: CONFIDENCE_LEVELS.has(entry.confidence) ? entry.confidence : 'low',
+      pointCount: Math.max(0, Math.round(parseNumber(entry.pointCount))),
+      spanDays: Math.max(0, Math.round(parseNumber(entry.spanDays))),
+      slope: round2(entry.slope),
+      backtestMaeKg: round2(entry.backtestMaeKg),
+      scenarios: (Array.isArray(entry.scenarios) ? entry.scenarios : [])
+        .map((scenario, index) => normalizeScenario(
+          scenario, ['optimistic', 'current', 'conservative'][index],
+        ))
+        .filter(Boolean),
+    };
+  })
+  .filter(Boolean)
+  .sort((a, b) => a.asOf.localeCompare(b.asOf))
+  .slice(-PREDICTION_HISTORY_LIMIT);
 
 /** Kullanıcının erişebildiği plaka/dambıl artışına yuvarlar. */
 export const roundToLoadStep = (value, step = 2.5) => {
@@ -92,6 +149,7 @@ export const normalizeProgressionPlan = (exerciseName, raw = {}, {
     increment: roundToLoadStep(clamp(raw.increment, 0.25, 20, 2.5), 0.25),
     backoffPercent: Math.round(clamp(raw.backoffPercent, 5, 30, 10)),
     deloadLastWeek: Boolean(raw.deloadLastWeek),
+    predictionHistory: normalizePredictionHistory(raw.predictionHistory),
     createdAt: typeof raw.createdAt === 'string' ? raw.createdAt : (updatedAt || new Date().toISOString()),
     updatedAt: updatedAt || (typeof raw.updatedAt === 'string' ? raw.updatedAt : new Date().toISOString()),
   };
@@ -313,54 +371,217 @@ const exerciseSessions = (exerciseName, workouts = [], { resolveLoad = null } = 
       exercise,
       bestE1RM,
       bestSet,
+      bodyWeight: parseNumber(workout?.bodyContextSnapshot?.weight)
+        || parseNumber(workout?.weightAtTime),
       prescription: exercise.progressionPrescription || null,
     });
   });
   return sessions.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 };
 
-/** Tarihsel e1RM eğiliminden hedefe kalan süreyi tahmin eder. */
-export const estimateProgressionEta = (plan, sessions = []) => {
-  const targetE1RM = estimateE1RM(plan?.targetWeight, plan?.targetReps, plan?.targetRir);
-  const points = (sessions || [])
-    .filter(item => item.bestE1RM > 0 && isoDay(item.date))
-    .slice(-10);
-  if (!(targetE1RM > 0) || points.length < 4) {
-    return { status: 'insufficient', targetE1RM, confidence: 'low', days: null, date: null };
-  }
+const progressionPoints = sessions => {
+  const byDay = new Map();
+  (sessions || []).forEach(item => {
+    const date = isoDay(item?.date);
+    const e1rm = parseNumber(item?.bestE1RM);
+    const plannedDeload = item?.prescription?.adaptation === 'planned-deload';
+    if (!date || !(e1rm > 0) || plannedDeload) return;
+    const existing = byDay.get(date);
+    if (!existing || e1rm > existing.bestE1RM) byDay.set(date, { ...item, date, bestE1RM: e1rm });
+  });
+  return [...byDay.values()]
+    .sort((a, b) => a.date.localeCompare(b.date))
+    .slice(-16);
+};
+
+/** Aykırı tek seansın eğimi sürüklememesi için Theil–Sen kestirimi. */
+const robustTrend = points => {
+  if (!Array.isArray(points) || points.length < 2) return null;
   const origin = new Date(points[0].date).getTime();
   const values = points.map(point => ({
     x: (new Date(point.date).getTime() - origin) / DAY_MS,
-    y: point.bestE1RM,
+    y: parseNumber(point.bestE1RM),
   }));
-  const meanX = values.reduce((sum, point) => sum + point.x, 0) / values.length;
+  const slopes = [];
+  for (let i = 0; i < values.length; i += 1) {
+    for (let j = i + 1; j < values.length; j += 1) {
+      const delta = values[j].x - values[i].x;
+      if (delta > 0) slopes.push((values[j].y - values[i].y) / delta);
+    }
+  }
+  const slope = median(slopes);
+  const intercept = median(values.map(point => point.y - slope * point.x));
   const meanY = values.reduce((sum, point) => sum + point.y, 0) / values.length;
-  const numerator = values.reduce((sum, point) => sum + (point.x - meanX) * (point.y - meanY), 0);
-  const denominator = values.reduce((sum, point) => sum + (point.x - meanX) ** 2, 0);
-  const slope = denominator > 0 ? numerator / denominator : 0;
-  const latest = values.at(-1).y;
-  if (latest >= targetE1RM) {
-    return { status: 'reached', targetE1RM, confidence: 'high', days: 0, date: isoDay(points.at(-1).date), slope: round1(slope * 7), r2: 1 };
-  }
-  if (!(slope > 0)) {
-    return { status: 'indeterminate', targetE1RM, confidence: 'low', days: null, date: null, slope: round1(slope * 7), r2: 0 };
-  }
-  const totalVariance = values.reduce((sum, point) => sum + (point.y - meanY) ** 2, 0);
-  const residual = values.reduce((sum, point) => {
-    const predicted = meanY + slope * (point.x - meanX);
-    return sum + (point.y - predicted) ** 2;
-  }, 0);
-  const r2 = totalVariance > 0 ? Math.max(0, Math.min(1, 1 - residual / totalVariance)) : 0;
-  const days = Math.ceil((targetE1RM - latest) / slope);
-  if (!(days >= 0) || days > 730) {
-    return { status: 'indeterminate', targetE1RM, confidence: 'low', days: null, date: null, slope: round1(slope * 7), r2: round1(r2) };
-  }
-  const date = new Date(new Date(points.at(-1).date).getTime() + days * DAY_MS).toISOString().slice(0, 10);
-  const confidence = points.length >= 6 && r2 >= 0.65 ? 'high' : r2 >= 0.35 ? 'medium' : 'low';
+  const variance = values.reduce((sum, point) => sum + (point.y - meanY) ** 2, 0);
+  const residual = values.reduce((sum, point) => sum + (point.y - (intercept + slope * point.x)) ** 2, 0);
+  const r2 = variance > 0 ? Math.max(0, Math.min(1, 1 - residual / variance)) : 0;
   return {
-    status: 'projected', targetE1RM, confidence, days, date,
-    slope: round1(slope * 7), r2: round1(r2),
+    slope,
+    intercept,
+    r2,
+    values,
+    origin,
+    spanDays: Math.round(values.at(-1).x - values[0].x),
   };
+};
+
+const progressionBacktest = points => {
+  const errors = [];
+  for (let index = 4; index < points.length; index += 1) {
+    const training = points.slice(0, index);
+    const fit = robustTrend(training);
+    if (!fit || !(fit.slope > 0)) continue;
+    const next = points[index];
+    const x = (new Date(next.date).getTime() - fit.origin) / DAY_MS;
+    const predicted = fit.intercept + fit.slope * x;
+    if (!Number.isFinite(predicted)) continue;
+    errors.push(predicted - next.bestE1RM);
+  }
+  if (errors.length === 0) return { samples: 0, maeKg: null, biasKg: null, quality: 'unknown' };
+  const maeKg = errors.reduce((sum, error) => sum + Math.abs(error), 0) / errors.length;
+  const biasKg = errors.reduce((sum, error) => sum + error, 0) / errors.length;
+  return {
+    samples: errors.length,
+    maeKg: round2(maeKg),
+    biasKg: round2(biasKg),
+    quality: maeKg <= 2.5 ? 'high' : maeKg <= 5 ? 'medium' : 'low',
+  };
+};
+
+const dateAfter = (date, days) => new Date(
+  new Date(date).getTime() + Math.max(0, Math.round(days)) * DAY_MS,
+).toISOString().slice(0, 10);
+
+const scenarioFromSlope = (key, label, slope, gap, latestDate) => {
+  const days = Math.ceil(gap / slope);
+  if (!(days >= 0) || days > 730) return null;
+  return { key, label, days, date: dateAfter(latestDate, days), weeklySlope: round2(slope * 7) };
+};
+
+/**
+ * Tarihsel e1RM eğiliminden hedef aralığı üretir.
+ * Bu bir nedensel model değildir: üç senaryo geçmiş eğilimin sürmesi halinde
+ * oluşabilecek takvim aralığını gösterir; hedef tarihi garanti etmez.
+ */
+export const estimateProgressionEta = (plan, sessions = [], context = {}) => {
+  const targetE1RM = estimateE1RM(plan?.targetWeight, plan?.targetReps, plan?.targetRir);
+  const points = progressionPoints(sessions);
+  const latest = points.at(-1);
+  if (!(targetE1RM > 0)) {
+    return { status: 'insufficient', reason: 'target', targetE1RM, confidence: 'low', days: null, date: null, pointCount: points.length, spanDays: 0 };
+  }
+  if (latest?.bestE1RM >= targetE1RM) {
+    const date = latest.date;
+    return {
+      status: 'reached', targetE1RM, confidence: 'high', confidenceScore: 100,
+      days: 0, date, rangeStart: date, rangeEnd: date, slope: 0, r2: 1,
+      pointCount: points.length, spanDays: points.length > 1
+        ? Math.round((new Date(date) - new Date(points[0].date)) / DAY_MS) : 0,
+      scenarios: [], backtest: progressionBacktest(points),
+    };
+  }
+
+  const fit = robustTrend(points);
+  const spanDays = fit?.spanDays || 0;
+  if (points.length < 6 || spanDays < 21) {
+    return {
+      status: 'insufficient', reason: points.length < 6 ? 'sessions' : 'span',
+      targetE1RM, confidence: 'low', days: null, date: null,
+      pointCount: points.length, spanDays, neededSessions: Math.max(0, 6 - points.length),
+      neededDays: Math.max(0, 21 - spanDays), backtest: progressionBacktest(points),
+    };
+  }
+  if (!fit || !(fit.slope > 0)) {
+    return {
+      status: 'indeterminate', reason: 'nonpositive-trend', targetE1RM,
+      confidence: 'low', days: null, date: null, slope: round2((fit?.slope || 0) * 7),
+      r2: round2(fit?.r2 || 0), pointCount: points.length, spanDays,
+      backtest: progressionBacktest(points),
+    };
+  }
+
+  const actualFrequency = points.length > 1 ? ((points.length - 1) * 7) / spanDays : 0;
+  const plannedFrequency = Math.max(1, parseNumber(plan?.sessionsPerWeek) || 1);
+  const frequencyRatio = Math.min(1.5, actualFrequency / plannedFrequency);
+  const adherence = context.adherence === null || context.adherence === undefined
+    ? null : Math.max(0, Math.min(100, parseNumber(context.adherence)));
+  const adherenceRatio = adherence === null ? 0.8 : adherence / 100;
+  const optimisticFactor = Math.min(1.3, Math.max(1.15, 1.15 + frequencyRatio * 0.1));
+  const conservativeFactor = Math.min(0.78, Math.max(0.55, 0.55 + adherenceRatio * 0.22));
+  const gap = targetE1RM - latest.bestE1RM;
+  const scenarios = [
+    scenarioFromSlope('optimistic', 'İyimser', fit.slope * optimisticFactor, gap, latest.date),
+    scenarioFromSlope('current', 'Mevcut eğilim', fit.slope, gap, latest.date),
+    scenarioFromSlope('conservative', 'Temkinli', fit.slope * conservativeFactor, gap, latest.date),
+  ];
+  if (scenarios.some(scenario => !scenario)) {
+    return {
+      status: 'indeterminate', reason: 'horizon', targetE1RM, confidence: 'low',
+      days: null, date: null, slope: round2(fit.slope * 7), r2: round2(fit.r2),
+      pointCount: points.length, spanDays, backtest: progressionBacktest(points),
+    };
+  }
+
+  const backtest = progressionBacktest(points);
+  const pointScore = Math.min(30, Math.max(0, points.length - 5) * 7.5);
+  const spanScore = Math.min(25, spanDays / 42 * 25);
+  const fitScore = fit.r2 * 25;
+  const backtestScore = backtest.quality === 'high' ? 20 : backtest.quality === 'medium' ? 12 : backtest.quality === 'low' ? 4 : 0;
+  const confidenceScore = Math.round(pointScore + spanScore + fitScore + backtestScore);
+  const confidence = confidenceScore >= 78 ? 'high' : confidenceScore >= 52 ? 'medium' : 'low';
+  const bodyWeights = points.filter(point => parseNumber(point.bodyWeight) > 0)
+    .map(point => ({ ...point, bestE1RM: parseNumber(point.bodyWeight) }));
+  const bodyTrend = bodyWeights.length >= 3 ? robustTrend(bodyWeights) : null;
+  const current = scenarios[1];
+
+  return {
+    status: 'projected', targetE1RM, confidence, confidenceScore,
+    days: current.days, date: current.date,
+    rangeStart: scenarios[0].date, rangeEnd: scenarios[2].date,
+    slope: round2(fit.slope * 7), r2: round2(fit.r2),
+    pointCount: points.length, spanDays, scenarios, backtest,
+    context: {
+      adherence,
+      actualSessionsPerWeek: round2(actualFrequency),
+      plannedSessionsPerWeek: plannedFrequency,
+      missedSessions: Math.max(0, Math.round(parseNumber(context.missedSessions))),
+      bodyWeightWeeklyTrend: bodyTrend ? round2(bodyTrend.slope * 7) : null,
+    },
+  };
+};
+
+export const predictionSnapshotFromEta = (plan, eta, asOf = new Date()) => {
+  if (!eta || !PREDICTION_STATUSES.has(eta.status)) return null;
+  const date = isoDay(asOf);
+  if (!date) return null;
+  return normalizePredictionHistory([{
+    asOf: date,
+    capturedAt: asOf instanceof Date ? asOf.toISOString() : `${date}T12:00:00.000Z`,
+    status: eta.status,
+    targetE1RM: eta.targetE1RM,
+    targetWeight: plan?.targetWeight,
+    targetReps: plan?.targetReps,
+    date: eta.date,
+    rangeStart: eta.rangeStart,
+    rangeEnd: eta.rangeEnd,
+    confidence: eta.confidence,
+    pointCount: eta.pointCount,
+    spanDays: eta.spanDays,
+    slope: eta.slope,
+    backtestMaeKg: eta.backtest?.maeKg,
+    scenarios: eta.scenarios,
+  }])[0] || null;
+};
+
+/** Aynı gün ve aynı hedef için ikinci kayıt oluşturmak yerine son tahmini yeniler. */
+export const appendPredictionSnapshot = (plan, eta, asOf = new Date()) => {
+  const snapshot = predictionSnapshotFromEta(plan, eta, asOf);
+  if (!snapshot) return plan;
+  const history = normalizePredictionHistory(plan?.predictionHistory);
+  const filtered = history.filter(entry => !(
+    entry.asOf === snapshot.asOf && entry.targetE1RM === snapshot.targetE1RM
+  ));
+  return { ...plan, predictionHistory: [...filtered, snapshot].slice(-PREDICTION_HISTORY_LIMIT) };
 };
 
 const recoveryPrescription = (base, missedStreak) => {
@@ -450,7 +671,11 @@ export const buildProgressionBlockReport = (exerciseName, rawPlan, workouts = []
   const met = measured.filter(item => item.evaluation.status === 'met').length;
   const partial = measured.filter(item => item.evaluation.status === 'partial').length;
   const missed = measured.filter(item => item.evaluation.status === 'missed').length;
-  const eta = estimateProgressionEta(plan, sessions);
+  const eta = estimateProgressionEta(plan, sessions, {
+    adherence,
+    completedSessions,
+    missedSessions: missed,
+  });
   const targetReached = eta.status === 'reached';
   const complete = targetReached || completedSessions >= totalSessions;
 

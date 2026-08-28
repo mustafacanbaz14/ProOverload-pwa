@@ -386,9 +386,9 @@ export const workoutCalories = (workout, weightKg, preferProvidedWeight = false)
 export const dayWorkoutCalories = (workouts = [], dateStr, weightKg) => {
   const same = workouts.filter(w => w.date === dateStr);
   const totals = same.reduce((acc, w) => {
-    // App bu tarihe ait ölçüm aralığından çözdüğü kiloyu verir; kayıt içindeki
-    // eski snapshot daha yeni/düzeltilmiş tarihsel ölçümü ezmemelidir.
-    const c = workoutCalories(w, weightKg, Number(weightKg) > 0);
+    // Yeni kayıtta seans günü dondurulan kilo kullanılır. Eski kayıtta snapshot
+    // yoksa App'in o tarihe göre çözdüğü ölçüm geriye uyumlu yedektir.
+    const c = workoutCalories(w, weightKg, false);
     return { lifting: acc.lifting + c.lifting, cardio: acc.cardio + c.cardio, total: acc.total + c.total };
   }, { lifting: 0, cardio: 0, total: 0 });
   const strengthSessionCount = same.filter(workout => (workout.exercises || []).length > 0).length;

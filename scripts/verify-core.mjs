@@ -58,8 +58,10 @@ import {
 } from '../src/utils/progression.js';
 import {
   PROGRESSION_BLOCK_MODEL_KEYS, activeProgressionBlocks,
+  appendPredictionSnapshot,
   applyProgressionPrescription, buildProgressionBlockReport,
   estimateProgressionEta, evaluatePrescription, normalizeProgressionPlan,
+  normalizePredictionHistory, predictionSnapshotFromEta,
   prescriptionForSession, roundToLoadStep,
 } from '../src/utils/progressionBlock.js';
 import { assessExercise, scanPlateaus, plateauCoachItem, exerciseTrend } from '../src/utils/plateau.js';
@@ -159,7 +161,10 @@ import {
   instantiateDraftProgram, suggestedWeekdays,
 } from '../src/utils/programDraft.js';
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
-import { createBackupPayload, migrateBackupPayload, DATA_SCHEMA_VERSION } from '../src/utils/dataSchema.js';
+import { BACKUP_COLLECTIONS, createBackupPayload, migrateBackupPayload, DATA_SCHEMA_VERSION } from '../src/utils/dataSchema.js';
+import {
+  buildEnergySnapshot, energyInputHash, readEnergySnapshot,
+} from '../src/utils/historicalContext.js';
 import { buildFrequencyReport, frequencyCoachItem } from '../src/utils/frequency.js';
 import { workoutsToCsv, metricsToCsv } from '../src/utils/csvExport.js';
 import { STARTER_PROGRAMS, instantiateStarterProgram } from '../src/utils/starterPrograms.js';
@@ -501,7 +506,7 @@ test('yedek birleştirmede aynı anahtarın yedek sürümü kazanır ve yerel e�
   ]);
 });
 
-test('şema v4 tüm kalıcı yedek koleksiyonlarını tek çıktıda korur', () => {
+test('şema v5 tüm kalıcı yedek koleksiyonlarını tek çıktıda korur', () => {
   const backup = createBackupPayload({
     workouts: [{ id: 'w1' }],
     mealTemplates: [{ id: 'meal-1', name: 'Kahvaltı' }],
@@ -512,19 +517,38 @@ test('şema v4 tüm kalıcı yedek koleksiyonlarını tek çıktıda korur', () 
   assert.equal(backup.mealTemplates[0].id, 'meal-1');
   assert.equal(backup.dayTemplates[0].id, 'day-1');
   BACKUP_KEYS.forEach(key => assert.ok(Object.hasOwn(backup, key), `yedekte ${key} eksik`));
+  BACKUP_COLLECTIONS.forEach(key => assert.ok(Array.isArray(backup[key]), `${key} dizi değil`));
   assert.equal(inspectBackupPayload(backup).valid, true);
 });
 
-test('eski yedek şema v4 biçimine idempotent taşınır', () => {
+test('eski yedek şema v5 biçimine idempotent taşınır', () => {
   const old = { schemaVersion: 3, version: '5.2', workouts: [{ id: 'w1' }], settings: {} };
   const first = migrateBackupPayload(old);
   const second = migrateBackupPayload(first.payload);
   assert.equal(first.payload.schemaVersion, DATA_SCHEMA_VERSION);
   assert.deepEqual(first.payload.mealTemplates, []);
   assert.deepEqual(first.payload.dayTemplates, []);
-  assert.equal(first.applied.length, 1);
+  assert.equal(first.applied.length, 2);
   assert.equal(second.applied.length, 0);
   assert.deepEqual(second.payload, first.payload);
+});
+
+test('şema v5 bozuk koleksiyon ve tahmin geçmişini güvenli biçime çevirir', () => {
+  const migrated = migrateBackupPayload({
+    schemaVersion: 5,
+    workouts: 'bozuk',
+    settings: {
+      progressionPlans: {
+        Bench: { id: 'p1', predictionHistory: { tarih: 'bozuk' } },
+        Squat: null,
+      },
+    },
+  });
+  assert.deepEqual(migrated.payload.workouts, []);
+  BACKUP_COLLECTIONS.forEach(key => assert.ok(Array.isArray(migrated.payload[key])));
+  assert.deepEqual(migrated.payload.settings.progressionPlans.Bench.predictionHistory, []);
+  assert.equal(Object.hasOwn(migrated.payload.settings.progressionPlans, 'Squat'), false);
+  assert.equal(migrateBackupPayload(migrated.payload).applied.length, 0);
 });
 
 test('silinen kayıt aynı sıraya geri alınır ve ikinci kez çoğalmaz', () => {
@@ -607,11 +631,11 @@ test('ağırlık antrenmanı kalorisi kayıt anındaki kiloyu kullanır', () => 
   assert.deepEqual(workoutCalories(workout, 100), workoutCalories(workout, 70));
 });
 
-test('gün toplamı kayıt snapshotı yerine o tarihin çözülmüş kilosunu kullanır', () => {
+test('gün toplamı yeni ölçüm gelse de kayıt günündeki kilo snapshotını kullanır', () => {
   const workout = { date: '2026-07-20', duration: 60, weightAtTime: 100, exercises: [] };
   assert.deepEqual(
     dayWorkoutCalories([workout], '2026-07-20', 70),
-    { ...workoutCalories({ ...workout, weightAtTime: 70 }, 70), activeRecovery: false },
+    { ...workoutCalories(workout, 70), activeRecovery: false },
   );
 });
 
@@ -633,6 +657,40 @@ test('enerji serisi eski snapshot yerine tarih-doğru hesaplayıcıyı kullanır
   }], { maintenance: 4000, bmr: 2500, energyForRecord: () => recalculated });
   assert.equal(series[0].out, recalculated.total);
   assert.notEqual(series[0].out, snapshot.total);
+});
+
+test('imzalı enerji snapshotı sonraki genel ayar ve vücut değişiminden etkilenmez', () => {
+  const record = { date: '2026-07-20', steps: 8000, activeCaloriesOut: 0 };
+  const macros = { calories: 2200, protein: 150, carbs: 250, fats: 65 };
+  const exercise = { lifting: 280, cardio: 0, mind: 10, activeRecovery: false };
+  const inputHash = energyInputHash({ record, macros, exercise });
+  const snapshot = buildEnergySnapshot({
+    total: 2550, bmr: 1750, neat: 400, tef: { total: 110 },
+    parts: [{ key: 'bmr', value: 1750 }], isRestDay: false,
+  }, {
+    inputHash,
+    bodyContext: { metricDate: '2026-07-15', weight: 70, bmr: 1750 },
+    settingsContext: { neatMode: 'level', activityLevel: 'light', neatMultiplier: 0.9 },
+    exerciseContext: exercise,
+    capturedAt: '2026-07-20T20:00:00.000Z',
+  });
+  const stored = readEnergySnapshot({ energySnapshot: snapshot }, inputHash);
+  assert.equal(stored.total, 2550);
+  assert.equal(stored._meta.bodyContext.weight, 70);
+  assert.equal(stored._meta.settingsContext.neatMultiplier, 0.9);
+});
+
+test('geçmiş gün girdisi değişirse enerji snapshotı geçersiz olur', () => {
+  const macros = { calories: 2200, protein: 150, carbs: 250, fats: 65 };
+  const exercise = { lifting: 280, cardio: 0, mind: 0 };
+  const original = { date: '2026-07-20', steps: 8000 };
+  const originalHash = energyInputHash({ record: original, macros, exercise });
+  const snapshot = buildEnergySnapshot({ total: 2500, parts: [], tef: { total: 100 } }, {
+    inputHash: originalHash,
+  });
+  const changedHash = energyInputHash({ record: { ...original, steps: 12000 }, macros, exercise });
+  assert.notEqual(changedHash, originalHash);
+  assert.equal(readEnergySnapshot({ energySnapshot: snapshot }, changedHash), null);
 });
 
 test('genel mod seçiliyken kayıtta kalmış alt NEAT alanları ayarı ezmez', () => {
@@ -6649,17 +6707,72 @@ test('blok ETA ve merkez özeti veri yokken kesin tarih uydurmuyor', () => {
     startWeight: 80, targetWeight: 100, targetReps: 5, targetRir: 1, increment: 2.5,
   }, { today: '2026-07-01', updatedAt: '2026-07-01T00:00:00.000Z' });
   assert.equal(estimateProgressionEta(plan, []).status, 'insufficient');
-  const history = [80, 82, 84, 86].map((weight, index) => ({
-    id: `w${index}`, date: `2026-07-${String(1 + index * 7).padStart(2, '0')}`,
+  const dates = ['2026-07-01', '2026-07-08', '2026-07-15', '2026-07-22', '2026-07-29', '2026-08-05'];
+  const history = [80, 82, 84, 86, 88, 90].map((weight, index) => ({
+    id: `w${index}`, date: dates[index],
     exercises: [{ name: 'Bench', sets: [{ weight: String(weight), reps: '5', rir: 1, setType: 'normal', completed: true }] }],
   }));
-  const report = buildProgressionBlockReport('Bench', plan, history, { today: '2026-07-25' });
+  const report = buildProgressionBlockReport('Bench', plan, history, { today: '2026-08-06' });
   assert.equal(report.eta.status, 'projected');
   assert.ok(report.eta.days > 0);
+  assert.ok(report.eta.rangeStart <= report.eta.date);
+  assert.ok(report.eta.date <= report.eta.rangeEnd);
   assert.equal(report.adherence, null);
-  const summary = activeProgressionBlocks({ Bench: plan }, history, { today: '2026-07-25' });
+  const summary = activeProgressionBlocks({ Bench: plan }, history, { today: '2026-08-06' });
   assert.equal(summary.length, 1);
   assert.equal(summary[0].plan.exerciseName, 'Bench');
+});
+
+test('ETA aykırı seansa rağmen üç sıralı senaryo ve geriye dönük hata üretir', () => {
+  const plan = { targetWeight: 115, targetReps: 1, targetRir: 0, sessionsPerWeek: 1 };
+  const dates = ['2026-06-01', '2026-06-08', '2026-06-15', '2026-06-22', '2026-06-29', '2026-07-06', '2026-07-13'];
+  const sessions = [100, 102, 104, 150, 108, 110, 112].map((bestE1RM, index) => ({
+    date: dates[index], bestE1RM,
+  }));
+  const eta = estimateProgressionEta(plan, sessions, { adherence: 85 });
+  assert.equal(eta.status, 'projected');
+  assert.deepEqual(eta.scenarios.map(item => item.key), ['optimistic', 'current', 'conservative']);
+  assert.ok(eta.scenarios[0].days <= eta.scenarios[1].days);
+  assert.ok(eta.scenarios[1].days <= eta.scenarios[2].days);
+  assert.ok(eta.backtest.samples >= 2);
+  assert.ok(Number.isFinite(eta.backtest.maeKg));
+});
+
+test('ETA düşen eğilimde ve kısa tarihte sahte hedef tarihi üretmez', () => {
+  const plan = { targetWeight: 120, targetReps: 1, targetRir: 0, sessionsPerWeek: 1 };
+  const falling = [112, 110, 108, 106, 104, 102].map((bestE1RM, index) => ({
+    date: new Date(Date.UTC(2026, 5, 1 + index * 7)).toISOString().slice(0, 10), bestE1RM,
+  }));
+  const eta = estimateProgressionEta(plan, falling);
+  assert.equal(eta.status, 'indeterminate');
+  assert.equal(eta.date, null);
+  const short = estimateProgressionEta(plan, falling.slice(0, 5));
+  assert.equal(short.status, 'insufficient');
+});
+
+test('ETA anlık görüntüsü aynı günü tekilleştirir ve geçmişi 36 kayıtla sınırlar', () => {
+  const plan = { targetWeight: 120, targetReps: 5, predictionHistory: [] };
+  const baseEta = {
+    status: 'projected', targetE1RM: 140, confidence: 'medium', pointCount: 8, spanDays: 49,
+    slope: 1.5, date: '2027-01-15', rangeStart: '2027-01-01', rangeEnd: '2027-02-01',
+    backtest: { maeKg: 2.4 }, scenarios: [
+      { key: 'optimistic', label: 'İyimser', days: 90, date: '2027-01-01', weeklySlope: 2 },
+      { key: 'current', label: 'Mevcut eğilim', days: 104, date: '2027-01-15', weeklySlope: 1.5 },
+      { key: 'conservative', label: 'Temkinli', days: 121, date: '2027-02-01', weeklySlope: 1.1 },
+    ],
+  };
+  assert.equal(predictionSnapshotFromEta(plan, baseEta, '2026-09-01').asOf, '2026-09-01');
+  let updated = plan;
+  for (let index = 0; index < 40; index += 1) {
+    const day = new Date(Date.UTC(2026, 8, 1 + index)).toISOString().slice(0, 10);
+    updated = appendPredictionSnapshot(updated, baseEta, day);
+  }
+  assert.equal(updated.predictionHistory.length, 36);
+  const sameDay = updated.predictionHistory.at(-1).asOf;
+  updated = appendPredictionSnapshot(updated, { ...baseEta, confidence: 'high' }, sameDay);
+  assert.equal(updated.predictionHistory.length, 36);
+  assert.equal(updated.predictionHistory.at(-1).confidence, 'high');
+  assert.deepEqual(normalizePredictionHistory({ bad: true }), []);
 });
 
 test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {

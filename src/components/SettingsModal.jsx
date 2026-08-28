@@ -327,7 +327,9 @@ const SettingsModal = memo(({
                 <button
                   type="button"
                   disabled={!programCode.trim()}
-                  onClick={() => { if (onImportProgramCode(programCode)) setProgramCode(''); }}
+                  onClick={async () => {
+                    if (await onImportProgramCode(programCode)) setProgramCode('');
+                  }}
                   className="w-full py-2.5 rounded-xl border border-cyan-900/60 bg-cyan-950/20 text-cyan-300 text-[10px] font-bold uppercase tracking-wider disabled:opacity-30"
                 >
                   İçe Aktar

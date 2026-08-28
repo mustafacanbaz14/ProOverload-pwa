@@ -520,6 +520,7 @@ const HistoryView = memo(({
                     const manual = parseNumber(n.activeCaloriesOut);
                     const maintenance = parseNumber(n.maintenanceAtTheTime) || maintenanceCalories;
                     const recalculated = typeof energyForRecord === 'function' ? energyForRecord(n) : null;
+                    const energyBody = recalculated?.bodyContext || bodyAtDate;
                     const totalOut = parseNumber(recalculated?.total)
                       || (maintenance > 0 ? maintenance + auto.total + zihin + manual : auto.total + zihin + manual);
                     const balance = totalOut > 0
@@ -552,10 +553,16 @@ const HistoryView = memo(({
                           <span className="text-zinc-300">{totalOut} kcal</span>
                         </div>
 
-                        {bodyAtDate.metricDate && (
+                        {energyBody.metricDate && (
                           <div className="flex justify-between text-[9px] font-mono text-zinc-600">
                             <span>Vücut verisi</span>
-                            <span>{formatDay(bodyAtDate.metricDate)} · {Math.round(historicalWeight * 10) / 10} kg</span>
+                            <span>{formatDay(energyBody.metricDate)} · {Math.round(parseNumber(energyBody.weight) * 10) / 10} kg</span>
+                          </div>
+                        )}
+                        {recalculated?.historicalSource && (
+                          <div className="flex justify-between text-[8px] font-mono text-zinc-600">
+                            <span>Hesap bağlamı</span>
+                            <span>{recalculated.historicalSource === 'snapshot' ? 'Kayıt anında sabitlendi' : 'Tarihsel veriden hesaplandı'}</span>
                           </div>
                         )}
 

@@ -9,6 +9,8 @@ import { effectiveLoad } from './bodyweight.js';
 import { mergeWellnessDay } from './wellness.js';
 import { DEFAULT_CYCLE_CONFIG, mergeCycleDay } from './cycle.js';
 import { normalizeCoachProtocol } from './coachProtocol.js';
+import { buildBodyContextSnapshot } from './historicalContext.js';
+import { normalizePredictionHistory } from './progressionBlock.js';
 
 /** Yazma daima en yeni sürüm anahtarına yapılır. */
 export const storageKey = (name) => `po_${name}${STORAGE_VERSION}`;
@@ -326,6 +328,9 @@ export const mergeWorkout = (data) => ({
   name: typeof data?.name === 'string' && data.name.trim() ? data.name : 'Serbest Antrenman',
   duration: Number(data?.duration) > 0 ? Number(data.duration) : 0,
   weightAtTime: Number(data?.weightAtTime) > 0 ? Number(data.weightAtTime) : 0,
+  ...(data?.bodyContextSnapshot && typeof data.bodyContextSnapshot === 'object'
+    ? { bodyContextSnapshot: buildBodyContextSnapshot(data.bodyContextSnapshot) }
+    : {}),
   exercises: Array.isArray(data?.exercises) ? data.exercises.map(mergeExercise) : [],
   cardio: Array.isArray(data?.cardio)
     ? data.cardio
@@ -605,6 +610,12 @@ export const mergeSettings = (saved = {}) => {
   if (!merged.progressionPlans || typeof merged.progressionPlans !== 'object' || Array.isArray(merged.progressionPlans)) {
     merged.progressionPlans = {};
   }
+  merged.progressionPlans = Object.fromEntries(Object.entries(merged.progressionPlans)
+    .filter(([name, plan]) => name && plan && typeof plan === 'object' && !Array.isArray(plan))
+    .map(([name, plan]) => [name, {
+      ...plan,
+      predictionHistory: normalizePredictionHistory(plan.predictionHistory),
+    }]));
   // Tek programdan çoklu program listesine göç. Idempotent: yeni biçim aynen
   // geçer, eski `weekPlan` nesnesi ilk programa dönüşür.
   const { plans, activeId } = migrateWeekPlans(merged);

@@ -115,13 +115,17 @@ const ProgressionBlockCard = memo(({
               <span className="text-[8px] font-mono text-zinc-600">{report.outcomes.measured} ölçülen seans</span>
             </div>
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-2.5">
-              <span className="text-[8px] font-bold uppercase text-zinc-600">Hedef ETA</span>
-              <strong className="mt-1 block text-[11px] font-mono text-cyan-300">
+              <span className="text-[8px] font-bold uppercase text-zinc-600">Hedef Aralığı</span>
+              <strong className="mt-1 block text-[10px] font-mono text-cyan-300">
                 {eta?.status === 'reached' ? 'Ulaşıldı'
-                  : eta?.status === 'projected' ? formatDay(eta.date, 'short') : 'Belirsiz'}
+                  : eta?.status === 'projected'
+                    ? `${formatDay(eta.rangeStart, 'short')}–${formatDay(eta.rangeEnd, 'short')}`
+                    : 'Belirsiz'}
               </strong>
               <span className="text-[8px] font-mono text-zinc-600">
-                {eta?.status === 'projected' ? `${eta.confidence === 'high' ? 'yüksek' : eta.confidence === 'medium' ? 'orta' : 'düşük'} güven` : 'en az 4 seans'}
+                {eta?.status === 'projected'
+                  ? `${eta.confidence === 'high' ? 'yüksek' : eta.confidence === 'medium' ? 'orta' : 'düşük'} güven · ${eta.pointCount} seans`
+                  : eta?.status === 'reached' ? 'veride doğrulandı' : '6 seans + 3 hafta'}
               </span>
             </div>
           </div>
@@ -158,10 +162,54 @@ const ProgressionBlockCard = memo(({
           )}
 
           {eta?.status === 'projected' && (
-            <p className="flex items-start gap-1.5 text-[9px] font-mono leading-relaxed text-zinc-500">
-              <Gauge size={11} className="mt-0.5 shrink-0 text-cyan-500" />
-              Eğilim haftada yaklaşık {eta.slope > 0 ? '+' : ''}{eta.slope} kg tahmini 1RM. Tarih doğrusal eğilim uzatmasıdır; garanti değildir.
+            <div className="space-y-2 rounded-xl border border-zinc-800 bg-zinc-950/55 p-3">
+              <span className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-wider text-zinc-400">
+                <Gauge size={11} className="text-cyan-500" /> Senaryolu Tahmin
+              </span>
+              <div className="grid grid-cols-3 gap-1.5">
+                {eta.scenarios.map(scenario => (
+                  <div key={scenario.key} className={`rounded-lg border p-2 ${scenario.key === 'current' ? 'border-cyan-900/60 bg-cyan-950/20' : 'border-zinc-800 bg-zinc-950/70'}`}>
+                    <span className="block text-[7px] font-bold uppercase text-zinc-600">{scenario.label}</span>
+                    <strong className={`mt-1 block text-[9px] font-mono ${scenario.key === 'current' ? 'text-cyan-300' : 'text-zinc-300'}`}>
+                      {formatDay(scenario.date, 'short')}
+                    </strong>
+                    <span className="text-[7px] font-mono text-zinc-600">{scenario.days} gün</span>
+                  </div>
+                ))}
+              </div>
+              <p className="text-[8px] font-mono leading-relaxed text-zinc-500">
+                Theil–Sen eğilimi haftada {eta.slope > 0 ? '+' : ''}{eta.slope} kg tahmini 1RM.
+                {eta.backtest?.samples > 0
+                  ? ` Geçmiş test: ${eta.backtest.samples} adımda ortalama ${eta.backtest.maeKg} kg hata.`
+                  : ' Geçmiş test için henüz yeterli ileri nokta yok.'}
+                {' '}Bu istatistiksel aralıktır; garanti değildir.
+              </p>
+            </div>
+          )}
+
+          {eta?.status === 'insufficient' && (
+            <p className="rounded-xl border border-zinc-800 bg-zinc-950/55 p-2.5 text-[8px] font-mono leading-relaxed text-zinc-500">
+              Tarih göstermek için en az 6 geçerli seans ve ilk–son ölçüm arasında 21 gün gerekir.
+              {eta.neededSessions > 0 ? ` ${eta.neededSessions} seans daha gerekli.` : ''}
+              {eta.neededDays > 0 ? ` Zaman aralığı ${eta.neededDays} gün kısa.` : ''}
             </p>
+          )}
+
+          {Array.isArray(plan.predictionHistory) && plan.predictionHistory.length > 0 && (
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/45 p-2.5">
+              <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-600">Tahmin Geçmişi</span>
+              <div className="mt-1.5 space-y-1">
+                {plan.predictionHistory.slice(-3).reverse().map(entry => (
+                  <div key={`${entry.asOf}-${entry.targetE1RM}`} className="flex items-center justify-between gap-2 text-[8px] font-mono">
+                    <span className="text-zinc-600">{formatDay(entry.asOf, 'short')}</span>
+                    <span className="text-zinc-400">
+                      {entry.status === 'reached' ? 'hedefe ulaşıldı'
+                        : `${formatDay(entry.rangeStart, 'short')}–${formatDay(entry.rangeEnd, 'short')}`}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
           )}
 
           <button

@@ -343,6 +343,14 @@ const EnergyDetailModal = memo(({
                                     <span>{dateShort(d.breakdown.bodyContext.metricDate)} · {Math.round(d.breakdown.bodyContext.weight * 10) / 10} kg</span>
                                   </div>
                                 )}
+                                <div className="flex justify-between gap-3 text-[8px] font-mono text-zinc-600">
+                                  <span>Hesap bağlamı</span>
+                                  <span className="text-right">
+                                    {d.breakdown.historicalSource === 'snapshot'
+                                      ? 'Kayıt anında sabitlendi'
+                                      : 'Eski kayıt · tarihsel veriden hesaplandı'}
+                                  </span>
+                                </div>
 
                                 {/* Güne özel günlük hareket çarpanı.
                                     Bütün gün ayakta geçen bir gün ile masa başı

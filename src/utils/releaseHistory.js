@@ -30,7 +30,7 @@ const RELEASE_8_2 = release('8.2', '2026-08-27', 'Hareket İlerleme Blokları', 
   item('Yedek ve İçe Aktarma Koruması', 'Plan reçetesi ve set hedef anlık görüntüsü localStorage ile yedekte korunuyor; bozuk dış veriler güvenli biçime normalleştiriliyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverload 8.3', [
+const RELEASE_8_3 = release('8.3', '2026-08-27', 'İlk Açılış Performansı ve Kod Bölme', [
   item('İlk Açılış Paketi %26 Küçüldü', 'Ana uygulama parçası yaklaşık 1,12 MB’tan 0,82 MB’a indirildi. Ağır ekran kodları artık uygulama ilk açılırken değerlendirilmek zorunda değil.'),
   item('Sekme Bazlı Kod Bölme', 'Antrenman, beslenme, gelişim ve arşiv ekranları ayrı parçalara ayrıldı; yalnız kullanıcı ilgili sekmeye geçtiğinde çalıştırılıyor.'),
   item('Analizleri İkinci Kez Bölme', 'Gelişim Merkezi içindeki vücut, ayrıntılı analiz ve kadın döngüsü ekranları da birbirinden ayrıldı. Analiz ekranını açmak diğer iki ekranı gereksiz yere çalıştırmıyor.'),
@@ -45,6 +45,28 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-27', 'ProOverl
   item('Gerçek İlk Yük Bağımlılık Hesabı', 'Bütçe kontrolü yalnız index dosyasına bakmıyor; Vite manifest üzerinden React ve ikon gibi statik bağımlılıkları da ilk yük toplamına katıyor.'),
   item('Gerçek Gzip Ölçümü', 'Sıkıştırılmış bütçe dosya boyutundan tahmin edilmiyor; üretilen her ilk-yük dosyası gzip ile yeniden sıkıştırılıp toplam ağ boyutu ölçülüyor.'),
   item('Çevrimdışı Navigasyon Güvencesi', 'Yeni ekran parçaları varken doğrudan açılan PWA yolları index uygulama kabuğuna düşüyor ve eski sürüm önbellekleri yükseltme sonrasında temizleniyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-28', 'Güven Aralıklı İlerleme ve Tarihsel Veri Güveni', [
+  item('Aykırı Değere Dayanıklı Eğilim', 'Hedef tahmini tek bir sıra dışı seansın çizgiyi sürüklemesini azaltan Theil–Sen eğilimiyle hesaplanıyor.'),
+  item('Asgari Veri Eşiği', 'Uygulama artık en az altı geçerli seans ve 21 günlük zaman açıklığı olmadan hedef tarihi uydurmuyor.'),
+  item('Üç Ayrı Hedef Senaryosu', 'İyimser, mevcut eğilim ve temkinli senaryolar tek kesin tarih yerine başlangıç–bitiş aralığı üretiyor.'),
+  item('Geriye Dönük Tahmin Testi', 'Motor geçmiş seride bir sonraki performansı saklayarak tahmin ediyor; ortalama kg hatası kullanıcıya açıkça gösteriliyor.'),
+  item('Çok Sinyalli Güven Puanı', 'Güven seviyesi yalnız R² ile değil seans sayısı, zaman açıklığı, uyum ve geriye dönük hata kalitesiyle belirleniyor.'),
+  item('Planlı Deload Süzgeci', 'Bilerek hafifletilen seanslar kalıcı güç kaybı gibi yorumlanıp hedef eğilimini aşağı çekmiyor.'),
+  item('Frekans ve Uyum Bağlamı', 'Gerçek seans sıklığı, planlanan sıklık ve blok uyumu tahminin yanında görünür bağlam olarak tutuluyor; nedensellik iddiası yapılmıyor.'),
+  item('Tahmin Anlık Görüntüleri', 'Bloklu bir seans kaydedildiğinde o günkü hedef aralığı donduruluyor; aynı gün yinelenmiyor ve son 36 tahmin saklanıyor.'),
+  item('Tahmin Geçmişi Arayüzü', 'Hareket profilinde son üç tahmin aralığı gösteriliyor; tahminin zaman içinde yakınlaşıp uzaklaştığı izlenebiliyor.'),
+  item('İmzalı Enerji Geçmişi', 'Kaydedilen günlük enerji dökümü hesap girdisi imzasıyla saklanıyor; sonraki genel NEAT ayarı veya yeni vücut ölçümü eski günü değiştirmiyor.'),
+  item('Bilinçli Yeniden Hesaplama', 'Geçmiş günün makrosu, adımı veya aktivitesi gerçekten düzenlenirse imza değişiyor ve yalnız o gün yeniden hesaplanıyor.'),
+  item('Seans Günü Vücut Bağlamı', 'Yeni antrenmanlar kilo, BMR, yağ oranı, FFM ve FFMI bağlamını tarihsel anlık görüntü olarak saklıyor.'),
+  item('Geçmiş Kalori Düzeltmesi', 'Ağırlık ve kardiyo kalorisi yeni ölçümle geçmişe doğru değişmek yerine varsa kayıt günündeki kilo snapshotını kullanıyor.'),
+  item('Yedek Şeması v5', 'Koleksiyonlar tek kayıt defterinden yedekleniyor; bozuk dizi, ayar ve tahmin geçmişi güvenli ve idempotent biçimde onarılıyor.'),
+  item('İki Yeni Sorumluluk Hook’u', 'İlerleme blokları ile tarihsel enerji hesapları App bileşeninden ayrıldı; aynı kuralın farklı ekranlarda sapma riski azaltıldı.'),
+  item('Aktif Antrenmanı Geç Yükleme', 'Aktif seans ekranı yalnız antrenman başlatıldığında indiriliyor; ana sayfanın ilk açılış işi azaltıldı.'),
+  item('Olay Bazlı Kod Bölme', 'Program kurucu, CSV, takvim ve program kodu araçları yalnız ilgili düğmeye basıldığında yükleniyor.'),
+  item('Daha Sıkı Performans Bütçesi', 'Ölçülen yeni ilk yük temel alınarak JavaScript sınırı 900 KB’den 820 KB’ye, gzip sınırı 305 KB’den 285 KB’ye indirildi.'),
+  item('İstatistiksel Sınırların Açıklanması', 'Hedef aralığı ve hata değeri tahmin olarak etiketleniyor; uygulama sonucu garanti eden bir tarih göstermiyor.'),
 ]);
 
 const RELEASE_8_1 = release('8.1', '2026-08-27', 'Antrenman Sihirbazı ve Sıra Motoru', [
@@ -83,6 +105,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_3,
   RELEASE_8_2,
   RELEASE_8_1,
   RELEASE_8_0,

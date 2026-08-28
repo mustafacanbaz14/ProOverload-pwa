@@ -48,10 +48,7 @@ import { buildRestingHrReport, upsertRestingHr, restingHrCoachItem } from './uti
 import { buildCardioRecords } from './utils/cardioRecords';
 import { activePainRegions, scanSessionForPain, painGuardCoachItem, painWarningFor, exercisesLoadingPain } from './utils/painGuard';
 import { progressionFor, setProgressionRule, buildNextSessionTargets, PROGRESSION_RULES } from './utils/progression';
-import {
-  activeProgressionBlocks, applyProgressionPrescription, buildProgressionBlockReport,
-  normalizeProgressionPlan, progressionPlanDefaults,
-} from './utils/progressionBlock';
+import { applyProgressionPrescription } from './utils/progressionBlock';
 import { scanPlateaus, plateauCoachItem } from './utils/plateau';
 import { repRecordsFor, isRepRecord } from './utils/repRecords';
 import { buildRestReport, restCoachItem } from './utils/restQuality';
@@ -65,7 +62,6 @@ import { setExerciseNote, notesFor } from './utils/exerciseNotes';
 import { scanSideBalance, sideBalanceCoachItem } from './utils/unilateral';
 import { buildSessionVolume } from './utils/sessionVolume';
 import { dailyWaterTarget, addWater, waterSummary, waterCoachItem } from './utils/hydration';
-import { planToIcs } from './utils/calendarExport';
 import { buildRecordTimeline } from './utils/recordTimeline';
 import { pickGhost, buildGhostRace, ghostTargetFor } from './utils/ghostSession';
 import { planTimeCrunch, describeTimeCrunch } from './utils/timeCrunch';
@@ -75,13 +71,11 @@ import { buildAdaptations, applyAdaptation } from './utils/autoAdapt';
 import { buildYearReview } from './utils/yearReview';
 import { discoverExercises } from './utils/exerciseDiscovery';
 import { restProfileByMuscle, adaptiveRestCoachItem } from './utils/adaptiveRest';
-import { templateToCode, codeToTemplate, describeCodeError } from './utils/programCode';
 import { applyTrainingGoal, findTrainingGoal } from './utils/trainingGoal';
 import { pushVersion, restoreVersion, describeVersionDiff } from './utils/templateVersions';
 import { buildFrequencyPlan, frequencyPlanCoachItem } from './utils/frequencyPlanner';
 import { buildSessionPace, compareSessions, findComparableSessions } from './utils/sessionPace';
 import { templateFromEntry, addCardioTemplate, removeCardioTemplate, markCardioTemplateUsed, applyCardioTemplate } from './utils/cardioTemplates';
-import { cardioToCsv } from './utils/csvExport';
 import { bodyweightBasisFor, describeSetLoad } from './utils/bodyweight';
 import { buildStrengthStandards, strengthStandardCoachItem } from './utils/strengthStandards';
 import { buildEffortDistribution, effortCoachItem } from './utils/effortDistribution';
@@ -91,7 +85,7 @@ import { buildDeloadReturn, deloadReturnCoachItem } from './utils/deloadReturn';
 import { buildPeriNutrition, periNutritionCoachItem } from './utils/periNutrition';
 import { buildWarmupRoutine } from './utils/warmupRoutine';
 import { computeAdaptiveTDEE } from './utils/tdee';
-import { totalCardioCalories, dayWorkoutCalories } from './utils/cardio';
+import { totalCardioCalories } from './utils/cardio';
 import { computeWeekPlan, findPlan } from './utils/weekPlan';
 import { removeTemplateFromPlans } from './utils/planMigration';
 import { buildPersonalVolumeGuidance } from './utils/personalization';
@@ -103,16 +97,14 @@ import { auditBodyweightEntries, normalizeBodyweightEntries } from './utils/body
 import { deloadState, shouldSuggestDeload, emptyDeload } from './utils/deload';
 import { mesocycleState, weeklyTargets, targetInstructions, mesocycleCoachItem, emptyMesocycle } from './utils/mesocycle';
 import { auditExerciseSelection, selectionCoachItem } from './utils/selectionAudit';
-import { instantiateProgram } from './utils/programBuilder';
 import { buildSessionReport, snapshotTemplatePlan } from './utils/sessionReport';
 import { bestTemplateRecommendation } from './utils/templateRecommendation';
 import { buildExerciseProfile } from './utils/exerciseProfile';
 import { buildPlateauInsights } from './utils/insights';
 import { buildFrequencyReport, frequencyCoachItem } from './utils/frequency';
-import { workoutsToCsv, metricsToCsv, nutritionToCsv } from './utils/csvExport';
 import { findStarterProgram, instantiateStarterProgram } from './utils/starterPrograms';
 import { analyzeDayConflicts } from './utils/interference';
-import { averageDailyExercise, dayEnergyBreakdown, ACTIVITY_LEVELS, estimateMacrosForTef, thermicEffect, neatOptsForDay, buildEnergySeries, groupByWeek } from './utils/energyModel';
+import { dayEnergyBreakdown, neatOptsForDay, buildEnergySeries, groupByWeek } from './utils/energyModel';
 import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
 import { caloriesFromMacros, dailyTotals } from './utils/nutritionStats';
 import { DEFAULT_READINESS, READINESS_FIELDS, computeReadiness, readinessTrend } from './utils/readiness';
@@ -124,7 +116,10 @@ import { useAppPersistence } from './hooks/useAppPersistence';
 import { useDisplayPreferences } from './hooks/useDisplayPreferences';
 import { useDeferredPwaUpdate } from './hooks/useDeferredPwaUpdate';
 import { useAppDataState } from './hooks/useAppDataState';
+import { useHistoricalEnergy } from './hooks/useHistoricalEnergy';
+import { useProgressionBlocks } from './hooks/useProgressionBlocks';
 import { createBackupPayload, migrateBackupPayload } from './utils/dataSchema';
+import { buildBodyContextSnapshot } from './utils/historicalContext';
 // Sürüm tek kaynaktan okunur: package.json. Ekranda gösterilen sürüm ile
 // yedek dosyasına yazılan sürümün birbirinden sapması böyle engellenir.
 import pkg from '../package.json';
@@ -146,14 +141,14 @@ import {
 
 import Navbar from './components/Navbar';
 import HomeView from './components/HomeView';
-import ActiveWorkoutView from './components/ActiveWorkoutView';
 import { formatDay, formatDayRelative } from './utils/dates';
-import { emptyWellnessDay, mergeWellnessDay, dayMindCalories, computeSleepScore } from './utils/wellness';
+import { emptyWellnessDay, mergeWellnessDay, computeSleepScore } from './utils/wellness';
 import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
 
 // Ana ekran için gerekli olmayan büyük pencereler ilk açılışta çalıştırılmaz.
 // Kullanıcı ilgili aracı açtığında ayrı parça indirilir ve değerlendirilir.
 const DeloadModal = lazy(() => import('./components/DeloadModal'));
+const ActiveWorkoutView = lazy(() => import('./components/ActiveWorkoutView'));
 const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
 const PainLogModal = lazy(() => import('./components/PainLogModal'));
 const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
@@ -808,7 +803,8 @@ export default function App() {
    * Yük çözücü setlere de uygulanıyor: barfiks satırında hem yazılan değer hem
    * gerçek yük görünsün ki tabloyu açan kişi hangisiyle hesap yaptığını bilsin.
    */
-  const handleExportCsv = useCallback((kind) => {
+  const handleExportCsv = useCallback(async (kind) => {
+    const { workoutsToCsv, metricsToCsv, nutritionToCsv, cardioToCsv } = await import('./utils/csvExport');
     const uretici = {
       workouts: () => ({
         text: workoutsToCsv(sortedWorkouts, { customExercises, resolveLoad: resolveSetLoad }),
@@ -858,7 +854,8 @@ export default function App() {
   }, [setSettings, setTemplates, showToast]);
 
   /** Sihirbazın ürettiği programı şablonlara ve haftalık plana yazar. */
-  const handleInstallGenerated = useCallback((built, { schedule = null } = {}) => {
+  const handleInstallGenerated = useCallback(async (built, { schedule = null } = {}) => {
+    const { instantiateProgram } = await import('./utils/programBuilder');
     const kurulum = instantiateProgram(built, generateId, { schedule });
     if (!kurulum) return;
 
@@ -1017,44 +1014,27 @@ export default function App() {
   }) : null, [profileExercise, settings.repRangeOverrides, settings.repRangeMin,
     settings.repRangeMax, customExercises]);
 
-  const profileProgressionPlan = profileExercise
-    ? settings.progressionPlans?.[profileExercise] || null
-    : null;
-  const progressionBlockReport = useMemo(() => (
-    profileExercise && profileProgressionPlan
-      ? buildProgressionBlockReport(profileExercise, profileProgressionPlan, sortedWorkouts, {
-        today: getLocalDateString(),
-        resolveLoad: resolveSetLoad,
-      })
-      : null
-  ), [profileExercise, profileProgressionPlan, sortedWorkouts, resolveSetLoad]);
-  const progressionBlockDefaults = useMemo(() => (
-    profileExercise && profileRepRange
-      ? progressionPlanDefaults(
-        profileExercise,
-        exerciseProfile,
-        profileRepRange,
-        loadStepFor(profileExercise, customExercises),
-      )
-      : null
-  ), [profileExercise, exerciseProfile, profileRepRange, customExercises]);
-
-  const progressionBlocks = useMemo(() => activeProgressionBlocks(
-    settings.progressionPlans,
-    sortedWorkouts,
-    { today: getLocalDateString(), resolveLoad: resolveSetLoad },
-  ), [settings.progressionPlans, sortedWorkouts, resolveSetLoad]);
-
-  /** Etkin bloktan o güne ait, geçmişe dondurulacak reçeteyi üretir. */
-  const progressionPrescriptionFor = useCallback((exerciseName, runtime = {}) => {
-    const plan = settings.progressionPlans?.[exerciseName];
-    if (!plan?.active) return null;
-    return buildProgressionBlockReport(exerciseName, plan, sortedWorkouts, {
-      today: getLocalDateString(),
-      resolveLoad: resolveSetLoad,
-      ...runtime,
-    })?.nextPrescription || null;
-  }, [settings.progressionPlans, sortedWorkouts, resolveSetLoad]);
+  const {
+    profilePlan: profileProgressionPlan,
+    profileReport: progressionBlockReport,
+    profileDefaults: progressionBlockDefaults,
+    blocks: progressionBlocks,
+    prescriptionFor: progressionPrescriptionFor,
+    saveBlock: handleSaveProgressionBlock,
+    removeBlock: handleRemoveProgressionBlock,
+    captureAfterWorkout: captureProgressionAfterWorkout,
+  } = useProgressionBlocks({
+    profileExercise,
+    profileRepRange,
+    exerciseProfile,
+    defaultIncrement: profileExercise ? loadStepFor(profileExercise, customExercises) : 2.5,
+    progressionPlans: settings.progressionPlans,
+    workouts: sortedWorkouts,
+    resolveLoad: resolveSetLoad,
+    setSettings,
+    showToast,
+    today: getLocalDateString(),
+  });
 
   // Rekor kontrolü set güncellenirken yapılıyor; o an güncel tabloyu okumak
   // için ref kullanılır, yoksa bağımlılık zinciri her tuşta yeniden kurulurdu.
@@ -1708,23 +1688,20 @@ export default function App() {
 
     const persistableWorkout = Object.fromEntries(Object.entries(activeWorkout)
       .filter(([key]) => key !== 'isEditingOld' && key !== 'activeExerciseId'));
-    const metricAtDate = findMetricsForDate(metricsHistory, activeWorkout.date, currentMetricsForm);
+    const bodyAtDate = bodyContextForDate(activeWorkout.date);
     const saved = {
       ...persistableWorkout,
       duration: finalDuration || 45,
-      weightAtTime: parseNumber(activeWorkout.weightAtTime) || parseNumber(metricAtDate?.weight),
+      weightAtTime: parseNumber(activeWorkout.weightAtTime) || bodyAtDate.weight,
+      bodyContextSnapshot: buildBodyContextSnapshot(bodyAtDate),
       timer: { status: 'finished' },
     };
-
-    setWorkouts(prev => {
-      const idx = prev.findIndex(w => w.id === saved.id);
-      if (idx >= 0) {
-        const next = [...prev];
-        next[idx] = saved;
-        return next;
-      }
-      return [saved, ...prev];
-    });
+    const existingIndex = workouts.findIndex(workout => workout.id === saved.id);
+    const nextWorkouts = existingIndex >= 0
+      ? workouts.map((workout, index) => index === existingIndex ? saved : workout)
+      : [saved, ...workouts];
+    setWorkouts(nextWorkouts);
+    captureProgressionAfterWorkout(saved, nextWorkouts);
 
     // Şablon kullanım bilgisi yalnız gerçekten kaydedilen yeni seanslarda artar;
     // başlatıp vazgeçmek veya geçmiş bir kaydı düzenlemek istatistiği bozmaz.
@@ -1799,35 +1776,14 @@ export default function App() {
   }, [setCurrentNutritionForm, showToast]);
 
   const handleSaveNutrition = () => {
-    const date = currentNutritionForm.date;
-    const body = bodyContextForDate(date);
-    const exercise = dayCaloriesFor(date);
-    const macros = dailyTotals(currentNutritionForm);
-    const currentBmr = parseNumber(computedComp?.bmr);
-    const historicalMaintenanceFallback = maintenanceCalories > 0 && currentBmr > 0 && body.bmr > 0
-      ? Math.round(maintenanceCalories * body.bmr / currentBmr)
-      : maintenanceCalories;
-    const maintenanceAtDate = parseNumber(currentNutritionForm.maintenanceAtTheTime)
-      || historicalMaintenanceFallback;
-    const energySnapshot = dayEnergyBreakdown({
-      maintenance: maintenanceAtDate,
-      bmr: body.bmr,
-      macros,
-      estimatedMacros: estimatedTefMacros,
-      lifting: exercise.lifting,
-      cardio: exercise.cardio,
-      activeRecovery: exercise.activeRecovery,
-      recovery: exercise.mind,
-      manual: currentNutritionForm.activeCaloriesOut,
-      steps: currentNutritionForm.steps,
-      ...neatOptsForDay({ ...neatOpts, weightKg: body.weight }, currentNutritionForm),
-    });
+    const captured = captureEnergySnapshot(currentNutritionForm);
+    const body = captured.body;
     const savedNutrition = {
       ...currentNutritionForm,
       weightAtTheTime: body.weight,
       bmrAtTheTime: body.bmr,
-      maintenanceAtTheTime: maintenanceAtDate,
-      energySnapshot,
+      maintenanceAtTheTime: captured.maintenanceAtDate,
+      energySnapshot: captured.snapshot,
     };
     setNutritionHistory(prev => {
       const idx = prev.findIndex(n => n.date === currentNutritionForm.date);
@@ -2712,121 +2668,27 @@ export default function App() {
   }, [handleStartRequest, handleChangeView, handleAddHistoricalMetric]);
 
   // --- KARDİYO ---
-
-  // Kalori tahmini vücut ağırlığına dayanır; en son girilen ölçüm kullanılır.
-  const latestWeight = useMemo(() => {
-    const rec = sortedMetrics.find(m => parseNumber(m.weight) > 0);
-    return rec ? parseNumber(rec.weight) : 0;
-  }, [sortedMetrics]);
-
-  /** Bir günün hesabında o gün bilinen son ölçüm kullanılır; gelecek ölçüm geçmişi değiştirmez. */
-  const bodyContextForDate = useCallback((dateStr) => {
-    const metric = findMetricsForDate(metricsHistory, dateStr, currentMetricsForm);
-    const composition = computeComposition(metric || currentMetricsForm);
-    return {
-      metric,
-      metricDate: metric?.date || '',
-      weight: parseNumber(metric?.weight) || latestWeight,
-      bmr: parseNumber(composition?.bmr) || parseNumber(computedComp?.bmr),
-      bodyFat: parseNumber(composition?.activeBF),
-      ffm: parseNumber(composition?.ffm),
-      ffmi: parseNumber(composition?.ffmi),
-    };
-  }, [metricsHistory, currentMetricsForm, latestWeight, computedComp]);
-
-  // Modal her gün için ayrı ayrı soruyor; kilo ve antrenman listesi sabit
-  // olduğu için tek bir fonksiyon yeterli.
-  // Meditasyon/esneme de dinlenmenin üstünde bir harcama; küçük ama gerçek.
-  // Kalori panosu ile Toparlanma ekranı aynı sayıyı göstersin diye burada
-  // toplanıyor.
-  const dayCaloriesFor = useCallback(
-    (dateStr) => {
-      const body = bodyContextForDate(dateStr);
-      const w = dayWorkoutCalories(workouts, dateStr, body.weight);
-      const zihin = dayMindCalories(wellness, dateStr, body.weight);
-      return { ...w, mind: zihin, total: w.total + zihin, weightAtTime: body.weight, bmrAtTime: body.bmr };
-    },
-    [workouts, bodyContextForDate, wellness]);
-
-  // Olculen TDEE o donemin ORTALAMA egzersizini zaten iceriyor; NEAT artigindan
-  // dusulmezse antrenman kalorisi iki kez sayilir.
-  const avgDailyExercise = useMemo(
-    () => averageDailyExercise(dayCaloriesFor, 28), [dayCaloriesFor]);
-
-  // Adaptif TDEE yokken sabit BMR×1.5 kullanmak günlük hareketi gereksiz
-  // şişiriyordu. Seçilen yaşam seviyesi + ortalama egzersiz + son makro
-  // dağılımından türetilen TEF ile daha tutarlı bir başlangıç tahmini üretir.
-  // üzerinden çözülür; adaptif TDEE oluştuğu anda yerini gerçek veriye bırakır.
-  const maintenanceCalories = useMemo(() => {
-    if (adaptiveTDEE?.tdee > 0) return Math.round(adaptiveTDEE.tdee);
-    const bmr = parseNumber(computedComp?.bmr);
-    if (!(bmr > 0)) return 0;
-    const level = ACTIVITY_LEVELS.find(item => item.key === settings.activityLevel) || ACTIVITY_LEVELS[1];
-    const neat = settings.neatMode === 'manual' && parseNumber(settings.neatManual) > 0
-      ? parseNumber(settings.neatManual)
-      : bmr * level.factor;
-    const core = bmr + neat + avgDailyExercise;
-    const estimatedMacros = estimateMacrosForTef(nutritionHistory, core);
-    const macroCalories = parseNumber(estimatedMacros.protein) * 4
-      + parseNumber(estimatedMacros.carbs) * 4 + parseNumber(estimatedMacros.fats) * 9;
-    const tefRate = macroCalories > 0
-      ? Math.min(0.2, thermicEffect(estimatedMacros).total / macroCalories)
-      : 0.1;
-    return Math.round(core / (1 - tefRate));
-  }, [adaptiveTDEE, computedComp, settings.activityLevel, settings.neatMode,
-    settings.neatManual, avgDailyExercise, nutritionHistory]);
-
-  const estimatedTefMacros = useMemo(
-    () => estimateMacrosForTef(nutritionHistory, maintenanceCalories),
-    [nutritionHistory, maintenanceCalories]);
-
-  const neatOpts = useMemo(() => ({
+  const {
+    latestWeight,
+    bodyContextForDate,
+    dayCaloriesFor,
     avgDailyExercise,
-    neatMode: settings.neatMode || 'auto',
-    activityLevel: settings.activityLevel || 'light',
-    neatManual: settings.neatManual,
-    weightKg: latestWeight,
-    neatMultiplier: settings.neatMultiplier,
-  }), [avgDailyExercise, settings.neatMode, settings.activityLevel,
-    settings.neatManual, latestWeight, settings.neatMultiplier]);
-
-  /**
-   * Geçmiş enerji hesabının tek doğruluk kaynağı:
-   * tarihsel ölçüm + o kaydın dönem korunum değeri + genel NEAT ayarı +
-   * yalnız o kayda açıkça yazılmış istisna.
-   */
-  const energyForNutritionRecord = useCallback((record) => {
-    const safeRecord = record || mergeNutrition({ date: getLocalDateString() });
-    const body = bodyContextForDate(safeRecord.date);
-    const exercise = dayCaloriesFor(safeRecord.date);
-    const macros = dailyTotals(safeRecord);
-    const currentBmr = parseNumber(computedComp?.bmr);
-    const historicalMaintenanceFallback = maintenanceCalories > 0 && currentBmr > 0 && body.bmr > 0
-      ? Math.round(maintenanceCalories * body.bmr / currentBmr)
-      : maintenanceCalories;
-    const breakdown = dayEnergyBreakdown({
-      maintenance: parseNumber(safeRecord.maintenanceAtTheTime) || historicalMaintenanceFallback,
-      bmr: body.bmr,
-      macros,
-      estimatedMacros: estimatedTefMacros,
-      lifting: exercise.lifting,
-      cardio: exercise.cardio,
-      activeRecovery: exercise.activeRecovery,
-      recovery: exercise.mind,
-      manual: safeRecord.activeCaloriesOut,
-      steps: safeRecord.steps,
-      ...neatOptsForDay({ ...neatOpts, weightKg: body.weight }, safeRecord),
-    });
-    return {
-      ...breakdown,
-      bodyContext: {
-        metricDate: body.metricDate,
-        weight: body.weight,
-        bmr: body.bmr,
-        bodyFat: body.bodyFat,
-      },
-    };
-  }, [bodyContextForDate, dayCaloriesFor, maintenanceCalories, computedComp, estimatedTefMacros, neatOpts]);
+    maintenanceCalories,
+    estimatedTefMacros,
+    neatOpts,
+    captureEnergySnapshot,
+    energyForNutritionRecord,
+  } = useHistoricalEnergy({
+    metricsHistory,
+    sortedMetrics,
+    currentMetricsForm,
+    computedComp,
+    workouts,
+    wellness,
+    nutritionHistory,
+    adaptiveTDEE,
+    settings,
+  });
 
   // Teorik hesaplar AKTİF programı kullanır: kullanıcı birden fazla program
   // tutabiliyor ama ana ekranda görünen hafta yıldızladığı olan.
@@ -3417,7 +3279,8 @@ export default function App() {
    * Dosya olarak indiriliyor, bir servise gönderilmiyor: uygulama çevrimdışı
    * çalışıyor ve hiçbir veri dışarı çıkmıyor.
    */
-  const handleExportCalendar = useCallback(() => {
+  const handleExportCalendar = useCallback(async () => {
+    const { planToIcs } = await import('./utils/calendarExport');
     const ics = planToIcs(activePlan, templates, { restSeconds: settings.restSeconds });
     if (!ics) {
       showToast('Aktif planda takvime yazılacak antrenman yok.', 'warning');
@@ -3779,6 +3642,7 @@ export default function App() {
    * önermek olurdu.
    */
   const handleCopyTemplateCode = useCallback(async (template) => {
+    const { templateToCode } = await import('./utils/programCode');
     const kod = templateToCode(template);
     if (!kod) {
       showToast('Bu şablonda paylaşılacak hareket yok.', 'warning');
@@ -3793,7 +3657,8 @@ export default function App() {
     }
   }, [showToast]);
 
-  const handleImportTemplateCode = useCallback((kod) => {
+  const handleImportTemplateCode = useCallback(async (kod) => {
+    const { codeToTemplate, describeCodeError } = await import('./utils/programCode');
     const sonuc = codeToTemplate(kod, generateId);
     if (!sonuc.ok) {
       showToast(describeCodeError(sonuc.reason), 'warning');
@@ -3830,39 +3695,6 @@ export default function App() {
       progressionRules: setProgressionRule(prev.progressionRules, exerciseName, key),
     }));
     showToast(`${exerciseName}: ${PROGRESSION_RULES[key]?.label || 'Çift İlerleme'}`);
-  }, [setSettings, showToast]);
-
-  const handleSaveProgressionBlock = useCallback((exerciseName, draft) => {
-    const now = new Date().toISOString();
-    const current = settings.progressionPlans?.[exerciseName] || null;
-    const restart = Boolean(draft?.restart);
-    const planId = restart ? generateId() : current?.id || generateId();
-    const normalized = normalizeProgressionPlan(exerciseName, {
-      ...draft,
-      id: planId,
-      active: true,
-      startDate: restart ? getLocalDateString() : current?.startDate || getLocalDateString(),
-      createdAt: restart ? now : current?.createdAt || now,
-    }, {
-      today: getLocalDateString(),
-      id: planId,
-      updatedAt: now,
-    });
-    if (!normalized) return;
-    setSettings(prev => ({
-      ...prev,
-      progressionPlans: { ...(prev.progressionPlans || {}), [exerciseName]: normalized },
-    }));
-    showToast(`${exerciseName}: ${restart ? 'yeni döngü başlatıldı' : `${normalized.weeks} haftalık ilerleme bloğu kaydedildi`}.`);
-  }, [settings.progressionPlans, setSettings, showToast]);
-
-  const handleRemoveProgressionBlock = useCallback((exerciseName) => {
-    setSettings(prev => {
-      const plans = { ...(prev.progressionPlans || {}) };
-      delete plans[exerciseName];
-      return { ...prev, progressionPlans: plans };
-    });
-    showToast(`${exerciseName} ilerleme bloğu kaldırıldı.`);
   }, [setSettings, showToast]);
 
   /** Seansa başlamadan önce şablonun tamamı için hedef kartı. */
@@ -4474,6 +4306,7 @@ export default function App() {
 
           {/* ACTIVE WORKOUT OVERLAY */}
           {activeWorkout && (
+            <Suspense fallback={<ModalLoadingFallback />}>
             <ActiveWorkoutView
               activeWorkout={activeWorkout}
               setActiveWorkout={setActiveWorkout}
@@ -4535,6 +4368,7 @@ export default function App() {
               rest={rest}
               restSecondsLeft={restSecondsLeft}
             />
+            </Suspense>
           )}
         </div>
 
@@ -5377,7 +5211,7 @@ export default function App() {
           <div className="fixed inset-0 bg-zinc-950 z-[100] flex flex-col h-[100dvh] max-w-[420px] mx-auto shadow-2xl">
             <div className="p-4 border-b border-zinc-800 bg-zinc-900 flex justify-between items-center pt-safe">
               <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider flex items-center"><Database size={14} className="mr-2 text-cyan-500" /> Hareket Seçimi</h3>
-              <button onClick={closeExercisePicker} className="text-zinc-500 p-2"><X size={18} /></button>
+              <button onClick={closeExercisePicker} aria-label="Hareket seçimini kapat" className="text-zinc-500 p-2"><X size={18} /></button>
             </div>
             <div className="p-4 border-b border-zinc-800 bg-zinc-950">
               {!isAddingCustom ? (

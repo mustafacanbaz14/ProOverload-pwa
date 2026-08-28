@@ -7,8 +7,8 @@ const DIST = path.join(ROOT, 'dist');
 const MANIFEST = path.join(DIST, '.vite', 'manifest.json');
 
 const BUDGETS = {
-  initialJs: 900 * 1024,
-  initialJsGzip: 305 * 1024,
+  initialJs: 820 * 1024,
+  initialJsGzip: 285 * 1024,
   initialCss: 140 * 1024,
   largestLazyJs: 480 * 1024,
 };

@@ -2,6 +2,7 @@
  * Saf JavaScript SVG QR Kod Üreteci ve Cihaz Aktarım Kodlayıcısı.
  * Harici CDN veya kütüphane bağımlılığı olmadan tamamen çevrimdışı çalışır.
  */
+import { DATA_SCHEMA_VERSION } from './dataSchema.js';
 
 // Basit QR Matrix üreteci (Mode byte / Numeric / Alphanumeric)
 export const generateQRCodeMatrix = (text) => {
@@ -23,7 +24,7 @@ export const createQRDataString = (backupData) => {
       // Aktarım formatının sürümü — uygulama sürümünden (package.json) bağımsızdır,
       // yalnızca bu metin kodunun yapısı değiştiğinde artar.
       version: '0.7.0',
-      schema: backupData.schemaVersion || 4,
+      schema: backupData.schemaVersion || DATA_SCHEMA_VERSION,
       exportedAt: new Date().toISOString(),
       workouts: backupData.workouts || [],
       templates: backupData.templates || [],
