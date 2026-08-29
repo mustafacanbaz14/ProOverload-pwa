@@ -92,7 +92,7 @@ const RELEASE_8_6 = release('8.6', '2026-08-28', 'Mağaza Hazırlığı ve Ürü
   item('Kamu İletişimi Engeli', 'Destek e-postası bilinmediği için uydurulmadı. Mağaza hazırlık merkezi ve metadata bunu başvuru öncesi zorunlu manuel adım olarak gösteriyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-29', 'Sadeleştirme: Duvar Yerine Liste', [
+const RELEASE_8_9 = release('8.9', '2026-08-29', 'Sadeleştirme: Duvar Yerine Liste', [
   item('Analiz Ekranı Bölümlendi', 'Hacim sekmesi ölçüldüğünde 10,8 ekran kaydırma, 236 dokunulabilir öğe ve 12.000 karakter metindi. Kartların hepsi aynı anda açıktı: her sürümde bir kart daha eklenmiş, hiçbiri kapanmamıştı. Kartlar beş bölüme ayrıldı ve yalnızca ilki açık geliyor. Sonuç: 4 ekran, 49 öğe, 3.860 karakter.'),
   item('Kapalıyken de Bilgi Veriyor', 'Bölüm başlıkları kapalıyken bile içindeki kart sayısını ve tek satırlık özeti gösteriyor; "burada ne var" sorusu açmadan cevaplanıyor. Hangi bölümün açık olduğu ayarlara yazılmıyor — o anki niyet, kalıcı tercih değil.'),
   item('Derin Analiz de Bölümlendi', 'Koç sekmesinin Derin panosu 3,6 ekran ve 17 uzun paragraftı; üç bölüme ayrıldı ve 2 ekrana indi.'),
@@ -103,7 +103,15 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-29', 'Sadeleş
   item('Araçlarda Arama', 'Araçlar menüsü yirmi dokuz girişe çıkmıştı; aradığını bilen için gezinmek, bilmeyen için okumak zorlaşmıştı. Arama kutusu ikisini birden çözüyor: başlık, açıklama ve grup adı birlikte aranıyor, yazılmadığında gruplar olduğu gibi duruyor.'),
   item('667 Satır Ölü Kod Silindi', 'Sürüm notlarının bir kopyası constants.js içinde kalmıştı ve kimse okumuyordu; arayüz de doğrulama betiği de releaseHistory.js’den okuyor. Ölü kopya sürüm 8.7’ye çıkmışken hâlâ "ProOverload 7.9" başlığını taşıyordu — yani yanlış olduğu fark edilmeden yaşayabiliyordu.'),
   item('Hiçbir Özellik Kaldırılmadı', 'Bu sürüm bir sadeleştirme sürümü ama hiçbir analiz, kart ya da araç silinmedi. Değişen tek şey varsayılan olarak neyin açık geldiği: uygulama artık her şeyi aynı anda anlatmak yerine sorulunca anlatıyor.'),
-])
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-29', 'Yayın Güvenilirliği', [
+  item('Vercel Yanlış Negatifi Düzeltildi', 'Mağaza güvenlik denetimi vercel.json dosyasındaki boşluklara bağımlı metin araması yapıyordu; Vercel dosyayı sıkıştırınca doğru yapı yanlış biçimde hatalı sayılıyordu.'),
+  item('Semantik Yapı Denetimi', 'Başlık kuralları ve SPA yönlendirmesi artık JSON olarak ayrıştırılıyor; girinti, satır sonu veya anahtarlar arasındaki boşluk değişse de aynı yapı aynı sonucu veriyor.'),
+  item('Güvenlik Başlıkları Korundu', 'X-Content-Type-Options, X-Frame-Options, Referrer-Policy ve Permissions-Policy kontrolleri kaldırılmadı; yalnız kırılgan doğrulama yöntemi düzeltildi.'),
+  item('Yerel ve Bulut Build Eşitliği', 'Bilgisayarda geçen üretim kapısının Vercel Linux ortamında da aynı yapı için geçmesi sağlandı; yayın sonucu artık dosya biçimlendirmesine bağlı değil.'),
+  item('PWA ve Kullanıcı Verisi Değişmedi', 'Bu bakım sürümü localStorage anahtarlarına, veri şemasına, PWA önbellek modeline veya Claude ile eklenen v8.9 arayüz sadeleştirmelerine dokunmuyor.'),
+]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
   item('Merkezi Veri Deposu', 'Kalıcı verinin okuma ve yazma yolları tek bir depo arayüzünde toplandı; ekran kodu localStorage anahtar ayrıntılarına bağımlı değil.'),
@@ -179,6 +187,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_9,
   RELEASE_8_8,
   RELEASE_8_7,
   RELEASE_8_6,

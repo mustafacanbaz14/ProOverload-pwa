@@ -16,7 +16,9 @@ const metadata = JSON.parse(read('store/metadata.tr.json'));
 const constants = read('src/utils/constants.js');
 const vite = read('vite.config.js');
 const index = read('index.html');
-const vercel = read('vercel.json');
+// Vercel build ortamı yapılandırma dosyasını normalize/minify edebilir.
+// Bu nedenle boşluklara bağlı ham metin araması yerine JSON yapısını denetle.
+const vercel = JSON.parse(read('vercel.json'));
 
 check(constants.includes(`export const APP_VERSION = '${packageJson.version}'`), 'Paket ve uygulama sürümü aynı');
 check(metadata.appVersion === packageJson.version, 'Mağaza metadatası güncel sürümde');
@@ -40,10 +42,21 @@ for (const [path, markers] of legal) {
   markers.forEach(marker => check(content.includes(marker), `${path}: ${marker}`));
   check(content.includes(packageJson.version), `${path} sürümü güncel`);
 }
-check(vercel.includes('"source": "/:path*"'), 'Global güvenlik başlığı yolu var');
-check(vercel.includes('"destination": "/index.html"'), 'SPA yönlendirmesi var');
+const globalHeaderRule = Array.isArray(vercel.headers)
+  ? vercel.headers.find(rule => rule?.source === '/:path*')
+  : null;
+const globalHeaderKeys = new Set(
+  Array.isArray(globalHeaderRule?.headers)
+    ? globalHeaderRule.headers.map(header => header?.key).filter(Boolean)
+    : [],
+);
+const hasSpaRewrite = Array.isArray(vercel.rewrites)
+  && vercel.rewrites.some(rule => rule?.destination === '/index.html');
+
+check(Boolean(globalHeaderRule), 'Global güvenlik başlığı yolu var');
+check(hasSpaRewrite, 'SPA yönlendirmesi var');
 ['X-Content-Type-Options', 'X-Frame-Options', 'Referrer-Policy', 'Permissions-Policy']
-  .forEach(header => check(vercel.includes(`"key": "${header}"`), `Güvenlik başlığı: ${header}`));
+  .forEach(header => check(globalHeaderKeys.has(header), `Güvenlik başlığı: ${header}`));
 
 const pngSize = (path) => {
   const bytes = readFileSync(resolve(root, path));
