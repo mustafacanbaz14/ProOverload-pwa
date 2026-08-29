@@ -14,6 +14,12 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
   onSnooze, onDismiss, onRestoreCoach, hiddenCount = 0, conflictCount = 0,
   onApply, onReject, focus = null, onOpenLedger, ledgerOpenCount = 0, briefing = null }) => {
   const [showAll, setShowAll] = useState(false);
+  // Açık madde: aynı anda yalnızca biri. Ölçüldüğünde ana ekranda beş uzun
+  // paragraf vardı (ortalama 160, en uzunu 307 karakter) ve birincil eylem
+  // 2.5 ekran aşağıdaydı. Koç maddelerinin GEREKÇESİ değerli ama her gün
+  // hepsini birden okumak kimsenin yaptığı bir şey değil; başlık kalıyor,
+  // gerekçe dokununca açılıyor.
+  const [openKey, setOpenKey] = useState(null);
   if (!data) return null;
   const planned = Boolean(data.workoutTemplate);
   return (
@@ -98,10 +104,21 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
             gerisi istenirse açılıyor — kart ikinci bir ekrana dönüşmesin. */}
         {actions.length > 0 && (
           <div className="space-y-1.5">
-            {(showAll ? actions : actions.slice(0, 2)).map(item => (
+            {(showAll ? actions : actions.slice(0, 3)).map(item => (
               <div key={item.key} className={`rounded-xl border p-2.5 ${item.tone.chip}`}>
                 <div className="flex items-start justify-between gap-2">
-                  <span className={`text-[10px] font-bold leading-snug ${item.tone.text}`}>{item.title}</span>
+                  <button
+                    type="button"
+                    onClick={() => setOpenKey(k => (k === item.key ? null : item.key))}
+                    aria-expanded={openKey === item.key}
+                    className="min-w-0 flex-1 text-left flex items-start gap-1.5 active:opacity-70"
+                  >
+                    <span className={`text-[10px] font-bold leading-snug ${item.tone.text}`}>{item.title}</span>
+                    <ChevronDown
+                      size={11}
+                      className={`shrink-0 mt-0.5 text-zinc-500 transition-transform ${openKey === item.key ? 'rotate-180' : ''}`}
+                    />
+                  </button>
                   {item.action && onAction && (
                     <button
                       onClick={() => onAction(item.action)}
@@ -111,10 +128,12 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                     </button>
                   )}
                 </div>
-                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">{item.detail}</p>
+                {openKey === item.key && (
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">{item.detail}</p>
+                )}
                 {/* Erteleme ve kapatma: aynı maddeyi her gün aynı yerde görmek
                     bir süre sonra kartın tamamını görünmez yapıyordu. */}
-                {(onSnooze || onDismiss || onApply) && (
+                {openKey === item.key && (onSnooze || onDismiss || onApply) && (
                   <div className="flex flex-wrap gap-3 mt-1.5">
                     {/* "Uyguladım" ertelemeden önce geliyor: kartın asıl amacı
                         tavsiyeyi susturmak değil uygulatmak, ve defter ancak
@@ -161,12 +180,12 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                 )}
               </p>
             )}
-            {actions.length > 2 && (
+            {actions.length > 3 && (
               <button
                 onClick={() => setShowAll(v => !v)}
                 className="w-full text-[9px] font-mono text-zinc-500 active:text-zinc-300 py-1 flex items-center justify-center gap-1"
               >
-                {showAll ? 'Daha az göster' : `${actions.length - 2} madde daha`}
+                {showAll ? 'Daha az göster' : `${actions.length - 3} madde daha`}
                 <ChevronDown size={10} className={`transition-transform ${showAll ? 'rotate-180' : ''}`} />
               </button>
             )}

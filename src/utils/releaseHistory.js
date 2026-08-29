@@ -92,6 +92,19 @@ const RELEASE_8_6 = release('8.6', '2026-08-28', 'Mağaza Hazırlığı ve Ürü
   item('Kamu İletişimi Engeli', 'Destek e-postası bilinmediği için uydurulmadı. Mağaza hazırlık merkezi ve metadata bunu başvuru öncesi zorunlu manuel adım olarak gösteriyor.'),
 ]);
 
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-29', 'Sadeleştirme: Duvar Yerine Liste', [
+  item('Analiz Ekranı Bölümlendi', 'Hacim sekmesi ölçüldüğünde 10,8 ekran kaydırma, 236 dokunulabilir öğe ve 12.000 karakter metindi. Kartların hepsi aynı anda açıktı: her sürümde bir kart daha eklenmiş, hiçbiri kapanmamıştı. Kartlar beş bölüme ayrıldı ve yalnızca ilki açık geliyor. Sonuç: 4 ekran, 49 öğe, 3.860 karakter.'),
+  item('Kapalıyken de Bilgi Veriyor', 'Bölüm başlıkları kapalıyken bile içindeki kart sayısını ve tek satırlık özeti gösteriyor; "burada ne var" sorusu açmadan cevaplanıyor. Hangi bölümün açık olduğu ayarlara yazılmıyor — o anki niyet, kalıcı tercih değil.'),
+  item('Derin Analiz de Bölümlendi', 'Koç sekmesinin Derin panosu 3,6 ekran ve 17 uzun paragraftı; üç bölüme ayrıldı ve 2 ekrana indi.'),
+  item('Koç Maddeleri Katlandı', 'Ana ekranda her koç maddesi tam paragrafıyla açıktı; ortalama 160, en uzunu 307 karakter. Artık başlık duruyor, gerekçe dokununca açılıyor. Erteleme ve kapatma bağlantıları da yalnızca madde açıkken görünüyor. Ana ekran metni 2.001 karakterden 1.331 karaktere indi.'),
+  item('Birincil Eylem Fold Üstünde', '"Antrenman Başlat" ana ekranda 2,5 ekran aşağıdaydı: uygulamanın en sık yapılan işi, en çok kaydırma isteyen yerdeydi. Kartların sırası zamanla büyüdükçe düğme aşağı itilmişti. Artık koç kartının hemen altında ve ilk ekranda.'),
+  item('Çift Başlat Düğmesi Kaldırıldı', 'Koç kartı zaten bağlama duyarlı bir başlat düğmesi taşıyor. Planlı bir şablon varsa "Planlananı Başlat" der ve alttaki serbest başlatmadan gerçekten farklı bir iş yapar; plan yoksa ikisi de aynı şeyi yapıyordu. Yan yana duran iki özdeş birincil eylem artık yok.'),
+  item('Yedekleme Uyarısı Alarm Olmaktan Çıktı', 'Uygulamayı açan kişinin ilk gördüğü şey turuncu bir veri kaybı uyarısıydı — üstelik hiç verisi olmayan yeni kullanıcıda bile. Artık yalnızca korunmaya değer bir geçmiş varken (en az üç antrenman) ve ekranın üstünde değil eylemin altında, tek satır olarak çıkıyor.'),
+  item('Araçlarda Arama', 'Araçlar menüsü yirmi dokuz girişe çıkmıştı; aradığını bilen için gezinmek, bilmeyen için okumak zorlaşmıştı. Arama kutusu ikisini birden çözüyor: başlık, açıklama ve grup adı birlikte aranıyor, yazılmadığında gruplar olduğu gibi duruyor.'),
+  item('667 Satır Ölü Kod Silindi', 'Sürüm notlarının bir kopyası constants.js içinde kalmıştı ve kimse okumuyordu; arayüz de doğrulama betiği de releaseHistory.js’den okuyor. Ölü kopya sürüm 8.7’ye çıkmışken hâlâ "ProOverload 7.9" başlığını taşıyordu — yani yanlış olduğu fark edilmeden yaşayabiliyordu.'),
+  item('Hiçbir Özellik Kaldırılmadı', 'Bu sürüm bir sadeleştirme sürümü ama hiçbir analiz, kart ya da araç silinmedi. Değişen tek şey varsayılan olarak neyin açık geldiği: uygulama artık her şeyi aynı anda anlatmak yerine sorulunca anlatıyor.'),
+])
+
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
   item('Merkezi Veri Deposu', 'Kalıcı verinin okuma ve yazma yolları tek bir depo arayüzünde toplandı; ekran kodu localStorage anahtar ayrıntılarına bağımlı değil.'),
   item('Tek Koleksiyon Sözlüğü', 'Antrenman, şablon, beslenme, ölçüm, toparlanma, döngü ve ayar alanlarının kalıcı kapsamı tek listede tanımlandı.'),
@@ -111,7 +124,7 @@ const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama
   item('Native Depoya Hazır Sınır', 'Arayüz localStorage davranışını korurken gelecekte IndexedDB veya native SQLite adaptörüne geçiş için tek bir teknik sınır oluşturuldu.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-29', 'Hızlı Açılış ve Akıcı Gezinme', [
+const RELEASE_8_8 = release('8.8', '2026-08-29', 'Hızlı Açılış ve Akıcı Gezinme', [
   item('Aşamalı Ana Ekran', 'Uygulama kabuğu, başlık ve alt gezinme önce açılıyor; ana ekran ayrı bir Suspense sınırında hazırlanıyor.'),
   item('Görünürlük Bazlı Isı Haritası', 'İnteraktif SVG kas haritası kullanıcı bölüme yaklaşana kadar değerlendirilmez; sabit ayrılmış alan sayfa sıçramasını engeller.'),
   item('Ertelenmiş Şablon Hesapları', 'Ana sayfanın altındaki şablon süre ve kas katkısı hesapları yalnız kullanıcı bölüme yaklaşınca çalışır.'),
@@ -166,6 +179,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_8,
   RELEASE_8_7,
   RELEASE_8_6,
   RELEASE_8_5,

@@ -6897,7 +6897,11 @@ test('ETA anlık görüntüsü aynı günü tekilleştirir ve geçmişi 36 kayı
 test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {
   assert.equal(LATEST_RELEASE_NOTES.version, APP_VERSION);
   assert.equal(RELEASE_HISTORY[0], LATEST_RELEASE_NOTES);
-  assert.ok(LATEST_RELEASE_NOTES.items.length >= 14);
+  // Madde SAYISI degil icerigi olculuyor. "En az on dort madde" kurali, bir
+  // surumun buyuklugunu kalitesiyle karistiriyordu: sadelestirme surumu on
+  // maddeyle cikinca test kirildi, oysa surumde bir eksiklik yoktu.
+  assert.ok(LATEST_RELEASE_NOTES.items.length >= 5);
+  assert.ok(LATEST_RELEASE_NOTES.items.every(x => x.title && x.desc.length > 40));
   assert.equal(findRelease('7.9')?.version, '7.9');
   assert.equal(findRelease('0.0'), null);
   assert.equal(new Set(RELEASE_HISTORY.map(entry => entry.version)).size, RELEASE_HISTORY.length);

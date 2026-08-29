@@ -65,17 +65,6 @@ const HomeView = memo(({
   return (
     <div data-view-scroll="home" className="luxury-screen p-4 space-y-5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
 
-      {needsBackup && (
-        <div className="bg-orange-900/20 border border-orange-900/50 p-3 rounded-2xl flex items-start space-x-3">
-          <AlertCircle className="text-orange-500 shrink-0 mt-0.5" size={16} />
-          <div className="flex-1">
-            <h4 className="text-[11px] font-bold text-orange-400 uppercase tracking-wider">Yedekleme Uyarısı</h4>
-            <p className="text-[10px] text-orange-300 mt-1 font-mono">Verilerinizi en son 7 günden uzun süre önce yedeklediniz veya hiç yedeklemediniz. Cihaz hafızası temizlenirse verileriniz kaybolur.</p>
-          </div>
-          <button onClick={() => setIsSettingsModalOpen(true)} className="text-[10px] bg-orange-500/20 text-orange-400 px-3 py-2 rounded-xl font-bold uppercase tracking-wider hover:bg-orange-500/30 transition-colors">Aç</button>
-        </div>
-      )}
-
       <TodayCoachCard
         data={todayCoach}
         briefing={coachBriefing}
@@ -96,6 +85,51 @@ const HomeView = memo(({
         onOpenWellness={onOpenWellness}
         onOpenCardio={onOpenCardio}
       />
+
+      {/* Birincil eylem koç kartının hemen altında. Ölçüldüğünde "Antrenman
+          Başlat" ana ekranda 2.5 EKRAN aşağıdaydı: uygulamanın en sık yapılan
+          işi, en çok kaydırma isteyen yerdeydi. Kartların sırası zamanla
+          büyüdükçe düğme aşağı itilmişti. */}
+      <div className="space-y-2.5">
+        {/* Koç kartı zaten bağlama duyarlı bir başlat düğmesi taşıyor. Planlı
+            bir şablon varsa o "Planlananı Başlat" der ve buradaki serbest
+            başlatmadan gerçekten farklı bir iş yapar. Plan yoksa ikisi de
+            "serbest başlat" demek oluyordu: yan yana duran iki özdeş birincil
+            eylem, hangisinin doğru olduğunu düşündürüyordu. */}
+        {!todayCoach?.workoutTemplate && !todayCoach?.cardioLabel ? null : (
+          <button onClick={() => handleStartRequest()} className="w-full bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-sm shadow-lg shadow-cyan-900/20 transition-all">
+            <Zap size={18} className="mr-2" /> Serbest Antrenman
+          </button>
+        )}
+
+        <button
+          onClick={() => onOpenTools?.()}
+          className="w-full bg-zinc-900 active:bg-zinc-800 border border-zinc-800 text-zinc-200 font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs transition-colors"
+        >
+          <Wrench size={16} className="mr-2 text-cyan-400" /> Araçlar
+          <span className="ml-2 text-[10px] font-mono text-zinc-500 normal-case tracking-normal">
+            kütüphane · program · kardiyo
+          </span>
+        </button>
+      </div>
+
+      {/* Yedekleme hatırlatması artık ekranın EN ÜSTÜNDE değil ve alarm tonunda
+          değil. Eskiden uygulamayı açan ilk gördüğü şey turuncu bir veri kaybı
+          uyarısıydı; oysa bu acil bir hata değil, yapılacak bir iş. Uyarı
+          yalnızca korunmaya değer bir geçmiş varken çıkıyor (App tarafında
+          üç antrenman eşiği). */}
+      {needsBackup && (
+        <button
+          onClick={() => setIsSettingsModalOpen(true)}
+          className="w-full bg-zinc-900 border border-zinc-800 px-3 py-2.5 rounded-2xl flex items-center gap-2.5 text-left active:bg-zinc-800"
+        >
+          <AlertCircle className="text-amber-500 shrink-0" size={14} />
+          <span className="text-[10px] font-mono text-zinc-400 flex-1 leading-relaxed">
+            Bir haftadır yedek almadın. Veriler yalnızca bu cihazda.
+          </span>
+          <span className="text-[9px] font-bold text-amber-400 uppercase shrink-0">Yedekle</span>
+        </button>
+      )}
 
       {gender === 'female' && (
         <CycleSummaryCard summary={cycleSummary} onOpen={onOpenCycle} />
@@ -306,19 +340,6 @@ const HomeView = memo(({
         )}
       </div>
 
-      <button onClick={() => handleStartRequest()} className="w-full bg-cyan-600 active:bg-cyan-700 text-white font-bold py-4 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-sm shadow-lg shadow-cyan-900/20 transition-all">
-        <Zap size={18} className="mr-2" /> Antrenman Başlat
-      </button>
-
-      <button
-        onClick={() => onOpenTools?.()}
-        className="w-full bg-zinc-900 active:bg-zinc-800 border border-zinc-800 text-zinc-200 font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs transition-colors"
-      >
-        <Wrench size={16} className="mr-2 text-cyan-400" /> Araçlar
-        <span className="ml-2 text-[10px] font-mono text-zinc-500 normal-case tracking-normal">
-          kütüphane · program · kardiyo
-        </span>
-      </button>
 
       {weeklyCardioKcal > 0 && (
         <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono text-zinc-500">

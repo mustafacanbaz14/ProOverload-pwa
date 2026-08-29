@@ -1,5 +1,8 @@
 import React, { memo, useState, useMemo } from 'react';
-import { Search, Eye, EyeOff, BrainCircuit, TrendingDown, Utensils } from 'lucide-react';
+import {
+  Search, Eye, EyeOff, BrainCircuit, TrendingDown, Utensils,
+  Waves, Target, CalendarRange, Gauge, Repeat, Radar,
+} from 'lucide-react';
 import TrendChart from './TrendChart';
 import ConsistencyCard from './ConsistencyCard';
 import TrainingCalendarCard from './TrainingCalendarCard';
@@ -12,6 +15,7 @@ import PerformanceDriversCard from './PerformanceDriversCard';
 import ResponseProfileCard from './ResponseProfileCard';
 import AnomalyCard from './AnomalyCard';
 import AnalysisUnlockCard from './AnalysisUnlockCard';
+import AnalyticsSection from './AnalyticsSection';
 import DoseResponseCard from './DoseResponseCard';
 import SetCountingCard from './SetCountingCard';
 import ProximityCard from './ProximityCard';
@@ -390,139 +394,190 @@ const AnalyticsView = memo(({
             birincil hedef 1, yardımcı 0.5, hafif 0.25 set sayılır.
           </p>
 
-          <OptimalVolumeCard
-            profile={optimalVolumeProfile}
-            onOpenPlan={onOpenPlan}
-            onOpenTargets={onOpenVolumeTargets}
-          />
+          {/* Kartlar bölümlere ayrıldı. Ölçüldüğünde bu sekme 10.8 ekran
+              kaydırma ve 12.000 karakter metindi: kartların hepsi aynı anda
+              açıktı ve en çok işe yarayan kart on kartın altında kalıyordu.
+              Yalnızca ilk bölüm açık geliyor. */}
+          <AnalyticsSection
+            title="Hacim ve Doz"
+            summary="Doz-yanıt eğrisi, set sayımı, kas karnesi"
+            icon={Waves}
+            defaultOpen
+          >
+            <DoseResponseCard
+              muscle={muscleKey}
+              currentVolume={currentVolume}
+              experienceLevel={experienceLevel}
+              philosophy={volumePhilosophy}
+              restSeconds={restSeconds}
+              onOpenEvidence={onOpenEvidence}
+            />
 
-          {/* Tutarlılık ve kuvvet dengesi: hacim grafiğinin yanıtlamadığı iki
-              soru. Biri "programı gerçekten uyguluyor muyum", diğeri "kuvvet
-              kaslar arasında nasıl dağılmış". */}
-          {/* Doz-yanıt en üstte: altındaki bütün hacim kartları bu modelden
-              türüyor ve model artık tek bir sayı değil, belirsizlik şeridi. */}
-          <DoseResponseCard
-            muscle={muscleKey}
-            currentVolume={currentVolume}
-            experienceLevel={experienceLevel}
-            philosophy={volumePhilosophy}
-            restSeconds={restSeconds}
-            onOpenEvidence={onOpenEvidence}
-          />
-          <SetCountingCard report={setCounts} onOpenEvidence={onOpenEvidence} />
-          <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
-          {/* Karne: "göğsüm iyi gidiyor mu" sorusunun cevabı. */}
-          <MuscleScorecardCard report={muscleScorecard} />
-          <WeakLinkCard report={weakLinks} onAction={onAction} />
-          <ExerciseRoiCard report={exerciseRoi} />
+            <SetCountingCard report={setCounts} onOpenEvidence={onOpenEvidence} />
 
-          {/* Hareket keşfi: kütüphanede iki yüzden fazla hareket var ve
-              tipik kullanıcı yirmi otuzunu kullanıyor. Arama, ne aradığını
-              bilene yarıyor; bu ise geçmişindeki BOŞLUKTAN yola çıkıyor. */}
-          {discovery?.hasData && (
-            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline gap-2">
-                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
-                  Denemediğin Hareketler
-                </h4>
-                <span className="text-[9px] font-mono text-zinc-600">
-                  {discovery.knownCount}/{discovery.poolSize} hareket biliniyor
-                </span>
-              </div>
-              <div className="divide-y divide-zinc-800/70">
-                {discovery.items.map(x => (
-                  <div key={x.name} className="px-4 py-2">
-                    <div className="flex justify-between items-baseline gap-2">
-                      <span className="text-[10px] font-bold text-zinc-200 truncate min-w-0">{x.name}</span>
-                      <span className="text-[9px] font-mono text-zinc-600 shrink-0">
-                        {x.muscle}{x.equipment ? ` · ${x.equipment}` : ''}
+            <MuscleScorecardCard report={muscleScorecard} />
+
+            <OptimalVolumeCard
+              profile={optimalVolumeProfile}
+              onOpenPlan={onOpenPlan}
+              onOpenTargets={onOpenVolumeTargets}
+            />
+
+          </AnalyticsSection>
+
+          <AnalyticsSection
+            title="Öncelikler"
+            summary="Önce neyi düzelteyim, hangi hareket yerini hak ediyor"
+            icon={Target}
+            accentClass="text-red-400"
+          >
+            <WeakLinkCard report={weakLinks} onAction={onAction} />
+
+            <ExerciseRoiCard report={exerciseRoi} />
+
+            {/* Hareket keşfi: kütüphanede iki yüzden fazla hareket var ve
+                tipik kullanıcı yirmi otuzunu kullanıyor. Arama, ne aradığını
+                bilene yarıyor; bu ise geçmişindeki BOŞLUKTAN yola çıkıyor. */}
+            {discovery?.hasData && (
+              <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline gap-2">
+                  <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+                    Denemediğin Hareketler
+                  </h4>
+                  <span className="text-[9px] font-mono text-zinc-600">
+                    {discovery.knownCount}/{discovery.poolSize} hareket biliniyor
+                  </span>
+                </div>
+                <div className="divide-y divide-zinc-800/70">
+                  {discovery.items.map(x => (
+                    <div key={x.name} className="px-4 py-2">
+                      <div className="flex justify-between items-baseline gap-2">
+                        <span className="text-[10px] font-bold text-zinc-200 truncate min-w-0">{x.name}</span>
+                        <span className="text-[9px] font-mono text-zinc-600 shrink-0">
+                          {x.muscle}{x.equipment ? ` · ${x.equipment}` : ''}
+                        </span>
+                      </div>
+                      <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">
+                        {x.reasons[0]}
                       </span>
                     </div>
-                    <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">
-                      {x.reasons[0]}
-                    </span>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+                  Öneriler rastgele değil: geçmişteki boşluklardan (eşik altı
+                  hacim, tek harekete bağımlılık, gerilme hareketi eksikliği)
+                  çıkıyor ve
+                  {discovery.equipmentFiltered
+                    ? ' yalnızca fiilen kullandığın ekipmanlardan seçiliyor.'
+                    : ' henüz yeterli kayıt olmadığı için ekipman süzgeci uygulanmıyor.'}
+                </p>
               </div>
-              <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
-                Öneriler rastgele değil: geçmişteki boşluklardan (eşik altı
-                hacim, tek harekete bağımlılık, gerilme hareketi eksikliği)
-                çıkıyor ve
-                {discovery.equipmentFiltered
-                  ? ' yalnızca fiilen kullandığın ekipmanlardan seçiliyor.'
-                  : ' henüz yeterli kayıt olmadığı için ekipman süzgeci uygulanmıyor.'}
-              </p>
-            </div>
-          )}
-          <FormCurveCard curve={formCurve} />
-          <TrainingCalendarCard workouts={workouts} today={today} />
-          <RecordTimelineCard timeline={recordTimeline} />
-          <SessionQualityCard workouts={workouts} customExercises={customExercises} />
-          <TrainingQualityCard workouts={workouts} customExercises={customExercises} resolveLoad={resolveLoad} />
-          <StrengthStandardsCard
-            workouts={workouts}
-            bodyWeightKg={bodyWeightKg}
-            gender={gender}
-            resolveLoad={resolveLoad}
-          />
-          <CardioCoachCard
-            report={cardioReport}
-            suggestion={cardioSuggestion}
-            goal={cardioGoal}
-            onChangeGoal={onChangeCardioGoal}
-            age={age}
-            onOpenCardio={onOpenCardio}
-          />
-          <StrengthBalanceCard workouts={workouts} resolveLoad={resolveLoad} />
+            )}
+
+          </AnalyticsSection>
+
+          <AnalyticsSection
+            title="Program ve Tutarlılık"
+            summary="Plana uyum, takvim, form eğrisi, rekorlar"
+            icon={CalendarRange}
+            accentClass="text-violet-400"
+          >
+            <ConsistencyCard workouts={workouts} planResult={planResult} today={today} />
+
+            <FormCurveCard curve={formCurve} />
+
+            <TrainingCalendarCard workouts={workouts} today={today} />
+
+            <RecordTimelineCard timeline={recordTimeline} />
+
+          </AnalyticsSection>
+
+          <AnalyticsSection
+            title="Kalite ve Kuvvet"
+            summary="Seans kalitesi, standartlar, denge, kardiyo"
+            icon={Gauge}
+            accentClass="text-emerald-400"
+          >
+            <SessionQualityCard workouts={workouts} customExercises={customExercises} />
+
+            <TrainingQualityCard workouts={workouts} customExercises={customExercises} resolveLoad={resolveLoad} />
+
+            <StrengthStandardsCard
+              workouts={workouts}
+              bodyWeightKg={bodyWeightKg}
+              gender={gender}
+              resolveLoad={resolveLoad}
+            />
+
+            <StrengthBalanceCard workouts={workouts} resolveLoad={resolveLoad} />
+
+            <CardioCoachCard
+              report={cardioReport}
+              suggestion={cardioSuggestion}
+              goal={cardioGoal}
+              onChangeGoal={onChangeCardioGoal}
+              age={age}
+              onOpenCardio={onOpenCardio}
+            />
+
+          </AnalyticsSection>
 
           {/* Sıklık: hacim tek başına 16 seti tek güne yığmakla ikiye bölmeyi
               ayırt etmiyor, oysa son setlerin kalitesi arasındaki fark buradan
               geliyor. */}
-          {frequency?.hasData && (
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-              <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
-                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Çalışma Sıklığı</h4>
-                <span className="text-[9px] font-mono text-zinc-600">son {frequency.weeks} tam hafta</span>
-              </div>
+          <AnalyticsSection
+            title="Çalışma Sıklığı"
+            summary="Hacim tek güne mi yığılmış, kaça bölünmüş"
+            icon={Repeat}
+            accentClass="text-amber-400"
+          >
+            {frequency?.hasData && (
+              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
+                  <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Çalışma Sıklığı</h4>
+                  <span className="text-[9px] font-mono text-zinc-600">son {frequency.weeks} tam hafta</span>
+                </div>
 
-              <div className="divide-y divide-zinc-800/70">
-                {frequency.byMuscle.filter(m => m.trained).map(m => (
-                  <div key={m.muscle} className="px-4 py-2.5 space-y-1.5">
-                    <div className="flex justify-between items-center gap-2">
-                      <span className="text-[11px] font-bold text-zinc-200 truncate">{m.muscle}</span>
-                      <span className="text-[10px] font-mono shrink-0">
-                        <span className={FREQ_TONE[m.verdict] || 'text-zinc-400'}>
-                          haftada {m.sessionsPerWeek}×
+                <div className="divide-y divide-zinc-800/70">
+                  {frequency.byMuscle.filter(m => m.trained).map(m => (
+                    <div key={m.muscle} className="px-4 py-2.5 space-y-1.5">
+                      <div className="flex justify-between items-center gap-2">
+                        <span className="text-[11px] font-bold text-zinc-200 truncate">{m.muscle}</span>
+                        <span className="text-[10px] font-mono shrink-0">
+                          <span className={FREQ_TONE[m.verdict] || 'text-zinc-400'}>
+                            haftada {m.sessionsPerWeek}×
+                          </span>
+                          <span className="text-zinc-600"> · {m.weeklyVolume} set</span>
                         </span>
-                        <span className="text-zinc-600"> · {m.weeklyVolume} set</span>
-                      </span>
-                    </div>
+                      </div>
 
-                    {/* Yığılma çubuğu: en yoğun seansın haftalık hacme oranı.
-                        Tamamen dolu = her şey tek güne sıkışmış. */}
-                    <div className="w-full bg-zinc-950 rounded-full h-1 border border-zinc-800 overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${m.concentration >= 0.9 ? 'bg-amber-500' : m.concentration >= 0.6 ? 'bg-cyan-500' : 'bg-emerald-500'}`}
-                        style={{ width: `${Math.min(100, m.concentration * 100)}%` }}
-                      />
-                    </div>
+                      {/* Yığılma çubuğu: en yoğun seansın haftalık hacme oranı.
+                          Tamamen dolu = her şey tek güne sıkışmış. */}
+                      <div className="w-full bg-zinc-950 rounded-full h-1 border border-zinc-800 overflow-hidden">
+                        <div
+                          className={`h-full rounded-full ${m.concentration >= 0.9 ? 'bg-amber-500' : m.concentration >= 0.6 ? 'bg-cyan-500' : 'bg-emerald-500'}`}
+                          style={{ width: `${Math.min(100, m.concentration * 100)}%` }}
+                        />
+                      </div>
 
-                    {m.advice && (
-                      <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">{m.advice}</p>
-                    )}
-                  </div>
-                ))}
+                      {m.advice && (
+                        <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">{m.advice}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-4 py-2.5 border-t border-zinc-800">
+                  Çubuk, haftalık hacmin en yoğun seansa ne kadar yığıldığını gösterir.
+                  Bir kas ancak o gün en az 2 set aldıysa "çalışıldı" sayılır — yoksa
+                  bench press'in tricepse yazdığı yarım set bile sıklığı şişirirdi.
+                  Aynı hacimde yüksek sıklığın avantajı ölçülü ve küçüktür; asıl
+                  kazanç setlerin tek seansta yığılmaması.
+                </p>
               </div>
+            )}
 
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-4 py-2.5 border-t border-zinc-800">
-                Çubuk, haftalık hacmin en yoğun seansa ne kadar yığıldığını gösterir.
-                Bir kas ancak o gün en az 2 set aldıysa "çalışıldı" sayılır — yoksa
-                bench press'in tricepse yazdığı yarım set bile sıklığı şişirirdi.
-                Aynı hacimde yüksek sıklığın avantajı ölçülü ve küçüktür; asıl
-                kazanç setlerin tek seansta yığılmaması.
-              </p>
-            </div>
-          )}
+          </AnalyticsSection>
         </div>
       )}
 
@@ -666,53 +721,80 @@ const AnalyticsView = memo(({
 
           {coachPanel === 'deep' && (
             <>
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-                <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
-                  <TrendingDown size={14} className="text-amber-400" />
-                  <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Plato Taraması</h4>
-                </div>
-                <div className="p-3 space-y-2">
-                  {coachInsights.plateaus.length === 0 ? (
-                    <p className="text-[10px] font-mono text-emerald-400 leading-relaxed py-2 text-center">
-                      4+ seans ve 21+ günlük veride belirgin bir plato görünmüyor.
-                    </p>
-                  ) : coachInsights.plateaus.map(item => (
-                    <div key={item.name} className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
-                      <div className="flex justify-between gap-2">
-                        <strong className="text-[11px] text-zinc-200 truncate">{item.name}</strong>
-                        <span className={`text-[10px] font-mono shrink-0 ${item.state === 'decline' ? 'text-red-400' : 'text-amber-400'}`}>
-                          {item.change > 0 ? '+' : ''}{item.change}%
-                        </span>
+              {/* Derin analiz de bölümlendi: ölçüldüğünde bu alt sekme 3.6
+                  ekran ve 17 uzun paragraftı. Kartların hiçbiri gereksiz değil
+                  ama hepsini birden okumak kimsenin yaptığı bir şey değil. */}
+              <AnalyticsSection
+                title="İlerleme ve Durgunluk"
+                summary="Plato taraması, yetmezliğe yakınlık"
+                icon={TrendingDown}
+                accentClass="text-amber-400"
+                defaultOpen
+              >
+                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                  <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
+                    <TrendingDown size={14} className="text-amber-400" />
+                    <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Plato Taraması</h4>
+                  </div>
+                  <div className="p-3 space-y-2">
+                    {coachInsights.plateaus.length === 0 ? (
+                      <p className="text-[10px] font-mono text-emerald-400 leading-relaxed py-2 text-center">
+                        4+ seans ve 21+ günlük veride belirgin bir plato görünmüyor.
+                      </p>
+                    ) : coachInsights.plateaus.map(item => (
+                      <div key={item.name} className="bg-zinc-950 border border-zinc-800 rounded-xl p-3">
+                        <div className="flex justify-between gap-2">
+                          <strong className="text-[11px] text-zinc-200 truncate">{item.name}</strong>
+                          <span className={`text-[10px] font-mono shrink-0 ${item.state === 'decline' ? 'text-red-400' : 'text-amber-400'}`}>
+                            {item.change > 0 ? '+' : ''}{item.change}%
+                          </span>
+                        </div>
+                        <p className="text-[9px] font-mono text-zinc-500 mt-1 leading-relaxed">{item.sessions} seans · {item.advice}</p>
                       </div>
-                      <p className="text-[9px] font-mono text-zinc-500 mt-1 leading-relaxed">{item.sessions} seans · {item.advice}</p>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
 
-              {/* Yakınlık koç sekmesinin başında: hacim modeli değiştikten sonra
-              az set çalışan biri için hacmin yerine geçen kaldıraç bu. */}
-          <ProximityCard report={proximityReport} />
-          <PerformanceDriversCard report={performanceDrivers} />
-              <ResponseProfileCard profile={responseProfile} />
-              <AnomalyCard report={anomalyWatch} />
+                <ProximityCard report={proximityReport} />
 
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Utensils size={14} className="text-emerald-400" />
-                  <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Beslenme × Performans</h4>
+              </AnalyticsSection>
+
+              <AnalyticsSection
+                title="Ne Sana Yarıyor"
+                summary="Performans sürücüleri, tepki profili"
+                icon={BrainCircuit}
+                accentClass="text-cyan-400"
+              >
+                <PerformanceDriversCard report={performanceDrivers} />
+
+                <ResponseProfileCard profile={responseProfile} />
+
+              </AnalyticsSection>
+
+              <AnalyticsSection
+                title="Sinyaller ve Kilitler"
+                summary="Sessiz sapmalar, beslenme ilişkisi, açılmayan analizler"
+                icon={Radar}
+                accentClass="text-violet-400"
+              >
+                <AnomalyCard report={anomalyWatch} />
+
+                <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Utensils size={14} className="text-emerald-400" />
+                    <h4 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Beslenme × Performans</h4>
+                  </div>
+                  <p className="text-[11px] font-bold text-zinc-200">
+                    {coachInsights.nutrition.label || 'Henüz yeterli eşleşen veri yok'}
+                  </p>
+                  <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1.5">
+                    {coachInsights.nutrition.message} · {coachInsights.nutrition.samples} eşleşen gün
+                  </p>
                 </div>
-                <p className="text-[11px] font-bold text-zinc-200">
-                  {coachInsights.nutrition.label || 'Henüz yeterli eşleşen veri yok'}
-                </p>
-                <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1.5">
-                  {coachInsights.nutrition.message} · {coachInsights.nutrition.samples} eşleşen gün
-                </p>
-              </div>
 
-              {/* Kilitler en altta: "bu kart neden boş" sorusunun cevabı, ama
-                  açılmış analizlerin önüne geçmemeli. */}
-              <AnalysisUnlockCard report={analysisLocks} />
+                <AnalysisUnlockCard report={analysisLocks} />
+
+              </AnalyticsSection>
             </>
           )}
         </div>

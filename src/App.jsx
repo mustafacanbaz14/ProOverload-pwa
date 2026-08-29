@@ -4044,10 +4044,14 @@ export default function App() {
   }, [setSettings, showToast]);
 
   const needsBackup = useMemo(() => {
+    // Kaybedilecek bir şey yokken veri kaybı uyarısı göstermek, uygulamayı
+    // ilk açan kişiye ilk gördüğü şey olarak turuncu bir alarm sunuyordu.
+    // Uyarı ancak korunmaya değer bir geçmiş varken anlamlı.
+    if (workouts.length < 3) return false;
     if (!lastBackupDate) return true;
     const diffDays = (todayTime - new Date(lastBackupDate).getTime()) / (1000 * 3600 * 24);
     return diffDays > 7;
-  }, [lastBackupDate, todayTime]);
+  }, [lastBackupDate, todayTime, workouts.length]);
 
   return (
     <div className="luxury-app flex justify-center min-h-screen font-sans antialiased text-zinc-100 select-none">

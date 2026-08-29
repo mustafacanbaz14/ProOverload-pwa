@@ -1,10 +1,11 @@
-import React, { memo } from 'react';
+import React, { memo, useState, useMemo } from 'react';
 import {
   Merge, Target, ArrowLeftRight,
   X, Wrench, Brain, Dumbbell, CalendarPlus, CalendarRange, HeartPulse,
   Trophy, Flame, Calculator, ArrowRightLeft, Ruler, Moon, BatteryLow, Sparkles, ClipboardCheck, CalendarDays,
-  Layers3, Wand2, Activity, Stethoscope, ShieldCheck, BookCheck, GitCompareArrows, FlaskConical, BookOpen,
+  Layers3, Wand2, Activity, Stethoscope, ShieldCheck, BookCheck, GitCompareArrows, FlaskConical, BookOpen, Search,
 } from 'lucide-react';
+import { foldForSearch } from '../utils/helpers';
 
 /**
  * Araçlar merkezi.
@@ -69,7 +70,35 @@ const GROUPS = [
 ];
 
 const ToolsModal = memo(({ isOpen, onClose, onSelect, showCycle = false }) => {
+  // Arama. Menü yirmi dokuz girişe çıktı ve dört başlık altında iki ekran
+  // kaydırma gerektiriyordu: aradığını bilen kişi için gezinmek, bilmeyen için
+  // de okumak zorlaşmıştı. Arama ikisini birden çözüyor — yazınca liste
+  // daralıyor, yazmayınca gruplar olduğu gibi duruyor.
+  const [query, setQuery] = useState('');
+
+  const gruplar = useMemo(() => {
+    const tumu = GROUPS.map(group => ({
+      ...group,
+      items: showCycle && group.title === 'Toparlanma'
+        ? [...group.items, { key: 'cycle', label: 'Döngü & Performans', hint: 'Belirti odaklı antrenman, kardiyo ve beslenme desteği', icon: CalendarDays, color: 'text-rose-400' }]
+        : group.items,
+    }));
+    const q = foldForSearch(query).trim();
+    if (!q) return tumu;
+    return tumu
+      .map(group => ({
+        ...group,
+        // Başlık, açıklama ve grup adı birlikte aranıyor: kullanıcı "kardiyo"
+        // yazdığında grubun kendisi eşleşiyorsa içindekiler de gelmeli.
+        items: group.items.filter(item =>
+          foldForSearch(`${item.label} ${item.hint} ${group.title}`).includes(q)),
+      }))
+      .filter(group => group.items.length > 0);
+  }, [query, showCycle]);
+
   if (!isOpen) return null;
+
+  const sonucSayisi = gruplar.reduce((t, g) => t + g.items.length, 0);
 
   return (
     <div className="fixed inset-0 bg-zinc-950 z-[94] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
@@ -82,14 +111,30 @@ const ToolsModal = memo(({ isOpen, onClose, onSelect, showCycle = false }) => {
         </button>
       </div>
 
+      <div className="px-3 pt-3 shrink-0">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
+          <input
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Araç ara..."
+            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-8 pr-3 py-2.5 text-xs text-zinc-100 font-mono outline-none focus:border-cyan-600 transition-colors"
+          />
+        </div>
+      </div>
+
       <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-4 pb-safe">
-        {GROUPS.map(group => (
+        {sonucSayisi === 0 && (
+          <p className="text-[10px] font-mono text-zinc-500 text-center py-8 leading-relaxed">
+            &quot;{query}&quot; ile eşleşen araç yok.
+          </p>
+        )}
+        {gruplar.map(group => (
           <div key={group.title} className="space-y-1.5">
             <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">{group.title}</h4>
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800">
-              {(showCycle && group.title === 'Toparlanma'
-                ? [...group.items, { key: 'cycle', label: 'Döngü & Performans', hint: 'Belirti odaklı antrenman, kardiyo ve beslenme desteği', icon: CalendarDays, color: 'text-rose-400' }]
-                : group.items).map(item => {
+              {group.items.map(item => {
                 const Icon = item.icon;
                 return (
                   <button
