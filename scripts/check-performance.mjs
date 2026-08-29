@@ -7,10 +7,10 @@ const DIST = path.join(ROOT, 'dist');
 const MANIFEST = path.join(DIST, '.vite', 'manifest.json');
 
 const BUDGETS = {
-  initialJs: 820 * 1024,
-  initialJsGzip: 285 * 1024,
-  initialCss: 140 * 1024,
-  largestLazyJs: 480 * 1024,
+  initialJs: 780 * 1024,
+  initialJsGzip: 270 * 1024,
+  initialCss: 136 * 1024,
+  largestLazyJs: 470 * 1024,
 };
 
 const formatKb = bytes => `${(bytes / 1024).toFixed(1)} KB`;

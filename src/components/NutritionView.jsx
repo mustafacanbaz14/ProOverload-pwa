@@ -255,7 +255,7 @@ const NutritionView = memo(({
   const scoreColor = !dayScore ? 'text-zinc-500' : dayScore.score >= 65 ? 'text-emerald-400' : dayScore.score >= 45 ? 'text-amber-400' : 'text-orange-400';
 
   return (
-    <div className="luxury-screen p-4 space-y-3.5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+    <div data-view-scroll="nutrition" className="luxury-screen p-4 space-y-3.5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <header className="flex items-start justify-between gap-3">
         <div>
           <span className="luxury-eyebrow text-[10px] uppercase">Günlük Takip</span>

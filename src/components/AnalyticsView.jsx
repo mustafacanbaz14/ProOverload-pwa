@@ -299,7 +299,7 @@ const AnalyticsView = memo(({
   }, [analysisType, nutritionSeries, nutritionMetric, showAverage, adaptiveTDEE, computedComp, settings, latestWeight]);
 
   return (
-    <div className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black`}>
+    <div data-view-scroll="progress" className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black`}>
       <div className="luxury-segmented grid grid-cols-6 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
         {[
           { key: 'body', label: 'Vücut' },

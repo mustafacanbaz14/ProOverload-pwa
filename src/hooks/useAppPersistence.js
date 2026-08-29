@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { safeSetItem, createErrorThrottle } from '../utils/persist.js';
-import { storageKey } from '../utils/helpers.js';
+import { createErrorThrottle } from '../utils/persist.js';
+import { getBrowserDataRepository } from '../utils/dataRepository.js';
 
 /** Kalıcı veri yazımlarını App görünüm mantığından ayırır. */
 export const useAppPersistence = ({
@@ -18,13 +18,14 @@ export const useAppPersistence = ({
   cycleHistory,
   settings,
 }, showToast) => {
+  const repository = useMemo(() => getBrowserDataRepository(), []);
   const notifyPersistError = useMemo(
     () => createErrorThrottle((message) => showToast(message, 'error')),
     [showToast]);
 
   const persist = useCallback(
-    (name, value) => safeSetItem(storageKey(name), value, notifyPersistError),
-    [notifyPersistError]);
+    (name, value) => repository.write(name, value, notifyPersistError),
+    [notifyPersistError, repository]);
 
   useEffect(() => { persist('workouts', workouts); }, [workouts, persist]);
   useEffect(() => { persist('templates', templates); }, [templates, persist]);

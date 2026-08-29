@@ -1,11 +1,22 @@
-import React, { memo } from 'react';
-import { AlertCircle, Activity, Target, Zap, BookmarkPlus, Trash2, Clock, Layers, ChevronRight, ChevronDown, Dumbbell, CalendarPlus, HeartPulse, Flame, CalendarRange, Pencil, Wrench, Star } from 'lucide-react';
+import React, { lazy, memo, Suspense } from 'react';
+import { AlertCircle, Activity, Target, Zap, ChevronDown, Flame, Wrench } from 'lucide-react';
 import { MUSCLE_SECTIONS, getVolumeLandmarks, volumeStatusOf, VOLUME_STATUS, acwrStatusOf, ACWR_STATUS, ACWR_HINT } from '../utils/constants';
-import { previewTemplateVolume, estimateDuration } from '../utils/templates';
-import { organizeTemplates } from '../utils/templateLibrary';
-import MuscleHeatmap from './MuscleHeatmap';
 import TodayCoachCard from './TodayCoachCard';
 import CycleSummaryCard from './CycleSummaryCard';
+import DeferredSection from './DeferredSection';
+
+const MuscleHeatmap = lazy(() => import('./MuscleHeatmap'));
+const HomeTemplatesSection = lazy(() => import('./HomeTemplatesSection'));
+
+const DeferredCardFallback = ({ height = 180, label = 'Bölüm hazırlanıyor' }) => (
+  <div
+    className="rounded-2xl border border-zinc-900 bg-zinc-950/70 animate-pulse flex items-center justify-center"
+    style={{ minHeight: height }}
+    role="status"
+  >
+    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-700">{label}</span>
+  </div>
+);
 
 const HomeView = memo(({
   needsBackup,
@@ -51,13 +62,8 @@ const HomeView = memo(({
   onOpenTraining,
   onToggleTemplateFavorite,
 }) => {
-  const orderedTemplates = organizeTemplates(templates);
-  const visibleTemplates = interfaceMode === 'simple'
-    ? orderedTemplates.slice(0, 3)
-    : orderedTemplates;
-
   return (
-    <div className="luxury-screen p-4 space-y-5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+    <div data-view-scroll="home" className="luxury-screen p-4 space-y-5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
 
       {needsBackup && (
         <div className="bg-orange-900/20 border border-orange-900/50 p-3 rounded-2xl flex items-start space-x-3">
@@ -156,13 +162,21 @@ const HomeView = memo(({
         </div>
       </div>
 
-      {/* İnteraktif Kas Isı Haritası */}
-      <MuscleHeatmap muscleVolume={dashboardStats.muscleVolume} onSelectMuscle={onSelectMuscle} experienceLevel={experienceLevel} gender={gender} />
-      {gender === 'female' && (
-        <p className="-mt-3 px-1 text-[9px] font-mono text-zinc-600 leading-relaxed">
-          Kadınlara yalnız cinsiyet nedeniyle farklı set çarpanı uygulanmaz. Araştırmalar göreli hipertrofi yanıtını genel olarak benzer buluyor; hacim, belirtiler ve kişisel toparlanma trendine göre ayarlanır.
-        </p>
-      )}
+      {/* SVG harita ilk boyama için zorunlu değil. Kullanıcı bölüme yaklaşınca
+          ayrı parça değerlendirilir; ayrılmış alan sayesinde sayfa sıçramaz. */}
+      <DeferredSection
+        minHeight={430}
+        fallback={<DeferredCardFallback height={430} label="Kas haritası hazırlanıyor" />}
+      >
+        <Suspense fallback={<DeferredCardFallback height={430} label="Kas haritası yükleniyor" />}>
+          <MuscleHeatmap muscleVolume={dashboardStats.muscleVolume} onSelectMuscle={onSelectMuscle} experienceLevel={experienceLevel} gender={gender} />
+          {gender === 'female' && (
+            <p className="mt-2 px-1 text-[9px] font-mono text-zinc-600 leading-relaxed">
+              Kadınlara yalnız cinsiyet nedeniyle farklı set çarpanı uygulanmaz. Araştırmalar göreli hipertrofi yanıtını genel olarak benzer buluyor; hacim, belirtiler ve kişisel toparlanma trendine göre ayarlanır.
+            </p>
+          )}
+        </Suspense>
+      </DeferredSection>
 
       <div className="grid grid-cols-2 gap-3">
         <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
@@ -313,99 +327,29 @@ const HomeView = memo(({
         </div>
       )}
 
-      {/* Bölüm liste boşken de görünür: eskiden tamamen gizleniyordu ve
-          kullanıcı şablon diye bir özellik olduğunu fark edemiyordu. */}
-      <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-        <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between gap-2">
-          <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center">
-            <BookmarkPlus size={13} className="mr-2 text-cyan-400" /> {interfaceMode === 'simple' ? 'Öne Çıkan Şablonlar' : 'Şablonlar'}
-          </h3>
-          {templates.length > 0 && (
-            <button onClick={() => onOpenTraining?.()} className="text-[8px] font-bold text-cyan-400 flex items-center">
-              Tümünü Yönet <ChevronRight size={11} />
-            </button>
-          )}
-        </div>
-
-        {templates.length === 0 ? (
-          <div className="p-5 text-center space-y-2.5">
-            <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto">
-              <BookmarkPlus size={16} className="text-zinc-600" />
-            </div>
-            <p className="text-[11px] font-bold text-zinc-300">Henüz şablon yok</p>
-            <p className="text-[10px] font-mono text-zinc-600 leading-relaxed">
-              Sık yaptığın antrenmanı şablona çevirirsen tek dokunuşla başlatırsın.
-              Antrenman bitince &quot;Şablon Yap&quot; ile kaydedebilir ya da baştan
-              bir program kurabilirsin.
-            </p>
-            <button
-              onClick={() => onOpenTemplateBuilder?.()}
-              className="text-[10px] font-bold uppercase tracking-wider text-cyan-400 bg-cyan-950/30 border border-cyan-900/50 active:bg-cyan-900/40 px-4 py-2 rounded-xl transition-colors"
-            >
-              Program Oluştur
-            </button>
-          </div>
-        ) : (
-          <>
-          <div className="divide-y divide-zinc-800">
-            {visibleTemplates.map(t => {
-              // Kart üzerinde kısa önizleme: süre, set ve en çok yüklenen üç bölge.
-              const { byMuscle, totalSets } = previewTemplateVolume(t.exercises, customExercises);
-              const minutes = estimateDuration(t.exercises, restSeconds);
-              const top = Object.entries(byMuscle).sort((a, b) => b[1] - a[1]).slice(0, 3);
-
-              return (
-                <div key={t.id} className="p-3 space-y-2">
-                  <div className="flex justify-between items-start gap-2">
-                    <button
-                      onClick={() => onPreviewTemplate?.(t)}
-                      className="min-w-0 flex-1 text-left active:opacity-70 transition-opacity"
-                    >
-                      <span className="text-xs font-bold text-cyan-400 truncate flex items-center">
-                        <span className="truncate">{t.name}</span>
-                        <ChevronRight size={13} className="ml-1 shrink-0 text-zinc-600" />
-                      </span>
-                      <span className="flex items-center gap-3 mt-1 text-[10px] font-mono text-zinc-500">
-                        <span className="flex items-center"><Clock size={10} className="mr-1" />~{minutes} dk</span>
-                        <span className="flex items-center"><Layers size={10} className="mr-1" />{totalSets} set</span>
-                      </span>
-                    </button>
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        onClick={() => onToggleTemplateFavorite?.(t)}
-                        title={t.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                        aria-label={t.favorite ? 'Şablonu favorilerden çıkar' : 'Şablonu favorilere ekle'}
-                        className={`p-1.5 ${t.favorite ? 'text-amber-400' : 'text-zinc-600 active:text-amber-400'}`}
-                      >
-                        <Star size={13} fill={t.favorite ? 'currentColor' : 'none'} />
-                      </button>
-                      <button onClick={() => handleStartRequest(t)} className="bg-cyan-900/30 active:bg-cyan-900/60 text-cyan-400 border border-cyan-800 text-[10px] font-bold py-1.5 px-3 rounded-lg uppercase tracking-wider">Başlat</button>
-                      <button onClick={() => onEditTemplate?.(t)} title="Şablonu düzenle" aria-label="Şablonu düzenle" className="text-zinc-600 active:text-cyan-400 p-1.5"><Pencil size={14} /></button>
-                      <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'template', id: t.id })} title="Şablonu sil" aria-label="Şablonu sil" className="text-zinc-600 active:text-red-500 p-1.5"><Trash2 size={14} /></button>
-                    </div>
-                  </div>
-
-                  {top.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {top.map(([m, v]) => (
-                        <span key={m} className="text-[9px] font-mono px-1.5 py-0.5 rounded border border-zinc-800 bg-zinc-950 text-zinc-400">
-                          {m} <strong className="text-cyan-400">{v}</strong>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {interfaceMode === 'simple' && orderedTemplates.length > visibleTemplates.length && (
-            <button onClick={() => onOpenTraining?.()} className="w-full border-t border-zinc-800 py-2.5 text-[9px] font-bold text-zinc-500 active:text-cyan-400">
-              {orderedTemplates.length - visibleTemplates.length} şablon daha · kütüphaneyi aç
-            </button>
-          )}
-          </>
-        )}
-      </div>
+      {/* Şablon kütüphanesi sayfanın altındadır; kullanıcı yaklaşmadan yüzlerce
+          hareket katkısı ve süre hesabını çalıştırmak ilk açılışı yavaşlatır. */}
+      <DeferredSection
+        minHeight={190}
+        rootMargin="420px 0px"
+        fallback={<DeferredCardFallback height={190} label="Şablonlar hazırlanıyor" />}
+      >
+        <Suspense fallback={<DeferredCardFallback height={190} label="Şablonlar yükleniyor" />}>
+          <HomeTemplatesSection
+            templates={templates}
+            customExercises={customExercises}
+            restSeconds={restSeconds}
+            interfaceMode={interfaceMode}
+            onOpenTraining={onOpenTraining}
+            onOpenTemplateBuilder={onOpenTemplateBuilder}
+            onPreviewTemplate={onPreviewTemplate}
+            onEditTemplate={onEditTemplate}
+            onToggleTemplateFavorite={onToggleTemplateFavorite}
+            handleStartRequest={handleStartRequest}
+            setDeleteConfirm={setDeleteConfirm}
+          />
+        </Suspense>
+      </DeferredSection>
     </div>
   );
 });

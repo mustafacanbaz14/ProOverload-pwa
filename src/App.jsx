@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, { lazy, Suspense, startTransition, useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useTransition } from 'react';
 import {
   Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff
 } from 'lucide-react';
@@ -109,7 +109,7 @@ import { recommendedCalories, trendRate, GOAL_FIELDS } from './utils/goals';
 import { caloriesFromMacros, dailyTotals } from './utils/nutritionStats';
 import { DEFAULT_READINESS, READINESS_FIELDS, computeReadiness, readinessTrend } from './utils/readiness';
 import { buildSessionAdaptation } from './utils/sessionAdaptation';
-import { safeSetRawItem } from './utils/persist';
+import { getBrowserDataRepository } from './utils/dataRepository';
 import { removeById, restoreAtIndex, removeCardioEntry, restoreCardioEntry } from './utils/undo';
 import { backupValue, inspectBackupPayload, mergeImportedRecords, backupImportSummary } from './utils/backupImport';
 import { useAppPersistence } from './hooks/useAppPersistence';
@@ -140,15 +140,51 @@ import {
 } from './utils/helpers';
 
 import Navbar from './components/Navbar';
-import HomeView from './components/HomeView';
 import { formatDay, formatDayRelative } from './utils/dates';
 import { emptyWellnessDay, mergeWellnessDay, computeSleepScore } from './utils/wellness';
 import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
 
 // Ana ekran için gerekli olmayan büyük pencereler ilk açılışta çalıştırılmaz.
 // Kullanıcı ilgili aracı açtığında ayrı parça indirilir ve değerlendirilir.
+const loadActiveWorkoutView = () => import('./components/ActiveWorkoutView');
+const loadHomeView = () => import('./components/HomeView');
+const loadTrainingView = () => import('./components/TrainingView');
+const loadNutritionView = () => import('./components/NutritionView');
+const loadProgressHubView = () => import('./components/ProgressHubView');
+const loadHistoryView = () => import('./components/HistoryView');
+const loadCardioView = () => import('./components/CardioView');
+const VIEW_LOADERS = Object.freeze({
+  home: loadHomeView,
+  training: loadTrainingView,
+  nutrition: loadNutritionView,
+  progress: loadProgressHubView,
+  history: loadHistoryView,
+});
+
+// Dinamik import aynı modülü tekrar indirmez. Niyet sinyali yalnız indirme ve
+// değerlendirmeyi tıklamadan biraz önce başlatır.
+const preloadView = (viewKey) => {
+  const loader = VIEW_LOADERS[viewKey];
+  if (loader) void loader().catch(() => {});
+};
+
+const scrollStorageKey = (viewKey) => `po_view_scroll_${viewKey}`;
+const rememberScrollPosition = (viewKey, value) => {
+  try { sessionStorage.setItem(scrollStorageKey(viewKey), String(Math.max(0, value || 0))); }
+  catch { /* Gizli mod veya kapalı depolamada bellek içi yedek yeterli. */ }
+};
+const storedScrollPosition = (viewKey, fallback = 0) => {
+  try {
+    const stored = Number(sessionStorage.getItem(scrollStorageKey(viewKey)));
+    return Number.isFinite(stored) ? Math.max(0, stored) : fallback;
+  } catch {
+    return fallback;
+  }
+};
+
 const DeloadModal = lazy(() => import('./components/DeloadModal'));
-const ActiveWorkoutView = lazy(() => import('./components/ActiveWorkoutView'));
+const HomeView = lazy(loadHomeView);
+const ActiveWorkoutView = lazy(loadActiveWorkoutView);
 const MesocycleModal = lazy(() => import('./components/MesocycleModal'));
 const PainLogModal = lazy(() => import('./components/PainLogModal'));
 const DataHealthModal = lazy(() => import('./components/DataHealthModal'));
@@ -162,11 +198,11 @@ const BlockCompareModal = lazy(() => import('./components/BlockCompareModal'));
 const ScenarioModal = lazy(() => import('./components/ScenarioModal'));
 const EvidenceModal = lazy(() => import('./components/EvidenceModal'));
 const ProgramWizardModal = lazy(() => import('./components/ProgramWizardModal'));
-const CardioView = lazy(() => import('./components/CardioView'));
-const TrainingView = lazy(() => import('./components/TrainingView'));
-const NutritionView = lazy(() => import('./components/NutritionView'));
-const ProgressHubView = lazy(() => import('./components/ProgressHubView'));
-const HistoryView = lazy(() => import('./components/HistoryView'));
+const CardioView = lazy(loadCardioView);
+const TrainingView = lazy(loadTrainingView);
+const NutritionView = lazy(loadNutritionView);
+const ProgressHubView = lazy(loadProgressHubView);
+const HistoryView = lazy(loadHistoryView);
 const QuickCaptureModal = lazy(() => import('./components/QuickCaptureModal'));
 const StarterProgramModal = lazy(() => import('./components/StarterProgramModal'));
 
@@ -210,8 +246,16 @@ const ModalLoadingFallback = () => (
   </div>
 );
 
-const ViewLoadingFallback = () => (
-  <div className="luxury-screen h-full bg-black p-4" role="status" aria-label="Sayfa yükleniyor">
+const VIEW_LABELS = Object.freeze({
+  home: 'Bugün',
+  training: 'Antrenman',
+  nutrition: 'Beslenme',
+  progress: 'Gelişim',
+  history: 'Geçmiş',
+});
+
+const ViewLoadingFallback = ({ viewKey }) => (
+  <div className="luxury-screen h-full bg-black p-4" role="status" aria-label={`${VIEW_LABELS[viewKey] || 'Sayfa'} yükleniyor`}>
     <div className="animate-pulse space-y-4">
       <div className="h-3 w-24 rounded-full bg-zinc-900" />
       <div className="h-7 w-52 rounded-xl bg-zinc-900" />
@@ -220,12 +264,16 @@ const ViewLoadingFallback = () => (
         <div className="h-24 rounded-2xl bg-zinc-950" />
         <div className="h-24 rounded-2xl bg-zinc-950" />
       </div>
+      <p className="text-[9px] font-mono uppercase tracking-widest text-zinc-700">
+        {VIEW_LABELS[viewKey] || 'Sayfa'} hazırlanıyor
+      </p>
     </div>
   </div>
 );
 
 export default function App() {
-  const [initial] = useState(loadPersistedState);
+  const [dataRepository] = useState(getBrowserDataRepository);
+  const [initial] = useState(() => loadPersistedState(dataRepository));
   const appData = useAppDataState(initial);
   const {
     workouts, setWorkouts,
@@ -258,6 +306,8 @@ export default function App() {
     const requested = new URLSearchParams(window.location.search).get('view');
     return ['home', 'training', 'nutrition', 'progress', 'history'].includes(requested) ? requested : 'home';
   });
+  const [isViewPending, beginViewTransition] = useTransition();
+  const viewScrollPositionsRef = useRef(new Map());
   const [historyTab, setHistoryTab] = useState('workouts');
   const [analysisType, setAnalysisType] = useState('body');
   const [progressTab, setProgressTab] = useState('body');
@@ -265,6 +315,31 @@ export default function App() {
   // kendi ekranı olmaması, uygulamanın ona bir ek özellik gibi davrandığı
   // anlamına geliyordu.
   const [trainingTab, setTrainingTab] = useState('lift');
+  const handleTrainingTabChange = useCallback((next) => {
+    if (next === 'cardio') void loadCardioView().catch(() => {});
+    startTransition(() => setTrainingTab(next));
+  }, []);
+
+  // Ana ekrandan en sık yapılan iki işlem antrenman merkezini açmak ve seans
+  // başlatmaktır. İlk boya tamamlandıktan sonra, bağlantı veri tasarrufunda
+  // değilse bu iki küçük parçayı boş zamanda hazırla. Kritik açılış yolunu
+  // büyütmez; ilk dokunuştaki beklemeyi azaltır.
+  useEffect(() => {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || '')) return undefined;
+
+    const warmUp = () => {
+      void Promise.allSettled([loadTrainingView(), loadActiveWorkoutView()]);
+    };
+
+    if (typeof window.requestIdleCallback === 'function') {
+      const id = window.requestIdleCallback(warmUp, { timeout: 4500 });
+      return () => window.cancelIdleCallback?.(id);
+    }
+
+    const id = window.setTimeout(warmUp, 2600);
+    return () => window.clearTimeout(id);
+  }, []);
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
@@ -2356,7 +2431,7 @@ export default function App() {
     setLastBackupDate(today);
     // Yedek tarihi yazılamazsa yalnızca "yedekleme uyarısı" erken görünür;
     // dosya zaten indi, bu yüzden hata kullanıcıya ayrıca bildirilmiyor.
-    safeSetRawItem('po_last_backup', today);
+    dataRepository.writeRaw('po_last_backup', today);
     showToast('Yedek indirildi.');
   };
 
@@ -2641,16 +2716,55 @@ export default function App() {
   // Beslenme sekmesi her zaman bugünle açılır. Geçmiş bir günü Geçmiş
   // bölümünden düzenledikten sonra sekmeye dönünce eski günde takılı kalmasın.
   const handleChangeView = useCallback((next) => {
-    if (next === 'nutrition') {
-      const today = getLocalDateString();
-      setCurrentNutritionForm(prev => {
-        if (prev.date === today) return prev;
-        const existing = nutritionHistory.find(n => n.date === today);
-        return mergeNutrition(existing || { date: today });
-      });
+    const currentScroller = document.querySelector(`[data-view-scroll="${view}"]`);
+    if (currentScroller) {
+      viewScrollPositionsRef.current.set(view, currentScroller.scrollTop);
+      rememberScrollPosition(view, currentScroller.scrollTop);
     }
-    setView(next);
-  }, [nutritionHistory, setCurrentNutritionForm]);
+    preloadView(next);
+    beginViewTransition(() => {
+      if (next === 'nutrition') {
+        const today = getLocalDateString();
+        setCurrentNutritionForm(prev => {
+          if (prev.date === today) return prev;
+          const existing = nutritionHistory.find(n => n.date === today);
+          return mergeNutrition(existing || { date: today });
+        });
+      }
+      setView(next);
+    });
+  }, [beginViewTransition, nutritionHistory, setCurrentNutritionForm, view]);
+
+  // Dinamik ekran henüz inmemişse birkaç kare bekle. Konum yalnız bellekte
+  // tutulur; uygulamayı yeni açan kullanıcı eski bir kaydın ortasına düşmez.
+  useLayoutEffect(() => {
+    let frameId;
+    let retryTimer;
+    let attempts = 0;
+    const restore = () => {
+      const scroller = document.querySelector(`[data-view-scroll="${view}"]`);
+      if (scroller) {
+        const remembered = viewScrollPositionsRef.current.get(view) || 0;
+        const restored = storedScrollPosition(view, remembered);
+        scroller.scrollTop = restored;
+        attempts += 1;
+        // Tembel bölümler henüz gerçek yüksekliğine ulaşmadıysa tarayıcı
+        // scrollTop değerini geçici maksimuma kırpar. İçerik yerleşirken 50 ms
+        // aralıkla yeniden dene; bu, her kare DOM yazmaktan daha ucuzdur.
+        if (restored > 0 && Math.abs(scroller.scrollTop - restored) > 1 && attempts < 100) {
+          retryTimer = window.setTimeout(restore, 50);
+        }
+        return;
+      }
+      attempts += 1;
+      if (attempts < 120) frameId = window.requestAnimationFrame(restore);
+    };
+    frameId = window.requestAnimationFrame(restore);
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      window.clearTimeout(retryTimer);
+    };
+  }, [view]);
 
   const handleGlobalNavigate = useCallback((next, subTab) => {
     if (next === 'progress' && subTab) setProgressTab(subTab);
@@ -4008,10 +4122,15 @@ export default function App() {
             </button>
           </div>
         </header>
+        <div className="h-px shrink-0 bg-zinc-950 overflow-hidden" aria-hidden="true">
+          <div className={`h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent transition-opacity ${isViewPending ? 'opacity-100 animate-pulse' : 'opacity-0'}`} />
+        </div>
+        <span className="sr-only" aria-live="polite">{isViewPending ? 'Sayfa hazırlanıyor' : ''}</span>
 
         {/* MAIN VIEW CONTENT */}
         <div className="flex-1 overflow-hidden relative z-[1]">
           {view === 'home' && (
+            <Suspense fallback={<ViewLoadingFallback viewKey="home" />}>
             <HomeView
               needsBackup={needsBackup}
               dashboardStats={dashboardStats}
@@ -4058,21 +4177,24 @@ export default function App() {
               onOpenTraining={() => handleChangeView('training')}
               onToggleTemplateFavorite={handleToggleTemplateFavorite}
             />
+            </Suspense>
           )}
 
-          <Suspense fallback={<ViewLoadingFallback />}>
+          <Suspense fallback={<ViewLoadingFallback viewKey={view} />}>
           {view === 'training' && (
             <div className="luxury-screen h-full flex flex-col bg-black">
               <div className="px-4 pt-4 pb-2 shrink-0">
                 <div className="luxury-segmented grid grid-cols-2 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
                   <button
-                    onClick={() => setTrainingTab('lift')}
+                    onClick={() => handleTrainingTabChange('lift')}
                     className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${trainingTab === 'lift' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
                   >
                     Ağırlık
                   </button>
                   <button
-                    onClick={() => setTrainingTab('cardio')}
+                    onPointerEnter={() => void loadCardioView().catch(() => {})}
+                    onFocus={() => void loadCardioView().catch(() => {})}
+                    onClick={() => handleTrainingTabChange('cardio')}
                     className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${trainingTab === 'cardio' ? 'bg-red-600 text-white' : 'text-zinc-500'}`}
                   >
                     Kardiyo & Aktivite
@@ -4380,7 +4502,7 @@ export default function App() {
 
         {/* BOTTOM NAVIGATION */}
         {!activeWorkout && (
-          <Navbar view={view} setView={handleChangeView} />
+          <Navbar view={view} setView={handleChangeView} onPreload={preloadView} isPending={isViewPending} />
         )}
 
         <Suspense fallback={<ModalLoadingFallback />}>
@@ -4806,6 +4928,7 @@ export default function App() {
           isOpen={isDataHealthOpen}
           onClose={() => setIsDataHealthOpen(false)}
           workouts={sortedWorkouts}
+          storageHealth={dataRepository.health()}
           onRemoveEmpty={handleRemoveEmptyWorkouts}
         />}
 

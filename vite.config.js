@@ -85,7 +85,11 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'vendor-react': ['react', 'react-dom'],
+          // react-dom/client ve scheduler açıkça aynı parçaya alınır. Aksi
+          // halde uygulama koduyla birleşip her özellik güncellemesinde tekrar
+          // indirilir; kütüphane sürümü değişmediği sürece bu dosyanın hash'i
+          // sabit kalır ve PWA önbelleği yeniden kullanır.
+          'vendor-react': ['react', 'react-dom', 'react-dom/client', 'scheduler'],
           'vendor-icons': ['lucide-react']
         }
       }

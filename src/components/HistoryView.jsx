@@ -39,7 +39,7 @@ const WeekGroups = ({ items, getDate, children, expandAll = false }) => {
       {months.map(month => {
         const monthOpen = expandAll || openMonths.has(month.key);
         return (
-          <section key={month.key} className="bg-zinc-900/65 border border-zinc-800 rounded-2xl overflow-hidden">
+          <section key={month.key} className="defer-card-render bg-zinc-900/65 border border-zinc-800 rounded-2xl overflow-hidden">
             <button
               onClick={() => toggle(setOpenMonths, month.key)}
               aria-expanded={monthOpen}
@@ -140,7 +140,7 @@ const HistoryView = memo(({
     [workouts, latestWeight, weightForDate]);
 
   return (
-    <div className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+    <div data-view-scroll="history" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <div>
         <span className="luxury-eyebrow text-[10px] uppercase">Kayıt Arşivi</span>
         <h2 className="luxury-title text-xl font-black mt-0.5">Geçmiş</h2>
@@ -229,7 +229,7 @@ const HistoryView = memo(({
               const cardio = w.cardio || [];
               const cardioKcal = totalCardioCalories(cardio, weightForDate(w.date));
               return (
-                <div key={w.id} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-3">
+                <div key={w.id} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-3">
                   <div className="flex justify-between items-start border-b border-zinc-800 pb-2">
                     <div>
                       <h4 className="text-sm font-bold text-cyan-400">{w.name || 'Serbest Antrenman'}</h4>
@@ -392,7 +392,7 @@ const HistoryView = memo(({
             const deviation = effortDelta(record.cardio, historicalWeight);
             const evaluation = evaluateCardioEntry(record.cardio, workouts, historicalWeight, true);
             return (
-              <div key={`${record.workoutId}-${record.cardio.id}`} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2.5">
+              <div key={`${record.workoutId}-${record.cardio.id}`} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2.5">
                 <div className="flex justify-between items-start gap-2">
                   <div>
                     <h4 className="text-sm font-bold text-red-400 flex items-center"><HeartPulse size={14} className="mr-1.5" />{activity?.label || record.cardio.type}</h4>
@@ -444,7 +444,7 @@ const HistoryView = memo(({
             <div className="text-center py-12 text-zinc-600 text-xs font-mono">Henüz ölçüm kaydı yok</div>
           ) : (
             <WeekGroups key="metrics" items={filteredMetrics} expandAll={Boolean(q)}>{m => (
-              <div key={m.id} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2">
+              <div key={m.id} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2">
                 <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
                   <div className="flex items-center space-x-2">
                     <Scale size={14} className="text-cyan-400" />
@@ -485,7 +485,7 @@ const HistoryView = memo(({
               const t = dailyTotals(n);
               const isDaily = n.entryMode === 'daily';
               return (
-                <div key={n.id} className="bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2">
+                <div key={n.id} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2">
                   <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
                     <div className="flex items-center space-x-2 min-w-0">
                       <Beef size={14} className="text-cyan-400 shrink-0" />

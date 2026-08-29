@@ -1,33 +1,26 @@
-import { APP_VERSION, STORAGE_VERSIONS } from './constants.js';
+import { APP_VERSION } from './constants.js';
 import { createBackupPayload } from './dataSchema.js';
-
-const readWithFallback = (storage, name, fallback) => {
-  for (const version of STORAGE_VERSIONS) {
-    try {
-      const raw = storage?.getItem?.(`po_${name}${version}`);
-      if (raw !== null && raw !== undefined) return JSON.parse(raw);
-    } catch {
-      // Bozuk/yasaklı bir anahtar diğer sürüm yedeğinin denenmesini engellemez.
-    }
-  }
-  return fallback;
-};
+import { createDataRepository } from './dataRepository.js';
 
 /**
  * React henüz açılmadan çökerse bile standart içe aktarma biçiminde bir yedek
  * üretir. En yeni anahtar yoksa v16…v13 geri dönüşleri de denenir.
  */
-export const buildEmergencyBackup = (storage, exportedAt = new Date().toISOString()) => createBackupPayload({
-  workouts: readWithFallback(storage, 'workouts', []),
-  templates: readWithFallback(storage, 'templates', []),
-  customExercises: readWithFallback(storage, 'custom_exercises', []),
-  customFoods: readWithFallback(storage, 'custom_foods', []),
-  recentFoods: readWithFallback(storage, 'recent_foods', []),
-  mealTemplates: readWithFallback(storage, 'meal_templates', []),
-  dayTemplates: readWithFallback(storage, 'day_templates', []),
-  metricsHistory: readWithFallback(storage, 'metrics', []),
-  nutritionHistory: readWithFallback(storage, 'nutrition', []),
-  wellness: readWithFallback(storage, 'wellness', []),
-  cycleHistory: readWithFallback(storage, 'cycle', []),
-  settings: readWithFallback(storage, 'settings', {}),
-}, { version: APP_VERSION, exportedAt, emergencyRecovery: true });
+export const buildEmergencyBackup = (storage, exportedAt = new Date().toISOString()) => {
+  const repository = createDataRepository(storage);
+  const read = (name, fallback) => repository.read(name, fallback).value;
+  return createBackupPayload({
+    workouts: read('workouts', []),
+    templates: read('templates', []),
+    customExercises: read('custom_exercises', []),
+    customFoods: read('custom_foods', []),
+    recentFoods: read('recent_foods', []),
+    mealTemplates: read('meal_templates', []),
+    dayTemplates: read('day_templates', []),
+    metricsHistory: read('metrics', []),
+    nutritionHistory: read('nutrition', []),
+    wellness: read('wellness', []),
+    cycleHistory: read('cycle', []),
+    settings: read('settings', {}),
+  }, { version: APP_VERSION, exportedAt, emergencyRecovery: true });
+};

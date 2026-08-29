@@ -1,6 +1,5 @@
 import {
-  EXERCISE_RULES, STORAGE_VERSION, STORAGE_VERSIONS, DEFAULT_SETTINGS,
-  SET_TYPE_KEYS, SMALL_MUSCLE_GROUPS
+  EXERCISE_RULES, DEFAULT_SETTINGS, SET_TYPE_KEYS, SMALL_MUSCLE_GROUPS
 } from './constants.js';
 import { migrateCustomExercises, normalizeMuscleName } from './migrations.js';
 import { migrateWeekPlans } from './planMigration.js';
@@ -11,9 +10,10 @@ import { DEFAULT_CYCLE_CONFIG, mergeCycleDay } from './cycle.js';
 import { normalizeCoachProtocol } from './coachProtocol.js';
 import { buildBodyContextSnapshot } from './historicalContext.js';
 import { normalizePredictionHistory } from './progressionBlock.js';
+import { getBrowserDataRepository, storageDatasetKey } from './dataRepository.js';
 
 /** Yazma daima en yeni sürüm anahtarına yapılır. */
-export const storageKey = (name) => `po_${name}${STORAGE_VERSION}`;
+export const storageKey = storageDatasetKey;
 
 export const generateId = () => crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
 
@@ -624,11 +624,11 @@ export const mergeSettings = (saved = {}) => {
   return merged;
 };
 
-export const loadPersistedState = () => {
-  const keys = (name) => STORAGE_VERSIONS.map(v => `po_${name}${v}`);
+export const loadPersistedState = (repository = getBrowserDataRepository()) => {
+  const read = (name, fallback, parser) => repository.read(name, fallback, parser).value;
   const todayStr = getLocalDateString();
 
-  const metricsRaw = loadWithFallback(keys('metrics'), []);
+  const metricsRaw = read('metrics', []);
   const metricsHistory = Array.isArray(metricsRaw) ? metricsRaw.map(mergeMetrics) : [];
   let currentMetricsForm = mergeMetrics({});
   if (metricsHistory.length > 0) {
@@ -642,9 +642,9 @@ export const loadPersistedState = () => {
       : mergeMetrics({ ...latest, id: generateId(), date: todayStr });
   }
 
-  const savedSettings = loadWithFallback(keys('settings'), {}) || {};
+  const savedSettings = read('settings', {}) || {};
   const resetLegacyDayNeat = Number(savedSettings.dayNeatModelVersion) < 1;
-  const nutritionRaw = loadWithFallback(keys('nutrition'), []);
+  const nutritionRaw = read('nutrition', []);
   const nutritionHistory = Array.isArray(nutritionRaw)
     ? nutritionRaw.map(entry => mergeNutrition(resetLegacyDayNeat ? resetDayNeatOverride(entry) : entry))
     : [];
@@ -654,22 +654,22 @@ export const loadPersistedState = () => {
     : savedSettings;
 
   return {
-    workouts: loadWithFallback(keys('workouts'), []),
-    templates: loadWithFallback(keys('templates'), []),
-    customExercises: migrateCustomExercises(loadWithFallback(keys('custom_exercises'), [])),
-    customFoods: loadWithFallback(keys('custom_foods'), []),
-    recentFoods: loadWithFallback(keys('recent_foods'), []),
-    mealTemplates: loadWithFallback(keys('meal_templates'), []),
-    dayTemplates: loadWithFallback(keys('day_templates'), []),
-    activeWorkout: loadWithFallback(keys('active_workout'), null),
+    workouts: read('workouts', []),
+    templates: read('templates', []),
+    customExercises: migrateCustomExercises(read('custom_exercises', [])),
+    customFoods: read('custom_foods', []),
+    recentFoods: read('recent_foods', []),
+    mealTemplates: read('meal_templates', []),
+    dayTemplates: read('day_templates', []),
+    activeWorkout: read('active_workout', null),
     wellness: (() => {
-      const raw = loadWithFallback(keys('wellness'), []);
+      const raw = read('wellness', []);
       return Array.isArray(raw)
         ? raw.map(day => mergeWellnessDay(day, generateId)).filter(day => day.date)
         : [];
     })(),
     cycleHistory: (() => {
-      const raw = loadWithFallback(keys('cycle'), []);
+      const raw = read('cycle', []);
       return Array.isArray(raw)
         ? raw.map(day => mergeCycleDay(day, generateId)).filter(day => day.date)
         : [];
@@ -679,7 +679,8 @@ export const loadPersistedState = () => {
     nutritionHistory,
     currentNutritionForm: todayNutrition ? mergeNutrition(todayNutrition) : mergeNutrition({ date: todayStr }),
     settings: mergeSettings(migratedSettings),
-    lastBackupDate: typeof localStorage !== 'undefined' ? localStorage.getItem('po_last_backup') : null
+    lastBackupDate: repository.readRaw('po_last_backup', null).value,
+    storageHealth: repository.health(),
   };
 };
 

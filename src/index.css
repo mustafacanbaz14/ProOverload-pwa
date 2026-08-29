@@ -654,6 +654,16 @@ body {
   padding-bottom: calc(6.4rem + env(safe-area-inset-bottom, 20px));
 }
 
+/* Uzun arşiv ve kütüphane listelerinde ekran dışındaki kartların boya ve
+   yerleşim maliyetini tarayıcı erteler. Desteklemeyen Safari sürümlerinde
+   kural yok sayılır; içerik ve erişilebilirlik ağacı değişmez. */
+@supports (content-visibility: auto) {
+  .defer-card-render {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 180px;
+  }
+}
+
 @media (min-width: 520px) {
   .luxury-frame {
     margin-block: 1.25rem;

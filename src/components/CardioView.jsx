@@ -129,7 +129,7 @@ const CardioView = memo(({
         </div>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-nav">
+      <div data-view-scroll="training" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-nav">
 
         <button
           onClick={() => onOpenCardio?.()}

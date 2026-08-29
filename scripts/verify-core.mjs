@@ -161,6 +161,10 @@ import {
   instantiateDraftProgram, suggestedWeekdays,
 } from '../src/utils/programDraft.js';
 import { buildEmergencyBackup } from '../src/utils/emergencyBackup.js';
+import {
+  checksumText, createDataRepository, migrateStorageManifest,
+  PERSISTED_DATASET_NAMES, STORAGE_LAYOUT_VERSION, STORAGE_MANIFEST_KEY,
+} from '../src/utils/dataRepository.js';
 import { BACKUP_COLLECTIONS, createBackupPayload, migrateBackupPayload, DATA_SCHEMA_VERSION } from '../src/utils/dataSchema.js';
 import {
   buildEnergySnapshot, energyInputHash, readEnergySnapshot,
@@ -596,6 +600,117 @@ test('acil yedek en yeni kayıt yoksa eski depolama sürümüne düşer', () => 
   assert.equal(backup.dayTemplates[0].id, 'day-safe');
   assert.equal(backup.schemaVersion, DATA_SCHEMA_VERSION);
   assert.equal(backup.emergencyRecovery, true);
+});
+
+test('depolama manifest göçü idempotent ve sürümlüdür', () => {
+  const first = migrateStorageManifest({ schemaVersion: 0, datasets: null }, '2026-08-29T10:00:00.000Z');
+  const second = migrateStorageManifest(first.manifest, '2026-08-29T11:00:00.000Z');
+  assert.equal(first.manifest.schemaVersion, STORAGE_LAYOUT_VERSION);
+  assert.equal(first.applied.length, 1);
+  assert.equal(second.applied.length, 0);
+  assert.deepEqual(second.manifest, first.manifest);
+});
+
+test('merkezi depo veriyi yazıp sağlama toplamlı manifest üretir', () => {
+  const values = new Map();
+  const storage = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+  };
+  const repository = createDataRepository(storage, { now: () => '2026-08-29T10:00:00.000Z' });
+  const result = repository.write('workouts', [{ id: 'w1' }]);
+  const raw = values.get('po_workouts_v17');
+  const manifest = JSON.parse(values.get(STORAGE_MANIFEST_KEY));
+  assert.equal(result.ok, true);
+  assert.equal(result.manifestOk, true);
+  assert.equal(manifest.datasets.workouts.checksum, checksumText(raw));
+  assert.equal(manifest.datasets.workouts.records, 1);
+  assert.equal(repository.read('workouts', []).value[0].id, 'w1');
+});
+
+test('bozuk güncel kayıt eski güvenli anahtara düşer ve hiçbir anahtarı silmez', () => {
+  const values = new Map([
+    ['po_workouts_v17', '{bozuk'],
+    ['po_workouts_v16', JSON.stringify([{ id: 'legacy-safe' }])],
+  ]);
+  const storage = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+  };
+  const repository = createDataRepository(storage);
+  const result = repository.read('workouts', []);
+  assert.equal(result.value[0].id, 'legacy-safe');
+  assert.equal(result.sourceVersion, '_v16');
+  assert.equal(values.has('po_workouts_v17'), true);
+  assert.equal(values.has('po_workouts_v16'), true);
+  assert.ok(repository.health().issues.some(issue => issue.kind === 'corruptValue'));
+  assert.equal(repository.health().recoveredDatasets, 1);
+});
+
+test('null güncel kayıt sağlam eski sürümü gölgelemez', () => {
+  const values = new Map([
+    ['po_settings_v17', 'null'],
+    ['po_settings_v16', JSON.stringify({ theme: 'light' })],
+  ]);
+  const repository = createDataRepository({
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+  });
+  assert.equal(repository.read('settings', {}).value.theme, 'light');
+});
+
+test('sağlama toplamı uyuşmazlığı veriyi reddetmeden görünür bulgu olur', () => {
+  const values = new Map();
+  const storage = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+  };
+  createDataRepository(storage).write('metrics', [{ id: 'm1' }]);
+  values.set('po_metrics_v17', JSON.stringify([{ id: 'm2' }]));
+  const repository = createDataRepository(storage);
+  assert.equal(repository.read('metrics', []).value[0].id, 'm2');
+  assert.ok(repository.health().issues.some(issue => issue.kind === 'checksumMismatch'));
+  assert.equal(repository.health().hasCritical, true);
+});
+
+test('manifest yazılamasa da önce yazılan asıl veri başarılı sayılır', () => {
+  const values = new Map();
+  const storage = {
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => {
+      if (key === STORAGE_MANIFEST_KEY) throw new Error('manifest engelli');
+      values.set(key, String(value));
+    },
+  };
+  const repository = createDataRepository(storage);
+  const result = repository.write('nutrition', [{ id: 'n1' }]);
+  assert.equal(result.ok, true);
+  assert.equal(result.manifestOk, false);
+  assert.equal(JSON.parse(values.get('po_nutrition_v17'))[0].id, 'n1');
+  assert.ok(repository.health().issues.some(issue => issue.kind === 'manifestWriteFailed'));
+});
+
+test('engelli depolama açılışı çökertmeden varsayılana döner', () => {
+  const repository = createDataRepository({
+    getItem: () => { throw new Error('erişim yok'); },
+    setItem: () => { throw new Error('erişim yok'); },
+  });
+  assert.deepEqual(repository.read('workouts', []).value, []);
+  assert.equal(repository.health().available, false);
+  assert.equal(repository.health().hasCritical, true);
+});
+
+test('merkezi sözlükte olmayan kalıcı alan sessizce yazılmaz', () => {
+  const values = new Map();
+  const repository = createDataRepository({
+    getItem: key => values.get(key) ?? null,
+    setItem: (key, value) => values.set(key, String(value)),
+  });
+  const result = repository.write('unutulan_yeni_alan', [{ id: 'x' }]);
+  assert.equal(result.ok, false);
+  assert.equal(values.has('po_unutulan_yeni_alan_v17'), false);
+  assert.equal(PERSISTED_DATASET_NAMES.length, 13);
+  assert.ok(repository.health().issues.some(issue => issue.kind === 'unknownDataset'));
 });
 
 test('kas filtresi yüzde 100 izolasyonu bileşik ve yardımcı hareketten önce sıralar', () => {

@@ -13,8 +13,7 @@
  */
 
 /** Kota hatası mı, yoksa depolama tümden kapalı mı? Mesaj buna göre değişir. */
-const isQuotaError = (err) =>
-  err instanceof DOMException &&
+export const isQuotaError = (err) => Boolean(err) &&
   (err.name === 'QuotaExceededError' ||
     err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
     err.code === 22 ||
@@ -24,6 +23,10 @@ export const PERSIST_ERROR_MESSAGES = {
   quota: 'Depolama alanı dolu — kayıt yapılamadı. Ayarlar\'dan yedek alıp eski kayıtları silmeyi dene.',
   blocked: 'Tarayıcı depolamaya izin vermiyor — değişiklikler kaydedilmiyor. Gizli sekmedeysen normal sekmede aç.',
 };
+
+export const persistenceErrorMessage = (err) => isQuotaError(err)
+  ? PERSIST_ERROR_MESSAGES.quota
+  : PERSIST_ERROR_MESSAGES.blocked;
 
 /**
  * Değeri JSON olarak yazar. Başarılıysa true, değilse false döner ve
@@ -37,9 +40,7 @@ export const safeSetItem = (key, value, onError) => {
     localStorage.setItem(key, JSON.stringify(value));
     return true;
   } catch (err) {
-    const message = isQuotaError(err)
-      ? PERSIST_ERROR_MESSAGES.quota
-      : PERSIST_ERROR_MESSAGES.blocked;
+    const message = persistenceErrorMessage(err);
     try { onError?.(message, err); } catch { /* bildirim de patlarsa sessiz geç */ }
     return false;
   }
@@ -57,9 +58,7 @@ export const safeSetRawItem = (key, value, onError) => {
     localStorage.setItem(key, String(value));
     return true;
   } catch (err) {
-    const message = isQuotaError(err)
-      ? PERSIST_ERROR_MESSAGES.quota
-      : PERSIST_ERROR_MESSAGES.blocked;
+    const message = persistenceErrorMessage(err);
     try { onError?.(message, err); } catch { /* bildirim de patlarsa sessiz geç */ }
     return false;
   }

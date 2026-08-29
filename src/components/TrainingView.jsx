@@ -53,7 +53,7 @@ const TrainingView = memo(({
   const displayedTemplates = visibleTemplates.slice(0, templateLimit);
 
   return (
-    <div className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+    <div data-view-scroll="training" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <div>
         <span className="luxury-eyebrow text-[10px] uppercase">Antrenman Merkezi</span>
         <h2 className="luxury-title text-xl font-black mt-0.5">Bugünkü çalışmanı yönet</h2>

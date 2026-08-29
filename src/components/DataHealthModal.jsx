@@ -18,7 +18,31 @@ const SEVERITY = {
   low: { border: 'border-zinc-800', bg: 'bg-zinc-950/60', text: 'text-zinc-300', icon: Info, label: 'Eksik' },
 };
 
-const DataHealthModal = memo(({ isOpen, onClose, workouts = [], onRemoveEmpty }) => {
+const STORAGE_LABELS = {
+  storageUnavailable: 'Cihaz depolamasına erişilemiyor.',
+  manifestCorrupt: 'Önceki bütünlük kaydı okunamadı; asıl veriler ayrı ayrı kontrol edildi.',
+  manifestFutureVersion: 'Bütünlük kaydı bu uygulamadan daha yeni bir biçimde.',
+  corruptValue: 'Bir veri anahtarı bozuk JSON içeriyor.',
+  normalizationFailed: 'Bir kayıt güvenli biçime dönüştürülemedi.',
+  legacyFallback: 'En yeni anahtar yerine eski güvenli sürüm kullanıldı.',
+  checksumMismatch: 'Kayıt içeriği son bütünlük imzasıyla uyuşmuyor.',
+  manifestKeyMismatch: 'Bütünlük kaydı farklı bir depolama anahtarını gösteriyor.',
+  manifestWriteFailed: 'Veri yazıldı ancak bütünlük kaydı güncellenemedi.',
+  writeFailed: 'Bir değişiklik cihaz depolamasına yazılamadı.',
+  rawWriteFailed: 'Yedek tarihi gibi yardımcı bir kayıt yazılamadı.',
+  unknownDataset: 'Bu veri alanı merkezi kalıcı koleksiyon sözlüğünde tanımlı değil.',
+};
+
+const DATASET_LABELS = {
+  workouts: 'Antrenmanlar', templates: 'Şablonlar', custom_exercises: 'Özel hareketler',
+  custom_foods: 'Özel besinler', recent_foods: 'Son besinler', meal_templates: 'Öğün şablonları',
+  day_templates: 'Gün şablonları', active_workout: 'Aktif antrenman', metrics: 'Vücut ölçümleri',
+  nutrition: 'Beslenme', wellness: 'Toparlanma', cycle: 'Döngü', settings: 'Ayarlar',
+};
+
+const DataHealthModal = memo(({
+  isOpen, onClose, workouts = [], storageHealth = null, onRemoveEmpty,
+}) => {
   const rapor = useMemo(
     () => (isOpen ? auditWorkoutData(workouts) : null),
     [isOpen, workouts]);
@@ -46,6 +70,79 @@ const DataHealthModal = memo(({ isOpen, onClose, workouts = [], onRemoveEmpty })
           1000 kg — hepsini birden bozuyor ve bozulma sessiz oluyor: grafikte
           sıçrama görünür, sebebi görünmez.
         </p>
+
+        {storageHealth && (
+          <div className={`rounded-2xl border p-3.5 space-y-3 ${
+            storageHealth.hasCritical
+              ? 'border-red-900/50 bg-red-950/20'
+              : storageHealth.hasIssues
+                ? 'border-amber-900/50 bg-amber-950/20'
+                : 'border-emerald-900/40 bg-emerald-950/20'
+          }`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <strong className="text-[11px] text-zinc-100 block">Depolama bütünlüğü</strong>
+                <span className="text-[9px] font-mono text-zinc-500 leading-relaxed block mt-0.5">
+                  Veri içeriği, sürüm geri dönüşü ve yazma durumu
+                </span>
+              </div>
+              <span className={`text-[9px] font-bold uppercase tracking-wider shrink-0 ${
+                storageHealth.hasCritical
+                  ? 'text-red-400'
+                  : storageHealth.hasIssues ? 'text-amber-400' : 'text-emerald-400'
+              }`}>
+                {storageHealth.hasCritical ? 'Müdahale gerekli' : storageHealth.hasIssues ? 'Kurtarıldı' : 'Sağlıklı'}
+              </span>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-zinc-950/50 border border-zinc-800 rounded-xl py-2 text-center">
+                <span className="text-xs font-mono font-bold text-zinc-100 block">{storageHealth.checkedDatasets}</span>
+                <span className="text-[8px] font-mono text-zinc-500">okunan alan</span>
+              </div>
+              <div className="bg-zinc-950/50 border border-zinc-800 rounded-xl py-2 text-center">
+                <span className="text-xs font-mono font-bold text-zinc-100 block">
+                  {storageHealth.trackedDatasets}/{storageHealth.totalDatasets}
+                </span>
+                <span className="text-[8px] font-mono text-zinc-500">imzalı alan</span>
+              </div>
+              <div className="bg-zinc-950/50 border border-zinc-800 rounded-xl py-2 text-center">
+                <span className={`text-xs font-mono font-bold block ${storageHealth.recoveredDatasets ? 'text-amber-400' : 'text-zinc-100'}`}>
+                  {storageHealth.recoveredDatasets}
+                </span>
+                <span className="text-[8px] font-mono text-zinc-500">geri kazanım</span>
+              </div>
+            </div>
+
+            {storageHealth.manifestStatus === 'missing' && (
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+                Bu cihazda önceki bütünlük kaydı yoktu. İlk güvenli kayıt arka planda oluşturuluyor;
+                mevcut veriler silinmedi veya yeniden yorumlanmadı.
+              </p>
+            )}
+
+            {storageHealth.issues.length > 0 && (
+              <div className="space-y-1.5">
+                {storageHealth.issues.slice(0, 8).map((issue, index) => (
+                  <div key={`${issue.kind}-${issue.dataset || issue.key || index}`} className="flex items-start gap-2 text-[9px] font-mono leading-relaxed">
+                    <AlertTriangle size={11} className={issue.severity === 'high' ? 'text-red-400 shrink-0 mt-0.5' : 'text-amber-400 shrink-0 mt-0.5'} />
+                    <span className="text-zinc-300">
+                      {issue.dataset && <strong>{DATASET_LABELS[issue.dataset] || issue.dataset}: </strong>}
+                      {STORAGE_LABELS[issue.kind] || issue.kind}
+                    </span>
+                  </div>
+                ))}
+                {storageHealth.issues.length > 8 && (
+                  <p className="text-[8px] font-mono text-zinc-500">+{storageHealth.issues.length - 8} ek depolama bulgusu</p>
+                )}
+              </div>
+            )}
+
+            <p className="text-[8px] font-mono text-zinc-600 leading-relaxed">
+              Eski sürüm anahtarları geri dönüş kopyası olarak korunur. Bütünlük uyarısı veriyi otomatik silmez.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-2">
           {[

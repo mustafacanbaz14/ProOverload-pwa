@@ -69,7 +69,7 @@ const RELEASE_8_5 = release('8.5', '2026-08-28', 'Güven Aralıklı İlerleme ve
   item('İstatistiksel Sınırların Açıklanması', 'Hedef aralığı ve hata değeri tahmin olarak etiketleniyor; uygulama sonucu garanti eden bir tarih göstermiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-28', 'Mağaza Hazırlığı ve Ürün Güveni', [
+const RELEASE_8_6 = release('8.6', '2026-08-28', 'Mağaza Hazırlığı ve Ürün Güveni', [
   item('Mağaza Hazırlık Merkezi', 'Ayarlar içinde web temeli, Apple App Store ve Google Play adımları ayrı ilerleme oranlarıyla izleniyor.'),
   item('Kalıcı Hazırlık Kontrolü', 'Geliştirici hesabı, paketleme, ekran görüntüsü ve mağaza beyanı gibi elle tamamlanan maddeler cihazda saklanıyor; otomatik maddeler değiştirilemiyor.'),
   item('Yanlış Hazır İddiası Yok', 'PWA yayını mağaza yayını gibi gösterilmiyor. iOS native paket, Xcode build’i veya Android AAB yoksa merkez bunu açık engel olarak tutuyor.'),
@@ -90,6 +90,44 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-28', 'Mağaza 
   item('Native Yayın Yol Haritası', 'Capacitor, iOS Bundle ID, Android paket adı, Xcode 26, API 36, imzalama, TestFlight ve kapalı test adımları sıralandı.'),
   item('Sabit Platform Kimliği', 'iOS ve Android için tech.afacan.prooverload kimliği tek ürün kaynağında tanımlandı; mağaza kaydı açılmadan önce değiştirilmesi gerekiyorsa tek noktadan görülüyor.'),
   item('Kamu İletişimi Engeli', 'Destek e-postası bilinmediği için uydurulmadı. Mağaza hazırlık merkezi ve metadata bunu başvuru öncesi zorunlu manuel adım olarak gösteriyor.'),
+]);
+
+const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
+  item('Merkezi Veri Deposu', 'Kalıcı verinin okuma ve yazma yolları tek bir depo arayüzünde toplandı; ekran kodu localStorage anahtar ayrıntılarına bağımlı değil.'),
+  item('Tek Koleksiyon Sözlüğü', 'Antrenman, şablon, beslenme, ölçüm, toparlanma, döngü ve ayar alanlarının kalıcı kapsamı tek listede tanımlandı.'),
+  item('Bütünlük Manifesti', 'Her kalıcı alan için anahtar, güncelleme zamanı, kayıt sayısı, boyut ve sağlama toplamı ayrı ve küçük bir manifestte tutuluyor.'),
+  item('İçerik İmzası', 'Kayıt içeriği FNV-1a sağlama toplamıyla izleniyor; son başarılı yazımdan sonra beklenmedik bir değişim varsa Veri Sağlığı bunu görünür kılıyor.'),
+  item('Bozuk JSON Kurtarması', 'En yeni anahtar ayrıştırılamazsa uygulama açılışı durmuyor; sağlam v16–v13 kopyaları sırayla deneniyor.'),
+  item('Null Gölgeleme Koruması', 'Yarım bir güncellemenin null değeri, eski sürümde duran sağlam kullanıcı verisini artık gölgeleyemiyor.'),
+  item('Geri Dönüş Kopyaları Korundu', 'Eski sürüm anahtarları otomatik silinmiyor veya taşınmıyor; cihaz içi kurtarma yolu olarak yerinde kalıyor.'),
+  item('Veri Önce Yazılır', 'Asıl kullanıcı verisi manifestten önce kaydediliyor. Bütünlük kaydı başarısız olsa bile başarılı veri yazımı geçersiz sayılmıyor.'),
+  item('Manifest Otorite Değil', 'İmza uyuşmazlığı kullanıcı verisini reddetmiyor; veri açılıyor ve bulgu raporlanıyor. Denetim katmanı yeni bir veri kaybı sebebi olamıyor.'),
+  item('Sürümlü Yerleşim Göçü', 'Cihaz içi depolama düzeni için yedek şemasından bağımsız, idempotent ve kayıtlı bir migration altyapısı eklendi.'),
+  item('Depolama Sağlığı Panosu', 'Veri Sağlığı ekranı okunan alan, imzalı alan, geri kazanılan alan ve bütünlük bulgularını anlaşılır biçimde gösteriyor.'),
+  item('Sessiz Kayıp Uyarısı', 'Kota dolması veya depolama engeli merkezi hata sınıflandırmasından geçiyor; aynı hata yağmuruna karşı mevcut toast kısıtlaması korunuyor.'),
+  item('Acil Yedekte Aynı Okuyucu', 'React açılmadan çalışan acil kurtarma yedeği de normal uygulamayla aynı sürüm geri dönüş kurallarını kullanıyor.'),
+  item('Salt Okunur Kurtarma', 'Acil hata ekranı yazma yetkisi olmasa bile mevcut kayıtları okuyup standart yedek biçiminde dışarı çıkarabiliyor.'),
+  item('488 Çekirdek Kontrol', 'Bozuk veri, null gölgelemesi, checksum farkı, manifest hatası, engelli depolama, tanımsız koleksiyon ve eski sürüm kurtarması otomatik regresyon testlerine eklendi.'),
+  item('Native Depoya Hazır Sınır', 'Arayüz localStorage davranışını korurken gelecekte IndexedDB veya native SQLite adaptörüne geçiş için tek bir teknik sınır oluşturuldu.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-29', 'Hızlı Açılış ve Akıcı Gezinme', [
+  item('Aşamalı Ana Ekran', 'Uygulama kabuğu, başlık ve alt gezinme önce açılıyor; ana ekran ayrı bir Suspense sınırında hazırlanıyor.'),
+  item('Görünürlük Bazlı Isı Haritası', 'İnteraktif SVG kas haritası kullanıcı bölüme yaklaşana kadar değerlendirilmez; sabit ayrılmış alan sayfa sıçramasını engeller.'),
+  item('Ertelenmiş Şablon Hesapları', 'Ana sayfanın altındaki şablon süre ve kas katkısı hesapları yalnız kullanıcı bölüme yaklaşınca çalışır.'),
+  item('Niyet Bazlı Sekme Hazırlığı', 'Alt gezinmede odak, işaretçi veya dokunma başladığında hedef ekranın kodu tıklama tamamlanmadan hazırlanmaya başlar.'),
+  item('Boş Zamanda Antrenman Hazırlığı', 'Veri tasarrufu kapalı bağlantılarda en sık kullanılan Antrenman ve aktif seans ekranı ilk boyadan sonra tarayıcının boş zamanında hazırlanır.'),
+  item('Bağlantı Duyarlı Ön Yükleme', 'Veri tasarrufu veya 2G bağlantı algılanırsa arka plandaki hazırlık atlanır; hız için gereksiz veri tüketilmez.'),
+  item('Akıcı Düşük Öncelikli Geçiş', 'Büyük sekme değişimleri React geçişi olarak işlenir; mevcut ekran dokunma geri bildirimini korurken yeni bölüm hazırlanır.'),
+  item('Görünür Geçiş Durumu', 'Sekme hazırlanırken başlığın altında ince bir durum çizgisi ve ekran okuyucu duyurusu gösterilir; donmuş uygulama hissi azaltılır.'),
+  item('Bağlamsal Yükleme Metni', 'Genel “sayfa yükleniyor” yerine Antrenman, Beslenme, Gelişim veya Geçmiş bölümünün hangisinin hazırlandığı yazılır.'),
+  item('Sekme Konumu Hafızası', 'Başka sekmeye gidip dönünce önceki kaydırma konumu aynı uygulama oturumunda korunur.'),
+  item('Aktif Sekmeyle Başa Dön', 'Seçili alt sekmeye yeniden dokunmak uzun sayfayı doğrudan başa taşır; tarayıcı animasyon desteğine bağımlı değildir.'),
+  item('Uzun Liste Boya Tasarrufu', 'Destekleyen tarayıcılar arşiv ve şablon listelerindeki ekran dışı kartların yerleşim ve boya işini görünene kadar erteler.'),
+  item('Gelişim Alt Sekme Hazırlığı', 'Vücut, Analiz ve Döngü alt sekmeleri odak veya işaretçi niyetinde hazırlanır; 135 KB’lık analiz ekranı gereksiz yere önceden çalıştırılmaz.'),
+  item('Kararlı React Önbelleği', 'ReactDOM istemcisi ve zamanlayıcı uygulama kodundan ayrıldı; kütüphane sürümü değişmedikçe özellik güncellemelerinde aynı PWA önbellek parçası yeniden kullanılır.'),
+  item('Sıkı Performans Kapısı', 'Ölçülen v8.8 tabanına göre ilk JavaScript, gzip, CSS ve en büyük geç parça bütçeleri düşürüldü; sonraki sürüm fark edilmeden eski ağırlığa dönemeyecek.'),
+  item('PWA ve Veri Yapısı Korundu', 'Kod bölme ve geçiş değişiklikleri localStorage anahtarlarını, v8.7 bütünlük manifestini ve çevrimdışı veri modelini değiştirmez.'),
 ]);
 
 const RELEASE_8_1 = release('8.1', '2026-08-27', 'Antrenman Sihirbazı ve Sıra Motoru', [
@@ -128,6 +166,8 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_8_7,
+  RELEASE_8_6,
   RELEASE_8_5,
   RELEASE_8_3,
   RELEASE_8_2,

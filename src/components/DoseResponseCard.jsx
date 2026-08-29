@@ -20,6 +20,7 @@ import { MUSCLE_GROUPS, MUSCLE_VOLUME_LANDMARKS } from '../utils/constants';
 const W = 300;
 const H = 110;
 const PAD = { l: 26, r: 8, t: 8, b: 18 };
+const DEFAULT_LANDMARKS = Object.freeze({ mav: 14 });
 
 const DoseResponseCard = memo(({
   muscle: initialMuscle = 'Göğüs',
@@ -31,7 +32,7 @@ const DoseResponseCard = memo(({
 }) => {
   const [muscle, setMuscle] = useState(initialMuscle);
 
-  const landmarks = MUSCLE_VOLUME_LANDMARKS[muscle] || { mav: 14 };
+  const landmarks = MUSCLE_VOLUME_LANDMARKS[muscle] || DEFAULT_LANDMARKS;
   const bands = bandsFor(landmarks, experienceLevel);
   const mevcut = Math.round((currentVolume?.[muscle] || 0) * 4) / 4;
 
