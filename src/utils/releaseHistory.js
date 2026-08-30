@@ -215,13 +215,22 @@ const RELEASE_10_1 = release('10.1', '2026-08-30', 'Haftalık Planlama & Program
   item('Tam Doğrulama ve Sıfır Regresyon', '492 birim testi, 16 kas grubu ve 56 hareket kuralı, mağaza ve performans kapıları başarıyla geçti.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Üstün Metin Okunabilirliği ve Tipografi Netliği', [
+const RELEASE_10_2 = release('10.2', '2026-08-30', 'Üstün Metin Okunabilirliği ve Tipografi Netliği', [
   item('Yüksek Kontrastlı Metin Hiyerarşisi', 'Koyu arayüz zeminlerinde okunması güç olan soluk ve karanlık metin renkleri yüksek kontrastlı, kristal netliğinde tipografiyle yenilendi.'),
   item('Koç ve Kapasite Sinyalleri', 'Koç brifingi, kapasite puanı, dayanaklar, kısıtlamalar ve öneri ayrıntıları her türlü ekran parlaklığında kusursuz okunabilir kılındı.'),
   item('Geçmiş ve Zaman Çizelgesi Netliği', 'Arşiv zaman çizelgesi, hafta ve ay gruplamaları, aktivite ve enerji dökümleri belirgin etiketlerle güçlendirildi.'),
   item('Analiz ve İlerleme Görselleri', 'Kas hacim eşikleri, çalışma sıklığı, 1RM seans sayıları ve beslenme analizi tabloları geliştirilmiş kontrast ile yeniden tasarlandı.'),
   item('Seans İçi İpuçları ve Notlar', 'Aktif antrenman ekranındaki seans hacmi, ısınma rehberi ve hareket notu giriş alanları net ve erişilebilir hale getirildi.'),
   item('492/492 Test ve Bütünlük', 'Tüm birim testleri, 16 kas grubu kuralı ve performans bütçeleri sıfır hata ile doğrulandı.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Kapsamlı Kullanıcı Deneyimi, Hızlı Ağırlık Stepper ve Hidrasyon Komuta Merkezi', [
+  item('Ana Ekran 4-Aksiyon Komuta Merkezi', 'Ana sayfaya Antrenman, Hızlı Kayıt, Program Planı ve Araçlar için lüks degrade efektli ve canlı durum rozetli 4’lü hızlı erişim bloğu eklendi.'),
+  item('Hızlı Su Takibi ve Anında Ekleme', 'Ana ekranda doğrudan tek dokunuşla +250ml ve +500ml su ekleme kısayolları ve interaktif sıvı dolum barı entegre edildi.'),
+  item('Aktif Seansta Hızlı Ağırlık Ayarlayıcılar', 'Set giriş satırlarına salonda klavye ile uğraşmayı sonlandıran tek dokunuşlu -2.5, +1.25, +2.5 ve +5 kg mikro-adımlama butonları eklendi.'),
+  item('Görsel Makro Dağılım ve Oran Çubuğu', 'Beslenme ekranında Protein, Karbonhidrat ve Yağ kalorilerinin günlük yüzdesel dağılımını canlı gösteren renkli gösterge şeridi sunuldu.'),
+  item('Rafine Dokunmatik Ergonomi', 'Tüm set tamamlama butonları, dokunmatik kısayollar ve modal geçişleri daha geniş dokunma alanları ve hassas mikro-etkileşimlerle donatıldı.'),
+  item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları ve performans bütçeleri tam uyumla doğrulandı.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -298,6 +307,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_2,
   RELEASE_10_1,
   RELEASE_10_0,
   RELEASE_9_9,

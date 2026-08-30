@@ -4217,10 +4217,13 @@ export default function App() {
               cycleSummary={todayCycleSummary}
               onOpenCycle={() => { setProgressTab('cycle'); handleChangeView('progress'); }}
               weeklyCardioKcal={weeklyCardioKcal}
-              showMuscleVolume={settings.showMuscleVolume}
-              onToggleMuscleVolume={() => setSettings(prev => ({ ...prev, showMuscleVolume: !prev.showMuscleVolume }))}
               interfaceMode={settings.interfaceMode}
               onOpenTraining={() => handleChangeView('training')}
+              onOpenNutrition={() => handleChangeView('nutrition')}
+              onOpenWeeklyPlan={() => setIsWeeklyPlanOpen(true)}
+              waterSummary={waterReport}
+              waterTarget={waterTarget}
+              onAddWater={handleAddWater}
               onToggleTemplateFavorite={handleToggleTemplateFavorite}
             />
             </Suspense>

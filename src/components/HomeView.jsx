@@ -1,5 +1,8 @@
 import React, { lazy, memo, Suspense } from 'react';
-import { AlertCircle, Dumbbell, Plus, Wrench, Zap } from 'lucide-react';
+import {
+  AlertCircle, Calendar, ChevronRight, Droplets, Dumbbell, Flame, Plus,
+  Sparkles, Wrench, Zap
+} from 'lucide-react';
 import TodayCoachCard from './TodayCoachCard';
 import CycleSummaryCard from './CycleSummaryCard';
 import DeferredSection from './DeferredSection';
@@ -60,11 +63,19 @@ const HomeView = memo(({
   onOpenCycle,
   interfaceMode = 'simple',
   onOpenTraining,
+  onOpenNutrition,
+  onOpenWeeklyPlan,
+  waterSummary,
+  waterTarget,
+  onAddWater,
   onToggleTemplateFavorite,
 }) => {
-  return (
-    <div data-view-scroll="home" className="luxury-screen p-4 space-y-5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+  const isTemplateReady = Boolean(todayCoach?.workoutTemplate || todayCoach?.cardioLabel);
 
+  return (
+    <div data-view-scroll="home" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
+
+      {/* Koç ve Günlük Brifing Kartı */}
       <TodayCoachCard
         data={todayCoach}
         briefing={coachBriefing}
@@ -87,55 +98,150 @@ const HomeView = memo(({
         compact={interfaceMode === 'simple'}
       />
 
-      {interfaceMode === 'simple' ? (
-        <div className="grid grid-cols-3 gap-2.5" aria-label="Hızlı işlemler">
+      {/* Hızlı Aksiyon & Görev Komuta Merkezi */}
+      <div className="space-y-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" aria-label="Hızlı işlemler">
           <button
             type="button"
-            onClick={() => onOpenTraining?.()}
-            className="min-h-21 rounded-2xl border border-cyan-900/50 bg-gradient-to-b from-cyan-950/40 via-zinc-900/80 to-zinc-950 text-cyan-100 active:scale-[0.96] transition-all flex flex-col items-center justify-center gap-2 shadow-lg shadow-black/30 hover:border-cyan-700/60"
+            onClick={() => handleStartRequest ? handleStartRequest() : onOpenTraining?.()}
+            className="group relative overflow-hidden rounded-2xl border border-cyan-800/50 bg-gradient-to-br from-cyan-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-cyan-950/20 hover:border-cyan-600/70"
           >
-            <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-800/50 flex items-center justify-center shadow-inner">
-              <Dumbbell size={16} className="text-cyan-400" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
+                <Zap size={16} className="text-cyan-300" />
+              </div>
+              <span className="text-[8px] font-mono uppercase tracking-wider text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded-md border border-cyan-800/40">
+                {isTemplateReady ? 'Planlı' : 'Serbest'}
+              </span>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-wider text-zinc-200">Antrenman</span>
+            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
+              Antrenman
+            </strong>
+            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
+              {todayCoach?.workoutTemplate ? todayCoach.workoutTemplate.name : 'Seansı Başlat'}
+            </span>
           </button>
+
           <button
             type="button"
             onClick={() => onQuickCapture?.()}
-            className="min-h-21 rounded-2xl border border-emerald-900/50 bg-gradient-to-b from-emerald-950/35 via-zinc-900/80 to-zinc-950 text-zinc-100 active:scale-[0.96] transition-all flex flex-col items-center justify-center gap-2 shadow-lg shadow-black/30 hover:border-emerald-700/60"
+            className="group relative overflow-hidden rounded-2xl border border-emerald-800/50 bg-gradient-to-br from-emerald-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-emerald-950/20 hover:border-emerald-600/70"
           >
-            <div className="w-8 h-8 rounded-xl bg-emerald-950/80 border border-emerald-800/50 flex items-center justify-center shadow-inner">
-              <Plus size={16} className="text-emerald-400" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
+                <Plus size={16} className="text-emerald-300" />
+              </div>
+              <span className="text-[8px] font-mono uppercase tracking-wider text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded-md border border-emerald-800/40">
+                Hızlı
+              </span>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-wider text-zinc-200">Hızlı Kayıt</span>
+            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
+              Hızlı Kayıt
+            </strong>
+            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
+              Set, Kilo & Besin
+            </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => onOpenWeeklyPlan ? onOpenWeeklyPlan() : onOpenTraining?.()}
+            className="group relative overflow-hidden rounded-2xl border border-indigo-800/50 bg-gradient-to-br from-indigo-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-indigo-950/20 hover:border-indigo-600/70"
+          >
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
+                <Calendar size={16} className="text-indigo-300" />
+              </div>
+              <span className="text-[8px] font-mono uppercase tracking-wider text-indigo-400 font-bold bg-indigo-950/60 px-1.5 py-0.5 rounded-md border border-indigo-800/40">
+                Haftalık
+              </span>
+            </div>
+            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
+              Program Planı
+            </strong>
+            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
+              Düzen & Günler
+            </span>
+          </button>
+
           <button
             type="button"
             onClick={() => onOpenTools?.()}
-            className="min-h-21 rounded-2xl border border-violet-900/50 bg-gradient-to-b from-violet-950/35 via-zinc-900/80 to-zinc-950 text-zinc-100 active:scale-[0.96] transition-all flex flex-col items-center justify-center gap-2 shadow-lg shadow-black/30 hover:border-violet-700/60"
+            className="group relative overflow-hidden rounded-2xl border border-violet-800/50 bg-gradient-to-br from-violet-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-violet-950/20 hover:border-violet-600/70"
           >
-            <div className="w-8 h-8 rounded-xl bg-violet-950/80 border border-violet-800/50 flex items-center justify-center shadow-inner">
-              <Wrench size={16} className="text-violet-400" />
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-8 h-8 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-violet-400 group-hover:scale-105 transition-transform">
+                <Wrench size={16} className="text-violet-300" />
+              </div>
+              <span className="text-[8px] font-mono uppercase tracking-wider text-violet-400 font-bold bg-violet-950/60 px-1.5 py-0.5 rounded-md border border-violet-800/40">
+                Merkez
+              </span>
             </div>
-            <span className="text-[9px] font-black uppercase tracking-wider text-zinc-200">Araçlar</span>
-          </button>
-        </div>
-      ) : (
-        <div className="space-y-2.5">
-          {(todayCoach?.workoutTemplate || todayCoach?.cardioLabel) && (
-            <button onClick={() => handleStartRequest()} className="w-full bg-cyan-600 active:scale-[0.98] text-white font-bold py-4 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-sm shadow-xl shadow-cyan-950/30 transition-all">
-              <Zap size={18} className="mr-2" /> Serbest Antrenman
-            </button>
-          )}
-          <button
-            onClick={() => onOpenTools?.()}
-            className="w-full bg-zinc-900/90 active:scale-[0.98] border border-zinc-800/80 text-zinc-200 font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs transition-all shadow-md shadow-black/20"
-          >
-            <Wrench size={16} className="mr-2 text-cyan-400" /> Araçlar
-            <span className="ml-2 text-[10px] font-mono text-zinc-500 normal-case tracking-normal">
-              kütüphane · program · kardiyo
+            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
+              Araçlar
+            </strong>
+            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
+              Plaka & 1RM
             </span>
           </button>
+        </div>
+      </div>
+
+      {/* Günlük Hızlı Hidrasyon Paneli */}
+      {waterSummary && waterTarget && (
+        <div className="luxury-feature-card bg-gradient-to-br from-sky-950/30 via-zinc-900/95 to-zinc-950 rounded-2xl border border-sky-900/40 p-3.5 shadow-lg shadow-black/30">
+          <div className="flex items-center justify-between gap-3 mb-2.5">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+                <Droplets size={14} className="text-sky-300" />
+              </div>
+              <div className="min-w-0">
+                <span className="text-[10px] font-black uppercase tracking-wider text-zinc-200 block">
+                  Günlük Su Takibi
+                </span>
+                <span className="text-[9px] font-mono text-zinc-400 block">
+                  {(waterSummary.today / 1000).toFixed(1)} / {(waterTarget.ml / 1000).toFixed(1)} L (%{waterSummary.percent})
+                </span>
+              </div>
+            </div>
+
+            {/* Hızlı Ekleme Butonları */}
+            <div className="flex items-center gap-1.5 shrink-0">
+              <button
+                type="button"
+                onClick={() => onAddWater?.(250)}
+                className="px-2.5 py-1 rounded-lg border border-sky-800/60 bg-sky-950/50 text-sky-200 text-[9px] font-mono font-bold active:scale-[0.95] transition-all hover:bg-sky-900/60 shadow-sm"
+                title="+250 ml su ekle"
+              >
+                +250ml
+              </button>
+              <button
+                type="button"
+                onClick={() => onAddWater?.(500)}
+                className="px-2.5 py-1 rounded-lg border border-sky-800/60 bg-sky-950/50 text-sky-200 text-[9px] font-mono font-bold active:scale-[0.95] transition-all hover:bg-sky-900/60 shadow-sm"
+                title="+500 ml su ekle"
+              >
+                +500ml
+              </button>
+              {onOpenNutrition && (
+                <button
+                  type="button"
+                  onClick={onOpenNutrition}
+                  className="p-1 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 active:scale-[0.95] transition-colors"
+                  title="Beslenme ekranına git"
+                >
+                  <ChevronRight size={13} />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="h-2 bg-zinc-950 rounded-full border border-zinc-800/80 overflow-hidden shadow-inner">
+            <div
+              className="h-full bg-gradient-to-r from-sky-500 to-cyan-400 rounded-full transition-all duration-300 shadow-sm"
+              style={{ width: `${Math.min(100, waterSummary.percent)}%` }}
+            />
+          </div>
         </div>
       )}
 
@@ -171,8 +277,7 @@ const HomeView = memo(({
         interfaceMode={interfaceMode}
       />
 
-      {/* Şablon kütüphanesi sayfanın altındadır; kullanıcı yaklaşmadan yüzlerce
-          hareket katkısı ve süre hesabını çalıştırmak ilk açılışı yavaşlatır. */}
+      {/* Şablon kütüphanesi sayfanın altındadır */}
       <DeferredSection
         minHeight={190}
         rootMargin="420px 0px"

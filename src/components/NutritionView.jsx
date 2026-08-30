@@ -348,6 +348,36 @@ const NutritionView = memo(({
           <MacroTile label="Karbonhidrat" value={`${totals.carbs}g`} color="text-amber-400" />
           <MacroTile label="Yağ" value={`${totals.fats}g`} color="text-purple-400" />
         </div>
+
+        {/* Makro Dağılım Oranları */}
+        {(() => {
+          const pKcal = (parseNumber(totals.protein) || 0) * 4;
+          const cKcal = (parseNumber(totals.carbs) || 0) * 4;
+          const fKcal = (parseNumber(totals.fats) || 0) * 9;
+          const totalKcal = pKcal + cKcal + fKcal;
+          if (totalKcal <= 0) return null;
+          const pPct = Math.round((pKcal / totalKcal) * 100);
+          const cPct = Math.round((cKcal / totalKcal) * 100);
+          const fPct = Math.max(0, 100 - pPct - cPct);
+          return (
+            <div className="mt-3 pt-2.5 border-t border-zinc-800/70 space-y-1.5">
+              <div className="flex justify-between items-center text-[9px] font-mono">
+                <span className="text-zinc-400 font-bold uppercase tracking-wider">Makro Enerji Dağılımı</span>
+                <span className="text-zinc-300 font-semibold">{totalKcal} kcal</span>
+              </div>
+              <div className="h-2 bg-zinc-950 rounded-full overflow-hidden flex border border-zinc-800/80 shadow-inner">
+                <div style={{ width: `${pPct}%` }} className="bg-emerald-500 transition-all duration-300" title={`Protein: %${pPct}`} />
+                <div style={{ width: `${cPct}%` }} className="bg-amber-500 transition-all duration-300" title={`Karbonhidrat: %${cPct}`} />
+                <div style={{ width: `${fPct}%` }} className="bg-purple-500 transition-all duration-300" title={`Yağ: %${fPct}`} />
+              </div>
+              <div className="flex justify-between items-center text-[8px] font-mono font-bold">
+                <span className="text-emerald-400">%{pPct} Protein</span>
+                <span className="text-amber-400">%{cPct} Karb</span>
+                <span className="text-purple-400">%{fPct} Yağ</span>
+              </div>
+            </div>
+          );
+        })()}
         {dayScore?.next?.length > 0 && (
           <p className="text-[9px] font-mono text-zinc-500 mt-2.5">
             {isToday ? 'Bugün' : 'Bu gün'} öncelik: <strong className="text-zinc-300">{dayScore.next.join(' ve ')}</strong>.

@@ -951,15 +951,15 @@ const ActiveWorkoutView = memo(({
                           {FORM_RATINGS.map(r => <option key={r.value} value={r.value}>{r.value}</option>)}
                         </select>
                       </div>
-                      <div className="col-span-12 flex justify-between items-center px-1.5 -mt-0.5 mb-0.5">
-                        <div className="flex items-center gap-2">
-                          <button onClick={() => removeSet(ex.id, set.id)} className="text-zinc-700 active:text-red-500 hover:text-red-500 p-1 -m-1 transition-colors" title="Bu seti sil" aria-label="Bu seti sil">
-                            <Trash2 size={11} />
+                      <div className="col-span-12 flex flex-wrap justify-between items-center px-1.5 pt-1 border-t border-zinc-900/60 gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <button onClick={() => removeSet(ex.id, set.id)} className="text-zinc-500 hover:text-red-400 active:text-red-500 p-1 -m-0.5 transition-colors" title="Bu seti sil" aria-label="Bu seti sil">
+                            <Trash2 size={12} />
                           </button>
                           <select
                             value={set.setType || 'normal'}
                             onChange={(e) => updateSet(ex.id, set.id, 'setType', e.target.value)}
-                            className="bg-zinc-900 text-zinc-400 hover:text-zinc-200 text-[10px] font-mono rounded p-0.5 outline-none border border-zinc-800 transition-colors"
+                            className="bg-zinc-900 text-zinc-300 hover:text-zinc-100 text-[10px] font-mono rounded-md px-1 py-0.5 outline-none border border-zinc-800 transition-colors"
                           >
                             <option value="normal">Normal (N)</option>
                             <option value="warmup">Isınma (W)</option>
@@ -967,6 +967,55 @@ const ActiveWorkoutView = memo(({
                             <option value="failure">Tükeniş (F)</option>
                             <option value="rest_pause">Rest-Pause (RP)</option>
                           </select>
+
+                          {/* Hızlı Ağırlık Artır/Azalt Kısayolları */}
+                          <div className="flex items-center gap-0.5 bg-zinc-900/90 rounded-lg p-0.5 border border-zinc-800">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = parseNumber(set.weight) || 0;
+                                updateSet(ex.id, set.id, 'weight', Math.max(0, Math.round((curr - 2.5) * 100) / 100));
+                              }}
+                              className="px-1.5 py-0.5 text-[8px] font-mono font-bold text-zinc-400 hover:text-zinc-200 active:bg-zinc-800 rounded"
+                              title="2.5 kg azalt"
+                            >
+                              -2.5
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = parseNumber(set.weight) || 0;
+                                updateSet(ex.id, set.id, 'weight', Math.round((curr + 1.25) * 100) / 100);
+                              }}
+                              className="px-1.5 py-0.5 text-[8px] font-mono font-bold text-cyan-400 hover:text-cyan-300 active:bg-zinc-800 rounded"
+                              title="1.25 kg artır"
+                            >
+                              +1.25
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = parseNumber(set.weight) || 0;
+                                updateSet(ex.id, set.id, 'weight', Math.round((curr + 2.5) * 100) / 100);
+                              }}
+                              className="px-1.5 py-0.5 text-[8px] font-mono font-bold text-cyan-400 hover:text-cyan-300 active:bg-zinc-800 rounded"
+                              title="2.5 kg artır"
+                            >
+                              +2.5
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const curr = parseNumber(set.weight) || 0;
+                                updateSet(ex.id, set.id, 'weight', Math.round((curr + 5) * 100) / 100);
+                              }}
+                              className="px-1.5 py-0.5 text-[8px] font-mono font-bold text-cyan-400 hover:text-cyan-300 active:bg-zinc-800 rounded"
+                              title="5 kg artır"
+                            >
+                              +5
+                            </button>
+                          </div>
+
                           <button
                             type="button"
                             onClick={() => {
@@ -979,19 +1028,19 @@ const ActiveWorkoutView = memo(({
                             }}
                             aria-pressed={Boolean(set.completed)}
                             title={set.completed ? 'Seti tamamlanmadı olarak işaretle' : 'Seti tamamla'}
-                            className={`flex items-center gap-1 rounded px-1.5 py-0.5 text-[9px] font-bold border transition-colors ${set.completed ? 'border-emerald-800 bg-emerald-950/30 text-emerald-400' : 'border-zinc-800 bg-zinc-900 text-zinc-600'}`}
+                            className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[10px] font-bold border transition-all active:scale-[0.96] shadow-sm ${set.completed ? 'border-emerald-700/80 bg-emerald-950/40 text-emerald-300' : 'border-zinc-800 bg-zinc-900/90 text-zinc-400 hover:text-zinc-200'}`}
                           >
-                            <CheckCircle2 size={10} /> {set.completed ? 'Tamam' : 'Bitir'}
+                            <CheckCircle2 size={12} className={set.completed ? 'text-emerald-400' : 'text-zinc-500'} /> {set.completed ? 'Tamamlandı' : 'Tamamla'}
                           </button>
                         </div>
                         {warmup ? (
-                          <span className="text-[10px] text-orange-600/70 font-mono tracking-widest uppercase">Isınma · hacme sayılmaz</span>
+                          <span className="text-[10px] text-orange-400 font-mono tracking-wider uppercase font-semibold">Isınma</span>
                         ) : (
-                          <span className="text-[10px] font-mono tracking-widest flex items-center gap-1.5">
+                          <span className="text-[10px] font-mono tracking-wider flex items-center gap-1.5">
                             {isNewRecord && (
-                              <span className="text-yellow-400 font-bold flex items-center"><Trophy size={9} className="mr-0.5" /> REKOR</span>
+                              <span className="text-yellow-400 font-bold flex items-center"><Trophy size={10} className="mr-0.5" /> REKOR</span>
                             )}
-                            <span className="text-cyan-600/70">1RM: {e1rm > 0 ? `${e1rm}kg` : '—'}</span>
+                            <span className="text-cyan-400 font-semibold">1RM: {e1rm > 0 ? `${e1rm}kg` : '—'}</span>
                           </span>
                         )}
                       </div>
