@@ -35,65 +35,66 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
   const olculemez = ledger.filter(e => e.decision === 'applied' && e.kind === 'none');
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[93] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <BookCheck size={15} className="mr-2 text-emerald-400" /> Koç Karar Defteri
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
+    <div role="dialog" aria-modal="true" aria-labelledby="coach-ledger-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="coach-ledger-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <BookCheck size={16} className="mr-2 text-emerald-400" /> Koç Karar Defteri
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
         {ledger.length === 0 ? (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 space-y-2">
+          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 space-y-2 backdrop-blur-sm">
             <span className="text-[11px] font-bold text-zinc-200 block">Defter henüz boş</span>
-            <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
+            <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">
               Ana ekrandaki koç kartında bir tavsiyeyi uyguladığında
               "Uyguladım"a dokun. Uygulama o anki hacmi ve tahmini 1RM'i not
               alır, {LEDGER_REVIEW_DAYS} gün sonra tekrar ölçer ve tavsiyenin
               işe yarayıp yaramadığını söyler.
             </p>
-            <p className="text-[10px] font-mono text-zinc-600 leading-relaxed">
+            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
               Amaç koçu yanlış olabilir hale getirmek: yanlış olamayan bir
               tavsiye doğru da olamaz.
             </p>
           </div>
         ) : (
           <>
-            <div className="rounded-2xl border border-zinc-800 bg-gradient-to-br from-emerald-950/20 to-zinc-900 p-4">
-              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block">Koçun karnesi</span>
+            <div className="rounded-3xl border border-zinc-800/80 bg-gradient-to-br from-emerald-950/25 via-zinc-900/80 to-zinc-950 p-4 shadow-sm backdrop-blur-sm">
+              <span className="text-[9px] font-mono font-bold text-zinc-400 uppercase tracking-widest block">Koçun karnesi</span>
               {stats.hitRate === null ? (
-                <p className="text-[11px] font-mono text-zinc-400 leading-relaxed mt-1.5">
+                <p className="text-[10px] font-mono text-zinc-400 leading-relaxed mt-2">
                   Oran için en az beş ölçülmüş tavsiye gerekiyor; şu an {stats.tested} tane var.
                   İki denemenin biri tutunca "%50 isabet" çıkıyor ve bu bir bilgi değil.
                 </p>
               ) : (
                 <>
-                  <div className="flex items-end gap-2 mt-1">
-                    <strong className="text-3xl font-mono text-emerald-300">%{stats.hitRate}</strong>
-                    <span className="text-[10px] font-mono text-zinc-500 pb-1.5">
+                  <div className="flex items-end gap-2 mt-2">
+                    <strong className="text-3xl font-mono font-black text-emerald-300">%{stats.hitRate}</strong>
+                    <span className="text-[10px] font-mono text-zinc-400 pb-1">
                       isabet · {stats.tested} ölçülmüş tavsiye
                     </span>
                   </div>
-                  <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1.5">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">
                     Oran yalnızca gerçekten UYGULANMIŞ tavsiyelerden hesaplanıyor.
                     Denenmemiş {stats.notApplied} tavsiye bu sayının dışında.
                   </p>
                 </>
               )}
 
-              <div className="grid grid-cols-4 gap-1.5 mt-3">
+              <div className="grid grid-cols-4 gap-1.5 mt-3.5">
                 {[
                   { l: 'işe yaradı', v: stats.worked, c: 'text-emerald-400' },
                   { l: 'fark etmedi', v: stats.flat, c: 'text-zinc-400' },
                   { l: 'ters gitti', v: stats.backfired, c: 'text-red-400' },
                   { l: 'denenmedi', v: stats.notApplied, c: 'text-zinc-600' },
                 ].map(k => (
-                  <div key={k.l} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2 text-center">
-                    <strong className={`text-[13px] font-mono block ${k.c}`}>{k.v}</strong>
-                    <span className="text-[8px] font-mono text-zinc-600">{k.l}</span>
+                  <div key={k.l} className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl py-2 text-center">
+                    <strong className={`text-[13px] font-mono font-bold block ${k.c}`}>{k.v}</strong>
+                    <span className="text-[8px] font-mono text-zinc-500">{k.l}</span>
                   </div>
                 ))}
               </div>
@@ -103,10 +104,10 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
               <button
                 type="button"
                 onClick={onSettle}
-                className="w-full rounded-2xl border border-cyan-800/60 bg-cyan-950/25 p-3.5 text-left active:bg-cyan-950/40"
+                className="w-full rounded-2xl border border-cyan-800/60 bg-cyan-950/30 p-3.5 text-left active:bg-cyan-950/50 shadow-md shadow-cyan-950/20 transition-all"
               >
                 <span className="text-[11px] font-bold text-cyan-300 flex items-center gap-1.5">
-                  <Clock3 size={12} /> {due.length} tavsiyenin sonucu ölçülmeye hazır
+                  <Clock3 size={13} /> {due.length} tavsiyenin sonucu ölçülmeye hazır
                 </span>
                 <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">
                   {LEDGER_REVIEW_DAYS} gün doldu. Dokun, uygulama şu anki hacim ve
@@ -116,17 +117,17 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
             )}
 
             {acik.length > 0 && (
-              <section className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-                <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-950/60">
-                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">
+              <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 overflow-hidden backdrop-blur-sm">
+                <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60">
+                  <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest">
                     Ölçüm Bekleyen ({acik.length})
                   </span>
                 </div>
                 <div className="divide-y divide-zinc-800/70">
                   {acik.map(e => (
-                    <div key={e.id} className="px-4 py-2">
-                      <span className="text-[10px] font-bold text-zinc-300 block truncate">{e.title || e.key}</span>
-                      <span className="text-[9px] font-mono text-zinc-600 block">
+                    <div key={e.id} className="px-4 py-2.5">
+                      <span className="text-[11px] font-bold text-zinc-200 block truncate">{e.title || e.key}</span>
+                      <span className="text-[9px] font-mono text-zinc-500 block mt-0.5">
                         {formatDay(e.decidedAt)} uygulandı · {formatDay(e.reviewOn)} ölçülecek
                         {e.compliance && ` · başlangıç ${e.compliance.baseline} ${e.compliance.label}`}
                       </span>
@@ -138,19 +139,19 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
 
             {kapali.length > 0 && (
               <section className="space-y-2">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest px-1">
+                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">
                   Ölçülmüş ({kapali.length})
                 </span>
                 {kapali.map(e => (
-                  <div key={e.id} className={`rounded-2xl border p-3 ${VERDICT_STYLE[e.outcome.verdict]}`}>
+                  <div key={e.id} className={`rounded-2xl border p-3.5 backdrop-blur-sm ${VERDICT_STYLE[e.outcome.verdict]}`}>
                     <div className="flex items-start justify-between gap-2">
-                      <span className="text-[10px] font-bold text-zinc-200 min-w-0 truncate">{e.title || e.key}</span>
+                      <span className="text-[11px] font-bold text-zinc-200 min-w-0 truncate">{e.title || e.key}</span>
                       <span className="text-[9px] font-mono text-zinc-400 shrink-0 flex items-center gap-1">
                         {VERDICT_ICON[e.outcome.verdict]}
                         {LEDGER_VERDICTS[e.outcome.verdict]?.label}
                       </span>
                     </div>
-                    <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">{describeEntry(e)}</p>
+                    <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">{describeEntry(e)}</p>
                   </div>
                 ))}
               </section>
@@ -185,6 +186,7 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
         </p>
       </div>
     </div>
+  </div>
   );
 });
 

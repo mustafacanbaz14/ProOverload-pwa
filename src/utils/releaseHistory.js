@@ -156,7 +156,7 @@ const RELEASE_9_5 = release('9.5', '2026-08-30', 'Hedef Merkezi, Birleşik Arşi
   item('PWA ve Kullanıcı Verisi Korundu', 'v9.5 yeni bir kalıcı veri anahtarı veya kırıcı şema eklemiyor; mevcut localStorage kayıtları, yedek biçimi ve ana ekrana kurulmuş PWA güncelleme akışı korunuyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Sade Ayarlar ve Gün Gün Enerji', [
+const RELEASE_9_6 = release('9.6', '2026-08-30', 'Sade Ayarlar ve Gün Gün Enerji', [
   item('Ayarlar Artık Bir Ana Menü', 'Ayarlar açıldığında bütün kontroller tek uzun sayfaya yığılmıyor; sekiz büyük konu kartı gösteriliyor ve yalnız seçilen kategorinin içeriği açılıyor.'),
   item('Koç Yöntemi Veriden Ayrıldı', 'Antrenman hedefi, hacim felsefesi, kademeli etkili set ve koç odağı yedekleme araçlarından ayrılıp Koç & Yöntem başlığında toplandı.'),
   item('Daha Anlaşılır Ayar Araması', 'Arama yalnız başlıklara değil NEAT, punto, kilit ekranı, dinlenme ve program kodu gibi günlük kullanılan terimlere de bakıyor.'),
@@ -167,6 +167,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Sade Aya
   item('Bir Yıllık Enerji Görünümü', 'Gün Gün enerji tablosu son 60 gün yerine son 365 günü kapsıyor; geçmiş vücut bağlamı, harcama kaynakları ve güne özel NEAT düzenlemesi korunuyor.'),
   item('Beş Sürümlük Sadeleştirme Planı', 'Aktif antrenman, koç ve analiz, günlük arşiv ve mağaza öncesi ürün bütünlüğünü kapsayan v9.7–v10.0 yol haritası belgelendi.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v9.6 yeni localStorage anahtarı veya kırıcı veri göçü eklemiyor; mevcut kayıt, yedek ve çevrimdışı güncelleme yapısı değişmiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Luxury Dark & Light UI ve Tam Tasarım Modernizasyonu', [
+  item('Luxury Dark & Light UI', 'Tüm uygulama obsidyen–altın (karanlık) ve fildişi–bronz (aydınlık) renk temalarıyla lüks bir tasarım sistemine taşındı.'),
+  item('24+ Modal ve Dialog Yenilendi', 'Bütün pencereler standart role="dialog", aria-modal="true", backdrop blur ve modern rounded-3xl cam gövde ile sıfırdan modernize edildi.'),
+  item('Lüks Başlık ve Navigasyon', 'luxury-header, luxury-icon-button ve luxury-segmented tab barları ile dokunmatik dostu mikro-etkileşimler sağlandı.'),
+  item('Beslenme & Tarif Kütüphanesi', 'Porsiyon hesaplayıcı, lüks kartlar ve şablon seçiciler yeni cam morfolojisi ile baştan tasarlandı.'),
+  item('Mağaza Hazırlık ve Güvenlik Panosu', 'Platform bazlı sekmeler, sabit kimlikler ve otomatik doğrulama maddeleri lüks görsel kartlarla sunuldu.'),
+  item('Veri Sağlığı ve İkame Motoru', 'Depolama bütünlüğü, kas grubu analizi ve hareket alternatifleri şık tipografi hiyerarşisiyle yeniden düzenlendi.'),
+  item('Hızlı Kayıt ve Hızlı Eylemler', 'Dokunma hedefleri büyütüldü, aktif basma efektleri (active scale) ve görsel geri bildirimler güçlendirildi.'),
+  item('Performans ve Sıfır Regresyon', '492 çekirdek doğrulama testi, 16 kas grubu kuralı ve sıkı performans bütçeleri eksiksiz korundu.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -243,6 +254,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_6,
   RELEASE_9_5,
   RELEASE_9_3,
   RELEASE_9_1,

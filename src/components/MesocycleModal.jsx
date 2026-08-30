@@ -86,21 +86,22 @@ const MesocycleModal = memo(({
   const tabanKasSayisi = Object.keys(meso.baseline || {}).length;
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[92] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Layers3 size={15} className="mr-2 text-cyan-400" /> Mezosiklik
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
+    <div role="dialog" aria-modal="true" aria-labelledby="mesocycle-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[92] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="mesocycle-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Layers3 size={16} className="mr-2 text-cyan-400" /> Mezosiklik Planlayıcı
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
 
         {!state.active ? (
           <>
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5">
+            <div className="bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-3.5 backdrop-blur-sm">
               <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">
                 Haftalık program sabit kalırsa hacim de sabit kalır. Blok, programı
                 ZAMANA yayar: bugünkü hacim taban alınır, her hafta kas kas bir
@@ -109,26 +110,26 @@ const MesocycleModal = memo(({
                 hesaplanır.
               </p>
               {state.expired && (
-                <p className="text-[10px] font-mono text-amber-300 leading-relaxed mt-2.5 pt-2.5 border-t border-zinc-800">
+                <p className="text-[10px] font-mono text-amber-300 leading-relaxed mt-2.5 pt-2.5 border-t border-zinc-800/80">
                   Önceki blok tamamlandı ({state.rangeLabel}). Yeni bloğun tabanı
                   şu anki programın hacmi olacak.
                 </p>
               )}
             </div>
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
-                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Blok Uzunluğu</h4>
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
+              <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60">
+                <h4 className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Blok Uzunluğu</h4>
               </div>
               <div className="p-3 space-y-2">
                 {MESOCYCLE_PRESETS.map(p => (
                   <button
                     key={p.key}
                     onClick={() => setWeeks(p.weeks)}
-                    className={`w-full text-left rounded-xl p-3 border transition-colors ${weeks === p.weeks ? 'border-cyan-600 bg-cyan-950/20' : 'border-zinc-800 bg-zinc-950'}`}
+                    className={`w-full text-left rounded-2xl p-3 border transition-all active:scale-[0.99] ${weeks === p.weeks ? 'border-cyan-600 bg-cyan-950/30 shadow-md shadow-cyan-950/30' : 'border-zinc-800/80 bg-zinc-950/60'}`}
                   >
                     <div className="flex justify-between items-baseline gap-2">
-                      <strong className={`text-[12px] ${weeks === p.weeks ? 'text-cyan-300' : 'text-zinc-200'}`}>{p.label}</strong>
+                      <strong className={`text-[12px] font-bold ${weeks === p.weeks ? 'text-cyan-300' : 'text-zinc-200'}`}>{p.label}</strong>
                       <span className="text-[9px] font-mono text-zinc-500 shrink-0">{p.summary}</span>
                     </div>
                     <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">{p.detail}</p>
@@ -137,22 +138,18 @@ const MesocycleModal = memo(({
               </div>
             </div>
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
-                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">İlerleme Kipi</h4>
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
+              <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60">
+                <h4 className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">İlerleme Kipi</h4>
               </div>
-              {/* Her hafta set eklemek uygulamanın kuruluşundan beri tek
-                  seçenekti; ama bu şema doğrudan test edildi ve sabit hacme
-                  belirgin üstünlüğü gösterilemedi. İki seçenek de kendi
-                  kanıtıyla birlikte sunuluyor. */}
-              <div className="p-3 space-y-2">
-                <div className="grid grid-cols-2 gap-1.5">
+              <div className="p-3 space-y-2.5">
+                <div className="grid grid-cols-2 gap-2">
                   {Object.values(PROGRESSION_MODES).map(m => (
                     <button
                       key={m.key}
                       onClick={() => setMode(m.key)}
                       aria-pressed={mode === m.key}
-                      className={`rounded-xl py-2 px-2 border text-[10px] font-bold transition-colors ${mode === m.key ? 'border-cyan-600 bg-cyan-950/25 text-cyan-200' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                      className={`rounded-xl py-2.5 px-2.5 border text-[10px] font-black uppercase tracking-wider transition-all active:scale-[0.98] ${mode === m.key ? 'border-cyan-600 bg-cyan-950/40 text-cyan-200 shadow-md shadow-cyan-950/30' : 'border-zinc-800/80 bg-zinc-950/60 text-zinc-500'}`}
                     >
                       {m.label}
                     </button>
@@ -169,7 +166,7 @@ const MesocycleModal = memo(({
 
             {Object.keys(muscleVolume).length === 0 ? (
               <div className="bg-amber-950/20 border border-amber-900/40 rounded-2xl p-3.5 flex items-start gap-2.5">
-                <Info size={15} className="text-amber-400 shrink-0 mt-0.5" />
+                <Info size={16} className="text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-[10px] font-mono text-amber-200 leading-relaxed">
                   Aktif haftalık programda hiç set yok; blok başlatılamaz. Önce bir
                   program kur (Araçlar → Hazır Programlar) ya da haftalık plana
@@ -179,23 +176,23 @@ const MesocycleModal = memo(({
             ) : (
               <button
                 onClick={basla}
-                className="w-full bg-cyan-600 active:bg-cyan-700 text-white font-bold py-3.5 rounded-2xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"
+                className="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 active:scale-[0.98] text-white font-black py-3.5 rounded-2xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 transition-all"
               >
-                <Play size={15} /> {weeks} haftalık bloğu başlat
+                <Play size={16} /> {weeks} Haftalık Bloğu Başlat
               </button>
             )}
           </>
         ) : (
           <>
             {/* Hafta göstergesi */}
-            <div className={`rounded-2xl p-3.5 border ${state.isDeload ? 'border-amber-900/50 bg-amber-950/20' : 'border-cyan-900/40 bg-cyan-950/20'}`}>
+            <div className={`rounded-3xl p-4 border backdrop-blur-sm ${state.isDeload ? 'border-amber-900/50 bg-amber-950/20' : 'border-cyan-900/50 bg-cyan-950/20'}`}>
               <div className="flex justify-between items-baseline gap-2">
-                <strong className={`text-[13px] ${state.isDeload ? 'text-amber-300' : 'text-cyan-300'}`}>
+                <strong className={`text-[13px] font-black tracking-wide ${state.isDeload ? 'text-amber-300' : 'text-cyan-300'}`}>
                   {state.weekIndex}. hafta / {state.totalWeeks}
                 </strong>
-                <span className="text-[9px] font-mono text-zinc-500 shrink-0">{state.weekRangeLabel}</span>
+                <span className="text-[9px] font-mono text-zinc-400 shrink-0">{state.weekRangeLabel}</span>
               </div>
-              <div className="flex gap-1 mt-2.5">
+              <div className="flex gap-1.5 mt-3">
                 {Array.from({ length: state.totalWeeks }, (_, i) => {
                   const n = i + 1;
                   const gecmis = n < state.weekIndex;
@@ -205,14 +202,14 @@ const MesocycleModal = memo(({
                     <div
                       key={n}
                       title={bosaltma ? 'Boşaltma haftası' : `${n}. hafta`}
-                      className={`h-1.5 flex-1 rounded-full ${simdi
-                        ? (bosaltma ? 'bg-amber-400' : 'bg-cyan-400')
+                      className={`h-2 flex-1 rounded-full transition-all ${simdi
+                        ? (bosaltma ? 'bg-amber-400 shadow-sm shadow-amber-400/50' : 'bg-cyan-400 shadow-sm shadow-cyan-400/50')
                         : gecmis ? 'bg-zinc-600' : (bosaltma ? 'bg-amber-900/50' : 'bg-zinc-800')}`}
                     />
                   );
                 })}
               </div>
-              <p className="text-[10px] font-mono text-zinc-400 leading-relaxed mt-2.5">
+              <p className="text-[10px] font-mono text-zinc-400 leading-relaxed mt-3">
                 {state.isDeload
                   ? 'Boşaltma haftası: hedefler bloğun BAŞLANGIÇ hacminin yarısı. Ağırlığı düşürme, set sayısını düşür — kuvvet uyarımı korunsun, biriken iş azalsın.'
                   : `Yükleme haftası. ${state.weeksLeft} hafta sonra boşaltma. Hafta sonunda aşağıdan kas kas geri bildirim gir; gelecek haftanın artışı buna göre hesaplanacak.`}
@@ -220,10 +217,10 @@ const MesocycleModal = memo(({
             </div>
 
             {/* Bu haftanın hedefleri */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-              <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
-                <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Bu Haftanın Hedefleri</h4>
-                <span className="text-[9px] font-mono text-zinc-600">mevcut → hedef</span>
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
+              <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60 flex justify-between items-baseline">
+                <h4 className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">Bu Haftanın Hedefleri</h4>
+                <span className="text-[9px] font-mono text-zinc-500">mevcut → hedef</span>
               </div>
               <div className="divide-y divide-zinc-800/70">
                 {instructions.map(i => {
@@ -233,16 +230,16 @@ const MesocycleModal = memo(({
                     <div key={i.muscle} className="px-3.5 py-2.5">
                       <div className="flex justify-between items-center gap-2">
                         <span className="flex items-center gap-1.5 min-w-0">
-                          <Icon size={11} className={`${stil.color} shrink-0`} />
+                          <Icon size={12} className={`${stil.color} shrink-0`} />
                           <strong className="text-[11px] text-zinc-200 truncate">{i.muscle}</strong>
                           {i.capped && (
-                            <span className="text-[8px] px-1.5 py-0.5 rounded border border-amber-900/50 bg-amber-950/25 text-amber-400 shrink-0">
+                            <span className="text-[8px] font-bold px-1.5 py-0.5 rounded-lg border border-amber-900/50 bg-amber-950/30 text-amber-400 shrink-0">
                               MRV
                             </span>
                           )}
                         </span>
                         <span className="text-[10px] font-mono shrink-0">
-                          <span className="text-zinc-600">{i.current} → </span>
+                          <span className="text-zinc-500">{i.current} → </span>
                           <strong className={stil.color}>{i.target}</strong>
                         </span>
                       </div>
@@ -260,21 +257,21 @@ const MesocycleModal = memo(({
 
             {/* Haftalık geri bildirim */}
             {!state.isDeload && (
-              <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
-                  <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+              <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
+                <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60">
+                  <h4 className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">
                     {state.weekIndex}. Hafta Geri Bildirimi
                   </h4>
                 </div>
-                <div className="p-3 space-y-2">
+                <div className="p-3.5 space-y-2.5">
                   <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
                     Her kas için hafta nasıl geçti? Girilmeyen kaslar varsayılan
                     artışı (+1 set) alır — form boş kalınca blok durmaz.
                   </p>
                   <div className="flex gap-1.5 pb-1">
                     {RECOVERY_FEEDBACK.map(f => (
-                      <span key={f.key} className="flex-1 text-center text-[8px] font-mono text-zinc-600 leading-tight">
-                        {f.label}<br /><span className="text-cyan-700">+{f.step} set</span>
+                      <span key={f.key} className="flex-1 text-center text-[8px] font-mono text-zinc-500 leading-tight">
+                        {f.label}<br /><span className="text-cyan-600">+{f.step} set</span>
                       </span>
                     ))}
                   </div>
@@ -288,25 +285,25 @@ const MesocycleModal = memo(({
                             key={f.key}
                             onClick={() => geriBildirimVer(t.muscle, f.key)}
                             title={f.hint}
-                            className={`flex-1 py-1.5 rounded-lg border text-[9px] font-bold transition-colors ${secili ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-600'}`}
+                            className={`flex-1 py-1.5 rounded-xl border text-[9px] font-bold transition-all active:scale-[0.97] ${secili ? 'border-cyan-600 bg-cyan-950/40 text-cyan-300 shadow-sm shadow-cyan-950/30' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
                           >
-                            {secili ? <Check size={10} className="inline" /> : f.label}
+                            {secili ? <Check size={11} className="inline" /> : f.label}
                           </button>
                         );
                       })}
                     </div>
                   ))}
                 </div>
-                <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60">
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <div className="px-4 py-2.5 border-t border-zinc-800/80 bg-zinc-950/60">
+                  <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
                     {RECOVERY_FEEDBACK.map(f => `${f.label}: ${f.hint.toLowerCase()}.`).join(' ')}
                   </p>
                 </div>
               </div>
             )}
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5">
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+            <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl p-3.5 backdrop-blur-sm">
+              <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
                 Blok {state.rangeLabel} aralığında; taban {tabanKasSayisi} kas
                 üzerinden dondurulmuş. Hedefler şablonlara KENDİLİĞİNDEN yazılmaz —
                 set eklemeyi sen yaparsın, böylece elle yaptığın düzenlemeler her
@@ -316,14 +313,15 @@ const MesocycleModal = memo(({
 
             <button
               onClick={bitir}
-              className="w-full bg-zinc-800 active:bg-zinc-700 text-zinc-300 font-bold py-3 rounded-2xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"
+              className="w-full bg-zinc-900 border border-zinc-800 hover:border-zinc-700 active:scale-[0.98] text-zinc-300 font-bold py-3.5 rounded-2xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-all"
             >
-              <Square size={13} /> Bloğu bitir
+              <Square size={13} /> Bloğu Bitir
             </button>
           </>
         )}
       </div>
     </div>
+  </div>
   );
 });
 

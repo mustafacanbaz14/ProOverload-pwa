@@ -101,18 +101,19 @@ const VolumeTargetsModal = memo(({
   const kisiselSayisi = satirlar.filter(r => r.current.source === 'custom').length;
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[92] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Target size={15} className="mr-2 text-cyan-400" /> Hacim Hedefleri
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
+    <div role="dialog" aria-modal="true" aria-labelledby="volume-targets-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[92] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="volume-targets-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Target size={16} className="mr-2 text-cyan-400" /> Kişisel Hacim Hedefleri
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
-        <p className="text-[9px] font-mono text-zinc-500 leading-relaxed bg-zinc-900 border border-zinc-800 rounded-xl p-3">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
+        <p className="text-[10px] font-mono text-zinc-400 leading-relaxed bg-zinc-900/70 border border-zinc-800/80 rounded-2xl p-3.5 backdrop-blur-sm">
           Bant sınırları doz-yanıt eğrisinden ve deneyim seviyene göre
           ölçekleniyor — doğru bir başlangıç ama kişisel değil. Aynı seviyedeki
           iki kişinin aynı kastaki toparlanma kapasitesi belirgin farklı
@@ -124,9 +125,9 @@ const VolumeTargetsModal = memo(({
         </p>
 
         {kisiselSayisi > 0 && (
-          <div className="rounded-xl border border-amber-900/40 bg-amber-950/15 p-2.5 flex items-start gap-2">
-            <AlertTriangle size={11} className="text-amber-400 shrink-0 mt-0.5" />
-            <span className="text-[9px] font-mono text-amber-200/85 leading-relaxed">
+          <div className="rounded-2xl border border-amber-900/50 bg-amber-950/20 p-3 flex items-start gap-2.5">
+            <AlertTriangle size={14} className="text-amber-400 shrink-0 mt-0.5" />
+            <span className="text-[9px] font-mono text-amber-200/90 leading-relaxed">
               Kişisel hedefler uygulamanın HER YERİNDE geçerli: hacim tablosu,
               ısı haritası, koç uyarıları, program üreticisi ve haftalık
               projeksiyon hepsi bu değerleri kullanır.
@@ -134,7 +135,7 @@ const VolumeTargetsModal = memo(({
           </div>
         )}
 
-        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800/70">
+        <div className="bg-zinc-900/60 rounded-2xl border border-zinc-800/80 overflow-hidden divide-y divide-zinc-800/70 backdrop-blur-sm">
           {satirlar.map(r => {
             const kisisel = r.current.source === 'custom';
             const varsayilan = getVolumeLandmarks(r.muscle, experienceLevel);
@@ -143,12 +144,12 @@ const VolumeTargetsModal = memo(({
                 <button
                   onClick={() => setAcik(acik === r.muscle ? null : r.muscle)}
                   aria-expanded={acik === r.muscle}
-                  className="w-full px-3 py-2 flex justify-between items-center gap-2 text-left active:bg-zinc-800/40"
+                  className="w-full px-3.5 py-2.5 flex justify-between items-center gap-2 text-left active:bg-zinc-800/40 transition-colors"
                 >
                   <span className="text-[11px] font-bold text-zinc-200 truncate min-w-0 flex items-center gap-1.5">
                     {r.muscle}
-                    {kisisel && <span className="text-[7px] font-bold text-cyan-300 bg-cyan-950/40 border border-cyan-900/50 rounded px-1 py-0.5">ÖZEL</span>}
-                    {!kisisel && r.suggestion && <Sparkles size={9} className="text-violet-400 shrink-0" />}
+                    {kisisel && <span className="text-[8px] font-black text-cyan-300 bg-cyan-950/50 border border-cyan-800/60 rounded-md px-1.5 py-0.5">ÖZEL</span>}
+                    {!kisisel && r.suggestion && <Sparkles size={10} className="text-violet-400 shrink-0" />}
                   </span>
                   <span className="text-[10px] font-mono text-zinc-500 shrink-0">
                     {r.current.mev} / {r.current.mav} / {r.current.mrv}
@@ -176,6 +177,7 @@ const VolumeTargetsModal = memo(({
         </p>
       </div>
     </div>
+  </div>
   );
 });
 

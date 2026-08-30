@@ -24,20 +24,21 @@ const EvidenceModal = memo(({ isOpen, onClose }) => {
   const konular = evidenceByTopic();
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[93] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <BookOpen size={15} className="mr-2 text-cyan-400" /> Kanıt Defteri
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
+    <div role="dialog" aria-modal="true" aria-labelledby="evidence-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="evidence-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <BookOpen size={16} className="mr-2 text-cyan-400" /> Bilimsel Kanıt Defteri
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
-        <div className="rounded-2xl border border-amber-900/40 bg-amber-950/15 p-3.5 space-y-2">
-          <span className="text-[11px] font-bold text-amber-200 flex items-center gap-1.5">
-            <Scale size={12} /> Hacim konusunda literatür bölünmüş
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
+        <div className="rounded-2xl border border-amber-900/50 bg-amber-950/20 p-4 space-y-2.5 backdrop-blur-sm">
+          <span className="text-[11px] font-bold text-amber-200 flex items-center gap-2">
+            <Scale size={14} className="text-amber-400" /> Hacim konusunda literatür bölünmüş
           </span>
           <p className="text-[10px] font-mono text-zinc-300 leading-relaxed">
             Bir kanıt hattı "daha fazla set daha fazla kas" diyor. Diğeri, aynı
@@ -56,7 +57,7 @@ const EvidenceModal = memo(({ isOpen, onClose }) => {
 
         <div className="flex flex-wrap gap-1.5">
           {Object.values(EVIDENCE_LINES).map(l => (
-            <span key={l.key} className={`text-[8px] font-bold px-1.5 py-1 rounded border ${LINE_STYLE[l.key]}`}>
+            <span key={l.key} className={`text-[8px] font-bold px-2 py-1 rounded-lg border ${LINE_STYLE[l.key]}`}>
               {l.label}
             </span>
           ))}
@@ -66,31 +67,31 @@ const EvidenceModal = memo(({ isOpen, onClose }) => {
         </p>
 
         {konular.map(({ topic, items }) => (
-          <section key={topic} className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-            <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline gap-2">
-              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">{topic}</span>
+          <section key={topic} className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 overflow-hidden backdrop-blur-sm">
+            <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60 flex justify-between items-baseline gap-2">
+              <span className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">{topic}</span>
               {isContested(topic) && (
-                <span className="text-[8px] font-bold text-amber-400 border border-amber-900/50 bg-amber-950/25 px-1.5 py-0.5 rounded">
+                <span className="text-[8px] font-bold text-amber-400 border border-amber-900/50 bg-amber-950/30 px-1.5 py-0.5 rounded-md">
                   ÇELİŞKİLİ
                 </span>
               )}
             </div>
             <div className="divide-y divide-zinc-800/70">
               {items.map(e => (
-                <div key={e.key} className="px-4 py-3 space-y-1.5">
+                <div key={e.key} className="px-4 py-3.5 space-y-2">
                   <div className="flex items-start gap-2">
-                    <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border shrink-0 ${LINE_STYLE[e.line]}`}>
+                    <span className={`text-[8px] font-bold px-2 py-0.5 rounded-md border shrink-0 ${LINE_STYLE[e.line]}`}>
                       {EVIDENCE_LINES[e.line]?.label}
                     </span>
                   </div>
-                  <p className="text-[11px] font-bold text-zinc-200 leading-snug">{e.claim}</p>
+                  <p className="text-[11px] font-bold text-zinc-100 leading-snug">{e.claim}</p>
                   <p className="text-[9px] font-mono text-zinc-500">{e.source} · {e.sample}</p>
                   <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
-                    <span className="text-zinc-600">Uygulamada: </span>{e.usedFor}
+                    <span className="text-zinc-500 font-bold">Uygulamada: </span>{e.usedFor}
                   </p>
-                  <p className="text-[9px] font-mono text-amber-200/70 leading-relaxed flex items-start gap-1">
-                    <AlertTriangle size={9} className="shrink-0 mt-0.5" />
-                    <span><span className="text-amber-500/80">Karşı görüş: </span>{e.counterpoint}</span>
+                  <p className="text-[9px] font-mono text-amber-200/80 leading-relaxed flex items-start gap-1.5 bg-amber-950/20 border border-amber-900/30 rounded-xl p-2">
+                    <AlertTriangle size={11} className="shrink-0 mt-0.5 text-amber-400" />
+                    <span><span className="text-amber-400 font-bold">Karşı görüş: </span>{e.counterpoint}</span>
                   </p>
                 </div>
               ))}
@@ -107,6 +108,7 @@ const EvidenceModal = memo(({ isOpen, onClose }) => {
         </p>
       </div>
     </div>
+  </div>
   );
 });
 

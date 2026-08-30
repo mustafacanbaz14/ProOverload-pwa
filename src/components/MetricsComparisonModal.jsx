@@ -28,27 +28,27 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88vh]">
+    <div role="dialog" aria-modal="true" aria-labelledby="metrics-comparison-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
         {/* Üst Bar */}
-        <div className="p-4 border-b border-zinc-800 flex justify-between items-center bg-zinc-950">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md flex justify-between items-center shrink-0">
           <div className="flex items-center space-x-2">
-            <Scale size={18} className="text-cyan-400" />
-            <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wider">Dönemsel Ölçüm Kıyaslama</h3>
+            <Scale size={16} className="text-cyan-400" />
+            <h3 id="metrics-comparison-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest">Dönemsel Ölçüm Kıyaslama</h3>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-zinc-200 p-1">
-            <X size={16} />
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
           </button>
         </div>
 
         {/* Tarih Seçimi */}
-        <div className="p-4 bg-zinc-950 border-b border-zinc-800 grid grid-cols-2 gap-2 text-xs font-mono">
+        <div className="p-3.5 bg-zinc-950/70 border-b border-zinc-800/80 grid grid-cols-2 gap-2 text-xs font-mono shrink-0">
           <div>
-            <label className="text-[10px] text-zinc-500 uppercase block mb-1 font-bold">1. Tarih (Önce)</label>
+            <label className="text-[9px] text-zinc-500 uppercase block mb-1 font-bold">1. Tarih (Önce)</label>
             <select
               value={dateA}
               onChange={(e) => setDateA(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2 text-zinc-300 text-[11px] outline-none"
+              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 text-zinc-300 text-[11px] outline-none focus:border-cyan-500/80 transition-colors"
             >
               {sortedMetrics.map(m => (
                 <option key={`a-${m.id || m.date}`} value={m.date}>{formatDay(m.date, 'numeric')} ({m.weight}kg)</option>
@@ -57,11 +57,11 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
           </div>
 
           <div>
-            <label className="text-[10px] text-zinc-500 uppercase block mb-1 font-bold">2. Tarih (Sonra)</label>
+            <label className="text-[9px] text-cyan-400 uppercase block mb-1 font-bold">2. Tarih (Sonra)</label>
             <select
               value={dateB}
               onChange={(e) => setDateB(e.target.value)}
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl p-2 text-cyan-400 font-bold text-[11px] outline-none"
+              className="w-full bg-zinc-900 border border-cyan-800/60 rounded-xl p-2.5 text-cyan-300 font-bold text-[11px] outline-none focus:border-cyan-500 transition-colors"
             >
               {sortedMetrics.map(m => (
                 <option key={`b-${m.id || m.date}`} value={m.date}>{formatDay(m.date, 'numeric')} ({m.weight}kg)</option>
@@ -71,27 +71,27 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
         </div>
 
         {/* Kıyaslama Tablosu */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-2.5 hide-scrollbar">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3.5 hide-scrollbar">
           {(!recordA || !recordB) ? (
-            <div className="text-center py-10 text-zinc-600 text-xs font-mono">Kıyaslanacak kayıt bulunamadı</div>
+            <div className="text-center py-10 text-zinc-500 text-xs font-mono">Kıyaslanacak kayıt bulunamadı</div>
           ) : (
             <>
               {/* Temel Metrikler */}
-              <div className="bg-zinc-950 p-3 rounded-2xl border border-zinc-800 space-y-2 font-mono text-xs">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block border-b border-zinc-800 pb-1">Vücut Kompozisyonu</span>
+              <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 space-y-3 font-mono text-xs backdrop-blur-sm shadow-sm">
+                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block border-b border-zinc-800/80 pb-2">Vücut Kompozisyonu</span>
 
                 {/* Kilo */}
                 {(() => {
                   const res = calcDiff(recordA.weight, recordB.weight);
                   return (
                     <div className="flex justify-between items-center text-zinc-300">
-                      <span>Kilo:</span>
+                      <span className="font-sans font-bold text-zinc-400">Kilo:</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">{recordA.weight}kg</span>
-                        <ArrowRight size={10} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-600" />
                         <span className="font-bold text-zinc-100">{recordB.weight}kg</span>
                         {res && (
-                          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${res.diff > 0 ? 'bg-emerald-950 text-emerald-400' : res.diff < 0 ? 'bg-orange-950 text-orange-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff > 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : res.diff < 0 ? 'bg-orange-950/80 text-orange-400 border border-orange-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
                             {res.diff > 0 ? `+${res.diff}` : res.diff}kg (%{res.pct})
                           </span>
                         )}
@@ -105,13 +105,13 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
                   const res = calcDiff(compA.activeBF, compB.activeBF);
                   return (
                     <div className="flex justify-between items-center text-zinc-300">
-                      <span>Yağ Oranı:</span>
+                      <span className="font-sans font-bold text-zinc-400">Yağ Oranı:</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">%{compA.activeBF}</span>
-                        <ArrowRight size={10} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-600" />
                         <span className="font-bold text-cyan-400">%{compB.activeBF}</span>
                         {res && (
-                          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${res.diff < 0 ? 'bg-emerald-950 text-emerald-400' : res.diff > 0 ? 'bg-red-950 text-red-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff < 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : res.diff > 0 ? 'bg-red-950/80 text-red-400 border border-red-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
                             {res.diff > 0 ? `+${res.diff}` : res.diff}%
                           </span>
                         )}
@@ -125,13 +125,13 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
                   const res = calcDiff(compA.ffm, compB.ffm);
                   return (
                     <div className="flex justify-between items-center text-zinc-300">
-                      <span>Kas (FFM):</span>
+                      <span className="font-sans font-bold text-zinc-400">Kas (FFM):</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">{compA.ffm}kg</span>
-                        <ArrowRight size={10} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-600" />
                         <span className="font-bold text-emerald-400">{compB.ffm}kg</span>
                         {res && (
-                          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${res.diff > 0 ? 'bg-emerald-950 text-emerald-400' : res.diff < 0 ? 'bg-red-950 text-red-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff > 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : res.diff < 0 ? 'bg-red-950/80 text-red-400 border border-red-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
                             {res.diff > 0 ? `+${res.diff}` : res.diff}kg
                           </span>
                         )}
@@ -142,8 +142,8 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
               </div>
 
               {/* Bölgesel Ölçüm Kıyaslamaları */}
-              <div className="bg-zinc-950 p-3 rounded-2xl border border-zinc-800 space-y-2 font-mono text-xs">
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest block border-b border-zinc-800 pb-1">Bölgesel Kas Ölçüleri (cm)</span>
+              <div className="bg-zinc-900/60 p-4 rounded-2xl border border-zinc-800/80 space-y-3 font-mono text-xs backdrop-blur-sm shadow-sm">
+                <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest block border-b border-zinc-800/80 pb-2">Bölgesel Kas Ölçüleri (cm)</span>
 
                 {BODY_METRICS.filter(m => m.key !== 'weight').map(m => {
                   const valA = recordA.measurements?.[m.key];
@@ -153,13 +153,13 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
 
                   return (
                     <div key={m.key} className="flex justify-between items-center text-zinc-300">
-                      <span>{m.label}:</span>
+                      <span className="font-sans font-bold text-zinc-400">{m.label}:</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">{valA || '-'}cm</span>
-                        <ArrowRight size={10} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-600" />
                         <span className="font-bold text-zinc-100">{valB || '-'}cm</span>
                         {res && (
-                          <span className={`text-[11px] font-bold px-1.5 py-0.5 rounded ${res.diff > 0 ? 'bg-cyan-950 text-cyan-400' : res.diff < 0 ? 'bg-orange-950 text-orange-400' : 'bg-zinc-800 text-zinc-400'}`}>
+                          <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff > 0 ? 'bg-cyan-950/80 text-cyan-400 border border-cyan-800/60' : res.diff < 0 ? 'bg-orange-950/80 text-orange-400 border border-orange-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
                             {res.diff > 0 ? `+${res.diff}` : res.diff}cm
                           </span>
                         )}

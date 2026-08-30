@@ -52,17 +52,18 @@ const DataHealthModal = memo(({
   const bosKayitlar = rapor.findings.filter(f => f.kind === 'emptyWorkout');
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[92] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Stethoscope size={15} className="mr-2 text-emerald-400" /> Veri Sağlığı
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
+    <div role="dialog" aria-modal="true" aria-labelledby="datahealth-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[92] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="datahealth-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Stethoscope size={16} className="mr-2 text-emerald-400" /> Veri Sağlığı & Denetim
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
 
         <p className="text-[10px] font-mono text-zinc-500 leading-relaxed px-1">
           Uygulamanın bütün hesapları (1RM, hacim, ACWR, adaptif TDEE, kuvvet
@@ -214,6 +215,7 @@ const DataHealthModal = memo(({
         )}
       </div>
     </div>
+  </div>
   );
 });
 

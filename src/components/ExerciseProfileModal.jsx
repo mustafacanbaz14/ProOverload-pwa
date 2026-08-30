@@ -108,57 +108,58 @@ const ExerciseProfileModal = memo(({
     : 0;
 
   return (
-    <div className="fixed inset-0 z-[97] bg-zinc-950 flex flex-col h-[100dvh] max-w-[440px] mx-auto">
-      <header className="px-4 py-3 border-b border-zinc-800 bg-zinc-900 flex items-center justify-between gap-3 pt-safe shrink-0">
-        <div className="min-w-0">
-          <span className="text-[9px] font-mono uppercase tracking-widest text-cyan-500 block">Hareket Profili</span>
-          <h3 className="text-[13px] font-black text-zinc-100 truncate">{profile.name}</h3>
-        </div>
-        <button onClick={onClose} aria-label="Hareket profilini kapat" className="p-2 text-zinc-400 active:text-white"><X size={20} /></button>
-      </header>
+    <div role="dialog" aria-modal="true" aria-labelledby="exercise-profile-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[97] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+        <header className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md flex items-center justify-between gap-3 shrink-0">
+          <div className="min-w-0">
+            <span className="text-[8px] font-mono uppercase tracking-widest text-cyan-400 font-bold block">Hareket Profili</span>
+            <h3 id="exercise-profile-title" className="text-[13px] font-black text-zinc-100 truncate">{profile.name}</h3>
+          </div>
+          <button onClick={onClose} aria-label="Hareket profilini kapat" className="luxury-icon-button"><X size={18} /></button>
+        </header>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-4 pb-nav space-y-3">
-        <section className="rounded-3xl border border-cyan-900/50 bg-gradient-to-br from-cyan-950/35 via-zinc-900 to-zinc-950 p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4">
+        <section className="rounded-3xl border border-cyan-900/50 bg-gradient-to-br from-cyan-950/40 via-zinc-900/90 to-zinc-950 p-4 space-y-3 shadow-sm backdrop-blur-sm">
           <div className="flex flex-wrap gap-1.5">
             {Object.entries(profile.contributions || {}).sort((a, b) => b[1] - a[1]).map(([muscle, weight]) => (
-              <span key={muscle} className={`rounded-lg border px-2 py-1 text-[9px] font-bold ${contributionTone(weight)}`}>
+              <span key={muscle} className={`rounded-xl border px-2.5 py-1 text-[9px] font-bold ${contributionTone(weight)}`}>
                 {muscle} · %{Math.round(weight * 100)}
               </span>
             ))}
           </div>
           <div className="grid grid-cols-3 gap-2">
-            <div className="rounded-xl border border-zinc-800 bg-black/30 p-2.5">
-              <Calendar size={12} className="text-cyan-400 mb-1" />
-              <strong className="text-sm font-mono text-zinc-100 block">{profile.sessionCount}</strong>
-              <span className="text-[8px] font-mono text-zinc-500">seans</span>
+            <div className="rounded-2xl border border-zinc-800/80 bg-black/40 p-3 text-center">
+              <Calendar size={13} className="text-cyan-400 mx-auto mb-1" />
+              <strong className="text-base font-mono font-black text-zinc-100 block">{profile.sessionCount}</strong>
+              <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-wider">seans</span>
             </div>
-            <div className="rounded-xl border border-zinc-800 bg-black/30 p-2.5">
-              <Layers size={12} className="text-violet-400 mb-1" />
-              <strong className="text-sm font-mono text-zinc-100 block">{profile.totalSets}</strong>
-              <span className="text-[8px] font-mono text-zinc-500">tamamlanan set</span>
+            <div className="rounded-2xl border border-zinc-800/80 bg-black/40 p-3 text-center">
+              <Layers size={13} className="text-violet-400 mx-auto mb-1" />
+              <strong className="text-base font-mono font-black text-zinc-100 block">{profile.totalSets}</strong>
+              <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-wider">set</span>
             </div>
-            <div className="rounded-xl border border-zinc-800 bg-black/30 p-2.5">
-              <Trophy size={12} className="text-amber-400 mb-1" />
-              <strong className="text-sm font-mono text-zinc-100 block">{bestValue || '—'}</strong>
-              <span className="text-[8px] font-mono text-zinc-500">{profile.metric === 'e1rm' ? 'en iyi 1RM' : 'en iyi hacim'}</span>
+            <div className="rounded-2xl border border-zinc-800/80 bg-black/40 p-3 text-center">
+              <Trophy size={13} className="text-amber-400 mx-auto mb-1" />
+              <strong className="text-base font-mono font-black text-zinc-100 block">{bestValue || '—'}</strong>
+              <span className="text-[8px] font-mono text-zinc-500 uppercase tracking-wider">{profile.metric === 'e1rm' ? 'en iyi 1RM' : 'en iyi hacim'}</span>
             </div>
           </div>
         </section>
 
         {profile.target && (
-          <section className="rounded-2xl border border-emerald-900/50 bg-emerald-950/20 p-3.5">
+          <section className="rounded-2xl border border-emerald-900/50 bg-emerald-950/20 p-4 backdrop-blur-sm">
             <div className="flex items-center justify-between gap-2">
-              <span className="text-[10px] uppercase tracking-widest font-bold text-emerald-400 flex items-center gap-1.5"><Target size={13} /> Sıradaki Hedef</span>
-              <strong className="text-base font-mono text-emerald-300">{profile.target.weight} kg × {profile.target.reps}</strong>
+              <span className="text-[10px] uppercase tracking-widest font-black text-emerald-400 flex items-center gap-1.5"><Target size={14} /> Sıradaki Hedef</span>
+              <strong className="text-base font-mono font-black text-emerald-300">{profile.target.weight} kg × {profile.target.reps}</strong>
             </div>
-            <p className="text-[10px] font-mono text-emerald-200/70 leading-relaxed mt-1.5">{profile.target.note}</p>
+            <p className="text-[10px] font-mono text-emerald-200/80 leading-relaxed mt-1.5">{profile.target.note}</p>
           </section>
         )}
 
         {profile.chartData.length >= 2 ? (
           <section className="space-y-2">
             <div className="flex items-center justify-between px-1">
-              <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Son {profile.chartData.length} Seans</h4>
+              <h4 className="text-[10px] uppercase tracking-widest font-black text-zinc-400">Son {profile.chartData.length} Seans</h4>
               <span className={`text-[10px] font-mono font-bold flex items-center gap-1 ${profile.trend.direction === 'up' ? 'text-emerald-400' : profile.trend.direction === 'down' ? 'text-amber-400' : 'text-zinc-500'}`}>
                 {trendIcon}{profile.trend.deltaPct > 0 ? '+' : ''}{profile.trend.deltaPct ?? 0}%
               </span>
@@ -171,25 +172,25 @@ const ExerciseProfileModal = memo(({
             />
           </section>
         ) : (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-4 text-center">
-            <Dumbbell size={18} className="text-zinc-700 mx-auto mb-2" />
+          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 text-center backdrop-blur-sm">
+            <Dumbbell size={18} className="text-zinc-600 mx-auto mb-2" />
             <p className="text-[10px] font-mono text-zinc-500">Trend için en az iki tamamlanmış seans gerekli.</p>
           </div>
         )}
 
         {profile.sessions.length > 0 && (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-            <div className="px-3.5 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
-              <h4 className="text-[10px] uppercase tracking-widest font-bold text-zinc-400">Seans Geçmişi</h4>
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 overflow-hidden backdrop-blur-sm">
+            <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60">
+              <h4 className="text-[10px] uppercase tracking-widest font-black text-zinc-400">Seans Geçmişi</h4>
             </div>
             <div className="divide-y divide-zinc-800/70">
               {profile.sessions.slice(0, 8).map(session => (
-                <div key={`${session.workoutId}-${session.date}`} className="px-3.5 py-2.5 flex items-center justify-between gap-3">
+                <div key={`${session.workoutId}-${session.date}`} className="px-4 py-2.5 flex items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <strong className="text-[10px] text-zinc-200 block truncate">{formatDay(session.date, 'medium')}</strong>
-                    <span className="text-[8px] font-mono text-zinc-600">{session.setCount} set · {session.workoutName || 'Antrenman'}</span>
+                    <strong className="text-[11px] font-bold text-zinc-200 block truncate">{formatDay(session.date, 'medium')}</strong>
+                    <span className="text-[9px] font-mono text-zinc-500">{session.setCount} set · {session.workoutName || 'Antrenman'}</span>
                   </div>
-                  <span className="text-[10px] font-mono font-bold text-cyan-400 shrink-0">
+                  <span className="text-[11px] font-mono font-bold text-cyan-400 shrink-0">
                     {profile.metric === 'e1rm' ? `${session.bestE1RM || '—'} kg 1RM` : `${session.tonnage} kg`}
                   </span>
                 </div>
@@ -198,8 +199,7 @@ const ExerciseProfileModal = memo(({
           </section>
         )}
 
-        {/* Hedef tekrar aralığı. Genel ayar tek bir aralığı bütün hareketlere
-            dayatıyordu; buradan yazılan değer yalnızca bu harekete uygulanıyor. */}
+        {/* Hedef tekrar aralığı */}
         {repRange && onChangeRepRange && (
           <RepRangeEditor
             key={`${profile.name}-${repRange.min}-${repRange.max}-${repRange.source}`}
@@ -208,13 +208,11 @@ const ExerciseProfileModal = memo(({
           />
         )}
 
-        {/* İlerleme kuralı. Uygulama tek bir sabit algoritma uyguluyordu ve o
-            algoritma her hareket için doğru değil: bench ile yan kaldırış aynı
-            kuralla ilerletilemez. */}
+        {/* İlerleme kuralı */}
         {progressionRule && onChangeProgression && (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5 space-y-2">
-            <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
-              <TrendingUp size={11} className="text-emerald-400" /> İlerleme Kuralı
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-3.5 space-y-2.5 backdrop-blur-sm">
+            <span className="text-[10px] font-black text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
+              <TrendingUp size={12} className="text-emerald-400" /> İlerleme Kuralı
             </span>
             <div className="grid grid-cols-4 gap-1.5">
               {Object.values(PROGRESSION_RULES).map(k => {
@@ -225,7 +223,7 @@ const ExerciseProfileModal = memo(({
                     onClick={() => onChangeProgression(k.key)}
                     aria-pressed={secili}
                     title={k.hint}
-                    className={`rounded-xl py-2 border text-[9px] font-bold transition-colors ${secili ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                    className={`rounded-xl py-2 border text-[9px] font-bold transition-all active:scale-95 ${secili ? 'border-emerald-600 bg-emerald-950/40 text-emerald-300 shadow-sm shadow-emerald-950/30' : 'border-zinc-800/80 bg-zinc-950 text-zinc-500'}`}
                   >
                     {k.short}
                   </button>
@@ -250,60 +248,58 @@ const ExerciseProfileModal = memo(({
           />
         )}
 
-        {/* Tekrar bandı rekorları: tek bir tahmini 1RM yerine gerçekten
-            yapılmış setler. */}
+        {/* Tekrar bandı rekorları */}
         {repRecords?.hasData && (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
-            <div className="px-3.5 py-2 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
-              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 overflow-hidden backdrop-blur-sm">
+            <div className="px-4 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60 flex justify-between items-baseline">
+              <span className="text-[10px] font-black text-zinc-300 uppercase tracking-widest">
                 Tekrar Rekorları
               </span>
               {repRecords.strongestBand && (
-                <span className="text-[9px] font-mono text-amber-400">
+                <span className="text-[9px] font-mono font-bold text-amber-400">
                   en güçlü: {repRecords.strongestBand.bandLabel}
                 </span>
               )}
             </div>
             <div className="divide-y divide-zinc-800/70">
               {repRecords.rows.map(r => (
-                <div key={r.band} className="px-3.5 py-1.5 flex justify-between items-center gap-2">
+                <div key={r.band} className="px-4 py-2 flex justify-between items-center gap-2">
                   <span className="text-[10px] font-bold text-zinc-300 shrink-0 w-12">{r.bandLabel}</span>
-                  <span className="text-[9px] font-mono text-zinc-600 truncate min-w-0 flex-1">{r.hint}</span>
+                  <span className="text-[9px] font-mono text-zinc-500 truncate min-w-0 flex-1">{r.hint}</span>
                   <span className="text-[10px] font-mono shrink-0 text-right">
                     <strong className="text-zinc-100">{r.weight} kg × {r.reps}</strong>
-                    <span className="text-zinc-600 block text-[9px]">
+                    <span className="text-zinc-500 block text-[9px]">
                       {formatDay(r.date, 'short')}{r.e1rm ? ` · ~${r.e1rm} kg 1RM` : ''}
                     </span>
                   </span>
                 </div>
               ))}
             </div>
-            <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+            <p className="px-4 py-2 text-[9px] font-mono text-zinc-500 leading-relaxed bg-zinc-950/40">
               Hepsi gerçekten yapılmış setler. 15 toplam tekrarın üstünde 1RM
               tahmini gösterilmiyor: formül o bölgede güvenilir değil.
             </p>
           </section>
         )}
 
-        {/* Durgunluk: hareket haftalardır ilerlemiyorsa yapılacak şey daha çok
-            denemek değil değiştirmek. */}
+        {/* Durgunluk */}
         {plateau && (plateau.status === 'stalling' || plateau.status === 'regressing') && (
-          <section className={`rounded-2xl border p-3.5 space-y-2 ${plateau.status === 'regressing' ? 'border-red-900/50 bg-red-950/15' : 'border-amber-900/50 bg-amber-950/15'}`}>
-            <span className={`text-[10px] font-bold uppercase tracking-widest flex items-center gap-1.5 ${plateau.status === 'regressing' ? 'text-red-300' : 'text-amber-300'}`}>
-              <AlertTriangle size={11} />
+          <section className={`rounded-2xl border p-4 space-y-2.5 backdrop-blur-sm ${plateau.status === 'regressing' ? 'border-red-900/50 bg-red-950/20' : 'border-amber-900/50 bg-amber-950/20'}`}>
+            <span className={`text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 ${plateau.status === 'regressing' ? 'text-red-300' : 'text-amber-300'}`}>
+              <AlertTriangle size={13} />
               {plateau.status === 'regressing'
                 ? `En iyinin %${plateau.dropPercent} altında`
                 : `${plateau.sessionsSinceBest} seanstır ilerlemiyor`}
             </span>
-            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+            <p className="text-[10px] font-mono text-zinc-300 leading-relaxed">
               En iyi tahmini 1RM {plateau.best.e1rm} kg ({formatDay(plateau.best.date, 'short')}),
               son seans {plateau.latest.e1rm} kg. Toplam {plateau.sessions} seans ölçüldü.
             </p>
             <div className="space-y-1.5">
               {plateau.advice.map(o => (
-                <div key={o.key} className="rounded-lg bg-zinc-950/60 border border-zinc-800 p-2">
-                  <strong className="text-[9px] text-zinc-200 block">{o.title}</strong>
-                  <span className="text-[9px] font-mono text-zinc-500 leading-relaxed">{o.detail}</span>
+                <div key={o.key} className="rounded-xl bg-zinc-950/70 border border-zinc-800/80 p-2.5">
+                  <strong className="text-[10px] text-zinc-200 block font-bold">{o.title}</strong>
+                  <span className="text-[9px] font-mono text-zinc-400 leading-relaxed">{o.detail}</span>
                 </div>
               ))}
             </div>
@@ -311,21 +307,22 @@ const ExerciseProfileModal = memo(({
         )}
 
         {(setupNote || profile.templateNames.length > 0) && (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3.5 space-y-2">
-            {setupNote && <p className="text-[10px] font-mono text-zinc-400 leading-relaxed"><Settings size={11} className="inline text-cyan-500 mr-1" />{setupNote}</p>}
+          <section className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-3.5 space-y-2 backdrop-blur-sm">
+            {setupNote && <p className="text-[10px] font-mono text-zinc-300 leading-relaxed"><Settings size={12} className="inline text-cyan-400 mr-1.5" />{setupNote}</p>}
             {profile.templateNames.length > 0 && (
-              <p className="text-[10px] font-mono text-zinc-400 leading-relaxed"><Bookmark size={11} className="inline text-violet-400 mr-1" />{profile.templateNames.join(' · ')}</p>
+              <p className="text-[10px] font-mono text-zinc-300 leading-relaxed"><Bookmark size={12} className="inline text-violet-400 mr-1.5" />{profile.templateNames.join(' · ')}</p>
             )}
           </section>
         )}
       </div>
 
-      <footer className="p-3 border-t border-zinc-800 bg-zinc-950 grid grid-cols-[auto_auto_1fr] gap-2 pb-safe shrink-0">
-        <button onClick={onTogglePinned} aria-label={pinned ? 'Sabitlemeyi kaldır' : 'Seçim listesine sabitle'} className={`w-11 rounded-xl border flex items-center justify-center ${pinned ? 'border-amber-700 bg-amber-950/30 text-amber-400' : 'border-zinc-800 text-zinc-500'}`}><Pin size={16} fill={pinned ? 'currentColor' : 'none'} /></button>
-        <button onClick={onEdit} aria-label="Hareket ayarlarını düzenle" className="w-11 rounded-xl border border-zinc-800 text-zinc-500 flex items-center justify-center"><Settings size={16} /></button>
-        <button onClick={onStart} className="rounded-xl bg-cyan-600 active:bg-cyan-700 py-3.5 text-[11px] font-black uppercase tracking-wide text-white flex items-center justify-center gap-2"><Play size={15} /> Bu Hareketle Başla</button>
+      <footer className="p-3.5 border-t border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md grid grid-cols-[auto_auto_1fr] gap-2 pb-safe shrink-0">
+        <button onClick={onTogglePinned} aria-label={pinned ? 'Sabitlemeyi kaldır' : 'Seçim listesine sabitle'} className={`w-12 h-12 rounded-2xl border flex items-center justify-center transition-all active:scale-95 ${pinned ? 'border-amber-700 bg-amber-950/40 text-amber-400 shadow-sm shadow-amber-950/30' : 'border-zinc-800 text-zinc-500 bg-zinc-900/60'}`}><Pin size={17} fill={pinned ? 'currentColor' : 'none'} /></button>
+        <button onClick={onEdit} aria-label="Hareket ayarlarını düzenle" className="w-12 h-12 rounded-2xl border border-zinc-800 text-zinc-400 bg-zinc-900/60 flex items-center justify-center transition-all active:scale-95"><Settings size={17} /></button>
+        <button onClick={onStart} className="rounded-2xl bg-gradient-to-r from-cyan-600 to-cyan-500 active:scale-[0.98] py-3.5 text-[11px] font-black uppercase tracking-wider text-white flex items-center justify-center gap-2 shadow-lg shadow-cyan-950/50 transition-all"><Play size={16} /> Bu Hareketle Başla</button>
       </footer>
     </div>
+  </div>
   );
 });
 

@@ -17,43 +17,44 @@ const YearReviewModal = memo(({ isOpen, onClose, review }) => {
   const bicim = (n) => new Intl.NumberFormat('tr-TR').format(Math.round(n));
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[92] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Trophy size={15} className="mr-2 text-yellow-400" /> Yıl Özeti
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
+    <div role="dialog" aria-modal="true" aria-labelledby="year-review-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[92] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="year-review-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Trophy size={16} className="mr-2 text-yellow-400" /> Yıl Özeti & Başarılar
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
-        {!review?.hasData ? (
-          <p className="text-[10px] font-mono text-zinc-500 leading-relaxed bg-zinc-900 border border-zinc-800 rounded-xl p-3">
-            Son on iki ayda kayıtlı antrenman yok.
-          </p>
-        ) : (
-          <>
-            <div className="rounded-2xl border border-yellow-900/40 bg-gradient-to-br from-yellow-950/25 to-zinc-900 p-4 text-center">
-              <span className="text-[9px] font-mono text-zinc-500 block">{review.label}</span>
-              <strong className="text-3xl font-mono text-yellow-300 block mt-1">{review.sessions}</strong>
-              <span className="text-[10px] font-mono text-zinc-400">antrenman</span>
-            </div>
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
+          {!review?.hasData ? (
+            <p className="text-[10px] font-mono text-zinc-400 leading-relaxed bg-zinc-900/80 border border-zinc-800/80 rounded-2xl p-4 text-center">
+              Son on iki ayda kayıtlı antrenman bulunamadı.
+            </p>
+          ) : (
+            <>
+              <div className="luxury-feature-card rounded-3xl border border-yellow-800/40 bg-gradient-to-br from-yellow-950/30 via-zinc-900/90 to-zinc-950 p-5 text-center shadow-lg shadow-yellow-950/20">
+                <span className="text-[9px] font-mono text-zinc-400 block tracking-wider uppercase font-bold">{review.label}</span>
+                <strong className="text-4xl font-mono font-black text-yellow-300 block mt-1 tracking-tight">{review.sessions}</strong>
+                <span className="text-[10px] font-mono text-zinc-400 mt-0.5 block">Tamamlanan Antrenman</span>
+              </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              {[
-                { icon: <Layers size={12} className="text-cyan-400" />, v: bicim(review.sets), l: 'etkili set' },
-                { icon: <Flame size={12} className="text-red-400" />, v: `${bicim(review.tonnage)} kg`, l: 'toplam tonaj' },
-                { icon: <Clock size={12} className="text-emerald-400" />, v: `${review.hours} sa`, l: 'salonda geçen' },
-                { icon: <Calendar size={12} className="text-violet-400" />, v: review.streakWeeks, l: 'hafta seri' },
-              ].map(k => (
-                <div key={k.l} className="bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 text-center">
-                  <div className="flex justify-center mb-1">{k.icon}</div>
-                  <strong className="text-[13px] font-mono text-zinc-100 block">{k.v}</strong>
-                  <span className="text-[8px] font-mono text-zinc-600">{k.l}</span>
-                </div>
-              ))}
-            </div>
+              <div className="grid grid-cols-2 gap-2.5">
+                {[
+                  { icon: <Layers size={13} className="text-cyan-400" />, v: bicim(review.sets), l: 'etkili set' },
+                  { icon: <Flame size={13} className="text-red-400" />, v: `${bicim(review.tonnage)} kg`, l: 'toplam tonaj' },
+                  { icon: <Clock size={13} className="text-emerald-400" />, v: `${review.hours} sa`, l: 'salonda geçen' },
+                  { icon: <Calendar size={13} className="text-violet-400" />, v: review.streakWeeks, l: 'hafta seri' },
+                ].map(k => (
+                  <div key={k.l} className="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl py-3 px-2 text-center shadow-sm">
+                    <div className="flex justify-center mb-1.5">{k.icon}</div>
+                    <strong className="text-[13px] font-mono font-black text-zinc-100 block tracking-tight">{k.v}</strong>
+                    <span className="text-[8px] font-mono text-zinc-500 block mt-0.5">{k.l}</span>
+                  </div>
+                ))}
+              </div>
 
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 space-y-1">
               <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest block">Özet</span>
@@ -122,6 +123,7 @@ const YearReviewModal = memo(({ isOpen, onClose, review }) => {
         )}
       </div>
     </div>
+  </div>
   );
 });
 

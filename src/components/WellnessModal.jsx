@@ -75,44 +75,45 @@ const WellnessModal = memo(({
   const gunKcal = mindCalories(gunKayitlari, weightKg);
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[94] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Moon size={15} className="mr-2 text-purple-400" /> Toparlanma
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
-
-      {/* Tarih + sekme */}
-      <div className="p-3 space-y-2.5 border-b border-zinc-800 bg-zinc-950 shrink-0">
-        <div className="flex items-center gap-2">
-          <CalendarDays size={13} className="text-zinc-500 shrink-0" />
-          <input
-            type="date"
-            value={date}
-            max={todayStr}
-            onChange={(e) => setDate(e.target.value || todayStr)}
-            className="bg-zinc-900 border border-zinc-800 rounded-xl px-2 py-1.5 text-zinc-300 font-mono text-[11px] outline-none flex-1"
-          />
-          <span className="text-[11px] font-mono font-bold text-cyan-500/80 shrink-0">{weekdayName(date)}</span>
+    <div role="dialog" aria-modal="true" aria-labelledby="wellness-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[94] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="wellness-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Moon size={16} className="mr-2 text-purple-400" /> Toparlanma & Uyku
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
         </div>
 
-        <div className="flex bg-zinc-900 p-1 rounded-xl border border-zinc-800">
-          {[{ k: 'sleep', l: 'Uyku' }, { k: 'mind', l: 'Meditasyon & Esneme' }].map(t => (
-            <button
-              key={t.k}
-              onClick={() => setTab(t.k)}
-              className={`flex-1 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-colors ${tab === t.k ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
-            >
-              {t.l}
-            </button>
-          ))}
-        </div>
-      </div>
+        {/* Tarih + sekme */}
+        <div className="p-3.5 space-y-2.5 border-b border-zinc-800/80 bg-zinc-950/70 shrink-0">
+          <div className="flex items-center gap-2">
+            <CalendarDays size={14} className="text-zinc-500 shrink-0" />
+            <input
+              type="date"
+              value={date}
+              max={todayStr}
+              onChange={(e) => setDate(e.target.value || todayStr)}
+              className="bg-zinc-900 border border-zinc-800/80 rounded-xl px-2.5 py-1.5 text-zinc-200 font-mono text-[11px] outline-none flex-1 focus:border-cyan-500/80 transition-colors"
+            />
+            <span className="text-[11px] font-mono font-bold text-cyan-400 shrink-0">{weekdayName(date)}</span>
+          </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+          <div className="luxury-segmented grid grid-cols-2 gap-1 p-1 rounded-2xl bg-zinc-900/90 border border-zinc-800/80">
+            {[{ k: 'sleep', l: 'Uyku' }, { k: 'mind', l: 'Meditasyon & Esneme' }].map(t => (
+              <button
+                key={t.k}
+                onClick={() => setTab(t.k)}
+                className={`py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all active:scale-[0.98] ${tab === t.k ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
+              >
+                {t.l}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
 
         {tab === 'sleep' && (
           <>
@@ -402,6 +403,7 @@ const WellnessModal = memo(({
         )}
       </div>
     </div>
+  </div>
   );
 });
 
