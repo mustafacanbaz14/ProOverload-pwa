@@ -189,13 +189,22 @@ const RELEASE_9_8 = release('9.8', '2026-08-30', 'Arayüz Akıcılığı, Kart E
   item('Tüm Doğrulama Testleri Yeşil', '492 temel test, 16 kas grubu ve 56 hareket kuralı, mağaza ve performans kapıları eksiksiz korundu.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Kullanıcı Deneyimi, Hızlı Kayıt ve Ergonomi Odaklı Geliştirmeler', [
+const RELEASE_9_9 = release('9.9', '2026-08-30', 'Kullanıcı Deneyimi, Hızlı Kayıt ve Ergonomi Odaklı Geliştirmeler', [
   item('Hızlı Su Ekleme Kısayolları', 'Beslenme ekranında tek dokunuşla +250ml ve +500ml su ekleme kısayolları ile hidrasyon takibi kolaylaştırıldı.'),
   item('Gelişmiş Seans & Plaka Ergonomisi', 'Aktif antrenman ekranında hareket kartları, plaka hesaplayıcı ve özel dinlenme süresi kontrolleri tek dokunuşla erişilebilir kılındı.'),
   item('Geçmiş & Arşiv Navigasyonu', 'Tüm kayıtlar, ağırlık, aktivite, ölçüm ve besin sekmeleri rafine dokunsal geri bildirim ve hızlı arama ile yenilendi.'),
   item('Vücut Ölçüm & Hedef Merkezi', 'Son durum özeti ve kıyaslama butonları cam kart morfolojisi ve yüksek netlikli metrik kutularıyla güncellendi.'),
   item('Pürüzsüz Mikro-Animasyonlar', 'Dokunmatik butonlarda ve kartlarda akıcı yay efektleri (active-scale) ile dokunma ergonomisi güçlendirildi.'),
   item('Eksiksiz Doğrulama ve Sıfır Regresyon', '492 çekirdek test, 16 kas grubu ve 56 hareket kuralı, mağaza hazırlık kapıları sıfır hata ile korundu.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'ProOverload 10.0 — Üst Düzey Kullanıcı Deneyimi ve Rafine Tasarım', [
+  item('Kapsamlı Besin & Porsiyon Arayüzü', 'Besin arama ve barkod tarama penceresinde hızlı gramaj (50g, 100g, 150g, 200g) ve favori ekleme butonları optimize edildi.'),
+  item('Kardiyo & Aktivite Seans Girişi', 'Hızlı süre seçicileri (15, 20, 30, 45, 60 dk) ve çoklu aktivite kaydetme butonları modern cam tonlarına kavuşturuldu.'),
+  item('Araçlar ve Yardımcılar Merkezi', 'Mezosiklik, plaka hesabı, uyku, ağrı ve koç defteri gibi tüm araçlar arama destekli zarif liste formatında sunuldu.'),
+  item('Seans İçi Yük & Set İpuçları', 'Yorgunluk düşüşü, geçmiş set hatırlatıcıları ve dinamik yük tavsiyeleri yüksek kontrastlı mikro kartlar haline getirildi.'),
+  item('Bütünsel Dokunmatik Konfor', 'Mobil cihazlarda tek elle kullanımı destekleyen genişletilmiş dokunma alanları ve güvenli alan (safe-area) uyumu kusursuzlaştırıldı.'),
+  item('492/492 Test ve Tam Güvenilirlik', 'Tüm biyomekanik kurallar, enerji formülleri, veri kurtarma ve performans sınırları eksiksiz doğrulandı.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -272,6 +281,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_9,
   RELEASE_9_8,
   RELEASE_9_7,
   RELEASE_9_6,

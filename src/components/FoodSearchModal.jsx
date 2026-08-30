@@ -323,10 +323,11 @@ const FoodSearchModal = memo(({
                   {servingUnit === 'g' && [50, 100, 150, 200].map(g => (
                     <button
                       key={g}
+                      type="button"
                       onClick={() => setServingGram(g)}
-                      className={`px-2 py-1 rounded-lg border text-[10px] font-bold transition-colors ${servingGram === g ? 'border-orange-600 text-orange-400' : 'border-zinc-800 text-zinc-500'}`}
+                      className={`px-2.5 py-1 rounded-xl border text-[10px] font-bold active:scale-95 transition-all ${servingGram === g ? 'border-orange-500 text-orange-300 bg-orange-950/40 shadow-sm' : 'border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}
                     >
-                      {g}
+                      {g}g
                     </button>
                   ))}
                   <input
@@ -470,10 +471,10 @@ const FoodSearchModal = memo(({
                     return { label: m.label, value: `${Math.round(parseNumber(m.raw) * factor * mult) / mult}${m.unit}` };
                   });
                 return (
-                  <div key={food.id} className="bg-zinc-950 p-3 rounded-2xl border border-zinc-800 space-y-2">
+                  <div key={food.id} className="luxury-feature-card bg-zinc-950/90 p-3.5 rounded-2xl border border-zinc-800/80 space-y-2.5 shadow-sm hover:border-zinc-700/80 transition-all">
                     <div className="flex justify-between items-start gap-2">
                       <div className="min-w-0">
-                        <h4 className="text-[11px] font-bold text-zinc-200 flex items-center">
+                        <h4 className="text-[11px] font-bold text-zinc-100 flex items-center">
                           {food.source === 'custom' && <Star size={10} className="mr-1 text-orange-400 shrink-0" fill="currentColor" />}
                           <span className="truncate">{food.name}</span>
                         </h4>
@@ -481,41 +482,45 @@ const FoodSearchModal = memo(({
                           {food.brand || food.category || 'Çevrimiçi'}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <button
+                          type="button"
                           onClick={() => onToggleFavorite?.(food)}
                           title={isFavorite(food) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
                           aria-label={isFavorite(food) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
                           className={`p-1.5 transition-colors ${isFavorite(food) ? 'text-orange-400' : 'text-zinc-600 active:text-orange-400'}`}
                         >
-                          <Star size={13} fill={isFavorite(food) ? 'currentColor' : 'none'} />
+                          <Star size={14} fill={isFavorite(food) ? 'currentColor' : 'none'} />
                         </button>
                         {food.source === 'custom' && (
                           <button
+                            type="button"
                             onClick={() => setCustomFoods(prev => prev.filter(f => f.id !== food.id))}
                             title="Bu özel besini sil"
                             aria-label="Bu özel besini sil"
                             className="text-zinc-600 active:text-red-500 p-1.5"
                           >
-                            <Trash2 size={12} />
+                            <Trash2 size={13} />
                           </button>
                         )}
                         {food.source === 'online' && (
                           <button
+                            type="button"
                             onClick={() => saveOnlineFoodToCustom(food)}
                             disabled={savedIds.includes(food.id)}
                             title="Kendi besinlerime kaydet"
                             aria-label="Kendi besinlerime kaydet"
-                            className={`p-1.5 transition-colors ${savedIds.includes(food.id) ? 'text-emerald-500' : 'text-zinc-600 active:text-orange-400'}`}
+                            className={`p-1.5 transition-colors ${savedIds.includes(food.id) ? 'text-emerald-400' : 'text-zinc-600 active:text-orange-400'}`}
                           >
-                            {savedIds.includes(food.id) ? <Check size={13} /> : <Save size={13} />}
+                            {savedIds.includes(food.id) ? <Check size={14} /> : <Save size={14} />}
                           </button>
                         )}
                         <button
+                          type="button"
                           onClick={() => addToMeal(food)}
-                          className="bg-orange-950/40 border border-orange-900/50 text-orange-400 active:bg-orange-900/60 px-2.5 py-1.5 rounded-xl flex items-center text-[10px] font-bold uppercase transition-colors"
+                          className="bg-orange-950/50 border border-orange-800/60 text-orange-300 active:scale-[0.95] active:bg-orange-900/70 px-3 py-1.5 rounded-xl flex items-center text-[10px] font-black uppercase transition-all shadow-sm"
                         >
-                          <Plus size={11} className="mr-0.5" /> Ekle
+                          <Plus size={12} className="mr-0.5" /> Ekle
                         </button>
                       </div>
                     </div>

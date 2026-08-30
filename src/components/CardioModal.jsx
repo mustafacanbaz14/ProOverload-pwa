@@ -243,10 +243,11 @@ const CardioModal = memo(({
             {QUICK_MINUTES.map(m => (
               <button
                 key={m}
+                type="button"
                 onClick={() => setMinutes(m)}
-                className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${Number(minutes) === m ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' : 'bg-zinc-950 border-zinc-800 text-zinc-500'}`}
+                className={`py-2 rounded-xl text-[10px] font-bold border active:scale-95 transition-all ${Number(minutes) === m ? 'bg-cyan-900/40 border-cyan-500 text-cyan-300 shadow-sm' : 'bg-zinc-950 border-zinc-800 text-zinc-500 hover:text-zinc-300'}`}
               >
-                {m}
+                {m} dk
               </button>
             ))}
           </div>
@@ -466,24 +467,27 @@ const CardioModal = memo(({
                 Bu yüzden asıl buton kaydedip formu sıfırlıyor ve ekran açık
                 kalıyor; kapatmak ayrı ve ikincil bir eylem. */}
             <button
+              type="button"
               disabled={!canSave}
               onClick={() => { kaydet(); yeniGirdiyeHazirla(); }}
-              className="w-full bg-red-600 active:bg-red-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold py-3.5 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"
+              className="w-full bg-gradient-to-r from-red-600 to-rose-600 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed text-white font-black py-3.5 rounded-2xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-all shadow-lg shadow-red-950/40"
             >
               <Plus size={15} />
               {activity?.label} · {minutes} dk · {effortInfo.label}
             </button>
             <div className="flex gap-2">
               <button
+                type="button"
                 disabled={!canSave}
                 onClick={() => { kaydet(); onClose(); }}
-                className="flex-1 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 disabled:opacity-40 text-zinc-300 font-bold py-2.5 rounded-xl uppercase text-[10px] tracking-wider flex items-center justify-center gap-1.5 transition-colors"
+                className="flex-1 bg-zinc-900/90 border border-zinc-800 active:scale-[0.98] active:bg-zinc-800 disabled:opacity-40 text-zinc-200 font-bold py-2.5 rounded-xl uppercase text-[10px] tracking-wider flex items-center justify-center gap-1.5 transition-all shadow-sm"
               >
                 <Save size={13} /> Kaydet ve kapat
               </button>
               <button
+                type="button"
                 onClick={onClose}
-                className="px-4 bg-zinc-900 border border-zinc-800 active:bg-zinc-800 text-zinc-500 font-bold py-2.5 rounded-xl uppercase text-[10px] tracking-wider transition-colors"
+                className="px-4 bg-zinc-900/90 border border-zinc-800 active:scale-[0.98] active:bg-zinc-800 text-zinc-400 font-bold py-2.5 rounded-xl uppercase text-[10px] tracking-wider transition-all shadow-sm"
               >
                 Bitti
               </button>
