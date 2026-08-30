@@ -198,13 +198,21 @@ const RELEASE_9_9 = release('9.9', '2026-08-30', 'Kullanıcı Deneyimi, Hızlı 
   item('Eksiksiz Doğrulama ve Sıfır Regresyon', '492 çekirdek test, 16 kas grubu ve 56 hareket kuralı, mağaza hazırlık kapıları sıfır hata ile korundu.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'ProOverload 10.0 — Üst Düzey Kullanıcı Deneyimi ve Rafine Tasarım', [
+const RELEASE_10_0 = release('10.0', '2026-08-30', 'ProOverload 10.0 — Üst Düzey Kullanıcı Deneyimi ve Rafine Tasarım', [
   item('Kapsamlı Besin & Porsiyon Arayüzü', 'Besin arama ve barkod tarama penceresinde hızlı gramaj (50g, 100g, 150g, 200g) ve favori ekleme butonları optimize edildi.'),
   item('Kardiyo & Aktivite Seans Girişi', 'Hızlı süre seçicileri (15, 20, 30, 45, 60 dk) ve çoklu aktivite kaydetme butonları modern cam tonlarına kavuşturuldu.'),
   item('Araçlar ve Yardımcılar Merkezi', 'Mezosiklik, plaka hesabı, uyku, ağrı ve koç defteri gibi tüm araçlar arama destekli zarif liste formatında sunuldu.'),
   item('Seans İçi Yük & Set İpuçları', 'Yorgunluk düşüşü, geçmiş set hatırlatıcıları ve dinamik yük tavsiyeleri yüksek kontrastlı mikro kartlar haline getirildi.'),
   item('Bütünsel Dokunmatik Konfor', 'Mobil cihazlarda tek elle kullanımı destekleyen genişletilmiş dokunma alanları ve güvenli alan (safe-area) uyumu kusursuzlaştırıldı.'),
   item('492/492 Test ve Tam Güvenilirlik', 'Tüm biyomekanik kurallar, enerji formülleri, veri kurtarma ve performans sınırları eksiksiz doğrulandı.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Haftalık Planlama & Program Sihirbazı Zarafeti', [
+  item('Haftalık Plan & Gün Atama', 'Haftalık program özeti, antrenman ve kardiyo slot ekleme butonları lüks cam paneller ve sezgisel dokunma efektleriyle yenilendi.'),
+  item('Yönlendirmeli Program Sihirbazı', 'Sihirbazın adım navigasyonu ve "Önce Düzenle / Direkt Kur" aksiyon butonları zengin mor–indigo gradyanlar ve derin gölgelerle zenginleştirildi.'),
+  item('Haftalık Çakışma & Uyum Analizi', 'Seans çakışma asistanı ve kas hacmi dağılımı görsel uyarı rozetleriyle netleştirildi.'),
+  item('Gelişmiş Dokunma Geri Bildirimi', 'Tüm modal butonlarında fiziksel basma hissi veren mikro-ölçeklendirmeler (active:scale-[0.98]) standartlaştırıldı.'),
+  item('Tam Doğrulama ve Sıfır Regresyon', '492 birim testi, 16 kas grubu ve 56 hareket kuralı, mağaza ve performans kapıları başarıyla geçti.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -281,6 +289,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_0,
   RELEASE_9_9,
   RELEASE_9_8,
   RELEASE_9_7,

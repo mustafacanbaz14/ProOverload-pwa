@@ -1127,11 +1127,12 @@ const ProgramWizardModal = memo(({
                   },
                 });
               }}
-              className="flex-1 py-3 rounded-2xl border border-violet-800/60 bg-violet-950/30 active:bg-violet-900/40 text-violet-300 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1"
+              className="flex-1 py-3.5 rounded-2xl border border-violet-700/60 bg-violet-950/40 active:scale-[0.98] text-violet-200 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1.5 shadow-sm transition-all"
             >
               <Pencil size={13} /> Önce Düzenle
             </button>
             <button
+              type="button"
               onClick={() => {
                 // Takvim ancak bölmenin gün sayısı kadar gün seçilmişse
                 // geçerli; eksikse bölmenin hazır takvimi kullanılıyor.
@@ -1139,15 +1140,16 @@ const ProgramWizardModal = memo(({
                 onInstall(built, { schedule: weekdays.length === daysPerWeek ? schedule : null });
                 onClose();
               }}
-              className="flex-1 py-3 rounded-2xl bg-violet-600 active:bg-violet-700 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-2"
+              className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 active:scale-[0.98] text-white font-black text-[11px] uppercase tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-violet-950/50 transition-all"
             >
               <Check size={15} /> Direkt Kur
             </button>
           </>
         ) : (
           <button
+            type="button"
             onClick={() => setAdim(a => a + 1)}
-            className="flex-1 py-3 rounded-2xl bg-violet-600 active:bg-violet-700 text-white font-bold text-[11px] uppercase tracking-wider flex items-center justify-center gap-1"
+            className="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 active:scale-[0.98] text-white font-black text-[11px] uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-lg shadow-violet-950/50 transition-all"
           >
             Devam <ChevronRight size={14} />
           </button>

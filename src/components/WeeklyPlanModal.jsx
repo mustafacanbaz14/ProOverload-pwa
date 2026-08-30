@@ -230,27 +230,27 @@ const WeeklyPlanModal = memo(({
         {/* Hafta özeti */}
         <div className="grid grid-cols-4 gap-2">
           {[
-            { icon: <CalendarRange size={13} className="text-cyan-400" />, value: result.trainingDays, label: 'Gün' },
-            { icon: <Layers size={13} className="text-emerald-400" />, value: result.totalSets, label: 'Set' },
-            { icon: <Clock size={13} className="text-amber-400" />, value: formatPlanDuration(result.totalMinutes), label: 'Süre' },
+            { icon: <CalendarRange size={14} className="text-cyan-400" />, value: result.trainingDays, label: 'Gün' },
+            { icon: <Layers size={14} className="text-emerald-400" />, value: result.totalSets, label: 'Set' },
+            { icon: <Clock size={14} className="text-amber-400" />, value: formatPlanDuration(result.totalMinutes), label: 'Süre' },
             {
-              icon: <Flame size={13} className="text-red-400" />,
+              icon: <Flame size={14} className="text-red-400" />,
               value: weightKg > 0 ? result.totalKcal + result.totalCardioKcal : '—',
               label: 'kcal',
             },
           ].map(item => (
-            <div key={item.label} className="bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 text-center">
+            <div key={item.label} className="bg-zinc-950/80 border border-zinc-800/80 rounded-2xl py-3 text-center shadow-inner">
               <div className="flex justify-center mb-1">{item.icon}</div>
-              <span className="text-sm font-mono font-bold text-zinc-100 block">{item.value}</span>
-              <span className="text-[9px] font-mono text-zinc-500 uppercase">{item.label}</span>
+              <strong className="text-sm font-mono font-black text-zinc-100 block">{item.value}</strong>
+              <span className="text-[8px] font-mono text-zinc-500 uppercase block mt-0.5">{item.label}</span>
             </div>
           ))}
         </div>
 
         {result.activeRecoveryDays > 0 && (
-          <div className="bg-indigo-950/20 border border-indigo-900/40 rounded-xl px-3 py-2 flex items-center justify-between gap-2">
+          <div className="bg-indigo-950/30 border border-indigo-900/50 rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2 shadow-sm">
             <span className="text-[10px] font-bold text-indigo-300">Aktif off day</span>
-            <span className="text-[9px] font-mono text-zinc-500">{result.activeRecoveryDays} gün · düşük-yük aktivite veya aktif toparlanma temposu</span>
+            <span className="text-[9px] font-mono text-zinc-400">{result.activeRecoveryDays} gün · düşük-yük aktivite veya aktif toparlanma temposu</span>
           </div>
         )}
 
@@ -267,9 +267,9 @@ const WeeklyPlanModal = memo(({
         )}
 
         {/* Gün atamaları */}
-        <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-          <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60">
-            <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Günler</h4>
+        <div className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 overflow-hidden shadow-xl">
+          <div className="px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/70 flex justify-between items-center">
+            <h4 className="text-[10px] font-bold text-zinc-200 uppercase tracking-widest">Haftalık Gün Atamaları</h4>
           </div>
           <div className="divide-y divide-zinc-800">
             {result.days.map(d => {
@@ -419,19 +419,21 @@ const WeeklyPlanModal = memo(({
                         </div>
                       ))}
 
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-2 gap-2 pt-1">
                         <button
+                          type="button"
                           onClick={() => slotEkle(d.key, 'workout')}
                           disabled={templates.length === 0}
-                          className="py-2 rounded-xl border border-dashed border-cyan-900/50 text-cyan-400 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center active:bg-zinc-800 disabled:opacity-30"
+                          className="py-2.5 rounded-2xl border border-dashed border-cyan-900/60 bg-cyan-950/20 text-cyan-300 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center active:scale-[0.97] transition-all disabled:opacity-30 shadow-sm"
                         >
-                          <Dumbbell size={12} className="mr-1.5" /> Antrenman
+                          <Dumbbell size={13} className="mr-1.5" /> Antrenman
                         </button>
                         <button
+                          type="button"
                           onClick={() => slotEkle(d.key, 'cardio')}
-                          className="py-2 rounded-xl border border-dashed border-red-900/50 text-red-400 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center active:bg-zinc-800"
+                          className="py-2.5 rounded-2xl border border-dashed border-red-900/60 bg-red-950/20 text-red-300 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center active:scale-[0.97] transition-all shadow-sm"
                         >
-                          <HeartPulse size={12} className="mr-1.5" /> Kardiyo
+                          <HeartPulse size={13} className="mr-1.5" /> Kardiyo
                         </button>
                       </div>
 
