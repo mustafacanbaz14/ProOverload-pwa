@@ -207,33 +207,33 @@ const TrainingView = memo(({
 
         {programDraft?.hasAny ? (
           <div className="space-y-2">
-            <button onClick={onResumeDraft} className="w-full rounded-2xl bg-violet-600 active:bg-violet-700 p-3 text-left flex items-center gap-3 text-white">
+            <button onClick={onResumeDraft} className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 active:scale-[0.98] transition-all p-3.5 text-left flex items-center gap-3 text-white shadow-lg shadow-violet-950/40">
               <span className="flex-1 min-w-0">
-                <strong className="text-[12px] block">Taslağa Devam Et</strong>
-                <span className="text-[9px] font-mono text-violet-100 block truncate mt-0.5">{draftSummary}</span>
+                <strong className="text-[12px] font-black tracking-wide block">Taslağa Devam Et</strong>
+                <span className="text-[9px] font-mono text-violet-200 block truncate mt-0.5">{draftSummary}</span>
               </span>
               <ChevronRight size={17} />
             </button>
-            <button onClick={onFreshProgram} className="w-full rounded-xl border border-zinc-800 bg-zinc-950/60 py-2 text-[9px] font-bold text-zinc-500 active:text-violet-300">
+            <button onClick={onFreshProgram} className="w-full rounded-xl border border-zinc-800 bg-zinc-950/60 py-2 text-[9px] font-bold text-zinc-500 active:text-violet-300 transition-colors">
               Taslağı bırakıp sıfırdan başla
             </button>
           </div>
         ) : (
-          <button onClick={onWizard} className="w-full rounded-2xl bg-violet-600 active:bg-violet-700 p-3 text-[11px] font-black uppercase tracking-wide text-white flex items-center justify-center gap-2">
+          <button onClick={onWizard} className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 active:scale-[0.98] transition-all p-3.5 text-[11px] font-black uppercase tracking-wider text-white flex items-center justify-center gap-2 shadow-lg shadow-violet-950/40">
             <Wand2 size={15} /> Yönlendirmeli Program Oluştur
           </button>
         )}
 
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-amber-950/15 p-2.5 text-left active:bg-amber-900/30">
-            <Sparkles size={14} className="mb-1 text-amber-400" />
-            <strong className="block text-[9px] text-zinc-200">Hazır Program</strong>
-            <span className="text-[8px] font-mono text-zinc-600">Hızlı başlangıç</span>
+          <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-gradient-to-b from-amber-950/25 to-zinc-950 p-3 text-left active:scale-[0.98] transition-all shadow-sm">
+            <Sparkles size={14} className="mb-1.5 text-amber-400" />
+            <strong className="block text-[10px] font-bold text-zinc-200">Hazır Program</strong>
+            <span className="text-[8px] font-mono text-zinc-500">Hızlı başlangıç</span>
           </button>
-          <button onClick={onBuilder} className="rounded-xl border border-cyan-900/50 bg-cyan-950/15 p-2.5 text-left active:bg-cyan-900/30">
-            <BookmarkPlus size={14} className="mb-1 text-cyan-400" />
-            <strong className="block text-[9px] text-zinc-200">Elle Kur</strong>
-            <span className="text-[8px] font-mono text-zinc-600">Tam kontrol</span>
+          <button onClick={onBuilder} className="rounded-xl border border-cyan-900/50 bg-gradient-to-b from-cyan-950/25 to-zinc-950 p-3 text-left active:scale-[0.98] transition-all shadow-sm">
+            <BookmarkPlus size={14} className="mb-1.5 text-cyan-400" />
+            <strong className="block text-[10px] font-bold text-zinc-200">Elle Kur</strong>
+            <span className="text-[8px] font-mono text-zinc-500">Tam kontrol</span>
           </button>
         </div>
       </section>

@@ -40,12 +40,12 @@ const CalorieBalanceCard = memo(({ data, dateLabel, manualValue, onChangeManual,
   const hedefteMi = Math.abs(sapma) <= 100;
 
   return (
-    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-      <div className="flex justify-between items-center px-4 py-3 border-b border-zinc-800 bg-zinc-950/60">
-        <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center">
+    <div className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
+      <div className="flex justify-between items-center px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/50 backdrop-blur-md">
+        <h3 className="text-[11px] font-bold text-zinc-100 uppercase tracking-widest flex items-center">
           <Flame size={13} className="mr-2 text-red-400" /> Kalori Panosu
         </h3>
-        <span className="text-[10px] font-mono text-zinc-500">{goalLabel ? `${goalLabel} · ` : ''}{dateLabel}</span>
+        <span className="text-[10px] font-mono text-zinc-400">{goalLabel ? `${goalLabel} · ` : ''}{dateLabel}</span>
       </div>
 
       <div className="p-4 space-y-3.5">
@@ -59,25 +59,25 @@ const CalorieBalanceCard = memo(({ data, dateLabel, manualValue, onChangeManual,
           const asti = kalan < 0;
           const renkKalan = asti ? 'text-amber-400' : 'text-emerald-400';
           return (
-            <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-4">
+            <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-4 shadow-inner">
               <div className="text-center mb-3">
-                <span className={`text-4xl font-mono font-bold ${renkKalan}`}>
+                <span className={`text-4xl font-mono font-black tracking-tight ${renkKalan}`}>
                   {Math.abs(kalan)}
                 </span>
-                <span className="text-[11px] font-mono text-zinc-500 block mt-0.5">
+                <span className="text-[11px] font-mono text-zinc-400 block mt-0.5">
                   {asti ? 'kcal hedefin üstünde' : 'kcal daha yiyebilirsin'}
                 </span>
               </div>
 
-              <div className="w-full bg-zinc-900 rounded-full h-2.5 border border-zinc-800 overflow-hidden mb-2">
+              <div className="w-full bg-zinc-900 rounded-full h-2.5 border border-zinc-800/80 overflow-hidden mb-3 shadow-inner">
                 <div
-                  className={`h-full rounded-full transition-all duration-500 ${asti ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                  className={`h-full rounded-full transition-all duration-500 shadow-sm ${asti ? 'bg-gradient-to-r from-amber-500 to-orange-400' : 'bg-gradient-to-r from-emerald-500 to-teal-400'}`}
                   style={{ width: `${oran}%` }}
                 />
               </div>
 
               {/* Hedef yalnızca bugünün ortalama harcamadan farkı kadar ayarlanır. */}
-              <div className="grid grid-cols-4 gap-1 text-center">
+              <div className="grid grid-cols-4 gap-1 text-center pt-1 border-t border-zinc-900">
                 {[
                   { l: 'Hedef', v: data.target, c: 'text-emerald-400' },
                   { l: 'Gün Farkı', v: `${data.activityAdjustment >= 0 ? '+' : ''}${data.activityAdjustment}`, c: 'text-red-400' },
@@ -85,8 +85,8 @@ const CalorieBalanceCard = memo(({ data, dateLabel, manualValue, onChangeManual,
                   { l: '= Kalan', v: kalan, c: renkKalan },
                 ].map(x => (
                   <div key={x.l}>
-                    <span className={`text-[13px] font-mono font-bold block ${x.c}`}>{x.v}</span>
-                    <span className="text-[9px] font-mono text-zinc-600 block">{x.l}</span>
+                    <span className={`text-[13px] font-mono font-black block tracking-tight ${x.c}`}>{x.v}</span>
+                    <span className="text-[9px] font-mono text-zinc-500 block uppercase tracking-wider mt-0.5">{x.l}</span>
                   </div>
                 ))}
               </div>

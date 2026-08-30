@@ -88,30 +88,36 @@ const HomeView = memo(({
       />
 
       {interfaceMode === 'simple' ? (
-        <div className="grid grid-cols-3 gap-2" aria-label="Hızlı işlemler">
+        <div className="grid grid-cols-3 gap-2.5" aria-label="Hızlı işlemler">
           <button
             type="button"
             onClick={() => onOpenTraining?.()}
-            className="min-h-20 rounded-2xl border border-cyan-900/50 bg-cyan-950/35 text-cyan-100 active:bg-cyan-900/40 flex flex-col items-center justify-center gap-2"
+            className="min-h-21 rounded-2xl border border-cyan-900/60 bg-gradient-to-b from-cyan-950/45 to-zinc-950 text-cyan-100 active:scale-[0.97] transition-all flex flex-col items-center justify-center gap-2 shadow-md shadow-black/20"
           >
-            <Dumbbell size={18} className="text-cyan-400" />
-            <span className="text-[9px] font-bold uppercase tracking-wide">Antrenman</span>
+            <div className="w-8 h-8 rounded-xl bg-cyan-950/80 border border-cyan-800/40 flex items-center justify-center">
+              <Dumbbell size={16} className="text-cyan-400" />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-wider text-zinc-200">Antrenman</span>
           </button>
           <button
             type="button"
             onClick={() => onQuickCapture?.()}
-            className="min-h-20 rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-100 active:bg-zinc-800 flex flex-col items-center justify-center gap-2"
+            className="min-h-21 rounded-2xl border border-emerald-900/50 bg-gradient-to-b from-emerald-950/35 to-zinc-950 text-zinc-100 active:scale-[0.97] transition-all flex flex-col items-center justify-center gap-2 shadow-md shadow-black/20"
           >
-            <Plus size={18} className="text-emerald-400" />
-            <span className="text-[9px] font-bold uppercase tracking-wide">Hızlı Kayıt</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-950/80 border border-emerald-800/40 flex items-center justify-center">
+              <Plus size={16} className="text-emerald-400" />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-wider text-zinc-200">Hızlı Kayıt</span>
           </button>
           <button
             type="button"
             onClick={() => onOpenTools?.()}
-            className="min-h-20 rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-100 active:bg-zinc-800 flex flex-col items-center justify-center gap-2"
+            className="min-h-21 rounded-2xl border border-violet-900/50 bg-gradient-to-b from-violet-950/35 to-zinc-950 text-zinc-100 active:scale-[0.97] transition-all flex flex-col items-center justify-center gap-2 shadow-md shadow-black/20"
           >
-            <Wrench size={18} className="text-violet-400" />
-            <span className="text-[9px] font-bold uppercase tracking-wide">Araçlar</span>
+            <div className="w-8 h-8 rounded-xl bg-violet-950/80 border border-violet-800/40 flex items-center justify-center">
+              <Wrench size={16} className="text-violet-400" />
+            </div>
+            <span className="text-[9px] font-black uppercase tracking-wider text-zinc-200">Araçlar</span>
           </button>
         </div>
       ) : (

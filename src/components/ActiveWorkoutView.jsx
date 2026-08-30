@@ -859,6 +859,7 @@ const ActiveWorkoutView = memo(({
 
                   const setBadgeText = set.setType === 'warmup' ? 'W' : set.setType === 'drop' ? 'D' : set.setType === 'failure' ? 'F' : set.setType === 'rest_pause' ? 'RP' : workingIndex;
 
+                  const isCompleted = Boolean(set.completed);
                   const borderStyle = warmup
                     ? 'bg-zinc-950/50 border-orange-900/40'
                     : set.setType === 'drop'
@@ -867,9 +868,11 @@ const ActiveWorkoutView = memo(({
                     ? 'bg-red-950/20 border-red-900/50'
                     : set.setType === 'rest_pause'
                     ? 'bg-emerald-950/20 border-emerald-900/50'
+                    : isCompleted
+                    ? 'bg-emerald-950/15 border-emerald-800/60 shadow-sm shadow-emerald-950/20'
                     : isEffective
                     ? 'bg-zinc-950 border-cyan-900/50'
-                    : 'bg-zinc-950 border-zinc-800';
+                    : 'bg-zinc-950 border-zinc-800/90';
 
                   return (
                     <div key={set.id} className={`grid grid-cols-12 gap-1 items-center p-1 rounded-xl border transition-colors relative ${borderStyle}`}>
@@ -1083,65 +1086,65 @@ const ActiveWorkoutView = memo(({
 
       {/* Dinlenme geri sayımı — ekranın altında sabit durur */}
       {rest && restSecondsLeft > 0 && (
-        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-[360px]">
-          <div className="bg-zinc-900 border border-zinc-700 rounded-2xl shadow-2xl px-4 py-3">
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-[380px]">
+          <div className="bg-zinc-950/95 backdrop-blur-2xl border border-cyan-800/40 rounded-3xl shadow-2xl shadow-black/80 px-4 py-3.5">
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-500 flex items-center">
-                <Timer size={12} className={`mr-1.5 ${rest.paused ? '' : 'animate-pulse'}`} /> {rest.paused ? 'Dinlenme Duraklatıldı' : 'Dinlenme'}
+              <span className="text-[10px] font-bold uppercase tracking-widest text-cyan-400 flex items-center">
+                <Timer size={12} className={`mr-1.5 ${rest.paused ? '' : 'animate-pulse text-cyan-400'}`} /> {rest.paused ? 'Dinlenme Duraklatıldı' : 'Dinlenme Sayacı'}
               </span>
               <div className="flex items-center gap-1">
                 <button
                   onClick={onToggleSessionRestMute}
                   title={sessionRestMuted ? 'Seans uyarılarını aç' : 'Yalnız bu seansın uyarılarını sessize al'}
                   aria-label={sessionRestMuted ? 'Seans uyarılarını aç' : 'Seans uyarılarını sessize al'}
-                  className={`p-1.5 rounded-lg border bg-zinc-950 ${sessionRestMuted ? 'border-red-900/60 text-red-400' : 'border-zinc-800 text-zinc-500'}`}
+                  className={`p-1.5 rounded-xl border bg-zinc-900/90 transition-colors ${sessionRestMuted ? 'border-red-900/60 text-red-400' : 'border-zinc-800 text-zinc-400 hover:text-zinc-200'}`}
                 >
-                  {sessionRestMuted ? <VolumeX size={12} /> : <Volume2 size={12} />}
+                  {sessionRestMuted ? <VolumeX size={13} /> : <Volume2 size={13} />}
                 </button>
                 <button
                   onClick={() => onReplayRestAlert?.()}
                   title="Uyarıyı şimdi tekrar çal"
                   aria-label="Dinlenme uyarısını tekrar çal"
-                  className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-500 active:text-cyan-400"
+                  className="p-1.5 rounded-xl border border-zinc-800 bg-zinc-900/90 text-zinc-400 active:text-cyan-400 transition-colors"
                 >
-                  <RotateCcw size={12} />
+                  <RotateCcw size={13} />
                 </button>
                 <button
                   onClick={rest.paused ? resumeRest : pauseRest}
                   title={rest.paused ? 'Sayacı sürdür' : 'Sayacı duraklat'}
                   aria-label={rest.paused ? 'Dinlenme sayacını sürdür' : 'Dinlenme sayacını duraklat'}
-                  className="p-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 active:text-cyan-400"
+                  className="p-1.5 rounded-xl border border-zinc-800 bg-zinc-900/90 text-zinc-300 active:text-cyan-400 transition-colors"
                 >
-                  {rest.paused ? <Play size={12} /> : <Pause size={12} />}
+                  {rest.paused ? <Play size={13} /> : <Pause size={13} />}
                 </button>
                 <button
                   onClick={stopRest}
                   title="Dinlenmeyi bitir"
                   aria-label="Dinlenme sayacını kapat"
-                  className="text-zinc-500 active:text-red-400 bg-zinc-950 border border-zinc-800 p-1.5 rounded-lg transition-colors"
+                  className="text-zinc-400 active:text-red-400 bg-zinc-900/90 border border-zinc-800 p-1.5 rounded-xl transition-colors hover:border-red-900/40"
                 >
-                  <X size={12} />
+                  <X size={13} />
                 </button>
               </div>
             </div>
             {sessionRestMuted && (
               <p className="text-[9px] font-mono text-red-300/80 mb-2">Bu seans için ses, titreşim ve sistem bildirimi kapalı.</p>
             )}
-            <div className="flex items-center gap-3">
-              <span className="font-mono font-bold text-3xl text-cyan-400 tabular-nums tracking-tight">
+            <div className="flex items-center gap-3.5 my-1">
+              <span className="font-mono font-black text-3xl text-cyan-400 tabular-nums tracking-tight drop-shadow-sm">
                 {Math.floor(restSecondsLeft / 60)}:{(restSecondsLeft % 60).toString().padStart(2, '0')}
               </span>
-              <div className="flex-1 bg-zinc-950 rounded-full h-2 border border-zinc-800 overflow-hidden">
+              <div className="flex-1 bg-zinc-900 rounded-full h-2.5 border border-zinc-800/80 overflow-hidden shadow-inner">
                 <div
-                  className="h-full bg-cyan-500 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full transition-all duration-500 shadow-sm"
                   style={{ width: `${Math.max(0, Math.min(100, (restSecondsLeft / rest.total) * 100))}%` }}
                 />
               </div>
             </div>
-            <div className="grid grid-cols-3 gap-1.5 mt-2">
-              <button aria-label="15 saniye azalt" onClick={() => adjustRest?.(-15)} className="py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-500 text-[10px] font-bold flex items-center justify-center gap-0.5"><Minus size={10} />15s</button>
-              <button aria-label="15 saniye ekle" onClick={() => adjustRest?.(15)} className="py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 text-[10px] font-bold">+15s</button>
-              <button aria-label="30 saniye ekle" onClick={() => adjustRest?.(30)} className="py-1.5 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 text-[10px] font-bold">+30s</button>
+            <div className="grid grid-cols-3 gap-2 mt-2.5">
+              <button aria-label="15 saniye azalt" onClick={() => adjustRest?.(-15)} className="py-1.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 text-[10px] font-black tracking-wide flex items-center justify-center gap-0.5 active:scale-[0.97] transition-all"><Minus size={10} />15s</button>
+              <button aria-label="15 saniye ekle" onClick={() => adjustRest?.(15)} className="py-1.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 text-[10px] font-black tracking-wide active:scale-[0.97] transition-all">+15s</button>
+              <button aria-label="30 saniye ekle" onClick={() => adjustRest?.(30)} className="py-1.5 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-300 text-[10px] font-black tracking-wide active:scale-[0.97] transition-all">+30s</button>
             </div>
             {restCue && (
               <div className={`mt-2 rounded-xl border px-2.5 py-2 ${restCue.complete ? 'border-emerald-900/50 bg-emerald-950/15' : 'border-cyan-900/40 bg-cyan-950/15'}`}>

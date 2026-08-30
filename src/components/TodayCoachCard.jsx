@@ -2,11 +2,11 @@ import React, { memo, useState } from 'react';
 import { CalendarCheck, Moon, BrainCircuit, Flame, Dumbbell, HeartPulse, ChevronRight, ChevronDown, Clock3, BellOff, CheckCheck, BookCheck } from 'lucide-react';
 
 const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
-  <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 min-w-0">
-    <span className="flex items-center text-[9px] font-mono text-zinc-600 uppercase tracking-wider mb-1">
+  <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-2.5 min-w-0 shadow-sm transition-colors">
+    <span className="flex items-center text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1">
       {icon}{label}
     </span>
-    <span className={`text-[11px] font-mono font-bold block truncate ${tone}`}>{value}</span>
+    <span className={`text-[12px] font-mono font-black block truncate tracking-tight ${tone}`}>{value}</span>
   </div>
 );
 
@@ -27,39 +27,39 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
   const detailsVisible = !compact || showDetails;
   const hasDetails = Boolean(briefing?.capacity || actions.length > 0 || (ledgerOpenCount > 0 && onOpenLedger));
   return (
-    <section className="luxury-feature-card bg-gradient-to-br from-cyan-950/45 via-zinc-900 to-zinc-900 rounded-3xl border border-cyan-900/40 overflow-hidden shadow-lg shadow-cyan-950/10">
-      <div className="px-4 py-3 border-b border-zinc-800/80 flex justify-between items-center gap-3">
+    <section className="luxury-feature-card bg-gradient-to-br from-cyan-950/40 via-zinc-900/90 to-zinc-950 rounded-3xl border border-cyan-900/35 overflow-hidden shadow-xl shadow-black/40">
+      <div className="px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center gap-3 bg-zinc-950/40 backdrop-blur-md">
         <div className="min-w-0">
-          <span className="text-[9px] font-mono text-cyan-500 uppercase tracking-[0.18em]">Bugünün Koçu</span>
-          <h2 className="text-sm font-bold text-zinc-100 truncate">{data.dateLabel}</h2>
+          <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-[0.2em] font-semibold block mb-0.5">Bugünün Koçu</span>
+          <h2 className="text-sm font-bold text-zinc-100 truncate tracking-tight">{data.dateLabel}</h2>
         </div>
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Odak rozeti: sıranın neden bu olduğunu görünür kılıyor. Ayardan
               seçilen bir şeyin etkisi görünmezse ayar unutuluyor. */}
           {focus && focus.key !== 'balanced' && (
-            <span className="text-[8px] font-mono text-violet-300 border border-violet-900/60 bg-violet-950/25 px-1.5 py-1 rounded-lg">
+            <span className="text-[8px] font-mono font-medium text-violet-300 border border-violet-900/60 bg-violet-950/30 px-2 py-1 rounded-lg">
               {focus.label}
             </span>
           )}
-          <span className={`text-[9px] font-bold uppercase px-2 py-1 rounded-lg border ${data.tone}`}>
+          <span className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-lg border tracking-wider ${data.tone}`}>
             {data.status}
           </span>
         </div>
       </div>
 
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3.5">
         <div>
-          <p className="text-[12px] font-bold text-zinc-100 leading-snug">{data.headline}</p>
-          <p className="text-[10px] font-mono text-zinc-500 leading-relaxed mt-1">{data.detail}</p>
+          <p className="text-[13px] font-black text-zinc-100 leading-snug tracking-tight">{data.headline}</p>
+          <p className="text-[10px] font-mono text-zinc-400 leading-relaxed mt-1">{data.detail}</p>
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <Metric icon={<Moon size={10} className="mr-1 text-indigo-400" />} label="Uyku" value={data.sleepLabel} tone={data.sleepTone} />
-          <Metric icon={<BrainCircuit size={10} className="mr-1 text-amber-400" />} label="Hazır Oluş" value={data.readinessLabel} tone={data.readinessTone} />
-          <Metric icon={<Flame size={10} className="mr-1 text-red-400" />} label="Kalori" value={data.calorieLabel} tone={data.calorieTone} />
+          <Metric icon={<Moon size={11} className="mr-1 text-indigo-400" />} label="Uyku" value={data.sleepLabel} tone={data.sleepTone} />
+          <Metric icon={<BrainCircuit size={11} className="mr-1 text-amber-400" />} label="Hazır Oluş" value={data.readinessLabel} tone={data.readinessTone} />
+          <Metric icon={<Flame size={11} className="mr-1 text-red-400" />} label="Kalori" value={data.calorieLabel} tone={data.calorieTone} />
         </div>
 
-        <div className="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-3 space-y-1.5">
+        <div className="bg-zinc-950/85 border border-zinc-800/90 rounded-2xl p-3.5 space-y-1.5 shadow-inner">
           <div className="flex items-center justify-between gap-2">
             <span className="text-[10px] font-bold text-zinc-300 flex items-center min-w-0">
               {planned ? <Dumbbell size={12} className="mr-1.5 text-cyan-400 shrink-0" /> : <CalendarCheck size={12} className="mr-1.5 text-zinc-500 shrink-0" />}
