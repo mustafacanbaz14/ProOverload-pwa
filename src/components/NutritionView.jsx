@@ -21,15 +21,15 @@ import HydrationCard from './HydrationCard';
 const MacroTile = ({ label, value, numericValue, target, color, bar }) => {
   const ratio = target > 0 ? Math.min(100, Math.round((parseNumber(numericValue) / target) * 100)) : null;
   return (
-    <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 min-w-0">
-      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-wide block">{label}</span>
-      <span className={`text-sm font-mono font-bold block mt-0.5 ${color}`}>{value}</span>
+    <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-3 min-w-0 shadow-sm">
+      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">{label}</span>
+      <span className={`text-sm font-mono font-black block mt-0.5 tracking-tight ${color}`}>{value}</span>
       {ratio !== null && (
         <>
-          <div className="h-1 bg-zinc-800 rounded-full overflow-hidden mt-1.5">
-            <div className={`h-full rounded-full ${bar}`} style={{ width: `${ratio}%` }} />
+          <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden mt-2 shadow-inner">
+            <div className={`h-full rounded-full transition-all duration-300 ${bar}`} style={{ width: `${ratio}%` }} />
           </div>
-          <span className="text-[8px] font-mono text-zinc-600 block mt-1">hedef {target}g</span>
+          <span className="text-[8px] font-mono text-zinc-500 block mt-1">hedef {target}g</span>
         </>
       )}
     </div>

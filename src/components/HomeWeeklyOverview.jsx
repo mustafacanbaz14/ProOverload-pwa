@@ -64,21 +64,21 @@ const HomeWeeklyOverview = memo(({
   const recoveryWarning = Boolean(dashboardStats.isDeloadNeeded || readiness?.deloadOnerisi);
 
   return (
-    <section className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+    <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setIsOpen(value => !value)}
         aria-expanded={isOpen}
-        className="w-full px-4 py-3.5 text-left active:bg-zinc-800/80 transition-colors flex items-center gap-3"
+        className="w-full px-4 py-3.5 text-left active:bg-zinc-800/60 transition-colors flex items-center gap-3"
       >
-        <span className="w-9 h-9 rounded-xl bg-cyan-950/45 border border-cyan-900/50 text-cyan-400 flex items-center justify-center shrink-0">
+        <span className="w-9 h-9 rounded-xl bg-cyan-950/60 border border-cyan-900/60 text-cyan-400 flex items-center justify-center shrink-0 shadow-sm">
           <Activity size={16} />
         </span>
         <span className="min-w-0 flex-1">
           <span className="flex items-center gap-2">
-            <strong className="text-[11px] uppercase tracking-wider text-zinc-100">Haftalık Durum</strong>
+            <strong className="text-[11px] font-black uppercase tracking-widest text-zinc-100">Haftalık Durum</strong>
             {recoveryWarning && (
-              <span className="text-[8px] font-bold uppercase text-red-300 bg-red-950/50 border border-red-900/50 rounded-md px-1.5 py-0.5">
+              <span className="text-[8px] font-black uppercase text-red-300 bg-red-950/60 border border-red-900/60 rounded-lg px-2 py-0.5 tracking-wider">
                 Dinlenmeyi kontrol et
               </span>
             )}

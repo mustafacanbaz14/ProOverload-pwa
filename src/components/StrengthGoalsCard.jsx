@@ -53,12 +53,12 @@ const StrengthGoalsCard = memo(({
   };
 
   return (
-    <section className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-      <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-center">
-        <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2"><Dumbbell size={13} className="text-cyan-400" /> Hareket Ağırlığı Hedefleri</h3>
-        <span className="text-[9px] font-mono text-zinc-600">{goals.length} hedef</span>
+    <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
+      <div className="px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/50 backdrop-blur-md flex justify-between items-center">
+        <h3 className="text-[11px] font-bold text-zinc-100 uppercase tracking-widest flex items-center gap-2"><Dumbbell size={13} className="text-cyan-400" /> Hareket Ağırlığı Hedefleri</h3>
+        <span className="text-[9px] font-mono text-zinc-400">{goals.length} hedef</span>
       </div>
-      <div className="p-4 space-y-3">
+      <div className="p-4 space-y-3.5">
         <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">Örnek: Bench Press 150 kg × 1. Varış tarihi geçmiş e1RM eğilimin aynı hızda sürerse hesaplanır; garanti değildir.</p>
 
         <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 space-y-2">

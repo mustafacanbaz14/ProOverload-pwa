@@ -113,31 +113,39 @@ const GoalCenterModal = memo(({
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="goal-center-title" className="fixed inset-0 z-[125] bg-black flex flex-col">
-      <header className="pt-safe px-4 py-3 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between shrink-0">
+      <header className="luxury-header pt-safe px-4 py-3 border-b border-zinc-800 bg-zinc-950 flex items-center justify-between shrink-0 shadow-md">
         <div>
-          <span className="text-[8px] font-mono text-cyan-500 uppercase tracking-widest">Gelişim</span>
-          <h2 id="goal-center-title" className="text-sm font-black text-zinc-100">Hedef Merkezi</h2>
+          <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-[0.2em] font-semibold block mb-0.5">Gelişim Paneli</span>
+          <h2 id="goal-center-title" className="text-sm font-black text-zinc-100 tracking-tight">Hedef Merkezi</h2>
         </div>
-        <button onClick={onClose} aria-label="Hedef merkezini kapat" className="w-10 h-10 rounded-xl border border-zinc-800 text-zinc-400 flex items-center justify-center">
+        <button onClick={onClose} aria-label="Hedef merkezini kapat" className="luxury-icon-button">
           <X size={18} />
         </button>
       </header>
 
-      <div className="px-3 pt-3 shrink-0">
-        <div className="grid grid-cols-4 gap-1 bg-zinc-900 border border-zinc-800 rounded-2xl p-1">
+      <div className="px-4 pt-3.5 shrink-0">
+        <div className="luxury-segmented grid grid-cols-4 gap-1.5 bg-zinc-950/80 border border-zinc-800 rounded-2xl p-1.5 shadow-inner">
           {TABS.map(item => {
             const Icon = item.icon;
             const active = tab === item.key;
             return (
-              <button key={item.key} onClick={() => setTab(item.key)} className={`rounded-xl py-2 flex flex-col items-center gap-1 text-[8px] font-bold ${active ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>
-                <Icon size={13} /> {item.label}
+              <button
+                key={item.key}
+                onClick={() => setTab(item.key)}
+                className={`rounded-xl py-2 flex flex-col items-center gap-1 text-[9px] font-black uppercase tracking-wider transition-all ${
+                  active
+                    ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
+              >
+                <Icon size={14} /> {item.label}
               </button>
             );
           })}
         </div>
       </div>
 
-      <main className="flex-1 overflow-y-auto hide-scrollbar p-4 pb-safe">
+      <main className="flex-1 overflow-y-auto hide-scrollbar p-4 pb-safe space-y-4">
         {tab === 'composition' && (
           <GoalsCard
             settings={settings}

@@ -64,13 +64,13 @@ const GoalsCard = memo(({
   });
 
   return (
-    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-      <div className="flex justify-between items-center px-4 py-3 border-b border-zinc-800 bg-zinc-950/60">
-        <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center">
+    <div className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
+      <div className="flex justify-between items-center px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/50 backdrop-blur-md">
+        <h3 className="text-[11px] font-bold text-zinc-100 uppercase tracking-widest flex items-center">
           <Target size={13} className="mr-2 text-emerald-400" /> Hedefler
         </h3>
         <span className="flex items-center gap-2 shrink-0">
-          <span className="text-[10px] font-mono text-zinc-500">
+          <span className="text-[10px] font-mono text-zinc-400">
             {rows.filter(r => r.hasTarget).length}/{rows.length} belirlendi
           </span>
           {anyUserEntered && (
@@ -78,9 +78,9 @@ const GoalsCard = memo(({
               onClick={clearAll}
               title="Tüm hedefleri temizle"
               aria-label="Tüm hedefleri temizle"
-              className="text-zinc-600 active:text-red-400 p-1 -mr-1"
+              className="text-zinc-500 active:text-red-400 hover:text-red-400 p-1 -mr-1 transition-colors"
             >
-              <RotateCcw size={12} />
+              <RotateCcw size={13} />
             </button>
           )}
         </span>
