@@ -304,31 +304,31 @@ const ProgramWizardModal = memo(({
       </div>
 
       {/* Adım göstergesi */}
-      <div className="px-3 py-2.5 border-b border-zinc-800 bg-zinc-950/60 shrink-0 flex gap-1.5">
+      <div className="px-4 py-3 border-b border-zinc-800/80 bg-zinc-950/80 shrink-0 flex gap-2">
         {ADIMLAR.map((ad, i) => (
           <div key={ad} className="flex-1">
-            <div className={`h-1 rounded-full ${i < adim ? 'bg-zinc-600' : i === adim ? 'bg-violet-400' : 'bg-zinc-800'}`} />
-            <span className={`text-[8px] font-mono uppercase tracking-widest block mt-1 ${i === adim ? 'text-violet-400' : 'text-zinc-600'}`}>
+            <div className={`h-1.5 rounded-full transition-all duration-300 ${i < adim ? 'bg-violet-600' : i === adim ? 'bg-violet-400 shadow-sm shadow-violet-500/50' : 'bg-zinc-800'}`} />
+            <span className={`text-[8px] font-mono font-bold uppercase tracking-widest block mt-1.5 ${i === adim ? 'text-violet-400' : 'text-zinc-500'}`}>
               {ad}
             </span>
           </div>
         ))}
       </div>
 
-      <div className="px-3 py-2 border-b border-zinc-800 bg-violet-950/10 flex items-center justify-between gap-3">
-        <span className="text-[8px] font-mono text-zinc-500">
+      <div className="px-4 py-2 border-b border-zinc-800/80 bg-violet-950/20 flex items-center justify-between gap-3">
+        <span className="text-[8px] font-mono text-zinc-400">
           {restoredDraft ? 'Kaldığın taslak geri yüklendi' : 'Her seçim bu cihazda otomatik kaydedilir'}
         </span>
-        <button type="button" onClick={resetWizard} className="text-[8px] font-bold text-violet-400 active:text-violet-200 shrink-0">
+        <button type="button" onClick={resetWizard} className="text-[9px] font-black uppercase tracking-wider text-violet-400 active:text-violet-200 shrink-0">
           Sıfırdan Başla
         </button>
       </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+      <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
 
         {adim === 0 && (
           <>
-            <p className="text-[10px] font-mono text-zinc-500 leading-relaxed px-1">
+            <p className="text-[10px] font-mono text-zinc-400 leading-relaxed px-1">
               Önce haftalık gün sayını, sonra sana en rahat gelen çalışma
               düzenini seç. Aynı gün sayısında tek bir doğru bölme yoktur.
             </p>
@@ -346,21 +346,19 @@ const ProgramWizardModal = memo(({
                       setOpenDay(0);
                     }}
                     aria-pressed={secili}
-                    className={`rounded-xl py-2.5 border font-mono transition-colors ${secili ? 'border-violet-500 bg-violet-950/35 text-violet-200' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                    className={`rounded-2xl py-3 border font-mono active:scale-[0.97] transition-all shadow-sm ${secili ? 'border-violet-500 bg-gradient-to-b from-violet-950/60 to-zinc-950 text-violet-200 shadow-violet-950/40' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
                   >
-                    <strong className="text-sm block">{g}</strong>
-                    <span className="text-[8px]">gün</span>
+                    <strong className="text-sm font-black block">{g}</strong>
+                    <span className="text-[8px] uppercase tracking-wider">gün</span>
                   </button>
                 );
               })}
             </div>
 
-            {/* Seans süresi. Sihirbaz 6.9'a kadar herkese aynı 30 setlik
-                tavanı uyguluyordu; 45 dakikası olan biri için üretilen program
-                ilk haftadan uygulanamazdı. */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest px-1 flex items-center gap-1.5">
-                <Clock size={11} className="text-cyan-400" /> Seansa ayırabildiğin süre
+            {/* Seans süresi */}
+            <div className="space-y-2">
+              <span className="text-[10px] font-black text-zinc-200 uppercase tracking-widest px-1 flex items-center gap-1.5">
+                <Clock size={12} className="text-cyan-400" /> Seansa ayırabildiğin süre
               </span>
               <div className="grid grid-cols-4 gap-1.5">
                 {SESSION_LENGTHS.map(u => {
@@ -371,28 +369,28 @@ const ProgramWizardModal = memo(({
                       onClick={() => setSessionLength(u.key)}
                       aria-pressed={secili}
                       title={u.hint}
-                      className={`rounded-xl py-2 border font-mono transition-colors ${secili ? 'border-cyan-500 bg-cyan-950/30 text-cyan-200' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}
+                      className={`rounded-2xl py-2.5 border font-mono active:scale-[0.97] transition-all shadow-sm ${secili ? 'border-cyan-500 bg-gradient-to-b from-cyan-950/50 to-zinc-950 text-cyan-200 shadow-cyan-950/40' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
                     >
-                      <strong className="text-[11px] block">{u.label}</strong>
+                      <strong className="text-[11px] font-bold block">{u.label}</strong>
                       <span className="text-[8px]">≤{u.cap} set</span>
                     </button>
                   );
                 })}
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+              <p className="text-[9px] font-mono text-zinc-500 leading-relaxed px-1">
                 {findSessionLength(sessionLength).hint}. Set başına ısınma ve
                 dinlenme dahil ortalama üç dakika sayılıyor.
               </p>
             </div>
 
             <div className="flex items-center justify-between px-1 pt-1">
-              <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
+              <h4 className="text-[10px] font-black text-zinc-200 uppercase tracking-widest">
                 {daysPerWeek} gün için {splitOptions.length} düzen
               </h4>
-              <span className="text-[8px] font-mono text-zinc-600">birini seç</span>
+              <span className="text-[8px] font-mono text-zinc-500">birini seç</span>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {splitOptions.map(secenek => {
                 const secili = splitId === secenek.id;
                 return (
@@ -400,11 +398,11 @@ const ProgramWizardModal = memo(({
                     key={secenek.id}
                     onClick={() => { setSplitId(secenek.id); setOpenDay(0); }}
                     aria-pressed={secili}
-                    className={`w-full text-left rounded-2xl p-3.5 border transition-colors ${secili ? 'border-violet-500 bg-violet-950/25 shadow-lg shadow-violet-950/20' : 'border-zinc-800 bg-zinc-900'}`}
+                    className={`w-full text-left rounded-3xl p-4 border active:scale-[0.99] transition-all ${secili ? 'border-violet-500 bg-gradient-to-br from-violet-950/30 via-zinc-900/90 to-zinc-950 shadow-xl shadow-violet-950/30' : 'border-zinc-800/80 bg-zinc-950'}`}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <span className="min-w-0">
-                        <strong className={`text-[12px] block leading-snug ${secili ? 'text-violet-200' : 'text-zinc-200'}`}>
+                        <strong className={`text-[12px] font-bold block leading-snug ${secili ? 'text-violet-200' : 'text-zinc-200'}`}>
                           {secenek.name}
                         </strong>
                         <span className="text-[9px] font-mono text-zinc-500 block mt-0.5">
@@ -412,7 +410,7 @@ const ProgramWizardModal = memo(({
                         </span>
                       </span>
                       {secenek.recommended && (
-                        <span className="text-[8px] font-bold text-emerald-300 bg-emerald-950/40 border border-emerald-900/50 px-2 py-1 rounded-lg shrink-0">
+                        <span className="text-[8px] font-black tracking-wider text-emerald-300 bg-emerald-950/50 border border-emerald-900/60 px-2 py-1 rounded-lg shrink-0">
                           DENGELİ
                         </span>
                       )}

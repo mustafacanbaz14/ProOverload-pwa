@@ -246,15 +246,15 @@ const TemplateBuilderModal = memo(({
           value={programName}
           onChange={(e) => setProgramName(e.target.value)}
           placeholder={editing ? 'Şablon adı' : 'Program adı (örn. Push Pull Legs)'}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-100 outline-none font-mono text-xs focus:border-cyan-500 transition-colors"
+          className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl px-3.5 py-2.5 text-zinc-100 outline-none font-mono text-xs focus:border-cyan-500 transition-colors shadow-inner"
         />
 
         {!editing && (
           <div className="flex items-center justify-between gap-2 px-1">
-            <span className="text-[8px] font-mono text-zinc-600">
+            <span className="text-[8px] font-mono text-zinc-500">
               {storedDraft ? 'Kaydedilmiş taslak geri yüklendi' : 'Değişiklikler bu cihazda otomatik korunur'}
             </span>
-            <span className="text-[8px] font-bold text-emerald-500">Taslak açık</span>
+            <span className="text-[8px] font-black uppercase tracking-wider text-emerald-400">Taslak açık</span>
           </div>
         )}
 
@@ -264,18 +264,18 @@ const TemplateBuilderModal = memo(({
             <button
               key={d.uid}
               onClick={() => { setActiveDay(i); setRemoveArmed(false); }}
-              className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${activeDay === i ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20' : 'border-zinc-800 text-zinc-500'}`}
+              className={`shrink-0 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all active:scale-[0.97] ${activeDay === i ? 'border-cyan-500 text-cyan-300 bg-cyan-950/40 shadow-sm shadow-cyan-950/40' : 'border-zinc-800 text-zinc-500 bg-zinc-950'}`}
             >
-              {d.name} <span className="text-zinc-600">({d.exercises.length})</span>
+              {d.name} <span className="text-zinc-500 font-mono">({d.exercises.length})</span>
             </button>
           ))}
           {days.length < 7 && (
             <button
               onClick={addDay}
               aria-label="Yeni program günü ekle"
-              className="shrink-0 px-2.5 py-1.5 rounded-lg border border-dashed border-zinc-700 text-zinc-500 active:text-cyan-400"
+              className="shrink-0 p-2 rounded-xl border border-dashed border-zinc-700 text-zinc-400 active:text-cyan-400 hover:border-cyan-500 transition-colors"
             >
-              <Plus size={13} />
+              <Plus size={14} />
             </button>
           )}
         </div>
@@ -288,7 +288,7 @@ const TemplateBuilderModal = memo(({
               value={day.name}
               onChange={(e) => updateDay({ name: e.target.value })}
               placeholder="Gün adı (örn. Push)"
-              className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-300 outline-none font-mono text-[11px] focus:border-cyan-500 transition-colors"
+              className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl px-3.5 py-2 text-zinc-200 outline-none font-mono text-[11px] focus:border-cyan-500 transition-colors shadow-inner"
             />
             <div className="flex gap-1 overflow-x-auto hide-scrollbar" aria-label="Haftanın günü">
               {WEEKDAYS.map(weekday => (
@@ -296,7 +296,7 @@ const TemplateBuilderModal = memo(({
                   key={weekday.key}
                   type="button"
                   onClick={() => updateDay({ weekday: weekday.key })}
-                  className={`shrink-0 rounded-lg border px-2 py-1.5 text-[9px] font-bold ${day.weekday === weekday.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 text-zinc-600'}`}
+                  className={`shrink-0 rounded-xl border px-2.5 py-1.5 text-[9px] font-mono font-bold transition-all ${day.weekday === weekday.key ? 'border-emerald-500 bg-emerald-950/40 text-emerald-300 shadow-sm' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
                 >
                   {weekday.short}
                 </button>

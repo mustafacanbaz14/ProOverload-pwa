@@ -11,18 +11,18 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
   const past = RELEASE_HISTORY.slice(1);
 
   return (
-    <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-[150] flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl max-w-sm w-full max-h-[88dvh] flex flex-col shadow-2xl animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-        <div className="flex items-start justify-between p-5 pb-3 shrink-0">
+    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl max-w-sm w-full max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+        <div className="flex items-start justify-between p-5 pb-3.5 shrink-0 border-b border-zinc-800/80 bg-zinc-950/50">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-cyan-950/60 border border-cyan-800/50 flex items-center justify-center text-cyan-400">
+            <div className="w-9 h-9 rounded-2xl bg-cyan-950/60 border border-cyan-800/50 flex items-center justify-center text-cyan-400 shadow-sm">
               <Sparkles size={18} />
             </div>
             <div>
-              <span className="text-[9px] font-mono font-bold uppercase text-cyan-400 tracking-wider block">
+              <span className="text-[9px] font-mono font-bold uppercase text-cyan-400 tracking-widest block">
                 Güncelleme Merkezi
               </span>
-              <h3 className="text-base font-black text-zinc-100 mt-0.5">
+              <h3 className="text-base font-black text-zinc-100 mt-0.5 tracking-tight">
                 ProOverload v{LATEST_RELEASE_NOTES.version}
               </h3>
             </div>
@@ -30,27 +30,27 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
           <button
             type="button"
             onClick={onClose}
-            className="text-zinc-500 hover:text-zinc-300 p-1 -mr-1 transition-colors"
+            className="luxury-icon-button"
             aria-label="Kapat"
           >
             <X size={18} />
           </button>
         </div>
 
-        <div className="grid grid-cols-2 gap-1 mx-5 mb-3 p-1 bg-zinc-950 border border-zinc-800 rounded-2xl shrink-0">
+        <div className="luxury-segmented grid grid-cols-2 gap-1.5 mx-5 my-3 p-1.5 bg-zinc-950/80 border border-zinc-800 rounded-2xl shrink-0 shadow-inner">
           <button
             type="button"
             onClick={() => setTab('latest')}
-            className={`rounded-xl py-2.5 text-[9px] font-bold uppercase flex items-center justify-center gap-1.5 ${tab === 'latest' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+            className={`rounded-xl py-2.5 text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${tab === 'latest' ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             <Sparkles size={11} /> Son Güncelleme
           </button>
           <button
             type="button"
             onClick={() => setTab('history')}
-            className={`rounded-xl py-2.5 text-[9px] font-bold uppercase flex items-center justify-center gap-1.5 ${tab === 'history' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+            className={`rounded-xl py-2.5 text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${tab === 'history' ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
-            <History size={11} /> Geçmiş
+            <History size={11} /> Geçmiş Sürümler
           </button>
         </div>
 
