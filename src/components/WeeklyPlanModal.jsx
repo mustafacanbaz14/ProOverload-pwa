@@ -117,105 +117,103 @@ const WeeklyPlanModal = memo(({
   const aktifMi = plan.id === activePlanId;
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[86] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <CalendarRange size={15} className="mr-2 text-cyan-400" /> Haftalık Programlar
-        </h3>
-        <span className="flex items-center gap-1">
-          {/* Plan uygulamanın içinde duruyordu ve hayatın geri kalanı başka bir
-              takvimde. Dosya olarak iniyor, hiçbir veri dışarı gitmiyor. */}
-          {onExportCalendar && (
-            <button
-              onClick={onExportCalendar}
-              title="Haftalık planı takvim dosyası (.ics) olarak indir"
-              aria-label="Planı takvime aktar"
-              className="text-zinc-500 active:text-cyan-400 p-2"
-            >
-              <CalendarPlus size={17} />
+    <div role="dialog" aria-modal="true" aria-labelledby="weekly-plan-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[86] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="weekly-plan-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <CalendarRange size={16} className="mr-2 text-cyan-400" /> Haftalık Programlar & Plan
+          </h3>
+          <div className="flex items-center gap-1.5">
+            {onExportCalendar && (
+              <button
+                onClick={onExportCalendar}
+                title="Haftalık planı takvim dosyası (.ics) olarak indir"
+                aria-label="Planı takvime aktar"
+                className="luxury-icon-button text-cyan-400"
+              >
+                <CalendarPlus size={16} />
+              </button>
+            )}
+            <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+              <X size={18} />
             </button>
-          )}
-          <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-            <X size={20} />
-          </button>
-        </span>
-      </div>
-
-      {/* Program seçici */}
-      <div className="p-3 space-y-2 border-b border-zinc-800 bg-zinc-950 shrink-0">
-        <div className="flex gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1 items-center">
-          {plans.map(p => (
-            <button
-              key={p.id}
-              onClick={() => setSeciliPlanId(p.id)}
-              className={`shrink-0 px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-colors flex items-center gap-1.5 ${p.id === plan.id ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20' : 'border-zinc-800 text-zinc-500'}`}
-            >
-              {p.id === activePlanId && <Star size={10} className="text-amber-400 fill-amber-400" />}
-              {p.name}
-            </button>
-          ))}
-          <button
-            onClick={planEkle}
-            aria-label="Yeni program"
-            className="shrink-0 px-2.5 py-1.5 rounded-lg border border-dashed border-zinc-700 text-zinc-500 active:text-cyan-400"
-          >
-            <Plus size={13} />
-          </button>
+          </div>
         </div>
 
-        {renaming === plan.id ? (
-          <div className="flex gap-1.5">
-            <input
-              autoFocus
-              type="text"
-              value={plan.name}
-              onChange={(e) => planGuncelle({ name: e.target.value })}
-              onKeyDown={(e) => { if (e.key === 'Enter') setRenaming(null); }}
-              className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-zinc-100 outline-none font-mono text-[12px] focus:border-cyan-500"
-            />
-            <button onClick={() => setRenaming(null)} className="px-3 rounded-xl bg-cyan-600 text-white" aria-label="Adı onayla">
-              <Check size={14} />
+        {/* Program seçici */}
+        <div className="p-4 space-y-3 border-b border-zinc-800/80 bg-zinc-950/95 shrink-0">
+          <div className="flex gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1 items-center">
+            {plans.map(p => (
+              <button
+                key={p.id}
+                onClick={() => setSeciliPlanId(p.id)}
+                className={`shrink-0 px-3.5 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all active:scale-[0.97] flex items-center gap-1.5 ${p.id === plan.id ? 'border-cyan-500 text-cyan-300 bg-cyan-950/40 shadow-sm shadow-cyan-950/40' : 'border-zinc-800 text-zinc-500 bg-zinc-900/60'}`}
+              >
+                {p.id === activePlanId && <Star size={11} className="text-amber-400 fill-amber-400" />}
+                {p.name}
+              </button>
+            ))}
+            <button
+              onClick={planEkle}
+              aria-label="Yeni program"
+              className="shrink-0 px-3 py-2 rounded-xl border border-dashed border-zinc-700 text-zinc-400 active:scale-[0.97] hover:text-cyan-400 transition-all"
+            >
+              <Plus size={13} />
             </button>
           </div>
-        ) : (
-          <div className="flex items-center gap-1.5">
-            <button
-              onClick={() => onChangeActive(plan.id)}
-              disabled={aktifMi}
-              className={`flex-1 py-2 rounded-xl text-[11px] font-bold uppercase tracking-wider border flex items-center justify-center gap-1.5 transition-colors ${aktifMi
-                ? 'border-amber-700/60 text-amber-400 bg-amber-950/20'
-                : 'border-zinc-800 text-zinc-400 bg-zinc-900 active:bg-zinc-800'}`}
-            >
-              <Star size={12} className={aktifMi ? 'fill-amber-400' : ''} />
-              {aktifMi ? 'Aktif Şablon' : 'Aktif Yap'}
-            </button>
-            <button onClick={() => setRenaming(plan.id)} className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 active:text-cyan-400" aria-label="Adı değiştir">
-              <Pencil size={13} />
-            </button>
-            <button onClick={planKopyala} className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-400 active:text-cyan-400" aria-label="Programı kopyala">
-              <Layers size={13} />
-            </button>
-            <button
-              onClick={planSil}
-              disabled={plans.length <= 1}
-              className="p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 text-zinc-500 active:text-red-500 disabled:opacity-30"
-              aria-label="Programı sil"
-            >
-              <Trash2 size={13} />
-            </button>
-          </div>
-        )}
 
-        {!aktifMi && (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
-            Bu programı görüntülüyorsun. Ana ekrandaki teorik hesaplar yıldızlı
-            (aktif) programı kullanır.
-          </p>
-        )}
-      </div>
+          {renaming === plan.id ? (
+            <div className="flex gap-1.5">
+              <input
+                autoFocus
+                type="text"
+                value={plan.name}
+                onChange={(e) => planGuncelle({ name: e.target.value })}
+                onKeyDown={(e) => { if (e.key === 'Enter') setRenaming(null); }}
+                className="flex-1 bg-zinc-900 border border-zinc-800 rounded-2xl px-3.5 py-2 text-zinc-100 outline-none font-mono text-xs focus:border-cyan-500 shadow-inner"
+              />
+              <button onClick={() => setRenaming(null)} className="px-3.5 rounded-2xl bg-cyan-600 text-white active:scale-95 transition-transform" aria-label="Adı onayla">
+                <Check size={15} />
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => onChangeActive(plan.id)}
+                disabled={aktifMi}
+                className={`flex-1 py-2.5 rounded-2xl text-[11px] font-black uppercase tracking-wider border flex items-center justify-center gap-2 transition-all active:scale-[0.97] ${aktifMi
+                  ? 'border-amber-600/70 text-amber-300 bg-amber-950/30 shadow-md shadow-amber-950/30'
+                  : 'border-zinc-800 text-zinc-400 bg-zinc-900/90 hover:bg-zinc-800'}`}
+              >
+                <Star size={13} className={aktifMi ? 'fill-amber-400' : ''} />
+                {aktifMi ? 'Aktif Program' : 'Aktif Olarak Ata'}
+              </button>
+              <button onClick={() => setRenaming(plan.id)} className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 active:text-cyan-400 hover:bg-zinc-800/80 transition-colors" aria-label="Adı değiştir">
+                <Pencil size={14} />
+              </button>
+              <button onClick={planKopyala} className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 active:text-cyan-400 hover:bg-zinc-800/80 transition-colors" aria-label="Programı kopyala">
+                <Layers size={14} />
+              </button>
+              <button
+                onClick={planSil}
+                disabled={plans.length <= 1}
+                className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-500 active:text-red-400 hover:bg-zinc-800/80 disabled:opacity-30 transition-colors"
+                aria-label="Programı sil"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
+          )}
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+          {!aktifMi && (
+            <p className="text-[9px] font-mono text-zinc-500 leading-relaxed px-1">
+              Bu programı görüntülüyorsun. Ana ekrandaki hesaplamalar yıldızlı
+              (aktif) programı kullanır.
+            </p>
+          )}
+        </div>
+
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
 
         <PlanningGuide mode="week" />
 
@@ -604,6 +602,7 @@ const WeeklyPlanModal = memo(({
         </div>
       </div>
     </div>
+  </div>
   );
 });
 

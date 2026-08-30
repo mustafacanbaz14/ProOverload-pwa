@@ -35,17 +35,18 @@ const DeloadModal = memo(({ isOpen, onClose, deload, onChange, suggestion }) => 
   };
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[94] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <BatteryLow size={15} className="mr-2 text-amber-400" /> Deload
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
+    <div role="dialog" aria-modal="true" aria-labelledby="deload-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[94] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="deload-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <BatteryLow size={16} className="mr-2 text-amber-400" /> Deload Planlayıcı
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
 
         {/* Devam eden deload */}
         {mevcut.active && (
@@ -181,16 +182,17 @@ const DeloadModal = memo(({ isOpen, onClose, deload, onChange, suggestion }) => 
       </div>
 
       {!mevcut.active && (
-        <div className="p-3 border-t border-zinc-800 bg-zinc-950 shrink-0 pb-safe">
+        <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/95 shrink-0 pb-safe">
           <button
             onClick={baslat}
-            className="w-full bg-amber-600 active:bg-amber-700 text-white font-bold py-3.5 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"
+            className="w-full bg-gradient-to-r from-amber-600 to-amber-500 active:scale-[0.98] text-white font-black py-3.5 rounded-2xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 shadow-lg shadow-amber-950/50 transition-all"
           >
-            <BatteryLow size={15} /> {secili.label} · {days} gün başlat
+            <BatteryLow size={16} /> {secili.label} · {days} Gün Başlat
           </button>
         </div>
       )}
     </div>
+  </div>
   );
 });
 
