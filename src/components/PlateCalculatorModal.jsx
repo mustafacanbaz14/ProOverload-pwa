@@ -32,35 +32,35 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
   const warmup = generateWarmup(weight, bar, envanter);
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[95] flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh]">
+    <div role="dialog" aria-modal="true" aria-labelledby="plate-calc-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[95] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
 
-        <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950 shrink-0">
-          <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-            <Layers size={15} className="mr-2 text-cyan-400" /> Plaka & Isınma
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="plate-calc-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Layers size={16} className="mr-2 text-cyan-400" /> Plaka & Isınma Hesaplayıcı
           </h3>
-          <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-            <X size={20} />
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
           </button>
         </div>
 
-        <div className="p-3 space-y-3 border-b border-zinc-800 bg-zinc-950 shrink-0">
-          <div className="flex gap-2">
+        <div className="p-4 space-y-3.5 border-b border-zinc-800/80 bg-zinc-950/95 shrink-0">
+          <div className="flex gap-2.5">
             <div className="flex-1">
-              <label className="text-[10px] font-mono text-zinc-500 uppercase block mb-1">Hedef (kg)</label>
+              <label className="text-[10px] font-mono text-zinc-400 uppercase font-bold block mb-1">Hedef (kg)</label>
               <input
                 type="number" inputMode="decimal" step="1.25"
                 value={weight}
                 onChange={(e) => setWeight(Number(e.target.value) || 0)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 text-center font-mono text-lg font-bold text-cyan-400 outline-none focus:border-cyan-600"
+                className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl py-2.5 text-center font-mono text-lg font-black text-cyan-400 outline-none focus:border-cyan-500 shadow-inner"
               />
             </div>
             <div className="flex-1">
-              <label className="text-[10px] font-mono text-zinc-500 uppercase block mb-1">Bar</label>
+              <label className="text-[10px] font-mono text-zinc-400 uppercase font-bold block mb-1">Bar Tipi</label>
               <select
                 value={bar}
                 onChange={(e) => setBar(Number(e.target.value))}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 px-2 text-[11px] font-mono text-zinc-200 outline-none h-[46px]"
+                className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl py-2.5 px-3 text-[11px] font-mono text-zinc-200 outline-none h-[46px] shadow-inner"
               >
                 {BAR_OPTIONS.map(o => (
                   <option key={o.weight} value={o.weight}>{o.label}</option>
@@ -74,14 +74,14 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
               <button
                 key={delta}
                 onClick={() => setWeight(w => Math.max(0, Math.round((w + delta) * 100) / 100))}
-                className="flex-1 py-2 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 text-[11px] font-bold active:bg-zinc-800 transition-colors"
+                className="flex-1 py-2 rounded-xl border border-zinc-800/80 bg-zinc-900/90 text-zinc-300 text-[11px] font-black uppercase active:scale-95 transition-all shadow-sm"
               >
                 {delta > 0 ? `+${delta}` : delta}
               </button>
             ))}
           </div>
 
-          <div className="flex bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+          <div className="luxury-segmented flex gap-1 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800 shadow-inner">
             {[
               { key: 'plates', label: 'Plakalar', icon: Layers },
               { key: 'warmup', label: 'Isınma', icon: Flame },
@@ -91,9 +91,9 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
                 <button
                   key={t.key}
                   onClick={() => setTab(t.key)}
-                  className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${tab === t.key ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center ${tab === t.key ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
                 >
-                  <TabIcon size={12} className="mr-1" /> {t.label}
+                  <TabIcon size={13} className="mr-1.5" /> {t.label}
                 </button>
               );
             })}

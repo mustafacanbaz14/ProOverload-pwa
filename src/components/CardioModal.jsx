@@ -115,18 +115,18 @@ const CardioModal = memo(({
   };
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[95] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
+    <div role="dialog" aria-modal="true" aria-labelledby="cardio-modal-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[95] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="cardio-modal-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <HeartPulse size={16} className="mr-2 text-rose-500" /> {editingEntry ? 'Kardiyo & Aktivite Düzenle' : 'Kardiyo & Aktivite Ekle'}
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
+        </div>
 
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <HeartPulse size={15} className="mr-2 text-red-400" /> {editingEntry ? 'Kardiyo / Aktivite Düzenle' : 'Kardiyo / Aktivite Ekle'}
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
-
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
 
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex items-center gap-3">
           <CalendarDays size={16} className="text-cyan-400 shrink-0" />
@@ -497,6 +497,7 @@ const CardioModal = memo(({
         )}
       </div>
     </div>
+  </div>
   );
 });
 
