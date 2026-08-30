@@ -30,17 +30,17 @@ const CoachCalibrationCard = memo(({ report, onOpenLedger }) => {
             <strong className={`text-base font-mono block ${enough ? 'text-emerald-400' : 'text-zinc-500'}`}>
               {enough ? `%${report.overallRate}` : '—'}
             </strong>
-            <span className="text-[7px] font-mono text-zinc-600">isabet</span>
+            <span className="text-[7px] font-mono text-zinc-400">isabet</span>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 py-2.5 text-center">
             <strong className="text-base font-mono text-cyan-400 block">{report.tested}</strong>
-            <span className="text-[7px] font-mono text-zinc-600">ölçüldü</span>
+            <span className="text-[7px] font-mono text-zinc-400">ölçüldü</span>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 py-2.5 text-center">
             <strong className="text-base font-mono text-violet-400 block">
               {report.complianceRate === null ? '—' : `%${report.complianceRate}`}
             </strong>
-            <span className="text-[7px] font-mono text-zinc-600">uygulama</span>
+            <span className="text-[7px] font-mono text-zinc-400">uygulama</span>
           </div>
         </div>
 

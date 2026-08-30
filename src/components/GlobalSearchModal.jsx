@@ -54,7 +54,7 @@ const GlobalSearchModal = memo(({
         {results.exerciseMatches.length > 0 && <ResultGroup title="Hareketler" items={results.exerciseMatches.map(name => ({ label: name, hint: 'Kas katkılarını görüntüle ve düzenle', icon: Dumbbell, onClick: () => run(() => onExercise(name)) }))} />}
         {results.templateMatches.length > 0 && <ResultGroup title="Şablonlar" items={results.templateMatches.map(item => ({ label: item.name, hint: `${(item.exercises || []).length} hareket`, icon: LayoutGrid, onClick: () => run(() => onTemplate(item)) }))} />}
         {results.workoutMatches.length > 0 && <ResultGroup title="Geçmiş Antrenmanlar" items={results.workoutMatches.map(item => ({ label: item.name || 'Serbest Antrenman', hint: formatDay(item.date, 'medium', { year: true }), icon: Clock, onClick: () => run(() => onNavigate('history', 'workouts')) }))} />}
-        {!hasAny && <p className="text-center py-16 text-xs font-mono text-zinc-600">Eşleşen sonuç yok.</p>}
+        {!hasAny && <p className="text-center py-16 text-xs font-mono text-zinc-400">Eşleşen sonuç yok.</p>}
       </div>
     </div>
   );
@@ -62,11 +62,11 @@ const GlobalSearchModal = memo(({
 
 const ResultGroup = ({ title, items }) => (
   <section>
-    <h3 className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest mb-2 px-1">{title}</h3>
+    <h3 className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest mb-2 px-1">{title}</h3>
     <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden divide-y divide-zinc-800">
       {items.map((item, index) => {
         const Icon = item.icon || LayoutGrid;
-        return <button key={`${item.label}-${index}`} onClick={item.onClick} className="w-full p-3 flex gap-3 items-center text-left active:bg-zinc-800"><Icon size={15} className="text-cyan-400 shrink-0" /><span className="min-w-0"><strong className="text-[11px] text-zinc-200 block truncate">{item.label}</strong><span className="text-[9px] font-mono text-zinc-600 block truncate">{item.hint}</span></span></button>;
+        return <button key={`${item.label}-${index}`} onClick={item.onClick} className="w-full p-3 flex gap-3 items-center text-left active:bg-zinc-800"><Icon size={15} className="text-cyan-400 shrink-0" /><span className="min-w-0"><strong className="text-[11px] text-zinc-200 block truncate">{item.label}</strong><span className="text-[9px] font-mono text-zinc-400 block truncate">{item.hint}</span></span></button>;
       })}
     </div>
   </section>

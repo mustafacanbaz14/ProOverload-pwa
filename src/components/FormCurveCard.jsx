@@ -55,7 +55,7 @@ const FormCurveCard = memo(({ curve }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Activity size={12} className="mr-1.5 text-violet-400" /> Form Eğrisi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600 flex items-center gap-1">
+        <span className="text-[9px] font-mono text-zinc-400 flex items-center gap-1">
           {yonIkon} {curve.trend.delta > 0 ? '+' : ''}{curve.trend.delta} / hafta
         </span>
       </div>
@@ -69,7 +69,7 @@ const FormCurveCard = memo(({ curve }) => {
           ].map(k => (
             <div key={k.label} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2 text-center">
               <strong className={`text-[13px] font-mono block ${k.cls}`}>{k.value}</strong>
-              <span className="text-[8px] font-mono text-zinc-600">{k.label}</span>
+              <span className="text-[8px] font-mono text-zinc-400">{k.label}</span>
             </div>
           ))}
         </div>
@@ -107,7 +107,7 @@ const FormCurveCard = memo(({ curve }) => {
           </div>
         )}
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           Üstel sönümlü bir model (fitness yaklaşık altı hafta, yorgunluk bir
           hafta yarı ömürle sönüyor). Sabitler kişiye göre değişiyor, burada
           literatürün yaygın değerleri kullanılıyor — işe yarayan taraf mutlak

@@ -38,8 +38,8 @@ const ScenarioModal = memo(({ isOpen, onClose, muscleStates = [], profile = null
   const bedel = totalCost(oneriler);
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="scenario-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+    <div role="dialog" aria-modal="true" aria-labelledby="scenario-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4 luxury-sheet-host">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] luxury-sheet shadow-2xl shadow-black/80">
         <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
           <h3 id="scenario-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
             <FlaskConical size={16} className="mr-2 text-violet-400" /> Senaryo Simülasyonu

@@ -167,13 +167,13 @@ const EnergyDetailModal = memo(({
                       <span className={`w-2 h-2 rounded-full shrink-0 mt-1 ${p.color}`} />
                       <span className="min-w-0">
                         <span className="text-[11px] font-bold text-zinc-200 block truncate">{p.label}</span>
-                        <span className="text-[9px] font-mono text-zinc-600 block leading-snug">{p.hint}</span>
+                        <span className="text-[9px] font-mono text-zinc-400 block leading-snug">{p.hint}</span>
                         <span className="inline-block mt-0.5 rounded border border-zinc-800 px-1 py-0.5 text-[8px] font-mono text-zinc-500">{p.source}</span>
                       </span>
                     </span>
                     <span className="text-[11px] font-mono text-zinc-300 shrink-0">
                       {p.value}
-                      <span className="text-zinc-600"> · %{Math.round((p.value / today.total) * 100)}</span>
+                      <span className="text-zinc-400"> · %{Math.round((p.value / today.total) * 100)}</span>
                     </span>
                   </div>
                 ))}
@@ -206,7 +206,7 @@ const EnergyDetailModal = memo(({
                     <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center">
                       <Footprints size={11} className="mr-1.5 text-cyan-400" /> Günlük Hareket Detayı
                     </h4>
-                    <span className="text-[9px] font-mono text-zinc-600">
+                    <span className="text-[9px] font-mono text-zinc-400">
                       {carpan !== 1 ? `çarpan ${carpan}×` : 'çarpan yok'}
                     </span>
                   </div>
@@ -222,11 +222,11 @@ const EnergyDetailModal = memo(({
                           <span className={`text-[11px] font-bold ${secili ? 'text-cyan-300' : 'text-zinc-300'}`}>
                             {y.label}{maintenanceEstimated && y.key === 'auto' ? ' · tahmini' : ''}{secili && ' · kullanılan'}
                           </span>
-                          <span className={`text-[12px] font-mono font-bold shrink-0 ${y.value === null ? 'text-zinc-600' : secili ? 'text-cyan-400' : 'text-zinc-400'}`}>
+                          <span className={`text-[12px] font-mono font-bold shrink-0 ${y.value === null ? 'text-zinc-400' : secili ? 'text-cyan-400' : 'text-zinc-400'}`}>
                             {y.value === null ? '—' : `${y.value} kcal`}
                           </span>
                         </div>
-                        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1">{y.formula}</p>
+                        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">{y.formula}</p>
                         {secili && (
                           <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">{y.note}</p>
                         )}
@@ -234,7 +234,7 @@ const EnergyDetailModal = memo(({
                     );
                   })}
 
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                     Yöntemi ve çarpanı Ayarlar &gt; Vücut &amp; Hesaplama&apos;dan
                     değiştirebilirsin. Yöntemler arasındaki fark büyükse, veri
                     biriktikçe otomatik yöntem en isabetlisi olur.
@@ -260,7 +260,7 @@ const EnergyDetailModal = memo(({
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                 Bazal metabolizma yağsız kütleden hesaplanır (Katch-McArdle):
                 <strong className="text-zinc-400"> 370 + 21.6 × {computedComp?.ffm || '—'} = {bmr} kcal</strong>.
                 Kas kazanmak bazal harcamanı kalıcı olarak yükseltir; yağ kaybı
@@ -268,7 +268,7 @@ const EnergyDetailModal = memo(({
               </p>
             </div>
 
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
               {maintenanceEstimated
                 ? 'Henüz gerçek TDEE olmadığı için günlük hareket, seçtiğin yaşam seviyesiyle kuruluyor. Kilo ve beslenme trendi yeterli olduğunda otomatik olarak kişisel artık yöntemine geçer.'
                 : 'Günlük hareket, gerçek korunum kalorisinden bazal, sindirim ve ortalama egzersiz payı düşülerek bulunur; bugünkü egzersiz daha sonra ayrıca eklenir.'}
@@ -279,15 +279,15 @@ const EnergyDetailModal = memo(({
         {/* --- GÜN GÜN --- */}
         {tab === 'days' && (
           series.length === 0 ? (
-            <p className="text-center py-10 text-[11px] font-mono text-zinc-600">Kayıt yok.</p>
+            <p className="text-center py-10 text-[11px] font-mono text-zinc-400">Kayıt yok.</p>
           ) : (
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
               <div className="px-3 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between gap-3">
                 <div>
                   <strong className="text-[9px] text-zinc-300 block">Günlük kalori dökümü</strong>
-                  <span className="text-[8px] font-mono text-zinc-600">Bir güne dokun: harcama kaynakları ve o günün NEAT ayarı açılır.</span>
+                  <span className="text-[8px] font-mono text-zinc-400">Bir güne dokun: harcama kaynakları ve o günün NEAT ayarı açılır.</span>
                 </div>
-                <span className="text-[8px] font-mono text-zinc-600 shrink-0">Son 365 gün</span>
+                <span className="text-[8px] font-mono text-zinc-400 shrink-0">Son 365 gün</span>
               </div>
               <div className="overflow-x-auto hide-scrollbar">
                 <table className="w-full text-[10px] font-mono">
@@ -309,11 +309,11 @@ const EnergyDetailModal = memo(({
                           <td className="text-left px-3 py-2 whitespace-nowrap">
                             <ChevronDown
                               size={10}
-                              className={`inline mr-1 text-zinc-600 transition-transform ${openDay === d.date ? 'rotate-180' : ''}`}
+                              className={`inline mr-1 text-zinc-400 transition-transform ${openDay === d.date ? 'rotate-180' : ''}`}
                             />
                             <span className="text-zinc-300">{dateShort(d.date)}</span>
                             {d.isRestDay
-                              ? <Moon size={9} className="inline ml-1 text-zinc-600" />
+                              ? <Moon size={9} className="inline ml-1 text-zinc-400" />
                               : <Dumbbell size={9} className="inline ml-1 text-emerald-500" />}
                           </td>
                           <td className="text-right px-2 py-2 text-cyan-400">{d.intake}</td>
@@ -335,7 +335,7 @@ const EnergyDetailModal = memo(({
                                       <span className={`w-1.5 h-1.5 rounded-full ${p.color}`} />
                                       <span className="min-w-0">
                                         <span className="text-zinc-400 block">{p.label}</span>
-                                        <span className="text-[8px] text-zinc-600 block">{p.source}</span>
+                                        <span className="text-[8px] text-zinc-400 block">{p.source}</span>
                                       </span>
                                     </span>
                                     <span className="text-zinc-300">{p.value} kcal</span>
@@ -348,12 +348,12 @@ const EnergyDetailModal = memo(({
                                   </span>
                                 </div>
                                 {d.breakdown.bodyContext?.metricDate && (
-                                  <div className="flex justify-between text-[9px] font-mono text-zinc-600">
+                                  <div className="flex justify-between text-[9px] font-mono text-zinc-400">
                                     <span>Vücut verisi</span>
                                     <span>{dateShort(d.breakdown.bodyContext.metricDate)} · {Math.round(d.breakdown.bodyContext.weight * 10) / 10} kg</span>
                                   </div>
                                 )}
-                                <div className="flex justify-between gap-3 text-[8px] font-mono text-zinc-600">
+                                <div className="flex justify-between gap-3 text-[8px] font-mono text-zinc-400">
                                   <span>Hesap bağlamı</span>
                                   <span className="text-right">
                                     {d.breakdown.historicalSource === 'snapshot'
@@ -383,7 +383,7 @@ const EnergyDetailModal = memo(({
                                           {hasOverride ? 'Bu güne özel' : `Genel · ×${defaultNeatMultiplier}`}
                                         </span>
                                       </div>
-                                      <p className="text-[8px] font-mono text-zinc-600 leading-relaxed">
+                                      <p className="text-[8px] font-mono text-zinc-400 leading-relaxed">
                                         Bu kontrol yalnız {dateShort(d.date)} tarihini değiştirir. Genel seçilirse Ayarlar’daki {neatOpts.neatMode || 'auto'} modu kullanılır.
                                       </p>
 
@@ -511,7 +511,7 @@ const EnergyDetailModal = memo(({
                   </tbody>
                 </table>
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 px-3 py-2 border-t border-zinc-800 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 px-3 py-2 border-t border-zinc-800 leading-relaxed">
                 Satıra dokununca o günün dökümü açılır. Ay ikonu dinlenme, halter
                 antrenman günü. Yakılan sütunu bazal + günlük hareket + sindirim +
                 egzersiz toplamıdır.
@@ -523,7 +523,7 @@ const EnergyDetailModal = memo(({
         {/* --- HAFTA --- */}
         {tab === 'weeks' && (
           weeks.length === 0 ? (
-            <p className="text-center py-10 text-[11px] font-mono text-zinc-600">Kayıt yok.</p>
+            <p className="text-center py-10 text-[11px] font-mono text-zinc-400">Kayıt yok.</p>
           ) : (
             <div className="space-y-2.5">
               {weeks.map(w => (
@@ -532,7 +532,7 @@ const EnergyDetailModal = memo(({
                     <span className="text-[11px] font-bold text-zinc-200 min-w-0 truncate">
                       {w.rangeLabel}
                     </span>
-                    <span className="text-[9px] font-mono text-zinc-600 shrink-0">
+                    <span className="text-[9px] font-mono text-zinc-400 shrink-0">
                       {w.days}/7 gün · {w.restDays} dinlenme
                     </span>
                   </div>
@@ -576,14 +576,14 @@ const EnergyDetailModal = memo(({
         {/* --- TEORİK --- */}
         {tab === 'plan' && (
           !plan ? (
-            <p className="text-center py-10 text-[11px] font-mono text-zinc-600 px-6 leading-relaxed">
+            <p className="text-center py-10 text-[11px] font-mono text-zinc-400 px-6 leading-relaxed">
               Teorik hesap için korunum kalorisi gerekiyor.
             </p>
           ) : plan.trainingDays === 0 ? (
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center space-y-2">
-              <Sparkles size={18} className="text-zinc-600 mx-auto" />
+              <Sparkles size={18} className="text-zinc-400 mx-auto" />
               <p className="text-[11px] font-bold text-zinc-300">Haftalık program kurulmamış</p>
-              <p className="text-[10px] font-mono text-zinc-600 leading-relaxed">
+              <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">
                 Ana sayfadan Haftalık Program ile şablonlarını günlere dağıtırsan,
                 o programı uyguladığında ne kadar yakacağını buradan görürsün.
               </p>
@@ -636,7 +636,7 @@ const EnergyDetailModal = memo(({
                     <div key={day.key} className="px-4 py-2.5 flex justify-between items-center gap-3">
                       <span>
                         <strong className="text-[11px] text-zinc-200 block">{day.label}</strong>
-                        <span className="text-[9px] font-mono text-zinc-600">
+                        <span className="text-[9px] font-mono text-zinc-400">
                           {day.isActiveRest ? `Aktif off day · ${day.exercise} kcal hareket` : day.isRestDay ? 'Dinlenme günü' : `${day.exercise} egzersiz + ${day.epoc} EPOC`}
                         </span>
                       </span>
@@ -651,7 +651,7 @@ const EnergyDetailModal = memo(({
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
                     <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Plan mı, Gerçek mi</h4>
-                    <span className="text-[9px] font-mono text-zinc-600">son {karsilastirma.days} gün</span>
+                    <span className="text-[9px] font-mono text-zinc-400">son {karsilastirma.days} gün</span>
                   </div>
 
                   <div className="p-3.5 space-y-3">
@@ -696,11 +696,11 @@ const EnergyDetailModal = memo(({
                         <div key={r.date} className="flex justify-between items-center text-[10px] font-mono gap-2">
                           <span className="text-zinc-400 truncate min-w-0">
                             {dateShort(r.date)}
-                            {r.planName && <span className="text-zinc-600"> · {r.planName}</span>}
+                            {r.planName && <span className="text-zinc-400"> · {r.planName}</span>}
                           </span>
                           <span className="shrink-0 flex items-center gap-1.5">
-                            <span className="text-zinc-600">{r.plannedTotal}</span>
-                            <span className="text-zinc-700">→</span>
+                            <span className="text-zinc-400">{r.plannedTotal}</span>
+                            <span className="text-zinc-500">→</span>
                             <span className="text-zinc-200">{r.actualTotal}</span>
                             {r.skipped && <span className="text-amber-500 text-[9px]">atlandı</span>}
                             {r.extra && <span className="text-cyan-500 text-[9px]">ekstra</span>}
@@ -712,7 +712,7 @@ const EnergyDetailModal = memo(({
                 </div>
               )}
 
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
                 Aradaki fark <strong className="text-zinc-400">{plan.trainingDayKcal - plan.restDayKcal} kcal</strong>.
                 Dinlenme günlerinde alımı bu kadar düşürmek, haftalık dengeyi
                 bozmadan antrenman günü daha rahat beslenmeni sağlar.

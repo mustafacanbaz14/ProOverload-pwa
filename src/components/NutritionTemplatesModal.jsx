@@ -91,7 +91,7 @@ const NutritionTemplatesModal = memo(({
                   key={item.key}
                   type="button"
                   onClick={() => setTab(item.key)}
-                  className={`rounded-xl py-2 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${active ? 'bg-orange-600 text-white shadow-md shadow-orange-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  className={`rounded-xl py-2 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${active ? 'bg-orange-700 text-white shadow-md shadow-orange-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
                 >
                   <Icon size={13} />
                   {item.label}
@@ -108,7 +108,7 @@ const NutritionTemplatesModal = memo(({
             <>
               {mealTemplates.length === 0 && dayTemplates.length === 0 && (
                 <div className="rounded-3xl border border-dashed border-zinc-800 p-8 text-center bg-zinc-900/30">
-                  <Utensils size={24} className="mx-auto text-zinc-700 mb-2" />
+                  <Utensils size={24} className="mx-auto text-zinc-500 mb-2" />
                   <p className="text-xs font-bold text-zinc-300">Henüz kayıtlı şablon yok</p>
                   <p className="text-[9px] font-mono text-zinc-500 mt-1 leading-relaxed">Sık yediğin bir öğünü, bütün bir günü veya tarifi bir kez kaydet.</p>
                 </div>

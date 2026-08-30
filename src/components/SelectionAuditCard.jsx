@@ -37,7 +37,7 @@ const SelectionAuditCard = memo(({ statuses = [], customExercises = [] }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Ruler size={12} className="mr-1.5 text-cyan-400" /> Hareket Seçimi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600 shrink-0">{rapor.audited} kas denetlendi</span>
+        <span className="text-[9px] font-mono text-zinc-400 shrink-0">{rapor.audited} kas denetlendi</span>
       </div>
 
       {rapor.clean ? (
@@ -64,7 +64,7 @@ const SelectionAuditCard = memo(({ statuses = [], customExercises = [] }) => {
                   className="w-full px-4 py-2.5 flex justify-between items-center gap-2 text-left active:bg-zinc-800/50 transition-colors"
                 >
                   <span className="flex items-center gap-1.5 min-w-0">
-                    <ChevronDown size={11} className={`text-zinc-600 shrink-0 transition-transform ${acik ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={11} className={`text-zinc-400 shrink-0 transition-transform ${acik ? 'rotate-180' : ''}`} />
                     <span className="text-[11px] font-bold text-zinc-200 truncate">{f.muscle}</span>
                   </span>
                   <span className="flex items-center gap-1.5 shrink-0">
@@ -95,11 +95,11 @@ const SelectionAuditCard = memo(({ statuses = [], customExercises = [] }) => {
                         <div key={h.name} className="flex justify-between items-baseline gap-2 text-[10px] font-mono">
                           <span className="text-zinc-400 truncate min-w-0">
                             {h.name}
-                            {!h.primary && <span className="text-zinc-600"> · dolaylı</span>}
+                            {!h.primary && <span className="text-zinc-400"> · dolaylı</span>}
                           </span>
                           <span className="shrink-0">
                             <span className={BIAS_COLOR[h.bias]}>{LENGTH_BIAS_LABEL[h.bias]}</span>
-                            <span className="text-zinc-600"> · </span>
+                            <span className="text-zinc-400"> · </span>
                             <strong className="text-zinc-300">{Math.round(h.volume * 4) / 4}</strong>
                           </span>
                         </div>
@@ -108,7 +108,7 @@ const SelectionAuditCard = memo(({ statuses = [], customExercises = [] }) => {
 
                     {f.suggestions.length > 0 && (
                       <div>
-                        <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest block mb-1">
+                        <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest block mb-1">
                           Gerilmede yükleyen seçenekler
                         </span>
                         <div className="flex flex-wrap gap-1.5">
@@ -118,7 +118,7 @@ const SelectionAuditCard = memo(({ statuses = [], customExercises = [] }) => {
                             </span>
                           ))}
                         </div>
-                        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1.5">
+                        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">
                           Set EKLEMEK gerekmiyor: mevcut setlerin bir kısmını bu
                           hareketlerden birine kaydırmak yeter. Toplam hacim
                           değişmez, uyaranın niteliği değişir.
@@ -134,7 +134,7 @@ const SelectionAuditCard = memo(({ statuses = [], customExercises = [] }) => {
       )}
 
       <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60">
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           {LENGTH_BIAS_LABEL.stretch}: kasın uzun boydayken yüklendiği hareketler —
           RDL, incline dumbbell fly, baş üstü triseps. {LENGTH_BIAS_LABEL.short}:
           tepe kasılmada yüklenenler — shrug, leg extension, pushdown. Buradaki

@@ -31,7 +31,7 @@ const TrendChart = memo(({ data, color = '#22d3ee', unit = '', decimals = 1 }) =
 
   if (!chartMath) {
     return (
-      <div className="h-32 flex items-center justify-center bg-zinc-950/50 rounded-2xl border border-zinc-800 text-[11px] text-zinc-600 font-mono">
+      <div className="h-32 flex items-center justify-center bg-zinc-950/50 rounded-2xl border border-zinc-800 text-[11px] text-zinc-400 font-mono">
         Trend çizmek için en az 2 kayıt gerekli
       </div>
     );
@@ -74,7 +74,7 @@ const TrendChart = memo(({ data, color = '#22d3ee', unit = '', decimals = 1 }) =
         ))}
       </svg>
 
-      <div className="flex justify-between text-[10px] text-zinc-600 font-mono px-1 uppercase">
+      <div className="flex justify-between text-[10px] text-zinc-400 font-mono px-1 uppercase">
         <span>{data[0].label}</span>
         <span>{data[data.length - 1].label}</span>
       </div>

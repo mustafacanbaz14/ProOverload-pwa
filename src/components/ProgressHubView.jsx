@@ -35,7 +35,7 @@ const ProgressHubView = memo(({ tab, setTab, metricsProps, analyticsProps, gende
         <button onPointerEnter={() => prepare('body')} onFocus={() => prepare('body')} onClick={() => select('body')} className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'body' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>
           <Scale size={14} /> Vücut & Hedefler
         </button>
-        <button onPointerEnter={() => prepare('analysis')} onFocus={() => prepare('analysis')} onClick={() => select('analysis')} className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'analysis' ? 'bg-emerald-600 text-white' : 'text-zinc-500'}`}>
+        <button onPointerEnter={() => prepare('analysis')} onFocus={() => prepare('analysis')} onClick={() => select('analysis')} className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'analysis' ? 'bg-emerald-700 text-white' : 'text-zinc-500'}`}>
           <LineChart size={14} /> Analizler
         </button>
         {gender === 'female' && (

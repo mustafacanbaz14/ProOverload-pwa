@@ -14,7 +14,7 @@ const SessionReportModal = memo(({ report, onClose, comparison = null }) => {
 
   const rozet = (row) => {
     if (row.isNew) return { icon: <Sparkles size={11} />, text: 'ilk kez', tone: 'text-cyan-400' };
-    if (row.delta === null) return { icon: <Minus size={11} />, text: '—', tone: 'text-zinc-600' };
+    if (row.delta === null) return { icon: <Minus size={11} />, text: '—', tone: 'text-zinc-400' };
     if (row.delta > 0) return { icon: <TrendingUp size={11} />, text: `+${row.delta}`, tone: 'text-emerald-400' };
     if (row.delta < 0) return { icon: <TrendingDown size={11} />, text: `${row.delta}`, tone: 'text-amber-400' };
     return { icon: <Minus size={11} />, text: 'aynı', tone: 'text-zinc-400' };
@@ -92,7 +92,7 @@ const SessionReportModal = memo(({ report, onClose, comparison = null }) => {
                     {r.status === 'new'
                       ? <Sparkles size={11} className="text-cyan-400 shrink-0" />
                       : r.status === 'dropped'
-                        ? <Minus size={11} className="text-zinc-600 shrink-0" />
+                        ? <Minus size={11} className="text-zinc-400 shrink-0" />
                         : r.tonnageDelta > 0
                           ? <TrendingUp size={11} className="text-emerald-400 shrink-0" />
                           : r.tonnageDelta < 0

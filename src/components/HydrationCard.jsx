@@ -55,7 +55,7 @@ const HydrationCard = memo(({ summary, target, onAdd, onToggleHeat, heat = false
             <button
               onClick={() => onAdd?.(-summary.today)}
               aria-label="Bugünkü kaydı sıfırla"
-              className="text-zinc-600 active:text-red-400 p-1 shrink-0"
+              className="text-zinc-400 active:text-red-400 p-1 shrink-0"
             >
               <RotateCcw size={11} />
             </button>
@@ -74,7 +74,7 @@ const HydrationCard = memo(({ summary, target, onAdd, onToggleHeat, heat = false
           </button>
         )}
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           Hedef kilo başına {target.perKg} ml{target.trainingBonus > 0 && ` + antrenman günü ${target.trainingBonus} ml`}
           {target.heatBonus > 0 && ` + sıcak hava ${target.heatBonus} ml`}.
           {target.estimatedWeight && ' Kilon kayıtlı olmadığı için ortalama bir yetişkin varsayıldı.'}

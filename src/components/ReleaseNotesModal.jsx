@@ -60,7 +60,7 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
               <div className="flex items-center justify-between rounded-2xl border border-cyan-900/45 bg-cyan-950/20 px-3 py-2.5">
                 <div>
                   <strong className="text-[11px] text-cyan-300">{LATEST_RELEASE_NOTES.title}</strong>
-                  <span className="mt-0.5 block text-[9px] font-mono text-zinc-600">Yalnız bu sürümde eklenenler</span>
+                  <span className="mt-0.5 block text-[9px] font-mono text-zinc-400">Yalnız bu sürümde eklenenler</span>
                 </div>
                 <span className="flex items-center gap-1 text-[9px] font-mono text-zinc-500">
                   <CalendarDays size={11} /> {LATEST_RELEASE_NOTES.date}
@@ -78,7 +78,7 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
             </div>
           ) : (
             <div className="space-y-2">
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1 pb-1">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1 pb-1">
                 Her sürüm kendi notunu gösterir. Eski özellikler son güncelleme etiketiyle yeniden sunulmaz.
               </p>
               {past.map(releaseEntry => {
@@ -96,16 +96,16 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
                           <strong className="text-[11px] font-mono text-cyan-400">v{releaseEntry.version}</strong>
                           <span className="truncate text-[10px] font-bold text-zinc-300">{releaseEntry.title}</span>
                         </div>
-                        <span className="mt-0.5 block text-[8px] font-mono text-zinc-600">{releaseEntry.date} · {releaseEntry.items.length} başlık</span>
+                        <span className="mt-0.5 block text-[8px] font-mono text-zinc-400">{releaseEntry.date} · {releaseEntry.items.length} başlık</span>
                       </div>
-                      <ChevronDown size={14} className={`shrink-0 text-zinc-600 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={14} className={`shrink-0 text-zinc-400 transition-transform ${expanded ? 'rotate-180' : ''}`} />
                     </button>
                     {expanded && (
                       <div className="space-y-2 border-t border-zinc-800 p-3">
                         {releaseEntry.items.map(releaseItem => (
                           <div key={releaseItem.title} className="rounded-xl border border-zinc-800 bg-zinc-900/65 p-2.5">
                             <strong className="text-[10px] text-zinc-300">{releaseItem.title}</strong>
-                            <p className="mt-1 text-[9px] font-mono leading-relaxed text-zinc-600">{releaseItem.desc}</p>
+                            <p className="mt-1 text-[9px] font-mono leading-relaxed text-zinc-400">{releaseItem.desc}</p>
                           </div>
                         ))}
                       </div>

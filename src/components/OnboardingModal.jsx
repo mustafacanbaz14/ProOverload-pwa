@@ -23,7 +23,7 @@ const OnboardingModal = memo(({ isOpen, settings, onFinish, status = {} }) => {
   return (
     <div role="dialog" aria-modal="true" aria-label="İlk kullanım kurulumu" className="fixed inset-0 bg-black z-[140] flex flex-col">
       <div className="pt-safe px-5 py-4 flex items-center justify-between">
-        <span className="text-[10px] font-mono text-zinc-600">{step + 1} / 4</span>
+        <span className="text-[10px] font-mono text-zinc-400">{step + 1} / 4</span>
         <button onClick={finish} className="text-[10px] font-mono text-zinc-500">Geç</button>
       </div>
       <div className="flex-1 px-5 flex flex-col justify-center max-w-sm w-full mx-auto">
@@ -60,14 +60,14 @@ const OnboardingModal = memo(({ isOpen, settings, onFinish, status = {} }) => {
           <h2 className="text-2xl font-black text-zinc-100 mt-2">Boş ekranda kalma.</h2>
           <p className="text-[10px] font-mono text-zinc-500 leading-relaxed mt-2 mb-4">Tamamlananlar otomatik işaretlenir. Örnek program gerçek geçmiş kaydı üretmez; yalnız düzenleyebileceğin şablon ve haftalık plan kurar.</p>
           <div className="space-y-2 mb-4">
-            {checklist.map(item => <div key={item.key} className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2.5">{item.done ? <CheckCircle2 size={15} className="text-emerald-400" /> : <Circle size={15} className="text-zinc-700" />}<span className={`text-[10px] font-bold ${item.done ? 'text-zinc-400 line-through' : 'text-zinc-200'}`}>{item.label}</span></div>)}
+            {checklist.map(item => <div key={item.key} className="bg-zinc-900 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2.5">{item.done ? <CheckCircle2 size={15} className="text-emerald-400" /> : <Circle size={15} className="text-zinc-500" />}<span className={`text-[10px] font-bold ${item.done ? 'text-zinc-400 line-through' : 'text-zinc-200'}`}>{item.label}</span></div>)}
           </div>
           {!status.program && (
             <div className="space-y-2">
-              <span className="text-[9px] font-mono text-zinc-600 uppercase">İsteğe bağlı örnek program</span>
+              <span className="text-[9px] font-mono text-zinc-400 uppercase">İsteğe bağlı örnek program</span>
               <div className="grid grid-cols-2 gap-2">
-                <button onClick={() => setStarterKey('')} className={`rounded-xl border p-2.5 text-left ${starterKey === '' ? 'border-cyan-600 bg-cyan-950/25' : 'border-zinc-800 bg-zinc-900'}`}><strong className="text-[10px] text-zinc-200 block">Şimdilik kurma</strong><span className="text-[8px] font-mono text-zinc-600">Boş başla</span></button>
-                {STARTER_PROGRAMS.filter(program => program.key !== 'ppl6').map(program => <button key={program.key} onClick={() => setStarterKey(program.key)} className={`rounded-xl border p-2.5 text-left ${starterKey === program.key ? 'border-cyan-600 bg-cyan-950/25' : 'border-zinc-800 bg-zinc-900'}`}><strong className="text-[10px] text-zinc-200 block">{program.name}</strong><span className="text-[8px] font-mono text-zinc-600">{program.daysPerWeek} gün · düzenlenebilir</span></button>)}
+                <button onClick={() => setStarterKey('')} className={`rounded-xl border p-2.5 text-left ${starterKey === '' ? 'border-cyan-600 bg-cyan-950/25' : 'border-zinc-800 bg-zinc-900'}`}><strong className="text-[10px] text-zinc-200 block">Şimdilik kurma</strong><span className="text-[8px] font-mono text-zinc-400">Boş başla</span></button>
+                {STARTER_PROGRAMS.filter(program => program.key !== 'ppl6').map(program => <button key={program.key} onClick={() => setStarterKey(program.key)} className={`rounded-xl border p-2.5 text-left ${starterKey === program.key ? 'border-cyan-600 bg-cyan-950/25' : 'border-zinc-800 bg-zinc-900'}`}><strong className="text-[10px] text-zinc-200 block">{program.name}</strong><span className="text-[8px] font-mono text-zinc-400">{program.daysPerWeek} gün · düzenlenebilir</span></button>)}
               </div>
             </div>
           )}

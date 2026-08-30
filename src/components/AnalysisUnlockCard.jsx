@@ -24,7 +24,7 @@ const AnalysisUnlockCard = memo(({ report }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Lock size={12} className="mr-1.5 text-zinc-400" /> Açılmayı Bekleyen Analizler
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">
+        <span className="text-[9px] font-mono text-zinc-400">
           {report.ready}/{report.total} açık
         </span>
       </div>
@@ -41,13 +41,13 @@ const AnalysisUnlockCard = memo(({ report }) => {
           <div key={r.key} className="px-4 py-2.5 space-y-1.5">
             <div className="flex justify-between items-baseline gap-2">
               <span className="text-[11px] font-bold text-zinc-300 truncate min-w-0">{r.label}</span>
-              <span className="text-[9px] font-mono text-zinc-600 shrink-0">{r.area}</span>
+              <span className="text-[9px] font-mono text-zinc-400 shrink-0">{r.area}</span>
             </div>
             <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">{r.value}</p>
             <div className="w-full bg-zinc-950 rounded-full h-1 border border-zinc-800 overflow-hidden">
               <div className="h-full rounded-full bg-cyan-700" style={{ width: `${r.progress}%` }} />
             </div>
-            <span className="text-[9px] font-mono text-zinc-600 block">
+            <span className="text-[9px] font-mono text-zinc-400 block">
               {r.conditions.map(c => `${c.have}/${c.need} ${c.label}`).join(' · ')}
             </span>
           </div>
@@ -66,7 +66,7 @@ const AnalysisUnlockCard = memo(({ report }) => {
       )}
 
       {report.unlocked.length > 0 && (
-        <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40 border-t border-zinc-800">
+        <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40 border-t border-zinc-800">
           <LockOpen size={9} className="inline mr-1 text-emerald-500" />
           Açık olanlar: {report.unlocked.map(r => r.label).join(', ')}.
         </p>

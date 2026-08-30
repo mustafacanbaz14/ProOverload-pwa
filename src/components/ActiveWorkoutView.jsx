@@ -119,7 +119,7 @@ const ActiveWorkoutView = memo(({
 
           <button
             onClick={() => setIsEndWorkoutModalOpen(true)}
-            className="bg-emerald-600 active:bg-emerald-700 text-white font-bold px-3 py-2 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-900/30 transition-all flex items-center"
+            className="bg-emerald-700 active:bg-emerald-800 text-white font-bold px-3 py-2 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-900/30 transition-all flex items-center"
           >
             <Save size={13} className="mr-1" /> {activeWorkout.isEditingOld ? 'Kaydet' : 'Bitir'}
           </button>
@@ -491,7 +491,7 @@ const ActiveWorkoutView = memo(({
                     disabled={exIndex === 0}
                     title="Yukarı taşı"
                     aria-label="Hareketi yukarı taşı"
-                    className="p-1.5 text-zinc-600 active:text-cyan-400 disabled:opacity-25 disabled:active:text-zinc-600"
+                    className="p-1.5 text-zinc-400 active:text-cyan-400 disabled:opacity-25 disabled:active:text-zinc-600"
                   >
                     <ArrowUp size={13} />
                   </button>
@@ -500,7 +500,7 @@ const ActiveWorkoutView = memo(({
                     disabled={exIndex === (activeWorkout.exercises || []).length - 1}
                     title="Aşağı taşı"
                     aria-label="Hareketi aşağı taşı"
-                    className="p-1.5 text-zinc-600 active:text-cyan-400 disabled:opacity-25 disabled:active:text-zinc-600"
+                    className="p-1.5 text-zinc-400 active:text-cyan-400 disabled:opacity-25 disabled:active:text-zinc-600"
                   >
                     <ArrowDown size={13} />
                   </button>
@@ -508,7 +508,7 @@ const ActiveWorkoutView = memo(({
                     onClick={() => onToggleSuperset?.(ex.id)}
                     title={ex.supersetId ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
                     aria-label={ex.supersetId ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
-                    className={`p-1.5 transition-colors ${ex.supersetId ? 'text-purple-400' : 'text-zinc-600 active:text-purple-400'}`}
+                    className={`p-1.5 transition-colors ${ex.supersetId ? 'text-purple-400' : 'text-zinc-400 active:text-purple-400'}`}
                   >
                     {ex.supersetId ? <Unlink size={13} /> : <Link2 size={13} />}
                   </button>
@@ -516,7 +516,7 @@ const ActiveWorkoutView = memo(({
                     onClick={() => onSubstitute?.(ex.name, ex.id)}
                     title="Bu hareketin yerine ne yapılabilir"
                     aria-label="Yerine geçebilecek hareketleri gör"
-                    className="text-zinc-600 active:text-cyan-400 p-1.5"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5"
                   >
                     <Repeat size={13} />
                   </button>
@@ -524,11 +524,11 @@ const ActiveWorkoutView = memo(({
                     onClick={() => onEditExercise?.(ex.name)}
                     title="Kas eşlemesini düzenle"
                     aria-label="Kas eşlemesini düzenle"
-                    className="text-zinc-600 active:text-cyan-400 p-1.5"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5"
                   >
                     <Settings size={13} />
                   </button>
-                  <button aria-label="Hareketi antrenmandan çıkar" onClick={() => setActiveWorkout(prev => ({ ...prev, exercises: prev.exercises.filter(e => e.id !== ex.id) }))} className="text-zinc-600 active:text-red-500 p-1.5"><X size={14} /></button>
+                  <button aria-label="Hareketi antrenmandan çıkar" onClick={() => setActiveWorkout(prev => ({ ...prev, exercises: prev.exercises.filter(e => e.id !== ex.id) }))} className="text-zinc-400 active:text-red-500 p-1.5"><X size={14} /></button>
                 </div>
               </div>
 
@@ -896,7 +896,7 @@ const ActiveWorkoutView = memo(({
                             className={`text-center text-[9px] font-mono font-bold h-3.5 rounded-md transition-colors ${
                               set.side === 'left' ? 'text-violet-300 bg-violet-950/40'
                                 : set.side === 'right' ? 'text-cyan-300 bg-cyan-950/40'
-                                  : 'text-zinc-700 bg-zinc-900'}`}
+                                  : 'text-zinc-500 bg-zinc-900'}`}
                           >
                             {set.side === 'left' ? SIDES[0].short : set.side === 'right' ? SIDES[1].short : '·'}
                           </button>

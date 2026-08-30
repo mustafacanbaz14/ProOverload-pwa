@@ -131,7 +131,7 @@ const CardioModal = memo(({
         <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 flex items-center gap-3">
           <CalendarDays size={16} className="text-cyan-400 shrink-0" />
           <div className="min-w-0 flex-1">
-            <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest block">Kayıt tarihi</span>
+            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest block">Kayıt tarihi</span>
             <span className="text-[10px] font-bold text-zinc-300 block truncate">{formatDay(date, 'medium', { year: true })}</span>
           </div>
           <input
@@ -175,7 +175,7 @@ const CardioModal = memo(({
           aria-expanded={showActivities}
         >
           <span className="min-w-0">
-            <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest block">1 · Ne yaptın?</span>
+            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest block">1 · Ne yaptın?</span>
             <strong className="text-[12px] text-zinc-100 block truncate">{activity?.label}</strong>
             <span className="text-[9px] font-mono text-zinc-500">{activity?.hint}</span>
             {isAR && (
@@ -192,7 +192,7 @@ const CardioModal = memo(({
               <Flame size={18} className="text-red-400 mx-auto mb-1.5" />
               <span className="text-3xl font-mono font-bold text-zinc-100">{kcal}</span>
               <span className="text-[11px] font-mono text-zinc-500 ml-1">kcal</span>
-              <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 mt-2 leading-relaxed">
                 {minutes} dk · {activity?.label} · {activity?.met} MET × {effortInfo.met} ({effortInfo.fullLabel}) · {weightKg} kg
                 <br />
                 Dinlenmenin üstüne yakılan miktar. Günlük hedefe eklenecek sayı budur.
@@ -311,7 +311,7 @@ const CardioModal = memo(({
               <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
                 {tempo && <>Tempo <strong className="text-cyan-400">{tempo.label}</strong> · {tempo.speedKmh} km/s · </>}
                 Bölge <strong className={zone.color}>{zone.label}</strong> ({zone.name})
-                <span className="text-zinc-600"> · {source === 'heartRate' ? 'nabızdan ölçüldü' : 'aktivite ve tempodan tahmin'}</span>
+                <span className="text-zinc-400"> · {source === 'heartRate' ? 'nabızdan ölçüldü' : 'aktivite ve tempodan tahmin'}</span>
               </p>
             );
           })()}
@@ -374,7 +374,7 @@ const CardioModal = memo(({
 
         {showActivities && <div className="space-y-3 bg-zinc-950 border border-zinc-800 rounded-2xl p-2.5">
           <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
             <input
               value={activityQuery}
               onChange={(event) => setActivityQuery(event.target.value)}
@@ -390,13 +390,13 @@ const CardioModal = memo(({
             <div className="flex items-center gap-2 px-1 pt-1">
               <h4 className={`text-[10px] font-bold uppercase tracking-widest ${section.key === 'cardio' ? 'text-red-400' : section.key === 'activities' ? 'text-purple-400' : 'text-emerald-400'}`}>{section.label}</h4>
               <span className="h-px flex-1 bg-zinc-800" />
-              <span className="text-[8px] font-mono text-zinc-700">{sectionActivities.length}</span>
+              <span className="text-[8px] font-mono text-zinc-500">{sectionActivities.length}</span>
             </div>
             {section.groups.map(group => {
               const groupActivities = sectionActivities.filter(a => a.group === group);
               if (groupActivities.length === 0) return null;
               return <div key={group} className="space-y-1.5">
-              <h5 className="text-[9px] font-bold text-zinc-600 uppercase tracking-widest px-1">{group}</h5>
+              <h5 className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest px-1">{group}</h5>
               <div className="space-y-1.5">
               {groupActivities.map(a => (
                 <button
@@ -409,11 +409,11 @@ const CardioModal = memo(({
                     <span className="text-[9px] font-mono text-zinc-500 shrink-0">
                       {a.met} MET
                       {weightKg > 0 && (
-                        <span className="text-zinc-600"> · {estimateCardioCalories(a.met * effortInfo.met, weightKg, minutes)} kcal</span>
+                        <span className="text-zinc-400"> · {estimateCardioCalories(a.met * effortInfo.met, weightKg, minutes)} kcal</span>
                       )}
                     </span>
                   </div>
-                  {a.hint && <span className="text-[9px] font-mono text-zinc-600 block mt-0.5">{a.hint}</span>}
+                  {a.hint && <span className="text-[9px] font-mono text-zinc-400 block mt-0.5">{a.hint}</span>}
                   {a.activeRecovery && <span className="text-[8px] font-bold text-indigo-400 block mt-0.5">Aktif toparlanma · off day korunur</span>}
                 </button>
               ))}
@@ -424,7 +424,7 @@ const CardioModal = memo(({
             );
           })}
           {visibleActivities.length === 0 && (
-            <p className="text-center text-[10px] font-mono text-zinc-600 py-5">Eşleşen kardiyo veya aktivite bulunamadı.</p>
+            <p className="text-center text-[10px] font-mono text-zinc-400 py-5">Eşleşen kardiyo veya aktivite bulunamadı.</p>
           )}
         </div>}
 
@@ -441,7 +441,7 @@ const CardioModal = memo(({
                     <span className="text-[10px] font-mono text-zinc-500">
                       {e.minutes} dk · {findEffort(e.effort).label} · <strong className="text-red-400">{cardioEntryCalories(e, weightKg)}</strong> kcal
                     </span>
-                    <button onClick={() => onDelete?.(e.id)} className="text-zinc-600 active:text-red-500 p-1">
+                    <button onClick={() => onDelete?.(e.id)} className="text-zinc-400 active:text-red-500 p-1">
                       <Trash2 size={13} />
                     </button>
                   </span>

@@ -265,7 +265,7 @@ const ViewLoadingFallback = ({ viewKey }) => (
         <div className="h-24 rounded-2xl bg-zinc-950" />
         <div className="h-24 rounded-2xl bg-zinc-950" />
       </div>
-      <p className="text-[9px] font-mono uppercase tracking-widest text-zinc-700">
+      <p className="text-[9px] font-mono uppercase tracking-widest text-zinc-500">
         {VIEW_LABELS[viewKey] || 'Sayfa'} hazırlanıyor
       </p>
     </div>
@@ -3087,7 +3087,7 @@ export default function App() {
           : 'text-cyan-300 border-cyan-900/50 bg-cyan-950/30',
       headline,
       detail,
-      sleepLabel: sleep ? `${sleep.score}/100` : 'Hızlı puan gir',
+      sleepLabel: sleep ? `${sleep.score}/100` : 'Puan gir',
       sleepTone: sleep ? sleep.zone.text : 'text-purple-400',
       readinessLabel: readiness ? `${readiness.ortalama}/100` : 'Veri yok',
       readinessTone: readiness?.zone?.text || 'text-zinc-500',
@@ -4140,11 +4140,15 @@ export default function App() {
               <h1 className="luxury-brand-title text-[13px] font-black uppercase whitespace-nowrap">
                 Hypertrophy <strong>LAB</strong>
               </h1>
-              <span className="text-[8px] font-medium text-zinc-600 uppercase tracking-[0.2em] block mt-0.5">
+              <span className="text-[8px] font-medium text-zinc-400 uppercase tracking-[0.1em] block mt-0.5 whitespace-nowrap">
                 Crafted by Afacan Tech
               </span>
             </div>
-            <span className="luxury-version text-[8px] font-mono self-center whitespace-nowrap">v{pkg.version}</span>
+            {/* 375px'te baslik tek basina 173px istiyor ama 135px yeri var:
+                marka isareti, ikonlar ve bu pil ustune biniyor. Pil tek
+                dekoratif oge (surum Ayarlar ve surum notlarinda da yaziyor),
+                o yuzden dar ekranda cekiliyor. */}
+            <span className="luxury-version text-[8px] font-mono self-center whitespace-nowrap hidden min-[520px]:inline-flex">v{pkg.version}</span>
           </div>
           <div className="flex items-center gap-0.5 pr-2 shrink-0">
             {!isOnline && (
@@ -4220,7 +4224,7 @@ export default function App() {
               interfaceMode={settings.interfaceMode}
               onOpenTraining={() => handleChangeView('training')}
               onOpenNutrition={() => handleChangeView('nutrition')}
-              onOpenWeeklyPlan={() => setIsWeeklyPlanOpen(true)}
+              onOpenWeeklyPlan={() => setIsWeekPlanOpen(true)}
               waterSummary={waterReport}
               waterTarget={waterTarget}
               onAddWater={handleAddWater}
@@ -5259,7 +5263,7 @@ export default function App() {
                       onChange={(e) => setReadinessForm(p => ({ ...p, [f.key]: parseInt(e.target.value, 10) }))}
                       className={`w-full ${f.accent}`}
                     />
-                    <div className="flex justify-between text-[9px] font-mono text-zinc-600 mt-0.5">
+                    <div className="flex justify-between text-[9px] font-mono text-zinc-400 mt-0.5">
                       <span>{f.low}</span><span>{f.high}</span>
                     </div>
                   </div>
@@ -5320,7 +5324,7 @@ export default function App() {
                       </div>
                       <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-2">{adaptation.mode.summary}</p>
                       {adaptation.reasons.length > 0 && (
-                        <p className="text-[8px] font-mono text-zinc-600 mt-1">Neden: {adaptation.reasons.join(' · ')}</p>
+                        <p className="text-[8px] font-mono text-zinc-400 mt-1">Neden: {adaptation.reasons.join(' · ')}</p>
                       )}
                       {adaptation.recommended && (
                         <div className="grid grid-cols-2 gap-2 mt-3">
@@ -5328,7 +5332,7 @@ export default function App() {
                           <button type="button" onClick={() => setPreWorkoutModal(prev => ({ ...prev, adaptationChoice: false }))} className={`rounded-xl border py-2 text-[9px] font-bold ${!adaptedSelected ? 'border-zinc-600 bg-zinc-800 text-zinc-200' : 'border-zinc-800 text-zinc-500'}`}>Planı Koru</button>
                         </div>
                       )}
-                      <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-2">Orijinal şablon değişmez; karar yalnızca bu seansa uygulanır.</p>
+                      <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-2">Orijinal şablon değişmez; karar yalnızca bu seansa uygulanır.</p>
                     </div>
                   )}
                   </>
@@ -5371,7 +5375,7 @@ export default function App() {
                   <label className="block text-[11px] font-bold text-zinc-500 uppercase mb-1">Zorluk Derecesi (RPE)</label>
                   <div className="flex space-x-2 bg-zinc-950 p-3 rounded-xl border border-zinc-800">
                     {[1, 2, 3, 4, 5].map(star => (
-                      <Star key={star} onClick={() => setActiveWorkout(prev => ({ ...prev, rating: star }))} fill={activeWorkout?.rating >= star ? "currentColor" : "none"} className={`transition-colors cursor-pointer ${activeWorkout?.rating >= star ? "text-yellow-500" : "text-zinc-700"}`} size={24} />
+                      <Star key={star} onClick={() => setActiveWorkout(prev => ({ ...prev, rating: star }))} fill={activeWorkout?.rating >= star ? "currentColor" : "none"} className={`transition-colors cursor-pointer ${activeWorkout?.rating >= star ? "text-yellow-500" : "text-zinc-500"}`} size={24} />
                     ))}
                   </div>
                 </div>
@@ -5384,7 +5388,7 @@ export default function App() {
 
               <div className="flex space-x-3">
                 <button onClick={() => setIsEndWorkoutModalOpen(false)} className="flex-1 bg-zinc-800 active:bg-zinc-700 text-zinc-300 font-bold py-3.5 rounded-xl uppercase text-xs transition-colors">İptal</button>
-                <button onClick={confirmSaveWorkout} className="flex-1 bg-emerald-600 active:bg-emerald-700 text-white font-bold py-3.5 rounded-xl uppercase text-xs transition-colors shadow-lg shadow-emerald-900/20">Kaydet</button>
+                <button onClick={confirmSaveWorkout} className="flex-1 bg-emerald-700 active:bg-emerald-800 text-white font-bold py-3.5 rounded-xl uppercase text-xs transition-colors shadow-lg shadow-emerald-900/20">Kaydet</button>
               </div>
             </div>
           </div>
@@ -5432,7 +5436,7 @@ export default function App() {
                   <div>
                     <div className="flex justify-between items-baseline mb-1.5">
                       <label className="block text-[10px] font-bold text-zinc-500 uppercase">Kas Katkıları</label>
-                      <span className="text-[9px] font-mono text-zinc-600">dokun: 1 → ½ → ¼ → yok</span>
+                      <span className="text-[9px] font-mono text-zinc-400">dokun: 1 → ½ → ¼ → yok</span>
                     </div>
                     <div className="grid grid-cols-3 gap-1">
                       {MUSCLE_GROUPS.map(m => {
@@ -5451,7 +5455,7 @@ export default function App() {
                               w === 1 ? 'text-emerald-400 border-emerald-600 bg-emerald-950/40'
                                 : w === 0.5 ? 'text-cyan-400 border-cyan-700 bg-cyan-950/30'
                                   : w === 0.25 ? 'text-zinc-300 border-zinc-600 bg-zinc-800'
-                                    : 'text-zinc-600 border-zinc-800 bg-zinc-950'
+                                    : 'text-zinc-400 border-zinc-800 bg-zinc-950'
                             }`}
                           >
                             {m}{w === 1 ? ' •' : w === 0.5 ? ' ½' : w === 0.25 ? ' ¼' : ''}
@@ -5459,7 +5463,7 @@ export default function App() {
                         );
                       })}
                     </div>
-                    <p className="text-[9px] font-mono text-zinc-600 mt-1.5 leading-snug">
+                    <p className="text-[9px] font-mono text-zinc-400 mt-1.5 leading-snug">
                       Tek kasa bir kez dokunmak yeterli. En az bir kas birincil (•) olmalı.
                     </p>
                   </div>
@@ -5513,7 +5517,7 @@ export default function App() {
                   <input type="text" value={exerciseSearchQuery} onChange={(e) => setExerciseSearchQuery(e.target.value)} placeholder="Tüm veritabanında ara..." className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-3 text-zinc-100 outline-none font-mono text-xs h-11 focus:border-cyan-500 transition-colors" />
                 </div>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[9px] font-mono text-zinc-600 leading-snug min-w-0">
+                  <span className="text-[9px] font-mono text-zinc-400 leading-snug min-w-0">
                     {exerciseSearchQuery.trim()
                       ? `${filteredExercises.length} sonuç · tüm veritabanı`
                       : settings.pickerShowAll
@@ -5540,7 +5544,7 @@ export default function App() {
                       <div className="text-xs font-bold font-mono">{ex}</div>
                       <div className="flex flex-wrap gap-1 mt-1.5">
                         {parts.length === 0 ? (
-                          <span className="text-[10px] text-zinc-600 font-mono">Kas eşlemesi yok</span>
+                          <span className="text-[10px] text-zinc-400 font-mono">Kas eşlemesi yok</span>
                         ) : parts.map(([muscle, weight]) => (
                           <span
                             key={muscle}
@@ -5563,7 +5567,7 @@ export default function App() {
                         onClick={(e) => { e.stopPropagation(); setEditorExercise(ex); }}
                         onKeyDown={(e) => { if (e.key === 'Enter') { e.stopPropagation(); setEditorExercise(ex); } }}
                         title="Kas eşlemesini düzenle"
-                        className="text-zinc-600 active:text-cyan-400 p-1.5 -m-0.5 cursor-pointer"
+                        className="text-zinc-400 active:text-cyan-400 p-1.5 -m-0.5 cursor-pointer"
                       >
                         <Settings size={13} />
                       </span>

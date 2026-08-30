@@ -64,7 +64,7 @@ const CardioSetEditor = memo(({ activityKey, rows = [], onChange, poolLength = '
       </div>
 
       {rows.length === 0 ? (
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           Set defteri isteğe bağlı. Doldurursan süre ve mesafe buradan çıkar;
           doldurmazsan yukarıdaki alanlar kullanılmaya devam eder.
         </p>
@@ -73,7 +73,7 @@ const CardioSetEditor = memo(({ activityKey, rows = [], onChange, poolLength = '
           {/* Başlık satırı: alanların ne olduğu her satırda tekrar edilmesin. */}
           <div className="grid grid-cols-[28px_46px_1fr_46px_46px_28px] gap-1 px-0.5">
             {['×', 'm', yuzme ? 'stil' : 'tip', 'sn', 'dinl.', ''].map((h, i) => (
-              <span key={`${h}-${i}`} className="text-[8px] font-mono text-zinc-600 text-center">{h}</span>
+              <span key={`${h}-${i}`} className="text-[8px] font-mono text-zinc-400 text-center">{h}</span>
             ))}
           </div>
 
@@ -122,7 +122,7 @@ const CardioSetEditor = memo(({ activityKey, rows = [], onChange, poolLength = '
                 <button
                   onClick={() => sil(i)}
                   aria-label="Satırı sil"
-                  className="text-zinc-700 active:text-red-500 flex justify-center"
+                  className="text-zinc-500 active:text-red-500 flex justify-center"
                 >
                   <Trash2 size={12} />
                 </button>
@@ -151,9 +151,9 @@ const CardioSetEditor = memo(({ activityKey, rows = [], onChange, poolLength = '
                   />
                 ) : <span />}
                 <button onClick={() => tasi(i, -1)} disabled={i === 0} aria-label="Yukarı taşı"
-                  className="text-zinc-700 active:text-cyan-400 disabled:opacity-25 px-1"><ArrowUp size={11} /></button>
+                  className="text-zinc-500 active:text-cyan-400 disabled:opacity-25 px-1"><ArrowUp size={11} /></button>
                 <button onClick={() => tasi(i, 1)} disabled={i === rows.length - 1} aria-label="Aşağı taşı"
-                  className="text-zinc-700 active:text-cyan-400 disabled:opacity-25 px-1"><ArrowDown size={11} /></button>
+                  className="text-zinc-500 active:text-cyan-400 disabled:opacity-25 px-1"><ArrowDown size={11} /></button>
               </div>
             </div>
           ))}
@@ -179,7 +179,7 @@ const CardioSetEditor = memo(({ activityKey, rows = [], onChange, poolLength = '
               {ozet.byStroke.map(s => `${s.stroke.label} ${s.distance} m (%${s.share})`).join(' · ')}
             </p>
           )}
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Tempo yalnızca ANA setlerden hesaplanıyor; ısınma ve soğuma dahil
             edilseydi ortalama her seansta olduğundan yavaş görünürdü.
             {ozet.avgSwolf && ' SWOLF bir havuz uzunluğunun süresi ile o uzunlukta atılan kulaç sayısının toplamı: aynı tempoyu daha az kulaçla tutmak teknik gelişimi gösterir.'}

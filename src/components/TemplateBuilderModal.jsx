@@ -471,7 +471,7 @@ const TemplateBuilderModal = memo(({
         {/* Hareketler */}
         <div className="space-y-2">
           {day.exercises.length === 0 ? (
-            <div className="text-center py-8 text-zinc-600 text-[11px] font-mono">
+            <div className="text-center py-8 text-zinc-400 text-[11px] font-mono">
               Bu güne henüz hareket eklenmedi.
             </div>
           ) : day.exercises.map((ex, exIndex) => (
@@ -489,7 +489,7 @@ const TemplateBuilderModal = memo(({
                     onClick={() => openReplacePicker(ex.uid)}
                     title="Hareketi değiştir"
                     aria-label={`${ex.name} hareketini değiştir`}
-                    className="text-zinc-600 active:text-emerald-400 p-1.5"
+                    className="text-zinc-400 active:text-emerald-400 p-1.5"
                   >
                     <RefreshCw size={13} />
                   </button>
@@ -501,7 +501,7 @@ const TemplateBuilderModal = memo(({
                     disabled={exIndex === 0}
                     title="En üste taşı"
                     aria-label="Hareketi en üste taşı"
-                    className="text-zinc-600 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
                   >
                     <ChevronsUp size={13} />
                   </button>
@@ -510,7 +510,7 @@ const TemplateBuilderModal = memo(({
                     disabled={exIndex === 0}
                     title="Yukarı taşı"
                     aria-label="Hareketi yukarı taşı"
-                    className="text-zinc-600 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
                   >
                     <ArrowUp size={13} />
                   </button>
@@ -519,7 +519,7 @@ const TemplateBuilderModal = memo(({
                     disabled={exIndex === day.exercises.length - 1}
                     title="Aşağı taşı"
                     aria-label="Hareketi aşağı taşı"
-                    className="text-zinc-600 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
                   >
                     <ArrowDown size={13} />
                   </button>
@@ -528,7 +528,7 @@ const TemplateBuilderModal = memo(({
                     disabled={exIndex === day.exercises.length - 1}
                     title="En alta taşı"
                     aria-label="Hareketi en alta taşı"
-                    className="text-zinc-600 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
                   >
                     <ChevronsDown size={13} />
                   </button>
@@ -539,7 +539,7 @@ const TemplateBuilderModal = memo(({
                       title="Başka güne taşı"
                       aria-label={`${ex.name} hareketini başka güne taşı`}
                       aria-expanded={moveTarget === ex.uid}
-                      className={`p-1.5 ${moveTarget === ex.uid ? 'text-amber-400' : 'text-zinc-600 active:text-amber-400'}`}
+                      className={`p-1.5 ${moveTarget === ex.uid ? 'text-amber-400' : 'text-zinc-400 active:text-amber-400'}`}
                     >
                       <MoveRight size={13} />
                     </button>
@@ -553,7 +553,7 @@ const TemplateBuilderModal = memo(({
                     title={ex.superset ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
                     aria-label={ex.superset ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
                     aria-pressed={Boolean(ex.superset)}
-                    className={`p-1.5 disabled:opacity-25 ${ex.superset ? 'text-purple-400' : 'text-zinc-600 active:text-purple-400'}`}
+                    className={`p-1.5 disabled:opacity-25 ${ex.superset ? 'text-purple-400' : 'text-zinc-400 active:text-purple-400'}`}
                   >
                     <Link2 size={13} />
                   </button>
@@ -562,14 +562,14 @@ const TemplateBuilderModal = memo(({
                     title="Yedek hareket, teknik ve tekrar aralığı"
                     aria-label={`${ex.name} için plan ayarları`}
                     aria-expanded={planTarget === ex.uid}
-                    className={`p-1.5 ${planTarget === ex.uid ? 'text-violet-400' : 'text-zinc-600 active:text-violet-400'}`}
+                    className={`p-1.5 ${planTarget === ex.uid ? 'text-violet-400' : 'text-zinc-400 active:text-violet-400'}`}
                   >
                     <SlidersHorizontal size={13} />
                   </button>
                   <button
                     onClick={() => updateDay({ exercises: day.exercises.filter(e => e.uid !== ex.uid) })}
                     aria-label={`${ex.name} hareketini çıkar`}
-                    className="text-zinc-600 active:text-red-500 p-1.5"
+                    className="text-zinc-400 active:text-red-500 p-1.5"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -589,7 +589,7 @@ const TemplateBuilderModal = memo(({
                         <span className="text-[10px] text-zinc-300 truncate flex-1">{ex.backup}</span>
                         <button
                           onClick={() => setExercisePlan(ex.uid, { backup: '' })}
-                          className="text-zinc-600 active:text-red-400 p-1 shrink-0"
+                          className="text-zinc-400 active:text-red-400 p-1 shrink-0"
                           aria-label="Yedek hareketi kaldır"
                         >
                           <Trash2 size={11} />
@@ -658,7 +658,7 @@ const TemplateBuilderModal = memo(({
                         aria-label={`${ex.name} alt tekrar`}
                         className="w-14 bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1.5 text-[10px] font-mono text-zinc-200 outline-none focus:border-violet-500"
                       />
-                      <span className="text-[10px] text-zinc-600">–</span>
+                      <span className="text-[10px] text-zinc-400">–</span>
                       <input
                         type="number" inputMode="numeric" min="1" max="30"
                         value={ex.repRange?.max ?? ''}
@@ -672,7 +672,7 @@ const TemplateBuilderModal = memo(({
                       {ex.repRange && (
                         <button
                           onClick={() => setExercisePlan(ex.uid, { repRange: null })}
-                          className="text-zinc-600 active:text-red-400 p-1"
+                          className="text-zinc-400 active:text-red-400 p-1"
                           aria-label="Tekrar aralığını temizle"
                         >
                           <Trash2 size={11} />
@@ -686,7 +686,7 @@ const TemplateBuilderModal = memo(({
                         tercih, vurgu ise günün geneline konmuş varsayılan.
                       </p>
                     )}
-                    <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                    <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                       Boş bırakılırsa hareketin genel aralığı kullanılır.
                     </p>
                   </div>
@@ -744,7 +744,7 @@ const TemplateBuilderModal = memo(({
             <span className="text-[9px] font-mono text-zinc-500">Yeni hareketler</span>
             <div className="flex gap-1">
               {[2, 3, 4, 5].map(value => (
-                <button key={value} type="button" onClick={() => setDefaultSets(value)} className={`w-7 h-6 rounded-md border text-[9px] font-bold ${defaultSets === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 text-zinc-600'}`}>
+                <button key={value} type="button" onClick={() => setDefaultSets(value)} className={`w-7 h-6 rounded-md border text-[9px] font-bold ${defaultSets === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 text-zinc-400'}`}>
                   {value}s
                 </button>
               ))}
@@ -763,7 +763,7 @@ const TemplateBuilderModal = memo(({
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
             <div className="flex justify-between items-baseline">
               <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Bu Gün Ne Çalışacak</h4>
-              <span className="text-[9px] font-mono text-zinc-600">tüm setler etkili varsayımı</span>
+              <span className="text-[9px] font-mono text-zinc-400">tüm setler etkili varsayımı</span>
             </div>
             {ranked.map(([muscle, vol]) => {
               const lm = getVolumeLandmarks(muscle, experienceLevel);
@@ -774,7 +774,7 @@ const TemplateBuilderModal = memo(({
                     <span className="text-[11px] font-bold text-zinc-200 truncate">{muscle}</span>
                     <span className="text-[10px] font-mono text-zinc-400 shrink-0">
                       <strong className="text-cyan-400">{vol}</strong> set
-                      <span className="text-zinc-600"> · haftalığın %{share}'i</span>
+                      <span className="text-zinc-400"> · haftalığın %{share}'i</span>
                     </span>
                   </div>
                   <div className="w-full bg-zinc-950 rounded-full h-1.5 border border-zinc-800">
@@ -797,7 +797,7 @@ const TemplateBuilderModal = memo(({
           >
             <span className="min-w-0">
               <span className="text-[10px] font-bold text-zinc-200 block">Haftalık plana da yerleştir</span>
-              <span className="text-[8px] font-mono text-zinc-600 block">Seçtiğin günlerle yeni aktif program oluşur</span>
+              <span className="text-[8px] font-mono text-zinc-400 block">Seçtiğin günlerle yeni aktif program oluşur</span>
             </span>
             <span className={`w-9 h-5 rounded-full relative shrink-0 ${createWeekPlan ? 'bg-emerald-600' : 'bg-zinc-700'}`}>
               <span className="absolute top-1 w-3 h-3 rounded-full bg-white transition-all" style={{ left: createWeekPlan ? 20 : 4 }} />

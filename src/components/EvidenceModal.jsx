@@ -24,8 +24,8 @@ const EvidenceModal = memo(({ isOpen, onClose }) => {
   const konular = evidenceByTopic();
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="evidence-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+    <div role="dialog" aria-modal="true" aria-labelledby="evidence-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4 luxury-sheet-host">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] luxury-sheet shadow-2xl shadow-black/80">
         <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
           <h3 id="evidence-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
             <BookOpen size={16} className="mr-2 text-cyan-400" /> Bilimsel Kanıt Defteri
@@ -62,7 +62,7 @@ const EvidenceModal = memo(({ isOpen, onClose }) => {
             </span>
           ))}
         </div>
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
           {Object.values(EVIDENCE_LINES).map(l => `${l.label}: ${l.hint}`).join(' ')}
         </p>
 
@@ -99,7 +99,7 @@ const EvidenceModal = memo(({ isOpen, onClose }) => {
           </section>
         ))}
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
           Her kayıtta karşı görüş var çünkü karşı görüşü olmayan bir bulgu ya
           gerçekten tartışmasızdır ya da eksik araştırılmıştır. Bu defterdeki
           en zayıf kayıt deneyim seviyesi: seviyenin hacim ihtiyacını ne kadar

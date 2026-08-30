@@ -27,7 +27,7 @@ const DisclosureCard = memo(({
         )}
         <span className="min-w-0 flex-1">
           <span className="text-xs font-bold text-zinc-100 block">{title}</span>
-          {summary && <span className="text-[10px] font-mono text-zinc-500 block mt-0.5 truncate">{summary}</span>}
+          {summary && <span className="text-[10px] font-mono text-zinc-500 block mt-0.5 line-clamp-2">{summary}</span>}
         </span>
         <ChevronDown
           size={16}

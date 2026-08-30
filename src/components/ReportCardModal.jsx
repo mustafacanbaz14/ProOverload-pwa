@@ -1,9 +1,8 @@
-import React, { useRef, memo } from 'react';
+import React, { memo } from 'react';
 import { X, Trophy, Activity, Download } from 'lucide-react';
 import { calcTonnage, calcEffectiveSets } from '../utils/helpers';
 
 const ReportCardModal = memo(({ isOpen, onClose, workouts = [], personalRecords }) => {
-  const cardRef = useRef(null);
 
   if (!isOpen) return null;
 

@@ -78,14 +78,14 @@ const YearReviewModal = memo(({ isOpen, onClose, review }) => {
                     <div key={x.name} className="px-4 py-1.5 flex justify-between items-center gap-2">
                       <span className="text-[10px] text-zinc-300 truncate min-w-0">{x.name}</span>
                       <span className="text-[10px] font-mono shrink-0">
-                        <span className="text-zinc-600">{x.from} → </span>
+                        <span className="text-zinc-400">{x.from} → </span>
                         <strong className="text-emerald-300">{x.to} kg</strong>
                         <span className="text-emerald-500"> (%{x.percent})</span>
                       </span>
                     </div>
                   ))}
                 </div>
-                <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+                <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
                   Sıralama ORANA göre: 20 kiloluk bir hareketin 5 kg artması,
                   150 kiloluk bir hareketin 5 kg artmasından çok daha büyük bir
                   gelişim. Mutlak farkla sıralasaydık ağır hareketler her zaman
@@ -107,7 +107,7 @@ const YearReviewModal = memo(({ isOpen, onClose, review }) => {
                     {blok.rows.map(([ad, deger]) => (
                       <div key={ad} className="px-3 py-1.5">
                         <span className="text-[9px] text-zinc-300 block truncate">{ad}</span>
-                        <span className="text-[9px] font-mono text-zinc-600">{deger}</span>
+                        <span className="text-[9px] font-mono text-zinc-400">{deger}</span>
                       </div>
                     ))}
                   </div>
@@ -115,7 +115,7 @@ const YearReviewModal = memo(({ isOpen, onClose, review }) => {
               ))}
             </div>
 
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
               Bütün sayılar kendi kayıtlarından; tahmin yok. Tonaj yalnızca
               çalışma setlerinden hesaplanıyor, ısınma sayılmıyor.
             </p>

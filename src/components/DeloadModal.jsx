@@ -172,7 +172,7 @@ const DeloadModal = memo(({ isOpen, onClose, deload, onChange, suggestion }) => 
                   <span className="text-lg font-mono font-bold text-emerald-400">{deloadWeight(100, onizleme)} kg</span>
                 </div>
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                 Şablonların değişmiyor — yalnızca antrenman ekranındaki hedefler
                 ölçekleniyor. Süre dolunca hedefler kendiliğinden normale döner.
               </p>

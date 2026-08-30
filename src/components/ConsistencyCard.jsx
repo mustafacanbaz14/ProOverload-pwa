@@ -54,7 +54,7 @@ const ConsistencyCard = memo(({ workouts = [], planResult = null, today }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <CalendarCheck size={12} className="mr-1.5 text-cyan-400" /> Tutarlılık
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600 shrink-0">son 12 hafta</span>
+        <span className="text-[9px] font-mono text-zinc-400 shrink-0">son 12 hafta</span>
       </div>
 
       <div className="p-3 space-y-3">
@@ -76,7 +76,7 @@ const ConsistencyCard = memo(({ workouts = [], planResult = null, today }) => {
         <div className="flex gap-1 overflow-x-auto hide-scrollbar pb-1">
           <div className="flex flex-col gap-1 shrink-0 pr-0.5">
             {[1, 2, 3, 4, 5, 6, 0].map(d => (
-              <span key={d} className="h-3 text-[7px] font-mono text-zinc-700 leading-3">
+              <span key={d} className="h-3 text-[7px] font-mono text-zinc-500 leading-3">
                 {d % 2 === 1 ? WEEKDAY_SHORT[d] : ''}
               </span>
             ))}
@@ -102,7 +102,7 @@ const ConsistencyCard = memo(({ workouts = [], planResult = null, today }) => {
           <div className="space-y-1.5">
             <div className="flex justify-between items-baseline">
               <span className="text-[10px] font-bold text-zinc-300">Plan uyumu</span>
-              <span className="text-[9px] font-mono text-zinc-600">
+              <span className="text-[9px] font-mono text-zinc-400">
                 haftada {uyum.plannedPerWeek} gün planlı
               </span>
             </div>
@@ -127,8 +127,8 @@ const ConsistencyCard = memo(({ workouts = [], planResult = null, today }) => {
       </div>
 
       <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60 flex items-start gap-2">
-        <Info size={11} className="text-zinc-600 shrink-0 mt-0.5" />
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <Info size={11} className="text-zinc-400 shrink-0 mt-0.5" />
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           Seri HAFTA biriminde sayılıyor; içinde en az bir antrenman olan hafta
           tutulmuş sayılıyor ve içinde bulunduğun hafta seriyi kırmıyor. Uyum,
           gün gün eşleşmeye değil hafta içindeki sayıya bakıyor: pazartesi

@@ -655,7 +655,7 @@ const AnalyticsView = memo(({
         <div className="space-y-3">
           <PlanExecutionCard report={planExecution} onOpenPlan={onOpenPlan} />
           <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-3">
-            <p className="text-[9px] font-mono leading-relaxed text-zinc-600">
+            <p className="text-[9px] font-mono leading-relaxed text-zinc-400">
               Bu ekran programın bilimsel kalitesini değil, uygulanmasını ölçer.
               Gün değiştirmek başarısızlık sayılmaz; şablon, set ve hareket
               anlık görüntüleri korunur. Geçmişte aktif planı sürümleyerek

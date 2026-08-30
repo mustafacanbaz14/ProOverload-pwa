@@ -12,14 +12,34 @@
   }
 }
 
-/* Tailwind'in text-[Npx] sınıfları rem olmadığı için kök font-size ayarından
-   etkilenmez. Uygulamadaki yoğun bilgi etiketleri de punto tercihini izlesin. */
-[class~="text-[8px]"]  { font-size: calc(8px * var(--font-scale, 1)); }
-[class~="text-[9px]"]  { font-size: calc(9px * var(--font-scale, 1)); }
-[class~="text-[10px]"] { font-size: calc(10px * var(--font-scale, 1)); }
-[class~="text-[11px]"] { font-size: calc(11px * var(--font-scale, 1)); }
-[class~="text-[12px]"] { font-size: calc(12px * var(--font-scale, 1)); }
-[class~="text-[13px]"] { font-size: calc(13px * var(--font-scale, 1)); }
+/* PUNTO ÖLÇEĞİ — tek tanım yeri.
+ *
+ * Tailwind'in `text-[Npx]` sınıfları rem olmadığı için kök font-size ayarından
+ * etkilenmiyordu; bu blok onları punto tercihine bağlıyor.
+ *
+ * Ama artık ikinci bir işi daha var: sınıf adları PİKSEL DEĞERİ DEĞİL, ÖLÇEK
+ * BASAMAĞI. `text-[9px]` yazan bir eleman 11px render ediliyor.
+ *
+ * Neden: uygulama fazla küçük dizilmişti. Ölçüldüğünde 9px ve altındaki metin
+ * 1209 yerde geçiyordu ve 9px en yaygın boyuttu — telefonda rahat okunan
+ * gövde metninin yaklaşık yarısı. Değerleri iki piksel yukarı taşımak, bin
+ * ikiyüz JSX satırına dokunmadan bütün ekranları okunur hale getiriyor ve
+ * hiyerarşi korunuyor (basamaklar arası fark aynı kalıyor).
+ *
+ * Sınıf adlarını gerçek boyuta çevirmek istenirse iş mekanik ama tek seferlik:
+ * o zaman burada eşleme birebir olur. Adların yanıltıcılığı bilinen ve
+ * kabul edilen maliyet; alternatifi ölçeği bir daha hiç değiştirememekti.
+ *
+ * `text-[7px]` eskiden bu listede YOKTU: 51 yerde kullanılıyor ve kullanıcının
+ * punto ayarını hiç dinlemiyordu. Artık dinliyor.
+ */
+[class~="text-[7px]"]  { font-size: calc(9px * var(--font-scale, 1)); }
+[class~="text-[8px]"]  { font-size: calc(10px * var(--font-scale, 1)); }
+[class~="text-[9px]"]  { font-size: calc(11px * var(--font-scale, 1)); }
+[class~="text-[10px]"] { font-size: calc(12px * var(--font-scale, 1)); }
+[class~="text-[11px]"] { font-size: calc(13px * var(--font-scale, 1)); }
+[class~="text-[12px]"] { font-size: calc(14px * var(--font-scale, 1)); }
+[class~="text-[13px]"] { font-size: calc(15px * var(--font-scale, 1)); }
 
 /* Opsiyonel pembe vurgu paleti. Semantik başarı/uyarı/tehlike renkleri
    değişmez; yalnızca uygulamanın cyan marka rengi rose ölçeğine taşınır. */
@@ -384,10 +404,14 @@ body {
 
 .luxury-icon-button:active { transform: scale(.92); }
 
+/* Birincil altın yüzeylerin gradyanı ORTA altın tonunda bitiyor, koyu tonda
+ * değil. Eskiden `--luxury-gold-deep` ile bitiyordu ve üzerindeki koyu metin
+ * gradyanın alt ucunda 4.33:1 kontrasta düşüyordu — WCAG AA eşiği 4.5. Koyu
+ * ton gölge ve kenarlıkta kalmaya devam ediyor, yani derinlik kaybolmuyor. */
 .luxury-icon-button--primary {
   color: #1b1409;
   border-color: color-mix(in srgb, var(--luxury-gold-bright) 55%, transparent);
-  background: linear-gradient(145deg, var(--luxury-gold-bright), var(--luxury-gold-deep));
+  background: linear-gradient(145deg, var(--luxury-gold-bright), var(--luxury-gold));
   box-shadow: 0 9px 24px color-mix(in srgb, var(--luxury-gold-deep) 32%, transparent), inset 0 1px rgba(255,255,255,.4);
 }
 
@@ -469,8 +493,8 @@ body {
 
 .luxury-app .bg-cyan-600 {
   color: #1c1408;
-  background-color: var(--luxury-gold-deep);
-  background-image: linear-gradient(135deg, var(--luxury-gold-bright), var(--luxury-gold-deep));
+  background-color: var(--luxury-gold);
+  background-image: linear-gradient(135deg, var(--luxury-gold-bright), var(--luxury-gold));
   border-color: color-mix(in srgb, var(--luxury-gold-bright) 48%, transparent);
   box-shadow: 0 12px 30px color-mix(in srgb, var(--luxury-gold-deep) 24%, transparent), inset 0 1px rgba(255,255,255,.3);
 }
@@ -620,7 +644,7 @@ body {
 
 .luxury-nav-item.is-active .luxury-nav-icon {
   color: #1a1207;
-  background: linear-gradient(145deg, var(--luxury-gold-bright), var(--luxury-gold-deep));
+  background: linear-gradient(145deg, var(--luxury-gold-bright), var(--luxury-gold));
   border-color: color-mix(in srgb, var(--luxury-gold-bright) 48%, transparent);
   box-shadow: 0 8px 22px color-mix(in srgb, var(--luxury-gold-deep) 36%, transparent), inset 0 1px rgba(255,255,255,.4);
   transform: translateY(-1.5px);
@@ -671,6 +695,37 @@ body {
     border: 1px solid var(--luxury-line);
   }
   .luxury-header { border-radius: 2rem 2rem 0 0; }
+}
+
+/* Belge gibi okunan modallar (blok karsilastirma, koc defteri, kanit paneli,
+   senaryo) icerigi bir ekrana sigmiyor. Ortalanmis kart bicimi orada 97px
+   dikey + 32px yatay bosluk birakirken kullanici yine de kaydiriyordu.
+
+   Telefonda alt sayfaya donuyorlar: yukseklik sabit degil, iceriğe gore
+   buyuyup tavana dayaniyor. Sabit 100dvh vermek bos defteri seyrek bir tam
+   ekran yapiyordu; bu bicim hem bos hem dolu durumda dogru duruyor.
+
+   Kirilim 520px: uygulamanin kendisi de o genislikten sonra cerceveli bir
+   karta donusuyor, yani modalin ortalanmis kart olmasi ancak orada anlamli. */
+@media (max-width: 519px) {
+  .luxury-sheet-host {
+    padding: 0;
+    align-items: flex-end;
+  }
+  .luxury-sheet {
+    max-width: none;
+    /* Centikli cihazlarda dvh centigi de sayiyor; sayfa oraya girmesin diye
+       ust guvenli alan bastan dusuluyor. env() yedegi burada ise yaramiyor:
+       centiksiz cihaz 0px donduruyor, yani deger var ama sifir. max() ile
+       her kosulda en az 1.5rem'lik serit kaliyor — arkaplani gorunur tutan
+       bu serit sayfanin dokunup kapatilabilecegini soyluyor. */
+    max-height: calc(100dvh - max(env(safe-area-inset-top, 0px), 1.5rem));
+    border-radius: 1.5rem 1.5rem 0 0;
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
 }
 
 @keyframes luxury-rise {

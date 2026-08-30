@@ -15,7 +15,7 @@ const CATEGORY = {
 };
 
 const deltaTone = (row) => {
-  if (!row.meaningful) return 'text-zinc-600';
+  if (!row.meaningful) return 'text-zinc-400';
   if (row.favorable === true) return 'text-emerald-400';
   if (row.favorable === false) return 'text-amber-400';
   return 'text-cyan-400';
@@ -80,11 +80,11 @@ const PeriodComparisonCard = memo(({
 
         <div className="grid grid-cols-2 gap-2 mt-2 text-center">
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-2">
-            <span className="text-[8px] font-mono text-zinc-600 block">ŞİMDİ</span>
+            <span className="text-[8px] font-mono text-zinc-400 block">ŞİMDİ</span>
             <strong className="text-[9px] font-mono text-zinc-300">{report.ranges.current.label}</strong>
           </div>
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-2">
-            <span className="text-[8px] font-mono text-zinc-600 block">ÖNCEKİ</span>
+            <span className="text-[8px] font-mono text-zinc-400 block">ÖNCEKİ</span>
             <strong className="text-[9px] font-mono text-zinc-300">{report.ranges.previous.label}</strong>
           </div>
         </div>
@@ -100,7 +100,7 @@ const PeriodComparisonCard = memo(({
             <span className="text-[9px] font-bold text-zinc-400 flex items-center gap-1.5">
               <Database size={11} className="text-violet-400" /> Veri kapsamı %{report.coverage.score}
             </span>
-            <ChevronDown size={11} className={`text-zinc-600 transition-transform ${showCoverage ? 'rotate-180' : ''}`} />
+            <ChevronDown size={11} className={`text-zinc-400 transition-transform ${showCoverage ? 'rotate-180' : ''}`} />
           </div>
           <div className="h-1 rounded-full bg-zinc-900 overflow-hidden mt-1.5">
             <div className="h-full bg-violet-500 rounded-full" style={{ width: `${report.coverage.score}%` }} />
@@ -115,7 +115,7 @@ const PeriodComparisonCard = memo(({
                   <span className="text-zinc-500">{row.label}</span>
                   <strong className={row.percent >= 60 ? 'text-emerald-400' : 'text-amber-400'}>%{row.percent}</strong>
                 </div>
-                <span className="text-[7px] font-mono text-zinc-700">{row.have}/{row.need} kayıt</span>
+                <span className="text-[7px] font-mono text-zinc-500">{row.have}/{row.need} kayıt</span>
               </div>
             ))}
           </div>
@@ -131,8 +131,8 @@ const PeriodComparisonCard = memo(({
                 onClick={() => setCategory(key)}
                 className={`rounded-xl border py-2 flex flex-col items-center gap-1 ${category === key ? 'border-cyan-700 bg-cyan-950/25' : 'border-zinc-800 bg-zinc-950'}`}
               >
-                <Icon size={12} className={category === key ? meta.color : 'text-zinc-600'} />
-                <span className={`text-[7px] font-bold ${category === key ? 'text-zinc-300' : 'text-zinc-600'}`}>{meta.label}</span>
+                <Icon size={12} className={category === key ? meta.color : 'text-zinc-400'} />
+                <span className={`text-[7px] font-bold ${category === key ? 'text-zinc-300' : 'text-zinc-400'}`}>{meta.label}</span>
               </button>
             );
           })}
@@ -148,7 +148,7 @@ const PeriodComparisonCard = memo(({
 
         <div className="space-y-1.5">
           {rows.length === 0 ? (
-            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-[9px] font-mono text-zinc-600 text-center">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-[9px] font-mono text-zinc-400 text-center">
               Bu başlıkta pratik eşiği aşan değişim yok.
             </div>
           ) : rows.map(row => (
@@ -156,7 +156,7 @@ const PeriodComparisonCard = memo(({
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <span className="text-[9px] font-bold text-zinc-300 block truncate">{row.label}</span>
-                  <span className="text-[8px] font-mono text-zinc-600">
+                  <span className="text-[8px] font-mono text-zinc-400">
                     önceki {formatValue(row.previous, row.unit)}
                   </span>
                 </div>
@@ -170,7 +170,7 @@ const PeriodComparisonCard = memo(({
                   )}
                 </div>
               </div>
-              {!row.available && <p className="text-[8px] font-mono text-zinc-700 mt-1">İki dönemde de karşılaştırılabilir kayıt gerekiyor.</p>}
+              {!row.available && <p className="text-[8px] font-mono text-zinc-500 mt-1">İki dönemde de karşılaştırılabilir kayıt gerekiyor.</p>}
             </div>
           ))}
         </div>
@@ -179,14 +179,14 @@ const PeriodComparisonCard = memo(({
           <div className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3">
             <div className="flex justify-between items-baseline mb-2">
               <span className="text-[9px] font-bold text-zinc-400">Antrenman Ritmi</span>
-              <span className="text-[7px] font-mono text-zinc-700">seansların günlere dağılımı</span>
+              <span className="text-[7px] font-mono text-zinc-500">seansların günlere dağılımı</span>
             </div>
             <div className="grid grid-cols-7 gap-1 h-16 items-end">
               {report.rhythm.map(row => (
                 <div key={row.day} className="flex flex-col items-center justify-end gap-1 h-full">
-                  <span className="text-[7px] font-mono text-zinc-600">{row.count}</span>
+                  <span className="text-[7px] font-mono text-zinc-400">{row.count}</span>
                   <div className="w-full rounded-t bg-cyan-600/70 min-h-[2px]" style={{ height: `${Math.max(3, row.count / rhythmMax * 38)}px` }} />
-                  <span className="text-[7px] font-mono text-zinc-600">{row.label}</span>
+                  <span className="text-[7px] font-mono text-zinc-400">{row.label}</span>
                 </div>
               ))}
             </div>
@@ -203,7 +203,7 @@ const PeriodComparisonCard = memo(({
           </div>
         )}
 
-        <p className="text-[8px] font-mono text-zinc-700 leading-relaxed">
+        <p className="text-[8px] font-mono text-zinc-500 leading-relaxed">
           Oklar aynı uzunluktaki iki dönemi betimler. Neden-sonuç iddiası değildir;
           küçük farklar pratik eşik altında kaldığında özellikle vurgulanmaz.
         </p>

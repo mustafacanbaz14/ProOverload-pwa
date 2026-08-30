@@ -522,7 +522,7 @@ const ProgramWizardModal = memo(({
                 aria-pressed={preferPerformed}
                 className={`w-full rounded-2xl p-3.5 border flex items-center gap-3 text-left ${preferPerformed ? 'border-cyan-800/60 bg-cyan-950/20' : 'border-zinc-800 bg-zinc-900'}`}
               >
-                <span className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${preferPerformed ? 'border-cyan-600 bg-cyan-500 text-zinc-950' : 'border-zinc-700 bg-zinc-950 text-zinc-600'}`}>
+                <span className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 ${preferPerformed ? 'border-cyan-600 bg-cyan-500 text-zinc-950' : 'border-zinc-700 bg-zinc-950 text-zinc-400'}`}>
                   {preferPerformed ? <Check size={15} /> : <Dumbbell size={14} />}
                 </span>
                 <span className="min-w-0">
@@ -543,7 +543,7 @@ const ProgramWizardModal = memo(({
               <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
                 <Ban size={11} className="text-red-400" /> Yapamadığın hareketler
               </span>
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                 Bunlar aday havuzundan tamamen çıkar — "önerilmesin" değil, "hiç
                 seçilmesin". Bir kasın bütün adayları çıkarsa üretici o kası
                 atlar ve raporda hacmi eksik gösterir.
@@ -585,14 +585,14 @@ const ProgramWizardModal = memo(({
                   ))}
                 </div>
               ) : (
-                <span className="text-[9px] font-mono text-zinc-600 block">
+                <span className="text-[9px] font-mono text-zinc-400 block">
                   Dışlanan hareket yok. Kontrol adımında herhangi bir hareketi
                   tek dokunuşla buraya ekleyebilirsin.
                 </span>
               )}
             </div>
 
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
               Deneyim seviyesi ayarlardan alınıyor; hacim bandı (eşik / verimli)
               ona göre ölçekleniyor.
             </p>
@@ -615,7 +615,7 @@ const ProgramWizardModal = memo(({
                     key={g.key}
                     onClick={() => gunSec(g.key)}
                     aria-pressed={secili}
-                    className={`rounded-xl py-2 border font-mono transition-colors ${secili ? 'border-violet-500 bg-violet-950/35 text-violet-200' : 'border-zinc-800 bg-zinc-900 text-zinc-600'}`}
+                    className={`rounded-xl py-2 border font-mono transition-colors ${secili ? 'border-violet-500 bg-violet-950/35 text-violet-200' : 'border-zinc-800 bg-zinc-900 text-zinc-400'}`}
                   >
                     <strong className="text-[10px] block">{g.short}</strong>
                     <span className="text-[8px]">{secili ? built.split.days[sira]?.name?.slice(0, 6) || '·' : '—'}</span>
@@ -729,7 +729,7 @@ const ProgramWizardModal = memo(({
                     className={`rounded-2xl border p-3 text-left disabled:opacity-35 ${selected ? 'border-fuchsia-500 bg-fuchsia-950/30' : 'border-zinc-800 bg-zinc-900'}`}
                   >
                     <strong className={`text-[10px] block ${selected ? 'text-fuchsia-200' : 'text-zinc-300'}`}>{item.label}</strong>
-                    <span className="text-[8px] font-mono text-zinc-600 leading-relaxed block mt-1">{item.detail}</span>
+                    <span className="text-[8px] font-mono text-zinc-400 leading-relaxed block mt-1">{item.detail}</span>
                   </button>
                 );
               })}
@@ -753,18 +753,18 @@ const ProgramWizardModal = memo(({
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
               <div className="px-3 py-2 border-b border-zinc-800 bg-zinc-950/50 flex justify-between items-center">
                 <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest">Örnek · {built.days[0]?.name}</span>
-                <span className="text-[8px] font-mono text-zinc-600">ilk {Math.min(8, built.days[0]?.exercises.length || 0)} hareket</span>
+                <span className="text-[8px] font-mono text-zinc-400">ilk {Math.min(8, built.days[0]?.exercises.length || 0)} hareket</span>
               </div>
               {(built.days[0]?.exercises || []).slice(0, 8).map((exercise, index) => (
                 <div key={exercise.name} className="px-3 py-1.5 border-b border-zinc-800/70 last:border-0 flex gap-2 items-center">
                   <span className="text-[8px] font-mono text-fuchsia-400 w-3 shrink-0">{index + 1}</span>
                   <span className="text-[9px] text-zinc-300 truncate flex-1">{exercise.name}</span>
-                  <span className="text-[7px] font-mono text-zinc-600 shrink-0">{exercise.orderReason}</span>
+                  <span className="text-[7px] font-mono text-zinc-400 shrink-0">{exercise.orderReason}</span>
                 </div>
               ))}
             </div>
 
-            <p className="text-[8px] font-mono text-zinc-700 leading-relaxed px-1">
+            <p className="text-[8px] font-mono text-zinc-500 leading-relaxed px-1">
               Kontrol adımında her hareketi tek basamak, en üste veya en alta da taşıyabilirsin. Elle değişiklik yalnız seçili güne uygulanır.
             </p>
           </>
@@ -900,7 +900,7 @@ const ProgramWizardModal = memo(({
                                 <div className="flex justify-between items-center gap-1.5 text-[10px] font-mono">
                                   <span className="text-zinc-300 truncate min-w-0 flex-1">{ex.name}</span>
                                   <span className="shrink-0 flex items-center gap-1">
-                                    <span className={lengthBias(ex.name) === 'stretch' ? 'text-cyan-500' : 'text-zinc-600'}>
+                                    <span className={lengthBias(ex.name) === 'stretch' ? 'text-cyan-500' : 'text-zinc-400'}>
                                       {LENGTH_BIAS_LABEL[lengthBias(ex.name)]}
                                     </span>
                                     <strong className="text-zinc-300">{ex.sets}s</strong>
@@ -910,7 +910,7 @@ const ProgramWizardModal = memo(({
                                       aria-pressed={kilit}
                                       title={kilit ? 'Kilidi aç' : 'Bu hareketi sabitle'}
                                       aria-label={`${ex.name} ${kilit ? 'kilidini aç' : 'hareketini sabitle'}`}
-                                      className={`p-1 ${kilit ? 'text-amber-400' : 'text-zinc-700 active:text-amber-400'}`}
+                                      className={`p-1 ${kilit ? 'text-amber-400' : 'text-zinc-500 active:text-amber-400'}`}
                                     >
                                       {kilit ? <Lock size={11} /> : <Unlock size={11} />}
                                     </button>
@@ -922,7 +922,7 @@ const ProgramWizardModal = memo(({
                                       title="Bu hareketi değiştir"
                                       aria-label={`${ex.name} hareketini değiştir`}
                                       aria-expanded={degistiriliyor}
-                                      className={`p-1 ${degistiriliyor ? 'text-emerald-400' : 'text-zinc-700 active:text-emerald-400'}`}
+                                      className={`p-1 ${degistiriliyor ? 'text-emerald-400' : 'text-zinc-500 active:text-emerald-400'}`}
                                     >
                                       <RefreshCw size={11} />
                                     </button>
@@ -930,18 +930,18 @@ const ProgramWizardModal = memo(({
                                       onClick={() => disla(ex.name)}
                                       title="Bu hareketi yapamıyorum"
                                       aria-label={`${ex.name} hareketini dışla`}
-                                      className="p-1 text-zinc-700 active:text-red-400"
+                                      className="p-1 text-zinc-500 active:text-red-400"
                                     >
                                       <Ban size={11} />
                                     </button>
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-1 pl-0.5">
-                                  <span className="text-[7px] font-mono text-zinc-700 truncate flex-1">{ex.orderReason}</span>
-                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 'top')} disabled={exIndex === 0} title="En üste taşı" aria-label={`${ex.name} en üste taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ChevronsUp size={10} /></button>
-                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, -1)} disabled={exIndex === 0} title="Yukarı taşı" aria-label={`${ex.name} yukarı taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ArrowUp size={10} /></button>
-                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 1)} disabled={exIndex === gun.exercises.length - 1} title="Aşağı taşı" aria-label={`${ex.name} aşağı taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ArrowDown size={10} /></button>
-                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 'bottom')} disabled={exIndex === gun.exercises.length - 1} title="En alta taşı" aria-label={`${ex.name} en alta taşı`} className="p-1 text-zinc-700 active:text-cyan-400 disabled:opacity-20"><ChevronsDown size={10} /></button>
+                                  <span className="text-[7px] font-mono text-zinc-500 truncate flex-1">{ex.orderReason}</span>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 'top')} disabled={exIndex === 0} title="En üste taşı" aria-label={`${ex.name} en üste taşı`} className="p-1 text-zinc-500 active:text-cyan-400 disabled:opacity-20"><ChevronsUp size={10} /></button>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, -1)} disabled={exIndex === 0} title="Yukarı taşı" aria-label={`${ex.name} yukarı taşı`} className="p-1 text-zinc-500 active:text-cyan-400 disabled:opacity-20"><ArrowUp size={10} /></button>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 1)} disabled={exIndex === gun.exercises.length - 1} title="Aşağı taşı" aria-label={`${ex.name} aşağı taşı`} className="p-1 text-zinc-500 active:text-cyan-400 disabled:opacity-20"><ArrowDown size={10} /></button>
+                                  <button onClick={() => sirayiElleDegistir(gun.name, ex.name, 'bottom')} disabled={exIndex === gun.exercises.length - 1} title="En alta taşı" aria-label={`${ex.name} en alta taşı`} className="p-1 text-zinc-500 active:text-cyan-400 disabled:opacity-20"><ChevronsDown size={10} /></button>
                                 </div>
                                 {degistiriliyor && (
                                   <div className="rounded-lg border border-emerald-900/40 bg-emerald-950/10 p-2 space-y-1.5">
@@ -953,7 +953,7 @@ const ProgramWizardModal = memo(({
                                           onClick={() => setSubstitutionGoal(goal.key)}
                                           aria-pressed={substitutionGoal === goal.key}
                                           title={goal.detail}
-                                          className={`shrink-0 rounded-lg border px-2 py-1 text-[8px] font-bold ${substitutionGoal === goal.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-900 text-zinc-600'}`}
+                                          className={`shrink-0 rounded-lg border px-2 py-1 text-[8px] font-bold ${substitutionGoal === goal.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-900 text-zinc-400'}`}
                                         >
                                           {goal.label}
                                         </button>
@@ -964,7 +964,7 @@ const ProgramWizardModal = memo(({
                                     </span>
                                     <div className="space-y-1">
                                       {swapOptions.length === 0 ? (
-                                        <span className="text-[9px] font-mono text-zinc-600">Uygun alternatif bulunamadı.</span>
+                                        <span className="text-[9px] font-mono text-zinc-400">Uygun alternatif bulunamadı.</span>
                                       ) : swapOptions.map(o => (
                                         <button
                                           key={o.name}
@@ -973,7 +973,7 @@ const ProgramWizardModal = memo(({
                                           className="w-full text-left bg-zinc-900 border border-emerald-900/50 px-2 py-1.5 rounded-lg active:bg-emerald-950/40"
                                         >
                                           <strong className="text-[9px] text-emerald-300 block truncate">{o.name}</strong>
-                                          <span className="text-[7px] font-mono text-zinc-600 block truncate">%{Math.round(o.similarity * 100)} · {o.note}</span>
+                                          <span className="text-[7px] font-mono text-zinc-400 block truncate">%{Math.round(o.similarity * 100)} · {o.note}</span>
                                         </button>
                                       ))}
                                     </div>
@@ -994,7 +994,7 @@ const ProgramWizardModal = memo(({
             <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
               <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
                 <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Ölçülen Hacim</h4>
-                <span className="text-[9px] font-mono text-zinc-600">dolaylı katkı dahil</span>
+                <span className="text-[9px] font-mono text-zinc-400">dolaylı katkı dahil</span>
               </div>
               <div className="divide-y divide-zinc-800/70">
                 {built.report.filter(r => r.volume > 0).map(r => (
@@ -1007,7 +1007,7 @@ const ProgramWizardModal = memo(({
                       <strong className={r.belowMev ? 'text-amber-400' : r.aboveMrv ? 'text-red-400' : 'text-zinc-100'}>
                         {r.volume}
                       </strong>
-                      <span className="text-zinc-600"> · eşik {r.mev} / verimli {r.mav}</span>
+                      <span className="text-zinc-400"> · eşik {r.mev} / verimli {r.mav}</span>
                     </span>
                   </div>
                 ))}
@@ -1024,7 +1024,7 @@ const ProgramWizardModal = memo(({
                   <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
                     Şu Anki Programına Göre
                   </h4>
-                  <span className="text-[9px] font-mono text-zinc-600 block mt-0.5 truncate">
+                  <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
                     {comparison.currentName}
                   </span>
                 </div>
@@ -1037,10 +1037,10 @@ const ProgramWizardModal = memo(({
                     <div key={k.l} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2 text-center">
                       <span className="text-[11px] font-mono block">
                         <span className="text-zinc-500">{k.a}</span>
-                        <ArrowRight size={9} className="inline mx-1 text-zinc-700" />
+                        <ArrowRight size={9} className="inline mx-1 text-zinc-500" />
                         <strong className="text-zinc-100">{k.b}</strong>
                       </span>
-                      <span className="text-[8px] font-mono text-zinc-600">{k.l}</span>
+                      <span className="text-[8px] font-mono text-zinc-400">{k.l}</span>
                     </div>
                   ))}
                 </div>
@@ -1071,7 +1071,7 @@ const ProgramWizardModal = memo(({
                     <div key={r.muscle} className="px-4 py-1.5 flex justify-between items-center gap-2">
                       <span className="text-[10px] font-bold text-zinc-300 truncate min-w-0">{r.muscle}</span>
                       <span className="text-[10px] font-mono shrink-0">
-                        <span className="text-zinc-600">{r.current} → </span>
+                        <span className="text-zinc-400">{r.current} → </span>
                         <strong className="text-zinc-200">{r.next}</strong>
                         <span className={r.delta > 0 ? 'text-emerald-400' : 'text-red-400'}>
                           {' '}({r.delta > 0 ? '+' : ''}{r.delta})
@@ -1080,7 +1080,7 @@ const ProgramWizardModal = memo(({
                     </div>
                   ))}
                 </div>
-                <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+                <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
                   İki taraf da aynı katkı modelinden geçti; fark yöntem farkı
                   değil program farkı. Eski şablonların silinmiyor.
                 </p>
@@ -1096,7 +1096,7 @@ const ProgramWizardModal = memo(({
               </div>
             )}
 
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
               Setler boş ağırlıkla açılır; hedefi uygulama ilk seanstan sonra
               geçmişten öğrenir. Hacmi haftadan haftaya artırmak için Araçlar →
               Mezosiklik'i kullanabilirsin — bu program bilerek verimli bandın

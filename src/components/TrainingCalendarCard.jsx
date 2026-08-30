@@ -40,7 +40,7 @@ const TrainingCalendarCard = memo(({ workouts = [], weeks = 26, today }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <CalendarDays size={12} className="mr-1.5 text-cyan-400" /> Antrenman Takvimi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">son {weeks} hafta</span>
+        <span className="text-[9px] font-mono text-zinc-400">son {weeks} hafta</span>
       </div>
 
       <div className="p-3 space-y-2">
@@ -52,7 +52,7 @@ const TrainingCalendarCard = memo(({ workouts = [], weeks = 26, today }) => {
               {takvim.weeks.map((_, i) => {
                 const ay = aylar.find(a => a.index === i);
                 return (
-                  <span key={i} className="w-[11px] text-[7px] font-mono text-zinc-600 shrink-0">
+                  <span key={i} className="w-[11px] text-[7px] font-mono text-zinc-400 shrink-0">
                     {ay?.label || ''}
                   </span>
                 );
@@ -61,7 +61,7 @@ const TrainingCalendarCard = memo(({ workouts = [], weeks = 26, today }) => {
             <div className="flex gap-[3px]">
               <div className="flex flex-col gap-[3px] mr-1 shrink-0">
                 {GUN_ETIKET.map((g, i) => (
-                  <span key={i} className="h-[11px] w-6 text-[7px] font-mono text-zinc-600 leading-[11px]">{g}</span>
+                  <span key={i} className="h-[11px] w-6 text-[7px] font-mono text-zinc-400 leading-[11px]">{g}</span>
                 ))}
               </div>
               {takvim.weeks.map((hafta, hi) => (
@@ -83,11 +83,11 @@ const TrainingCalendarCard = memo(({ workouts = [], weeks = 26, today }) => {
         </div>
 
         <div className="flex items-center justify-end gap-1">
-          <span className="text-[7px] font-mono text-zinc-600 mr-1">az</span>
+          <span className="text-[7px] font-mono text-zinc-400 mr-1">az</span>
           {LEVEL_CLASS.map((c, i) => (
             <span key={i} className={`w-[9px] h-[9px] rounded-[2px] border ${c}`} />
           ))}
-          <span className="text-[7px] font-mono text-zinc-600 ml-1">çok</span>
+          <span className="text-[7px] font-mono text-zinc-400 ml-1">çok</span>
         </div>
 
         {detay ? (
@@ -102,22 +102,22 @@ const TrainingCalendarCard = memo(({ workouts = [], weeks = 26, today }) => {
           <div className="grid grid-cols-3 gap-2">
             <div className="bg-zinc-950 border border-zinc-800 rounded-xl py-2 text-center">
               <strong className="text-[12px] font-mono text-zinc-100 block">{takvim.totalDays}</strong>
-              <span className="text-[8px] font-mono text-zinc-600">antrenman günü</span>
+              <span className="text-[8px] font-mono text-zinc-400">antrenman günü</span>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded-xl py-2 text-center">
               <Flame size={10} className="text-amber-400 mx-auto" />
               <strong className="text-[12px] font-mono text-zinc-100 block">{takvim.streakWeeks}</strong>
-              <span className="text-[8px] font-mono text-zinc-600">hafta seri</span>
+              <span className="text-[8px] font-mono text-zinc-400">hafta seri</span>
             </div>
             <div className="bg-zinc-950 border border-zinc-800 rounded-xl py-2 text-center">
               <TrendingDown size={10} className="text-zinc-500 mx-auto" />
               <strong className="text-[12px] font-mono text-zinc-100 block">{takvim.longestGap}</strong>
-              <span className="text-[8px] font-mono text-zinc-600">gün en uzun ara</span>
+              <span className="text-[8px] font-mono text-zinc-400">gün en uzun ara</span>
             </div>
           </div>
         )}
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           Renk yoğunluğu ETKİLİ SET sayısını gösteriyor, seans sayısını değil:
           yirmi dakikalık tamamlama seansıyla iki saatlik bacak gününü aynı
           renkte göstermek asıl bilgiyi silerdi. Bir güne dokun, ayrıntısı çıksın.

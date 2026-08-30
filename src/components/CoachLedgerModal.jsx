@@ -16,7 +16,7 @@ const VERDICT_ICON = {
   worked: <CheckCircle2 size={12} className="text-emerald-400" />,
   flat: <MinusCircle size={12} className="text-zinc-500" />,
   backfired: <XCircle size={12} className="text-red-400" />,
-  'not-applied': <CircleDashed size={12} className="text-zinc-600" />,
+  'not-applied': <CircleDashed size={12} className="text-zinc-400" />,
 };
 
 const VERDICT_STYLE = {
@@ -35,8 +35,8 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
   const olculemez = ledger.filter(e => e.decision === 'applied' && e.kind === 'none');
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="coach-ledger-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+    <div role="dialog" aria-modal="true" aria-labelledby="coach-ledger-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4 luxury-sheet-host">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] luxury-sheet shadow-2xl shadow-black/80">
         <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
           <h3 id="coach-ledger-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
             <BookCheck size={16} className="mr-2 text-emerald-400" /> Koç Karar Defteri
@@ -56,7 +56,7 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
               alır, {LEDGER_REVIEW_DAYS} gün sonra tekrar ölçer ve tavsiyenin
               işe yarayıp yaramadığını söyler.
             </p>
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
               Amaç koçu yanlış olabilir hale getirmek: yanlış olamayan bir
               tavsiye doğru da olamaz.
             </p>
@@ -90,7 +90,7 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
                   { l: 'işe yaradı', v: stats.worked, c: 'text-emerald-400' },
                   { l: 'fark etmedi', v: stats.flat, c: 'text-zinc-400' },
                   { l: 'ters gitti', v: stats.backfired, c: 'text-red-400' },
-                  { l: 'denenmedi', v: stats.notApplied, c: 'text-zinc-600' },
+                  { l: 'denenmedi', v: stats.notApplied, c: 'text-zinc-400' },
                 ].map(k => (
                   <div key={k.l} className="bg-zinc-950/80 border border-zinc-800/80 rounded-xl py-2 text-center">
                     <strong className={`text-[13px] font-mono font-bold block ${k.c}`}>{k.v}</strong>
@@ -158,7 +158,7 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
             )}
 
             {olculemez.length > 0 && (
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
                 {olculemez.length} tavsiye uygulandı ama ölçülemiyor
                 ({olculemez.map(e => e.title || e.key).join(', ')}). Her tavsiyenin
                 sayısal bir karşılığı yok — "uyku puanını gir" tavsiyesinin 1RM
@@ -168,7 +168,7 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
             )}
 
             {red.length > 0 && (
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
                 {red.length} tavsiye uygulanmadan kapatıldı. Bunlar ölçüme
                 girmiyor ama defterde duruyorlar: koçun neyi tekrar tekrar
                 önerdiğini ve senin neyi tekrar tekrar reddettiğini görmek de
@@ -178,7 +178,7 @@ const CoachLedgerModal = memo(({ isOpen, onClose, ledger = [], stats, due = [], 
           </>
         )}
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
           Ölçüm penceresi {LEDGER_REVIEW_DAYS} gün: daha kısası antrenman
           gürültüsünü sonuç sanmak, daha uzunu tavsiyenin etkisini araya giren
           on başka değişikliğe karıştırmak olurdu. Uygulama ve sonuç ayrı

@@ -31,7 +31,7 @@ const ResponseProfileCard = memo(({ profile }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Fingerprint size={12} className="mr-1.5 text-violet-400" /> Tepki Profili
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">{profile.observations} seans geçişi</span>
+        <span className="text-[9px] font-mono text-zinc-400">{profile.observations} seans geçişi</span>
       </div>
 
       <div className="grid grid-cols-3 gap-1 p-2 bg-zinc-950/40">
@@ -56,11 +56,11 @@ const ResponseProfileCard = memo(({ profile }) => {
           return (
             <div key={b.key} className="px-4 py-2 space-y-1">
               <div className="flex justify-between items-baseline gap-2">
-                <span className={`text-[10px] font-bold truncate min-w-0 ${b.enough ? 'text-zinc-200' : 'text-zinc-600'}`}>
+                <span className={`text-[10px] font-bold truncate min-w-0 ${b.enough ? 'text-zinc-200' : 'text-zinc-400'}`}>
                   {b.label}
-                  {b.hint && <span className="font-normal text-zinc-600"> · {b.hint}</span>}
+                  {b.hint && <span className="font-normal text-zinc-400"> · {b.hint}</span>}
                 </span>
-                <span className={`text-[10px] font-mono shrink-0 ${kazanan ? 'text-emerald-400' : b.enough ? 'text-zinc-400' : 'text-zinc-700'}`}>
+                <span className={`text-[10px] font-mono shrink-0 ${kazanan ? 'text-emerald-400' : b.enough ? 'text-zinc-400' : 'text-zinc-500'}`}>
                   {b.enough ? `%${b.gainPerSession} / seans` : `${b.observations} gözlem`}
                 </span>
               </div>
@@ -83,7 +83,7 @@ const ResponseProfileCard = memo(({ profile }) => {
         </p>
       )}
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
         Ölçü SEANS BAŞINA tahmini 1RM kazancı — haftalık ölçmek daha çok
         antrenman yapan bandı otomatik kazandırırdı. Her kazanç onu üreten
         seansın bandına yazılıyor. Bu bir deney değil gözlem: ağır çalıştığın

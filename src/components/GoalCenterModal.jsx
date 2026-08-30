@@ -39,7 +39,7 @@ const MeasurementGoals = memo(({ type, settings, setSettings, current = {} }) =>
         <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">
           {isTape ? 'Çevre ölçüsü hedefleri' : 'Kaliper hedefleri'}
         </h3>
-        <p className="text-[9px] font-mono text-zinc-600 mt-1">
+        <p className="text-[9px] font-mono text-zinc-400 mt-1">
           Şu anki değer solda, hedef sağda. Boş bırakılan bölge takip edilmez.
         </p>
       </div>
@@ -52,7 +52,7 @@ const MeasurementGoals = memo(({ type, settings, setSettings, current = {} }) =>
             <div key={key} className="grid grid-cols-[1fr_62px_82px] gap-2 items-center bg-zinc-950 border border-zinc-800 rounded-xl p-2.5">
               <div className="min-w-0">
                 <strong className="text-[10px] text-zinc-300 block truncate">{label}</strong>
-                <span className="text-[8px] font-mono text-zinc-600">
+                <span className="text-[8px] font-mono text-zinc-400">
                   {now > 0 ? `Şu an ${now} ${unit}` : 'Güncel ölçüm yok'}
                   {delta !== null ? ` · ${delta > 0 ? '+' : ''}${delta} ${unit}` : ''}
                 </span>
@@ -80,7 +80,7 @@ const MeasurementGoals = memo(({ type, settings, setSettings, current = {} }) =>
                   className="w-full h-9 bg-cyan-950/20 border border-cyan-900/50 rounded-lg pl-2 pr-6 text-center text-[10px] font-mono text-cyan-400 outline-none focus:border-cyan-500"
                 />
                 {target > 0 && (
-                  <button type="button" onClick={() => clear(key)} aria-label={`${label} hedefini temizle`} className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-600 p-1">
+                  <button type="button" onClick={() => clear(key)} aria-label={`${label} hedefini temizle`} className="absolute right-1 top-1/2 -translate-y-1/2 text-zinc-400 p-1">
                     <X size={10} />
                   </button>
                 )}

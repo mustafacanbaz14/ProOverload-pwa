@@ -224,13 +224,26 @@ const RELEASE_10_2 = release('10.2', '2026-08-30', 'Üstün Metin Okunabilirliğ
   item('492/492 Test ve Bütünlük', 'Tüm birim testleri, 16 kas grubu kuralı ve performans bütçeleri sıfır hata ile doğrulandı.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Kapsamlı Kullanıcı Deneyimi, Hızlı Ağırlık Stepper ve Hidrasyon Komuta Merkezi', [
+const RELEASE_10_3 = release('10.3', '2026-08-30', 'Kapsamlı Kullanıcı Deneyimi, Hızlı Ağırlık Stepper ve Hidrasyon Komuta Merkezi', [
   item('Ana Ekran 4-Aksiyon Komuta Merkezi', 'Ana sayfaya Antrenman, Hızlı Kayıt, Program Planı ve Araçlar için lüks degrade efektli ve canlı durum rozetli 4’lü hızlı erişim bloğu eklendi.'),
   item('Hızlı Su Takibi ve Anında Ekleme', 'Ana ekranda doğrudan tek dokunuşla +250ml ve +500ml su ekleme kısayolları ve interaktif sıvı dolum barı entegre edildi.'),
   item('Aktif Seansta Hızlı Ağırlık Ayarlayıcılar', 'Set giriş satırlarına salonda klavye ile uğraşmayı sonlandıran tek dokunuşlu -2.5, +1.25, +2.5 ve +5 kg mikro-adımlama butonları eklendi.'),
   item('Görsel Makro Dağılım ve Oran Çubuğu', 'Beslenme ekranında Protein, Karbonhidrat ve Yağ kalorilerinin günlük yüzdesel dağılımını canlı gösteren renkli gösterge şeridi sunuldu.'),
   item('Rafine Dokunmatik Ergonomi', 'Tüm set tamamlama butonları, dokunmatik kısayollar ve modal geçişleri daha geniş dokunma alanları ve hassas mikro-etkileşimlerle donatıldı.'),
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları ve performans bütçeleri tam uyumla doğrulandı.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Okunabilir Tipografi, Sıfır Kontrast Hatası ve Alt Sayfa Modalleri', [
+  item('Tüm Metin Ölçeği İki Punto Büyüdü', 'Arayüzdeki en küçük yazı boyutları 7–13 punto aralığından 9–15 punto aralığına taşındı. Salonda telefonu uzaktan okumak, küçük etiketleri zorlanmadan seçmek mümkün.'),
+  item('En Küçük Yazı Artık Ayarı Dinliyor', 'En küçük punto kademesi yazı boyutu ayarının dışında kalmıştı; 51 kullanım noktası ayarı görmezden geliyordu. Artık ölçeğin tamamı ayarla birlikte büyüyor.'),
+  item('Sıfır Kontrast Hatası', 'Beş ana ekranda ölçülen 31 WCAG AA kontrast ihlalinin tamamı giderildi. Soluk gri metinler bir kademe açıldı, beyaz yazı taşıyan renkli zeminler bir kademe koyulaştı.'),
+  item('Altın Zeminde Okunur Metin', 'Birincil butonların altın degradesi en koyu tonda bitiyordu; üzerindeki metin kaybolmaya yakındı. Degrade artık bir kademe açık tonda kapanıyor.'),
+  item('Yoğun Modaller Alt Sayfaya Dönüştü', 'Blok karşılaştırma, koç defteri, kanıt paneli ve senaryo pencereleri telefonda ortalanmış kart yerine alt sayfa olarak açılıyor. Kart biçimi 97 punto dikey, 32 punto yatay alanı boşa harcarken içerik yine de kayıyordu.'),
+  item('İçeriğe Göre Büyüyen Sayfa', 'Alt sayfa sabit yükseklikte değil: kısa içerik kadar yer kaplıyor, uzun içerikte ekranın tamamına yaklaşıyor. Üstte her koşulda kapatma için bir şerit kalıyor.'),
+  item('Çentik ve Home Indicator Koruması', 'Kenardan kenara açılan sayfalarda içerik artık çentiğin ve alt çubuğun altına girmiyor; güvenli alan payları hesaba katılıyor.'),
+  item('Kilitlenen Haftalık Plan Düğmesi', 'Ana ekrandan haftalık planı açan düğme tanımsız bir işlevi çağırıyor ve uygulamayı çökertiyordu. Düğme doğru pencereyi açıyor.'),
+  item('Devre Dışı Durumlar Korundu', '83 dosyada yapılan renk düzeltmesi sırasında devre dışı buton ve alanların soluk görünümü bilinçli olarak dokunulmadan bırakıldı; pasif olan pasif görünmeye devam ediyor.'),
+  item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -307,6 +320,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_3,
   RELEASE_10_2,
   RELEASE_10_1,
   RELEASE_10_0,

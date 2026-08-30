@@ -151,7 +151,7 @@ const CoachCenterModal = memo(({
         <section className="rounded-2xl border border-zinc-800 bg-zinc-950 p-3.5">
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-[9px] font-bold text-zinc-300">{proposal.validFrom} → {proposal.validUntil}</span>
-            <span className="text-[8px] font-mono text-zinc-600">kaynak: {proposal.sourceWeek.range}</span>
+            <span className="text-[8px] font-mono text-zinc-400">kaynak: {proposal.sourceWeek.range}</span>
           </div>
           <button
             onClick={() => onActivate?.(proposal)}
@@ -161,11 +161,11 @@ const CoachCenterModal = memo(({
             <Power size={12} /> {active && sameSource ? 'Bu Protokol Aktif' : 'Bu Haftaya Uygula'}
           </button>
           {!proposal.canApply && (
-            <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-2 text-center">
+            <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-2 text-center">
               Aktivasyon için en az bir antrenman ve 35/100 veri güveni gerekir.
             </p>
           )}
-          <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-2 text-center">
+          <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-2 text-center">
             Protokol şablonları değiştirmez. Toparlanma modu yalnızca o hafta başlatılan seansın çalışma setlerini azaltır.
           </p>
         </section>
@@ -181,7 +181,7 @@ const CoachCenterModal = memo(({
                 <div key={item.id} className="px-3.5 py-2.5 flex items-center justify-between gap-3">
                   <div className="min-w-0">
                     <strong className="text-[10px] text-zinc-300 block truncate">{item.label}</strong>
-                    <span className="text-[8px] font-mono text-zinc-600">{item.validFrom} → {item.validUntil}</span>
+                    <span className="text-[8px] font-mono text-zinc-400">{item.validFrom} → {item.validUntil}</span>
                   </div>
                   <span className="text-[9px] font-mono text-zinc-500 shrink-0">güven {item.confidence?.score || 0}</span>
                 </div>

@@ -155,7 +155,7 @@ const WellnessModal = memo(({
               </div>
             ) : (
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 text-center">
-                <Moon size={20} className="text-zinc-600 mx-auto mb-2" />
+                <Moon size={20} className="text-zinc-400 mx-auto mb-2" />
                 <p className="text-[11px] font-mono text-zinc-500 leading-relaxed">
                   Yatış ve uyanış saatini gir; puan otomatik hesaplanacak.
                 </p>
@@ -174,12 +174,12 @@ const WellnessModal = memo(({
               <div className="grid grid-cols-5 gap-1.5">
                 {[40, 55, 70, 85, 95].map(value => (
                   <button key={value} onClick={() => uykuGuncelle({ quickScore: value })}
-                    className={`py-1.5 rounded-lg border text-[9px] font-mono ${Number(uyku.quickScore) === value ? 'border-purple-600 bg-purple-950/30 text-purple-300' : 'border-zinc-800 bg-zinc-950 text-zinc-600'}`}>
+                    className={`py-1.5 rounded-lg border text-[9px] font-mono ${Number(uyku.quickScore) === value ? 'border-purple-600 bg-purple-950/30 text-purple-300' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}>
                     {value}
                   </button>
                 ))}
               </div>
-              <p className="text-[8px] font-mono text-zinc-600">Saatleri bilmiyorsan genel hissini gir. Ayrıntılı saatler doluysa onların hesabı önceliklidir.</p>
+              <p className="text-[8px] font-mono text-zinc-400">Saatleri bilmiyorsan genel hissini gir. Ayrıntılı saatler doluysa onların hesabı önceliklidir.</p>
               <div className="border-t border-zinc-800 pt-3">
                 <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Ayrıntılı Uyku</h4>
               </div>
@@ -241,7 +241,7 @@ const WellnessModal = memo(({
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
                 <div className="flex justify-between items-baseline">
                   <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Uyku Trendi</h4>
-                  <span className="text-[9px] font-mono text-zinc-600">son {trend.kayitSayisi} gece</span>
+                  <span className="text-[9px] font-mono text-zinc-400">son {trend.kayitSayisi} gece</span>
                 </div>
                 <div className="flex items-baseline gap-2">
                   <span className={`text-2xl font-mono font-bold ${trend.zone.text}`}>{trend.ortalama}</span>
@@ -344,7 +344,7 @@ const WellnessModal = memo(({
               </div>
 
               {gunKayitlari.length === 0 ? (
-                <div className="text-center py-6 text-zinc-600 text-[11px] font-mono">
+                <div className="text-center py-6 text-zinc-400 text-[11px] font-mono">
                   Bu güne kayıt eklenmedi.
                 </div>
               ) : gunKayitlari.map(e => {
@@ -353,7 +353,7 @@ const WellnessModal = memo(({
                   <div key={e.id} className={`rounded-xl border p-3 space-y-2 ${k.accent}`}>
                     <div className="flex justify-between items-center gap-2">
                       <span className={`text-[11px] font-bold ${k.color}`}>{k.label}</span>
-                      <button onClick={() => zihinSil(e.id)} className="text-zinc-600 active:text-red-500 p-1 -m-1" aria-label="Sil">
+                      <button onClick={() => zihinSil(e.id)} className="text-zinc-400 active:text-red-500 p-1 -m-1" aria-label="Sil">
                         <Trash2 size={13} />
                       </button>
                     </div>
@@ -394,7 +394,7 @@ const WellnessModal = memo(({
               </div>
             </div>
 
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
               Kalori katkısı MET tabanlı ve düşük (meditasyon 1.3, esneme 2.3) —
               bunlar kalori yakmak için değil, stres ve hareket açıklığı için
               takip ediliyor. Kalori panosuna da bu değerler ekleniyor.

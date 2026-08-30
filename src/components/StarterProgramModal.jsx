@@ -116,7 +116,7 @@ const StarterProgramModal = memo(({ isOpen, onClose, onInstall, onCustomize, exi
           );
         })}
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
           Set sayıları, her kasın haftalık toplamı eşiğin üstünde ve tartışmalı
           bandın sonunun altında kalacak şekilde seçildi. Kurduktan
           sonra Haftalık Program ekranındaki kas dökümünden kendi gözünle

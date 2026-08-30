@@ -115,7 +115,7 @@ const ExerciseLibraryModal = memo(({
 
         {suggestionModes.length > 0 && (
           <div className="space-y-1.5">
-            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest block">
+            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest block">
               Alternatif amacı
             </span>
             <div className="flex gap-1 overflow-x-auto hide-scrollbar pb-1">
@@ -126,7 +126,7 @@ const ExerciseLibraryModal = memo(({
                   onClick={() => onSuggestionModeChange?.(mode.key)}
                   aria-pressed={suggestionMode === mode.key}
                   title={mode.detail}
-                  className={`shrink-0 rounded-lg border px-2 py-1.5 text-[8px] font-bold ${suggestionMode === mode.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-900 text-zinc-600'}`}
+                  className={`shrink-0 rounded-lg border px-2 py-1.5 text-[8px] font-bold ${suggestionMode === mode.key ? 'border-emerald-600 bg-emerald-950/30 text-emerald-300' : 'border-zinc-800 bg-zinc-900 text-zinc-400'}`}
                 >
                   {mode.label}
                 </button>
@@ -173,12 +173,12 @@ const ExerciseLibraryModal = memo(({
               </button>
             )}
           </div>
-          <span className="text-[10px] font-mono text-zinc-600">
+          <span className="text-[10px] font-mono text-zinc-400">
             {visibleList.length < list.length ? `${visibleList.length}/${list.length}` : list.length} hareket
           </span>
         </div>
         {muscleFilter !== 'Tümü' && (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Sıra: %100 izolasyon → %100 bileşik → yardımcı katkılar.
           </p>
         )}
@@ -195,7 +195,7 @@ const ExerciseLibraryModal = memo(({
         )}
 
         {list.length === 0 && (
-          <div className="text-center py-12 text-zinc-600 text-[11px] font-mono">Eşleşen hareket yok.</div>
+          <div className="text-center py-12 text-zinc-400 text-[11px] font-mono">Eşleşen hareket yok.</div>
         )}
 
         {visibleList.map(name => {
@@ -239,7 +239,7 @@ const ExerciseLibraryModal = memo(({
                     </span>
                   )}
                   {parts.length === 0 ? (
-                    <span className="text-[10px] text-zinc-600 font-mono">Kas eşlemesi yok</span>
+                    <span className="text-[10px] text-zinc-400 font-mono">Kas eşlemesi yok</span>
                   ) : parts.map(([m, w]) => (
                     <span key={m} className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${chip(w)}`}>
                       {m}{suffix(w)}
@@ -250,11 +250,11 @@ const ExerciseLibraryModal = memo(({
 
               {selectMode ? (
                 disabled ? (
-                  <span className="text-[8px] font-bold text-zinc-600 border border-zinc-800 rounded-md px-1.5 py-1 shrink-0">EKLİ</span>
+                  <span className="text-[8px] font-bold text-zinc-400 border border-zinc-800 rounded-md px-1.5 py-1 shrink-0">EKLİ</span>
                 ) : selected ? (
                   <span className="text-white bg-cyan-600 rounded-full p-1 shrink-0"><Check size={13} /></span>
                 ) : (
-                  <span className="text-zinc-600 border border-zinc-800 rounded-full p-1 shrink-0"><Plus size={13} /></span>
+                  <span className="text-zinc-400 border border-zinc-800 rounded-full p-1 shrink-0"><Plus size={13} /></span>
                 )
               ) : (
                 <div className="flex items-center shrink-0">
@@ -262,7 +262,7 @@ const ExerciseLibraryModal = memo(({
                     onClick={() => onTogglePinned?.(name)}
                     title={pinned ? 'Sabitlemeyi kaldır' : 'Seçim listesine sabitle'}
                     aria-label={pinned ? `${name} sabitlemesini kaldır` : `${name} hareketini sabitle`}
-                    className={`p-1.5 ${pinned ? 'text-amber-400' : 'text-zinc-600 active:text-amber-400'}`}
+                    className={`p-1.5 ${pinned ? 'text-amber-400' : 'text-zinc-400 active:text-amber-400'}`}
                   >
                     <Pin size={14} fill={pinned ? 'currentColor' : 'none'} />
                   </button>
@@ -270,7 +270,7 @@ const ExerciseLibraryModal = memo(({
                     onClick={() => onToggleHidden(name)}
                     title={hidden ? 'Seçim listesinde göster' : 'Seçim listesinde gizle'}
                     aria-label={hidden ? `${name} seçim listesinde göster` : `${name} seçim listesinde gizle`}
-                    className="text-zinc-600 active:text-cyan-400 p-1.5"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5"
                   >
                     {hidden ? <EyeOff size={14} /> : <Eye size={14} />}
                   </button>
@@ -278,7 +278,7 @@ const ExerciseLibraryModal = memo(({
                     onClick={() => onEditExercise(name)}
                     title="Kas eşlemesini düzenle"
                     aria-label={`${name} kas eşlemesini düzenle`}
-                    className="text-zinc-600 active:text-cyan-400 p-1.5"
+                    className="text-zinc-400 active:text-cyan-400 p-1.5"
                   >
                     <Settings size={14} />
                   </button>
@@ -287,12 +287,12 @@ const ExerciseLibraryModal = memo(({
                       onClick={() => onDeleteExercise(name)}
                       title="Bu hareketi sil"
                       aria-label={`${name} hareketini sil`}
-                      className="text-zinc-600 active:text-red-500 p-1.5"
+                      className="text-zinc-400 active:text-red-500 p-1.5"
                     >
                       <Trash2 size={14} />
                     </button>
                   )}
-                  <ChevronRight size={14} className="text-zinc-700 ml-0.5" aria-hidden="true" />
+                  <ChevronRight size={14} className="text-zinc-500 ml-0.5" aria-hidden="true" />
                 </div>
               )}
             </div>

@@ -185,7 +185,7 @@ const SettingsModal = memo(({
               </div>
 
               {filteredSections.length === 0 ? (
-                <div className="py-10 text-center"><Search size={20} className="text-zinc-700 mx-auto mb-2" /><p className="text-[10px] font-mono text-zinc-600">Bu aramayla eşleşen ayar başlığı yok.</p></div>
+                <div className="py-10 text-center"><Search size={20} className="text-zinc-500 mx-auto mb-2" /><p className="text-[10px] font-mono text-zinc-400">Bu aramayla eşleşen ayar başlığı yok.</p></div>
               ) : (
                 <div className="grid grid-cols-2 gap-2.5">
                   {filteredSections.map(section => {
@@ -199,7 +199,7 @@ const SettingsModal = memo(({
                       >
                         <span className="flex items-center justify-between mb-2.5">
                           <span className={`w-8 h-8 rounded-xl border border-zinc-800 bg-zinc-900 flex items-center justify-center shadow-inner ${section.tone}`}><Icon size={15} /></span>
-                          <ChevronRight size={14} className="text-zinc-600" />
+                          <ChevronRight size={14} className="text-zinc-400" />
                         </span>
                         <strong className="text-[10px] font-bold text-zinc-200 block leading-tight">{section.label}</strong>
                         <span className="text-[8px] font-mono text-zinc-500 leading-relaxed mt-1">{section.summary}</span>
@@ -291,7 +291,7 @@ const SettingsModal = memo(({
                     kullanma geçmişini ölçüyor, antrenman yaşını değil.
                   </p>
                 )}
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   Mod yalnızca VARSAYILANLARI değiştiriyor: tekrar aralığı,
                   dinlenme süresi ve ilerleme kuralı. Hareket ya da şablon için
                   elle yazdığın değerler dokunulmadan kalıyor — mod denemek
@@ -328,10 +328,10 @@ const SettingsModal = memo(({
                   {findPhilosophy(volumePhilosophy).summary}
                 </p>
                 <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
-                  <span className="text-zinc-600">Dayanak: </span>
+                  <span className="text-zinc-400">Dayanak: </span>
                   {findPhilosophy(volumePhilosophy).evidence}
                 </p>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   Felsefe yalnızca HEDEFİ kaydırıyor. Eşik (altında ölçülebilir
                   uyaran beklenmeyen hacim) ve seans başı tavan değişmiyor —
                   onlar tartışmalı değil, iki kanıt hattı da orada anlaşıyor.
@@ -358,7 +358,7 @@ const SettingsModal = memo(({
                     {' '}{effectiveSetComparison.note}
                   </p>
                 )}
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   İkili kural RIR 0 ile RIR 3'ü aynı sayıyor ve RIR 4'ü hiç
                   saymıyordu. Kademeli ölçü yetmezliğe yakınlığa göre ağırlık
                   veriyor. Ağırlıklar eğrinin şeklinden geliyor, ölçülmüş
@@ -395,7 +395,7 @@ const SettingsModal = memo(({
                 <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
                   {findFocus(coachFocus).desc}
                 </p>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   Odak maddeleri silmiyor, SIRALARINI kaydırıyor. Sağlık ve
                   toparlanma maddeleri hiçbir odakta geri itilmiyor: bir tercih
                   ekranının kullanıcıyı sakatlığa götürebilmesi kabul edilebilir
@@ -430,7 +430,7 @@ const SettingsModal = memo(({
                 >
                   İçe Aktar
                 </button>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   Kod programın YAPISINI taşıyor: hareketler, set sayıları,
                   süperset bağları, tekrar aralıkları. Ağırlıklar taşınmıyor —
                   başkasının yükünü senin programına yazmak yanlış bir
@@ -461,7 +461,7 @@ const SettingsModal = memo(({
                     </button>
                   ))}
                 </div>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   Excel ve Google E-Tablolar için hazır: noktalı virgül ayraçlı,
                   ondalıklar virgüllü. Geri yükleme için değil, kendi analizini
                   kurmak için — geri yükleme JSON yedeğiyle yapılır.
@@ -492,7 +492,7 @@ const SettingsModal = memo(({
                   );
                 })}
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 mt-2 leading-relaxed">
                 Seçtiğin tema kaydedilir ve uygulamayı her açtığında geçerli olur.
               </p>
             </div>
@@ -515,7 +515,7 @@ const SettingsModal = memo(({
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 mt-2 leading-relaxed">
                 Tüm uygulamadaki yazılar bu orana göre ölçeklenir.
               </p>
             </div>
@@ -539,7 +539,7 @@ const SettingsModal = memo(({
                     );
                   })}
                 </div>
-                <p className="text-[9px] font-mono text-zinc-600 mt-2">İsteğe bağlıdır; sağlık ve uyarı renklerini değiştirmez.</p>
+                <p className="text-[9px] font-mono text-zinc-400 mt-2">İsteğe bağlıdır; sağlık ve uyarı renklerini değiştirmez.</p>
               </div>
             )}
 
@@ -602,7 +602,7 @@ const SettingsModal = memo(({
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 mt-2 leading-relaxed">
                 {(settings.bmiMode || 'athletic') === 'athletic'
                   ? 'Yağ oranın sağlıklı bandın içindeyse yüksek BMI kas olarak yorumlanır; FFMI arttıkça üst sınırlar yukarı kaydırılır.'
                   : 'Dünya Sağlık Örgütü aralıkları (18.5 / 25 / 30) olduğu gibi kullanılır.'}
@@ -645,14 +645,14 @@ const SettingsModal = memo(({
                       </button>
                     ))}
                   </div>
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                     {(ACTIVITY_LEVELS.find(l => l.key === (settings.activityLevel || 'light')) || ACTIVITY_LEVELS[1]).hint}
                   </p>
                 </div>
               )}
 
               {settings.neatMode === 'steps' && (
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed flex items-start gap-1.5">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed flex items-start gap-1.5">
                   <Footprints size={11} className="text-cyan-400 shrink-0 mt-0.5" />
                   Adım sayısını Beslenme sekmesinde gün gün girersin. Yakım vücut
                   ağırlığınla ölçeklenir (yaklaşık 0.0005 kcal/adım/kg).
@@ -690,7 +690,7 @@ const SettingsModal = memo(({
                       placeholder="0"
                       className="w-20 bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 text-center font-mono text-cyan-400 text-[11px] outline-none focus:border-cyan-500"
                     />
-                    <span className="text-[10px] font-mono text-zinc-600">kcal</span>
+                    <span className="text-[10px] font-mono text-zinc-400">kcal</span>
                   </span>
                 </div>
               )}
@@ -745,7 +745,7 @@ const SettingsModal = memo(({
                     );
                   })}
                 </div>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1.5">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">
                   Dokununca örnek çalar. {REST_ALERT_INTENSITIES.find(x => x.key === (settings.restAlertIntensity || 'strong'))?.hint}
                 </p>
                 </div>
@@ -829,7 +829,7 @@ const SettingsModal = memo(({
                         Ayakta tutma: {soundTest.keepAlive ? 'açık' : 'kapalı'}
                       </span>
                       {!soundTest.triggers && (
-                        <span className="block mt-1 text-zinc-600">
+                        <span className="block mt-1 text-zinc-400">
                           Bu tarayıcı bildirimi önceden zamanlayamıyor. Ekran
                           kapalıyken uyarının kaçmaması için "Dinlenmede Ses
                           Motorunu Ayakta Tut" açık kalmalı.
@@ -936,7 +936,7 @@ const SettingsModal = memo(({
                     {bodyweightAudit.byExercise.slice(0, 3).map(e => (
                       <div key={e.name} className="flex justify-between text-[9px] font-mono">
                         <span className="text-zinc-500 truncate">{e.name}</span>
-                        <span className="text-zinc-600 shrink-0">ek {e.added} · toplam {e.total}</span>
+                        <span className="text-zinc-400 shrink-0">ek {e.added} · toplam {e.total}</span>
                       </div>
                     ))}
                     {bodyweightAudit.canNormalize && onNormalizeBodyweight && (
@@ -947,7 +947,7 @@ const SettingsModal = memo(({
                         >
                           Geçmişi tek biçime çevir ({bodyweightAudit.total} set)
                         </button>
-                        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                           Toplam yazılmış setlerden o tarihteki vücut ağırlığı düşülür; alan
                           yalnızca ek yükü gösterir. Hesaplanan yükler <strong>değişmez</strong> —
                           yalnızca yazım biçimi tekleşir. Önce yedek almanı öneririm.
@@ -1009,14 +1009,14 @@ const SettingsModal = memo(({
                         if (sonraki.length === 0) return;
                         set({ availablePlates: [...new Set(sonraki)].sort((a, b) => b - a) });
                       }}
-                      className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${secili ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' : 'bg-zinc-900 border-zinc-800 text-zinc-600'}`}
+                      className={`py-2 rounded-lg text-[10px] font-bold border transition-colors ${secili ? 'bg-cyan-900/30 border-cyan-600 text-cyan-400' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
                     >
                       {p}
                     </button>
                   );
                 })}
               </div>
-              <span className="text-zinc-600 text-[9px] font-mono block mt-2">
+              <span className="text-zinc-400 text-[9px] font-mono block mt-2">
                 En küçük plaka {smallestPlateOf(settings.availablePlates)} kg — yükleme adımı {smallestPlateOf(settings.availablePlates) * 2} kg.
               </span>
             </div>
@@ -1032,7 +1032,7 @@ const SettingsModal = memo(({
                   onChange={(e) => set({ repRangeMin: Math.max(1, Number(e.target.value) || 1) })}
                   className="flex-1 min-w-0 bg-zinc-900 border border-zinc-800 rounded-lg py-2 text-center font-mono text-cyan-400 text-xs outline-none"
                 />
-                <span className="text-zinc-600">—</span>
+                <span className="text-zinc-400">—</span>
                 <input
                   type="number" inputMode="numeric" value={settings.repRangeMax}
                   onChange={(e) => set({ repRangeMax: Math.max(1, Number(e.target.value) || 1) })}
@@ -1057,10 +1057,10 @@ const SettingsModal = memo(({
                   </button>
                 ))}
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 mt-2 leading-relaxed">
                 {(EXPERIENCE_LEVELS.find(l => l.key === settings.experienceLevel) || EXPERIENCE_LEVELS[1]).hint}
               </p>
-              <p className="text-[9px] font-mono text-zinc-600 mt-1.5 leading-relaxed border-t border-zinc-900 pt-1.5">
+              <p className="text-[9px] font-mono text-zinc-400 mt-1.5 leading-relaxed border-t border-zinc-900 pt-1.5">
                 Emin değilsen <strong className="text-zinc-400">Orta</strong> seç: referans değerler bu
                 seviyeye göre belirlendi ve çoğu kişi için en güvenli başlangıç.
                 Seviye ne olursa olsun hedef, eşik ile verimli bandın üstü arasında kalıp haftadan haftaya
@@ -1118,9 +1118,9 @@ const SettingsModal = memo(({
                   })}
                 </div>
                 {activePace && (
-                  <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">{activePace.hint}</p>
+                  <p className="text-[9px] font-mono text-zinc-400 mt-2 leading-relaxed">{activePace.hint}</p>
                 )}
-                <p className="text-[9px] font-mono text-zinc-600 mt-1.5 leading-relaxed border-t border-zinc-900 pt-1.5">
+                <p className="text-[9px] font-mono text-zinc-400 mt-1.5 leading-relaxed border-t border-zinc-900 pt-1.5">
                   Seçtiğin hız, yağ oranına göre belirlenen güvenli sınırı aşamaz —
                   aşarsa otomatik kırpılır ve analiz ekranında bunu görürsün.
                 </p>
@@ -1215,7 +1215,7 @@ const SettingsModal = memo(({
                 <ShieldCheck size={14} /> Mağaza Hazırlık Merkezi
               </button>
             )}
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
               Sağlık hesapları tahmindir; uygulama tıbbi cihaz değildir ve tanı veya tedavi sunmaz.
             </p>
           </Group>

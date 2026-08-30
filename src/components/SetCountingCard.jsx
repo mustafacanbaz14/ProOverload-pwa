@@ -24,10 +24,10 @@ const SetCountingCard = memo(({ report, onOpenEvidence }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Sigma size={12} className="mr-1.5 text-violet-400" /> Set Sayımı
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">son {report.weeks} hafta ortalaması</span>
+        <span className="text-[9px] font-mono text-zinc-400">son {report.weeks} hafta ortalaması</span>
       </div>
 
-      <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-950/30 grid grid-cols-[1fr_auto_auto_auto] gap-2 text-[8px] font-mono text-zinc-600 uppercase tracking-wider">
+      <div className="px-4 py-2 border-b border-zinc-800 bg-zinc-950/30 grid grid-cols-[1fr_auto_auto_auto] gap-2 text-[8px] font-mono text-zinc-400 uppercase tracking-wider">
         <span>Kas</span>
         <span className="text-right w-10">Doğr.</span>
         <span className="text-right w-10">Kesirli</span>
@@ -46,7 +46,7 @@ const SetCountingCard = memo(({ report, onOpenEvidence }) => {
                 className="w-full px-4 py-2 grid grid-cols-[1fr_auto_auto_auto] gap-2 items-baseline text-left active:bg-zinc-950/40"
               >
                 <span className="text-[10px] text-zinc-300 truncate">{r.muscle}</span>
-                <span className="text-[10px] font-mono text-zinc-600 text-right w-10">{r.direct}</span>
+                <span className="text-[10px] font-mono text-zinc-400 text-right w-10">{r.direct}</span>
                 <span className="text-[10px] font-mono text-violet-300 text-right w-10">{r.fractional}</span>
                 <span className="text-[10px] font-mono text-zinc-400 text-right w-10">{r.total}</span>
               </button>
@@ -63,7 +63,7 @@ const SetCountingCard = memo(({ report, onOpenEvidence }) => {
 
       <div className="px-4 py-2.5 bg-zinc-950/40 border-t border-zinc-800 space-y-1.5">
         {Object.values(COUNTING_METHODS).map(m => (
-          <p key={m.key} className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p key={m.key} className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             <strong className={m.key === 'fractional' ? 'text-violet-400' : 'text-zinc-500'}>
               {m.label}:
             </strong> {m.hint}

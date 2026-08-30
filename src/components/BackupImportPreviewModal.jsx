@@ -70,7 +70,7 @@ const BackupImportPreviewModal = memo(({ isOpen, fileName, inspection, migration
             {confirmReplace && (
               <div className="mt-3 border-t border-orange-900/40 pt-3">
                 <p className="mb-2 flex items-start gap-1.5 text-[9px] font-mono leading-relaxed text-orange-300"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> İşlemden sonra kısa süreli Geri Al seçeneği gösterilecek.</p>
-                <button type="button" onClick={() => onApply('replace')} className="w-full rounded-xl bg-orange-600 py-2.5 text-[10px] font-black uppercase tracking-wide text-white active:bg-orange-500">Evet, dosyadakiyle değiştir</button>
+                <button type="button" onClick={() => onApply('replace')} className="w-full rounded-xl bg-orange-700 py-2.5 text-[10px] font-black uppercase tracking-wide text-white active:bg-orange-600">Evet, dosyadakiyle değiştir</button>
               </div>
             )}
           </div>

@@ -38,7 +38,7 @@ const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male' }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Ruler size={12} className="mr-1.5 text-cyan-400" /> Vücut Oranları
         </h4>
-        {rapor.dateLabel && <span className="text-[9px] font-mono text-zinc-600 shrink-0">{rapor.dateLabel}</span>}
+        {rapor.dateLabel && <span className="text-[9px] font-mono text-zinc-400 shrink-0">{rapor.dateLabel}</span>}
       </div>
 
       {rapor.hasData ? (
@@ -58,12 +58,12 @@ const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male' }) => {
                 <div className="flex justify-between items-baseline gap-2">
                   <span className="text-[11px] font-bold text-zinc-200 truncate min-w-0">
                     {r.label}
-                    <span className="text-[8px] font-mono text-zinc-600 ml-1.5">{KIND_LABEL[r.kind]}</span>
+                    <span className="text-[8px] font-mono text-zinc-400 ml-1.5">{KIND_LABEL[r.kind]}</span>
                   </span>
                   <span className="text-[10px] font-mono shrink-0 flex items-center gap-1">
-                    {r.direction && <Ok size={10} className={r.direction === 'up' ? 'text-emerald-400' : r.direction === 'down' ? 'text-amber-400' : 'text-zinc-600'} />}
+                    {r.direction && <Ok size={10} className={r.direction === 'up' ? 'text-emerald-400' : r.direction === 'down' ? 'text-amber-400' : 'text-zinc-400'} />}
                     <strong className={s.color}>{r.ratio}</strong>
-                    <span className="text-zinc-600">· {r.band.low}–{r.band.high}</span>
+                    <span className="text-zinc-400">· {r.band.low}–{r.band.high}</span>
                   </span>
                 </div>
 
@@ -75,10 +75,10 @@ const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male' }) => {
                 <p className="text-[9px] font-mono text-zinc-500 mt-1.5">
                   {r.values.of} / {r.values.to} cm · <span className={s.color}>{s.label}</span>
                   {r.delta !== null && r.delta !== 0 && (
-                    <span className="text-zinc-600"> · önceki ölçüme göre {r.delta > 0 ? '+' : ''}{r.delta}</span>
+                    <span className="text-zinc-400"> · önceki ölçüme göre {r.delta > 0 ? '+' : ''}{r.delta}</span>
                   )}
                 </p>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1">{r.note}</p>
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">{r.note}</p>
               </div>
             );
           })}
@@ -93,8 +93,8 @@ const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male' }) => {
 
       {rapor.missing.length > 0 && (
         <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60 flex items-start gap-2">
-          <Info size={11} className="text-zinc-600 shrink-0 mt-0.5" />
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <Info size={11} className="text-zinc-400 shrink-0 mt-0.5" />
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Eksik ölçüler: {rapor.missing.map(olcuAdi).join(', ')}. Eksik ölçünün
             oranı hiç hesaplanmıyor — eksik veriden oran üretmek, uydurma bir
             sayıyı gerçek gibi göstermek olurdu.

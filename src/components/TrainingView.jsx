@@ -97,7 +97,7 @@ const TrainingView = memo(({
           </div>
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => onPreview?.(recommendation.template)} className="rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 active:bg-zinc-800">Planı İncele</button>
-            <button onClick={() => onStart?.(recommendation.template)} className="rounded-xl bg-emerald-600 py-2.5 text-[9px] font-black uppercase text-white active:bg-emerald-700 flex items-center justify-center gap-1.5"><Play size={12} /> Başlat</button>
+            <button onClick={() => onStart?.(recommendation.template)} className="rounded-xl bg-emerald-700 py-2.5 text-[9px] font-black uppercase text-white active:bg-emerald-800 flex items-center justify-center gap-1.5"><Play size={12} /> Başlat</button>
           </div>
           <p className="text-[8px] font-mono text-zinc-400">Puan; haftalık hacim açığı, tavan riski ve son 48 saat yüklenmesini birlikte tartar.</p>
         </section>
@@ -106,7 +106,7 @@ const TrainingView = memo(({
       <button onClick={() => onStart?.()} className="luxury-primary-card w-full bg-cyan-600 active:bg-cyan-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-cyan-950/30">
         <span className="flex items-center gap-3">
           <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center"><Zap size={19} /></span>
-          <span className="text-left"><strong className="text-sm block">Serbest Antrenman Başlat</strong><span className="text-[10px] text-cyan-100">Hazır oluşluk kontrolüyle</span></span>
+          <span className="text-left"><strong className="text-sm block">Serbest Antrenman Başlat</strong><span className="text-[10px] opacity-75">Hazır oluşluk kontrolüyle</span></span>
         </span>
         <ChevronRight size={18} />
       </button>

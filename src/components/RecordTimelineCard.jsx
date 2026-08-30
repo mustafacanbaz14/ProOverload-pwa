@@ -24,7 +24,7 @@ const RecordTimelineCard = memo(({ timeline }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Trophy size={12} className="mr-1.5 text-yellow-400" /> Rekor Çizelgesi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">
+        <span className="text-[9px] font-mono text-zinc-400">
           son {timeline.recentDays} günde {timeline.recentCount}
         </span>
       </div>
@@ -36,7 +36,7 @@ const RecordTimelineCard = memo(({ timeline }) => {
           </span>
         ))}
         {timeline.byMuscle.length === 0 && (
-          <span className="text-[9px] font-mono text-zinc-600">Son dönemde yeni rekor yok.</span>
+          <span className="text-[9px] font-mono text-zinc-400">Son dönemde yeni rekor yok.</span>
         )}
       </div>
 
@@ -48,7 +48,7 @@ const RecordTimelineCard = memo(({ timeline }) => {
                 {r.first && <Sparkles size={9} className="inline text-cyan-400 mr-1" />}
                 {r.exercise}
               </span>
-              <span className="text-[9px] font-mono text-zinc-600">{r.label}</span>
+              <span className="text-[9px] font-mono text-zinc-400">{r.label}</span>
             </span>
             <span className="text-[10px] font-mono shrink-0 text-right">
               <strong className="text-zinc-100">{r.weight} kg × {r.reps}</strong>
@@ -70,7 +70,7 @@ const RecordTimelineCard = memo(({ timeline }) => {
         </button>
       )}
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
         {timeline.daysSinceLast !== null && (
           <>Son rekorun üstünden {timeline.daysSinceLast} gün geçti. </>
         )}

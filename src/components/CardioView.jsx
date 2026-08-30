@@ -193,7 +193,7 @@ const CardioView = memo(({
                     placeholder="örn. 194"
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-200 text-[12px] font-mono text-center outline-none focus:border-red-500"
                   />
-                  <span className="text-[9px] font-mono text-zinc-600 leading-relaxed block mt-1">{MAX_HR_TEST_HINT}</span>
+                  <span className="text-[9px] font-mono text-zinc-400 leading-relaxed block mt-1">{MAX_HR_TEST_HINT}</span>
                 </label>
 
                 <label className="block">
@@ -206,7 +206,7 @@ const CardioView = memo(({
                     className="w-full bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-200 text-[12px] font-mono text-center outline-none focus:border-cyan-500"
                   />
                 </label>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   {zoneMethod === 'hrr' && gecerliYontem === 'max'
                     ? 'Karvonen seçili ama dinlenme nabzı yok; sınırlar şimdilik maksimum nabız yüzdesinden hesaplanıyor. Eksik veriyle yanlış bir sayı üretmektense bilinen yöntemi kullanmak doğru.'
                     : zoneMethodOptions.find(m => m.key === gecerliYontem)?.hint}
@@ -222,7 +222,7 @@ const CardioView = memo(({
                   <HeartPulse size={12} className="mr-1.5 text-red-400" /> Sabah Dinlenme Nabzı
                 </h4>
                 {restingHrReport?.hasData && (
-                  <span className="text-[9px] font-mono text-zinc-600">{restingHrReport.entries.length} ölçüm</span>
+                  <span className="text-[9px] font-mono text-zinc-400">{restingHrReport.entries.length} ölçüm</span>
                 )}
               </div>
               <div className="p-3 space-y-2.5">
@@ -230,7 +230,7 @@ const CardioView = memo(({
                   <>
                     <div className="flex justify-between items-baseline gap-2">
                       <span className="text-[10px] font-bold text-zinc-300">
-                        Son ölçüm <span className="text-zinc-600 font-mono">{restingHrReport.latest.label}</span>
+                        Son ölçüm <span className="text-zinc-400 font-mono">{restingHrReport.latest.label}</span>
                       </span>
                       <span className="text-[11px] font-mono">
                         <strong className={restingHrReport.status === 'sustainedHigh' || restingHrReport.status === 'high'
@@ -238,14 +238,14 @@ const CardioView = memo(({
                           {restingHrReport.latest.bpm}
                         </strong>
                         {restingHrReport.baseline !== null && (
-                          <span className="text-zinc-600"> · taban {restingHrReport.baseline}
+                          <span className="text-zinc-400"> · taban {restingHrReport.baseline}
                             {restingHrReport.delta !== null && ` (${restingHrReport.delta > 0 ? '+' : ''}${restingHrReport.delta})`}
                           </span>
                         )}
                       </span>
                     </div>
                     {restingHrReport.baseline === null && (
-                      <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                      <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                         Taban çizgisi için en az {restingHrReport.needed} ölçüm gerekiyor
                         ({restingHrReport.baselineCount} var). Taban kurulmadan tek bir
                         yüksek değer yorumlanmıyor — kahve, geç yemek ya da kötü uyku
@@ -254,7 +254,7 @@ const CardioView = memo(({
                     )}
                   </>
                 ) : (
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                     Sabah yataktan kalkmadan ölçülen nabız, toparlanma borcunun en
                     erken göstergelerinden biri. Birkaç gün girince taban çizgisi
                     kurulur ve sapmalar yorumlanmaya başlar.
@@ -303,12 +303,12 @@ const CardioView = memo(({
                       <strong className="text-[12px] text-zinc-100 block truncate">{h.activity.label}</strong>
                       <span className="text-[9px] font-mono text-cyan-400 block">{h.summary}</span>
                       {h.lastDate && (
-                        <span className="text-[9px] font-mono text-zinc-600 block">
+                        <span className="text-[9px] font-mono text-zinc-400 block">
                           son: {formatDayRelative(h.lastDate, 'short')}
                         </span>
                       )}
                     </span>
-                    <ChevronDown size={14} className={`text-zinc-600 shrink-0 ${acik ? 'rotate-180' : ''}`} />
+                    <ChevronDown size={14} className={`text-zinc-400 shrink-0 ${acik ? 'rotate-180' : ''}`} />
                   </button>
                   {acik && (
                     <TargetEditor
@@ -333,7 +333,7 @@ const CardioView = memo(({
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3 space-y-2 max-h-[50vh] overflow-y-auto hide-scrollbar">
                 {CARDIO_SECTIONS.map(section => (
                   <div key={section.key}>
-                    <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest block mb-1">{section.label}</span>
+                    <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest block mb-1">{section.label}</span>
                     <div className="flex flex-wrap gap-1.5 mb-2">
                       {CARDIO_ACTIVITIES.filter(a => section.groups.includes(a.group)).map(a => (
                         <button
@@ -369,7 +369,7 @@ const CardioView = memo(({
                         <strong className={x.trend.direction === 'improving' ? 'text-emerald-400' : x.trend.direction === 'declining' ? 'text-amber-400' : 'text-zinc-300'}>
                           {x.trend.latest.label}
                         </strong>
-                        <span className="text-zinc-600">
+                        <span className="text-zinc-400">
                           {' '}· {x.trend.direction === 'improving' ? 'hızlanıyor' : x.trend.direction === 'declining' ? 'yavaşlıyor' : 'sabit'}
                         </span>
                       </span>
@@ -377,7 +377,7 @@ const CardioView = memo(({
                   ))}
                 </div>
                 <div className="px-4 py-2 bg-zinc-950/60">
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                     Karşılaştırma yalnızca aynı aktivite ve aynı şiddet sınıfı içinde
                     yapılıyor; zone 2 koşusunun temposunu interval seansıyla
                     kıyaslamak gerileme gibi görünürdü.
@@ -396,7 +396,7 @@ const CardioView = memo(({
                   <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
                     <Bookmark size={12} className="mr-1.5 text-cyan-400" /> Seans Şablonları
                   </h4>
-                  <span className="text-[9px] font-mono text-zinc-600">{siraliSablonlar.length}</span>
+                  <span className="text-[9px] font-mono text-zinc-400">{siraliSablonlar.length}</span>
                 </div>
                 <div className="divide-y divide-zinc-800/70">
                   {siraliSablonlar.map(t => (
@@ -417,7 +417,7 @@ const CardioView = memo(({
                       </button>
                       <button
                         onClick={() => onDeleteCardioTemplate?.(t.id)}
-                        className="text-zinc-600 active:text-red-400 p-1.5 shrink-0"
+                        className="text-zinc-400 active:text-red-400 p-1.5 shrink-0"
                         aria-label={`${t.name} şablonunu sil`}
                       >
                         <Trash2 size={12} />
@@ -426,7 +426,7 @@ const CardioView = memo(({
                   ))}
                 </div>
                 <div className="px-4 py-2 bg-zinc-950/60">
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                     Şablon plandaki mesafe, stil, set tipi ve dinlenmeyi taşır;
                     ölçtüğün süreyi ve kulaç sayısını taşımaz — onlar o seansa
                     ait. Geçmiş kayıtlardaki "Şablon yap" düğmesiyle çoğaltılır.
@@ -441,24 +441,24 @@ const CardioView = memo(({
                   <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
                     <Trophy size={12} className="mr-1.5 text-amber-400" /> Kardiyo Rekorları
                   </h4>
-                  <span className="text-[9px] font-mono text-zinc-600">{cardioRecords.records.length}</span>
+                  <span className="text-[9px] font-mono text-zinc-400">{cardioRecords.records.length}</span>
                 </div>
                 <div className="divide-y divide-zinc-800/70">
                   {cardioRecords.records.map(r => (
                     <div key={`${r.family}-${r.distance}`} className="px-4 py-2 flex justify-between items-baseline gap-2">
                       <span className="text-[11px] font-bold text-zinc-200 truncate min-w-0">
                         {r.label}
-                        <span className="text-[9px] font-mono text-zinc-600 ml-1.5">{r.activityInfo?.label}</span>
+                        <span className="text-[9px] font-mono text-zinc-400 ml-1.5">{r.activityInfo?.label}</span>
                       </span>
                       <span className="text-[10px] font-mono shrink-0">
                         <strong className="text-amber-400">{r.timeLabel}</strong>
-                        <span className="text-zinc-600"> · {r.paceLabel} · {formatDay(r.date, 'short')}</span>
+                        <span className="text-zinc-400"> · {r.paceLabel} · {formatDay(r.date, 'short')}</span>
                       </span>
                     </div>
                   ))}
                 </div>
                 <div className="px-4 py-2 bg-zinc-950/60">
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                     Rekor yalnızca TAM eşleşen mesafede sayılıyor; 1200 m'lik bir
                     yüzmeden 1000 m rekoru türetmek tempoyu sabit varsaymak olurdu.
                   </p>
@@ -469,10 +469,10 @@ const CardioView = memo(({
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
               <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
                 <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Son Kayıtlar</h4>
-                <span className="text-[9px] font-mono text-zinc-600">{sonKayitlar.length}</span>
+                <span className="text-[9px] font-mono text-zinc-400">{sonKayitlar.length}</span>
               </div>
               {sonKayitlar.length === 0 ? (
-                <p className="px-4 py-8 text-center text-[10px] font-mono text-zinc-600">
+                <p className="px-4 py-8 text-center text-[10px] font-mono text-zinc-400">
                   Henüz kardiyo kaydı yok.
                 </p>
               ) : (
@@ -501,7 +501,7 @@ const CardioView = memo(({
                         <button
                           onClick={() => onSaveCardioTemplate(k, `${k.activity?.label || k.type} · ${k.sets.length} set`)}
                           aria-label="Şablon yap"
-                          className="text-zinc-700 active:text-cyan-400 p-1 shrink-0"
+                          className="text-zinc-500 active:text-cyan-400 p-1 shrink-0"
                         >
                           <Bookmark size={12} />
                         </button>
@@ -510,7 +510,7 @@ const CardioView = memo(({
                         <button
                           onClick={() => onDeleteEntry(k)}
                           aria-label="Kaydı sil"
-                          className="text-zinc-700 active:text-red-500 p-1 shrink-0"
+                          className="text-zinc-500 active:text-red-500 p-1 shrink-0"
                         >
                           <Trash2 size={12} />
                         </button>
@@ -561,7 +561,7 @@ const TargetEditor = memo(({ activityKey, value, onSave, onRemove }) => {
         placeholder="Not: teknik, parkur, ekipman…"
         className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-zinc-200 text-[11px] font-mono outline-none focus:border-cyan-500"
       />
-      <p className="text-[9px] font-mono text-zinc-600">{describeTarget(form, activityKey) || 'Henüz hedef yok.'}</p>
+      <p className="text-[9px] font-mono text-zinc-400">{describeTarget(form, activityKey) || 'Henüz hedef yok.'}</p>
       <div className="flex gap-2">
         <button
           onClick={onRemove}

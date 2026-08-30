@@ -19,8 +19,8 @@ const Row = ({ r }) => {
     <div className="px-4 py-2 flex items-baseline justify-between gap-2">
       <span className="text-[10px] text-zinc-300 truncate min-w-0">{r.label}</span>
       <span className="text-[10px] font-mono shrink-0 flex items-center gap-1">
-        <span className="text-zinc-600">{r.before}{r.unit}</span>
-        <ArrowRight size={9} className="text-zinc-700" />
+        <span className="text-zinc-400">{r.before}{r.unit}</span>
+        <ArrowRight size={9} className="text-zinc-500" />
         <span className="text-zinc-200">{r.after}{r.unit}</span>
         {r.deltaPct !== null && (
           <span className={renk}>({r.deltaPct > 0 ? '+' : ''}%{r.deltaPct})</span>
@@ -37,8 +37,8 @@ const BlockCompareModal = memo(({ isOpen, onClose, buildReport }) => {
   const report = buildReport(weeks);
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="block-compare-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
+    <div role="dialog" aria-modal="true" aria-labelledby="block-compare-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[93] flex items-center justify-center p-4 luxury-sheet-host">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] luxury-sheet shadow-2xl shadow-black/80">
         <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
           <h3 id="block-compare-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
             <GitCompareArrows size={16} className="mr-2 text-cyan-400" /> Blok Karşılaştırma
@@ -149,7 +149,7 @@ const BlockCompareModal = memo(({ isOpen, onClose, buildReport }) => {
             )}
 
             {(report.added.length > 0 || report.dropped.length > 0) && (
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
                 {report.added.length > 0 && `Yeni: ${report.added.join(', ')}. `}
                 {report.dropped.length > 0 && `Bırakılan: ${report.dropped.join(', ')}. `}
                 Bunlar çıktı hesabına girmiyor — yeni bir harekete başlamak

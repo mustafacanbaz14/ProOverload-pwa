@@ -37,10 +37,10 @@ const HomeTemplatesSection = memo(({
       {templates.length === 0 ? (
         <div className="p-5 text-center space-y-2.5">
           <div className="w-10 h-10 rounded-full bg-zinc-950 border border-zinc-800 flex items-center justify-center mx-auto">
-            <BookmarkPlus size={16} className="text-zinc-600" />
+            <BookmarkPlus size={16} className="text-zinc-400" />
           </div>
           <p className="text-[11px] font-bold text-zinc-300">Henüz şablon yok</p>
-          <p className="text-[10px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">
             Sık yaptığın antrenmanı şablona çevirirsen tek dokunuşla başlatırsın.
             Antrenman bitince &quot;Şablon Yap&quot; ile kaydedebilir ya da baştan
             bir program kurabilirsin.
@@ -69,7 +69,7 @@ const HomeTemplatesSection = memo(({
                     >
                       <span className="text-xs font-bold text-cyan-400 truncate flex items-center">
                         <span className="truncate">{template.name}</span>
-                        <ChevronRight size={13} className="ml-1 shrink-0 text-zinc-600" />
+                        <ChevronRight size={13} className="ml-1 shrink-0 text-zinc-400" />
                       </span>
                       <span className="flex items-center gap-3 mt-1 text-[10px] font-mono text-zinc-500">
                         <span className="flex items-center"><Clock size={10} className="mr-1" />~{minutes} dk</span>
@@ -81,13 +81,13 @@ const HomeTemplatesSection = memo(({
                         onClick={() => onToggleTemplateFavorite?.(template)}
                         title={template.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
                         aria-label={template.favorite ? 'Şablonu favorilerden çıkar' : 'Şablonu favorilere ekle'}
-                        className={`p-1.5 ${template.favorite ? 'text-amber-400' : 'text-zinc-600 active:text-amber-400'}`}
+                        className={`p-1.5 ${template.favorite ? 'text-amber-400' : 'text-zinc-400 active:text-amber-400'}`}
                       >
                         <Star size={13} fill={template.favorite ? 'currentColor' : 'none'} />
                       </button>
                       <button onClick={() => handleStartRequest(template)} className="bg-cyan-900/30 active:bg-cyan-900/60 text-cyan-400 border border-cyan-800 text-[10px] font-bold py-1.5 px-3 rounded-lg uppercase tracking-wider">Başlat</button>
-                      <button onClick={() => onEditTemplate?.(template)} title="Şablonu düzenle" aria-label="Şablonu düzenle" className="text-zinc-600 active:text-cyan-400 p-1.5"><Pencil size={14} /></button>
-                      <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'template', id: template.id })} title="Şablonu sil" aria-label="Şablonu sil" className="text-zinc-600 active:text-red-500 p-1.5"><Trash2 size={14} /></button>
+                      <button onClick={() => onEditTemplate?.(template)} title="Şablonu düzenle" aria-label="Şablonu düzenle" className="text-zinc-400 active:text-cyan-400 p-1.5"><Pencil size={14} /></button>
+                      <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'template', id: template.id })} title="Şablonu sil" aria-label="Şablonu sil" className="text-zinc-400 active:text-red-500 p-1.5"><Trash2 size={14} /></button>
                     </div>
                   </div>
 

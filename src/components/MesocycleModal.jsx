@@ -158,7 +158,7 @@ const MesocycleModal = memo(({
                 <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   {findProgressionMode(mode).summary}
                 </p>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   {findProgressionMode(mode).detail}
                 </p>
               </div>
@@ -248,7 +248,7 @@ const MesocycleModal = memo(({
                   );
                 })}
                 {instructions.length === 0 && (
-                  <p className="px-4 py-6 text-center text-[10px] font-mono text-zinc-600">
+                  <p className="px-4 py-6 text-center text-[10px] font-mono text-zinc-400">
                     Bloğun tabanında kas yok.
                   </p>
                 )}

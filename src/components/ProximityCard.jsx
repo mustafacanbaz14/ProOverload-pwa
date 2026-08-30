@@ -26,7 +26,7 @@ const ProximityCard = memo(({ report }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Gauge size={12} className="mr-1.5 text-orange-400" /> Yetmezliğe Yakınlık
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">
+        <span className="text-[9px] font-mono text-zinc-400">
           {report.meanRir !== null ? `ortalama RIR ${report.meanRir}` : `son ${report.weeks} hafta`}
         </span>
       </div>
@@ -37,7 +37,7 @@ const ProximityCard = memo(({ report }) => {
           { l: 'uzak', v: report.tooFar.length, c: 'text-amber-400' },
           { l: 'yakın', v: report.tooClose.length, c: 'text-cyan-400' },
         ].map(k => (
-          <span key={k.l} className="text-[9px] font-mono text-zinc-600">
+          <span key={k.l} className="text-[9px] font-mono text-zinc-400">
             <strong className={k.c}>{k.v}</strong> {k.l}
           </span>
         ))}
@@ -51,7 +51,7 @@ const ProximityCard = memo(({ report }) => {
               <span className="text-[10px] text-zinc-300 truncate min-w-0">{r.name}</span>
               <span className="text-[9px] font-mono shrink-0">
                 <span className={s.text}>RIR {r.meanRir}</span>
-                <span className="text-zinc-600"> · {r.targetLabel} · {r.sets} set</span>
+                <span className="text-zinc-400"> · {r.targetLabel} · {r.sets} set</span>
               </span>
             </div>
           );
@@ -68,7 +68,7 @@ const ProximityCard = memo(({ report }) => {
         </p>
       )}
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40 border-t border-zinc-800">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40 border-t border-zinc-800">
         <AlertTriangle size={9} className="inline mr-1" />
         {report.caveat} Hedefler hareket tipine göre veriliyor: bileşke
         hareketlerde yetmezliğe gitmenin bedeli (teknik bozulması, eklem yükü,

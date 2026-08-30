@@ -16,7 +16,7 @@ const chipClass = (w) =>
   w === 1 ? 'text-emerald-400 border-emerald-600 bg-emerald-950/40'
     : w === 0.5 ? 'text-cyan-400 border-cyan-700 bg-cyan-950/30'
       : w === 0.25 ? 'text-zinc-300 border-zinc-600 bg-zinc-800'
-        : 'text-zinc-600 border-zinc-800 bg-zinc-950';
+        : 'text-zinc-400 border-zinc-800 bg-zinc-950';
 
 const suffix = (w) => (w === 1 ? ' •' : w === 0.5 ? ' ½' : w === 0.25 ? ' ¼' : '');
 
@@ -88,13 +88,13 @@ const ExerciseEditorModal = memo(({
           <div>
             <div className="flex justify-between items-baseline mb-2">
               <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider">Katkı Ağırlıkları</span>
-              <span className="text-[9px] font-mono text-zinc-600">dokun: • → ½ → ¼ → yok</span>
+              <span className="text-[9px] font-mono text-zinc-400">dokun: • → ½ → ¼ → yok</span>
             </div>
 
             <div className="space-y-3">
               {MUSCLE_SECTIONS.map(section => (
                 <div key={section.title}>
-                  <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest block mb-1">
+                  <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest block mb-1">
                     {section.title}
                   </span>
                   <div className="grid grid-cols-2 gap-1.5">
@@ -138,7 +138,7 @@ const ExerciseEditorModal = memo(({
                 </button>
               ))}
             </div>
-            <p className="text-[9px] font-mono text-zinc-600 mt-1.5 leading-snug">
+            <p className="text-[9px] font-mono text-zinc-400 mt-1.5 leading-snug">
               İtme/çekme dengesi hesabında kullanılır.
             </p>
           </div>
@@ -150,7 +150,7 @@ const ExerciseEditorModal = memo(({
             <label htmlFor="setup-note" className="text-[11px] font-bold text-zinc-200 block mb-1">
               Kurulum Notu
             </label>
-            <span className="text-[9px] font-mono text-zinc-600 block mb-2 leading-snug">
+            <span className="text-[9px] font-mono text-zinc-400 block mb-2 leading-snug">
               Sehpa/koltuk yüksekliği, pim deliği, tutuş genişliği, ayak
               pozisyonu… Antrenman ekranında hareketin altında görünür.
             </span>

@@ -234,7 +234,7 @@ const FoodSearchModal = memo(({
                 <button
                   key={t.key}
                   onClick={() => { setTab(t.key); setErrorMsg(''); }}
-                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center ${active ? 'bg-orange-600 text-white shadow-md shadow-orange-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
+                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center ${active ? 'bg-orange-700 text-white shadow-md shadow-orange-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
                 >
                   <TabIcon size={12} className="mr-1.5" /> {t.label}
                 </button>
@@ -285,7 +285,7 @@ const FoodSearchModal = memo(({
                   </button>
                 )}
                 {tab === 'online' && (
-                  <button type="submit" disabled={loading} className="bg-orange-600 active:bg-orange-700 text-white px-4 rounded-xl flex items-center justify-center">
+                  <button type="submit" disabled={loading} className="bg-orange-700 active:bg-orange-800 text-white px-4 rounded-xl flex items-center justify-center">
                     {loading ? <Loader2 size={15} className="animate-spin" /> : <Search size={15} />}
                   </button>
                 )}
@@ -339,7 +339,7 @@ const FoodSearchModal = memo(({
                   <span className="text-zinc-500">{servingUnit}</span>
                 </div>
                 {servingUnit !== 'g' && (
-                  <label className="flex items-center justify-end gap-1.5 text-[9px] text-zinc-600">
+                  <label className="flex items-center justify-end gap-1.5 text-[9px] text-zinc-400">
                     1 {servingUnit} =
                     <input type="number" inputMode="decimal" min="1" max="2000" value={unitGram} onChange={event => setUnitGram(parseNumber(event.target.value) || 0)} className="w-14 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center font-mono text-orange-400 outline-none" />
                     g <span className="text-zinc-500">· toplam {Math.round(effectiveGram)}g</span>
@@ -374,7 +374,7 @@ const FoodSearchModal = memo(({
             bastırmasın diye. */}
         {tab === 'local' && !query.trim() && recentFoods.length > 0 && (
           <div className="px-3 pt-2.5 pb-1 border-b border-zinc-800 bg-zinc-950">
-            <span className="text-[9px] font-mono text-zinc-600 uppercase tracking-widest flex items-center mb-1.5">
+            <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest flex items-center mb-1.5">
               <History size={10} className="mr-1" /> Sık Kullandıkların
             </span>
             <div className="flex gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1 pb-1">
@@ -438,7 +438,7 @@ const FoodSearchModal = memo(({
               <button
                 onClick={saveCustomFood}
                 disabled={!customForm.name.trim()}
-                className="w-full bg-orange-600 active:bg-orange-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold py-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center transition-colors"
+                className="w-full bg-orange-700 active:bg-orange-800 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold py-3 rounded-xl text-[11px] uppercase tracking-wider flex items-center justify-center transition-colors"
               >
                 <Save size={14} className="mr-2" /> Besini Kaydet
               </button>
@@ -447,7 +447,7 @@ const FoodSearchModal = memo(({
             <>
               {errorMsg && <div className="text-center py-6 text-zinc-500 font-mono text-[11px] px-4">{errorMsg}</div>}
               {!errorMsg && results.length === 0 && (
-                <div className="text-center py-8 text-zinc-600 font-mono text-[11px]">
+                <div className="text-center py-8 text-zinc-400 font-mono text-[11px]">
                   {tab === 'online' ? 'Aramak için bir şeyler yaz.' : 'Eşleşen besin yok.'}
                 </div>
               )}
@@ -488,7 +488,7 @@ const FoodSearchModal = memo(({
                           onClick={() => onToggleFavorite?.(food)}
                           title={isFavorite(food) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
                           aria-label={isFavorite(food) ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                          className={`p-1.5 transition-colors ${isFavorite(food) ? 'text-orange-400' : 'text-zinc-600 active:text-orange-400'}`}
+                          className={`p-1.5 transition-colors ${isFavorite(food) ? 'text-orange-400' : 'text-zinc-400 active:text-orange-400'}`}
                         >
                           <Star size={14} fill={isFavorite(food) ? 'currentColor' : 'none'} />
                         </button>
@@ -498,7 +498,7 @@ const FoodSearchModal = memo(({
                             onClick={() => setCustomFoods(prev => prev.filter(f => f.id !== food.id))}
                             title="Bu özel besini sil"
                             aria-label="Bu özel besini sil"
-                            className="text-zinc-600 active:text-red-500 p-1.5"
+                            className="text-zinc-400 active:text-red-500 p-1.5"
                           >
                             <Trash2 size={13} />
                           </button>
@@ -510,7 +510,7 @@ const FoodSearchModal = memo(({
                             disabled={savedIds.includes(food.id)}
                             title="Kendi besinlerime kaydet"
                             aria-label="Kendi besinlerime kaydet"
-                            className={`p-1.5 transition-colors ${savedIds.includes(food.id) ? 'text-emerald-400' : 'text-zinc-600 active:text-orange-400'}`}
+                            className={`p-1.5 transition-colors ${savedIds.includes(food.id) ? 'text-emerald-400' : 'text-zinc-400 active:text-orange-400'}`}
                           >
                             {savedIds.includes(food.id) ? <Check size={14} /> : <Save size={14} />}
                           </button>

@@ -10,7 +10,7 @@ const inputClass = 'w-full rounded-xl border border-zinc-800 bg-zinc-950 px-2.5 
 
 const Field = ({ label, value, onChange, min, max, step = 1, suffix = '' }) => (
   <label className="space-y-1">
-    <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-600">{label}</span>
+    <span className="block text-[8px] font-bold uppercase tracking-wider text-zinc-400">{label}</span>
     <div className="relative">
       <input
         type="number" inputMode="decimal" value={value}
@@ -18,7 +18,7 @@ const Field = ({ label, value, onChange, min, max, step = 1, suffix = '' }) => (
         onChange={(event) => onChange(event.target.value)}
         className={`${inputClass} ${suffix ? 'pr-7' : ''}`}
       />
-      {suffix && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[8px] font-mono text-zinc-600">{suffix}</span>}
+      {suffix && <span className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[8px] font-mono text-zinc-400">{suffix}</span>}
     </div>
   </label>
 );
@@ -101,28 +101,28 @@ const ProgressionBlockCard = memo(({
         <div className="space-y-3 p-3.5">
           <div className="grid grid-cols-3 gap-1.5">
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-2.5">
-              <span className="text-[8px] font-bold uppercase text-zinc-600">İlerleme</span>
+              <span className="text-[8px] font-bold uppercase text-zinc-400">İlerleme</span>
               <strong className="mt-1 block text-[12px] font-mono text-zinc-100">
                 {report.completedSessions}/{report.totalSessions}
               </strong>
-              <span className="text-[8px] font-mono text-zinc-600">seans · {report.currentWeek}. hafta</span>
+              <span className="text-[8px] font-mono text-zinc-400">seans · {report.currentWeek}. hafta</span>
             </div>
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-2.5">
-              <span className="text-[8px] font-bold uppercase text-zinc-600">Uyum</span>
+              <span className="text-[8px] font-bold uppercase text-zinc-400">Uyum</span>
               <strong className={`mt-1 block text-[12px] font-mono ${report.adherence === null ? 'text-zinc-500' : report.adherence >= 80 ? 'text-emerald-400' : report.adherence >= 60 ? 'text-amber-400' : 'text-red-400'}`}>
                 {report.adherence === null ? '—' : `%${report.adherence}`}
               </strong>
-              <span className="text-[8px] font-mono text-zinc-600">{report.outcomes.measured} ölçülen seans</span>
+              <span className="text-[8px] font-mono text-zinc-400">{report.outcomes.measured} ölçülen seans</span>
             </div>
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-2.5">
-              <span className="text-[8px] font-bold uppercase text-zinc-600">Hedef Aralığı</span>
+              <span className="text-[8px] font-bold uppercase text-zinc-400">Hedef Aralığı</span>
               <strong className="mt-1 block text-[10px] font-mono text-cyan-300">
                 {eta?.status === 'reached' ? 'Ulaşıldı'
                   : eta?.status === 'projected'
                     ? `${formatDay(eta.rangeStart, 'short')}–${formatDay(eta.rangeEnd, 'short')}`
                     : 'Belirsiz'}
               </strong>
-              <span className="text-[8px] font-mono text-zinc-600">
+              <span className="text-[8px] font-mono text-zinc-400">
                 {eta?.status === 'projected'
                   ? `${eta.confidence === 'high' ? 'yüksek' : eta.confidence === 'medium' ? 'orta' : 'düşük'} güven · ${eta.pointCount} seans`
                   : eta?.status === 'reached' ? 'veride doğrulandı' : '6 seans + 3 hafta'}
@@ -149,7 +149,7 @@ const ProgressionBlockCard = memo(({
                 {next.sets.map((target, index) => (
                   <span key={`${target.kind}-${index}`} className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1 text-[9px] font-mono text-zinc-300">
                     {index + 1}. {target.weight > 0 ? `${target.weight} kg × ` : ''}{target.reps} · RIR {target.rir}
-                    {target.kind !== 'work' && <em className="ml-1 not-italic text-zinc-600">{setKind(target.kind)}</em>}
+                    {target.kind !== 'work' && <em className="ml-1 not-italic text-zinc-400">{setKind(target.kind)}</em>}
                   </span>
                 ))}
               </div>
@@ -169,11 +169,11 @@ const ProgressionBlockCard = memo(({
               <div className="grid grid-cols-3 gap-1.5">
                 {eta.scenarios.map(scenario => (
                   <div key={scenario.key} className={`rounded-lg border p-2 ${scenario.key === 'current' ? 'border-cyan-900/60 bg-cyan-950/20' : 'border-zinc-800 bg-zinc-950/70'}`}>
-                    <span className="block text-[7px] font-bold uppercase text-zinc-600">{scenario.label}</span>
+                    <span className="block text-[7px] font-bold uppercase text-zinc-400">{scenario.label}</span>
                     <strong className={`mt-1 block text-[9px] font-mono ${scenario.key === 'current' ? 'text-cyan-300' : 'text-zinc-300'}`}>
                       {formatDay(scenario.date, 'short')}
                     </strong>
-                    <span className="text-[7px] font-mono text-zinc-600">{scenario.days} gün</span>
+                    <span className="text-[7px] font-mono text-zinc-400">{scenario.days} gün</span>
                   </div>
                 ))}
               </div>
@@ -197,11 +197,11 @@ const ProgressionBlockCard = memo(({
 
           {Array.isArray(plan.predictionHistory) && plan.predictionHistory.length > 0 && (
             <div className="rounded-xl border border-zinc-800 bg-zinc-950/45 p-2.5">
-              <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-600">Tahmin Geçmişi</span>
+              <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-400">Tahmin Geçmişi</span>
               <div className="mt-1.5 space-y-1">
                 {plan.predictionHistory.slice(-3).reverse().map(entry => (
                   <div key={`${entry.asOf}-${entry.targetE1RM}`} className="flex items-center justify-between gap-2 text-[8px] font-mono">
-                    <span className="text-zinc-600">{formatDay(entry.asOf, 'short')}</span>
+                    <span className="text-zinc-400">{formatDay(entry.asOf, 'short')}</span>
                     <span className="text-zinc-400">
                       {entry.status === 'reached' ? 'hedefe ulaşıldı'
                         : `${formatDay(entry.rangeStart, 'short')}–${formatDay(entry.rangeEnd, 'short')}`}
@@ -244,7 +244,7 @@ const ProgressionBlockCard = memo(({
       {editing && (
         <div className="space-y-3 p-3.5">
           <div>
-            <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-wider text-zinc-600">Yükleme Modeli</span>
+            <span className="mb-1.5 block text-[8px] font-bold uppercase tracking-wider text-zinc-400">Yükleme Modeli</span>
             <div className="grid grid-cols-2 gap-1.5">
               {Object.values(PROGRESSION_BLOCK_MODELS).map(model => (
                 <button
@@ -286,7 +286,7 @@ const ProgressionBlockCard = memo(({
           >
             <span>
               <strong className={`block text-[9px] ${draft.deloadLastWeek ? 'text-cyan-300' : 'text-zinc-400'}`}>Son haftayı hafiflet</strong>
-              <span className="block text-[8px] font-mono text-zinc-600">Tam bırakma değil; yaklaşık %10 yük ve %50 set azaltımı.</span>
+              <span className="block text-[8px] font-mono text-zinc-400">Tam bırakma değil; yaklaşık %10 yük ve %50 set azaltımı.</span>
             </span>
             <span className={`h-5 w-9 rounded-full p-0.5 ${draft.deloadLastWeek ? 'bg-cyan-600' : 'bg-zinc-800'}`}>
               <span className={`block h-4 w-4 rounded-full bg-white transition-transform ${draft.deloadLastWeek ? 'translate-x-4' : ''}`} />
@@ -298,7 +298,7 @@ const ProgressionBlockCard = memo(({
               Son sette taşınan toplam yük yaklaşık {defaults.effectiveLoadHint} kg; ancak alana ek yük yazıldığı için başlangıç 0 bırakıldı. Buraya salonda ağırlık alanına yazacağın değeri gir.
             </p>
           )}
-          <p className="text-[8px] font-mono leading-relaxed text-zinc-600">
+          <p className="text-[8px] font-mono leading-relaxed text-zinc-400">
             Takvim bir reçetedir, fizyolojik sonuç garantisi değildir. Bir kötü seans yükü otomatik düşürmez; önce hedef tekrarlanır, iki belirgin kaçırmada %5 geri çekilir.
           </p>
 

@@ -84,13 +84,13 @@ const ProgramOptimizerCard = memo(({
           <strong className="text-base font-mono leading-none">{audit.hasData ? audit.score : '—'}</strong>
           <span className="text-[7px] font-bold mt-1">SKOR</span>
         </span>
-        {open ? <ChevronUp size={15} className="text-zinc-600 shrink-0" /> : <ChevronDown size={15} className="text-zinc-600 shrink-0" />}
+        {open ? <ChevronUp size={15} className="text-zinc-400 shrink-0" /> : <ChevronDown size={15} className="text-zinc-400 shrink-0" />}
       </button>
 
       {open && (
         <div className="border-t border-zinc-800/80 p-3 space-y-3">
           <div>
-            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest block mb-1.5">1 · Program amacı</span>
+            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest block mb-1.5">1 · Program amacı</span>
             <div className="grid grid-cols-3 gap-1.5">
               {Object.values(PROGRAM_GOALS).map(item => (
                 <button
@@ -104,13 +104,13 @@ const ProgramOptimizerCard = memo(({
                 </button>
               ))}
             </div>
-            <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-1.5">{PROGRAM_GOALS[goal].detail}</p>
+            <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-1.5">{PROGRAM_GOALS[goal].detail}</p>
           </div>
 
           <div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">2 · Seans süresi</span>
-              <span className="text-[8px] font-mono text-zinc-600">en fazla {timeBudget} dk</span>
+              <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest">2 · Seans süresi</span>
+              <span className="text-[8px] font-mono text-zinc-400">en fazla {timeBudget} dk</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5">
               {PROGRAM_TIME_BUDGETS.map(value => (
@@ -118,7 +118,7 @@ const ProgramOptimizerCard = memo(({
                   type="button"
                   key={value}
                   onClick={() => setTimeBudget(value)}
-                  className={`rounded-lg border py-1.5 text-[9px] font-mono ${timeBudget === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-600'}`}
+                  className={`rounded-lg border py-1.5 text-[9px] font-mono ${timeBudget === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
                 >
                   {value} dk
                 </button>
@@ -128,8 +128,8 @@ const ProgramOptimizerCard = memo(({
 
           <div>
             <div className="flex items-center justify-between gap-2 mb-1.5">
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">3 · Kas önceliği</span>
-              <span className="text-[8px] font-mono text-zinc-600">{priorities.length}/3</span>
+              <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest">3 · Kas önceliği</span>
+              <span className="text-[8px] font-mono text-zinc-400">{priorities.length}/3</span>
             </div>
             <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
               {MUSCLE_GROUPS.map(muscle => (
@@ -138,7 +138,7 @@ const ProgramOptimizerCard = memo(({
                   key={muscle}
                   onClick={() => togglePriority(muscle)}
                   aria-pressed={priorities.includes(muscle)}
-                  className={`shrink-0 rounded-lg border px-2 py-1.5 text-[8px] font-bold ${priorities.includes(muscle) ? 'border-amber-500 bg-amber-950/30 text-amber-200' : 'border-zinc-800 bg-zinc-950 text-zinc-600'}`}
+                  className={`shrink-0 rounded-lg border px-2 py-1.5 text-[8px] font-bold ${priorities.includes(muscle) ? 'border-amber-500 bg-amber-950/30 text-amber-200' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
                 >
                   {muscle}
                 </button>
@@ -152,7 +152,7 @@ const ProgramOptimizerCard = memo(({
                 {audit.dimensions.map(item => (
                   <div key={item.key} className="rounded-lg border border-zinc-800 bg-zinc-950 py-1.5 text-center min-w-0">
                     <strong className={`text-[10px] font-mono block ${item.score >= 70 ? 'text-emerald-300' : item.score >= 45 ? 'text-amber-300' : 'text-red-300'}`}>{item.score}</strong>
-                    <span className="text-[6px] font-bold text-zinc-600 uppercase block truncate px-0.5">{item.label}</span>
+                    <span className="text-[6px] font-bold text-zinc-400 uppercase block truncate px-0.5">{item.label}</span>
                   </div>
                 ))}
               </div>
@@ -165,7 +165,7 @@ const ProgramOptimizerCard = memo(({
                       : <Target size={10} className="text-cyan-400 mt-0.5 shrink-0" />}
                     <span className="min-w-0">
                       <strong className="text-[9px] text-zinc-300 block">{finding.title}</strong>
-                      <span className="text-[8px] font-mono text-zinc-600 leading-relaxed block">{finding.detail}</span>
+                      <span className="text-[8px] font-mono text-zinc-400 leading-relaxed block">{finding.detail}</span>
                     </span>
                   </div>
                 ))}
@@ -205,7 +205,7 @@ const ProgramOptimizerCard = memo(({
               {matrixOpen && audit.dayRows.length > 0 && (
                 <div className="overflow-x-auto hide-scrollbar rounded-xl border border-zinc-800 bg-zinc-950">
                   <table className="min-w-full text-[8px] font-mono">
-                    <thead><tr className="text-zinc-600 border-b border-zinc-800">
+                    <thead><tr className="text-zinc-400 border-b border-zinc-800">
                       <th className="text-left p-2">Kas</th>
                       {audit.dayRows.map(day => <th key={day.uid} className="px-2 py-2 text-center whitespace-nowrap">{day.name}</th>)}
                     </tr></thead>
@@ -226,7 +226,7 @@ const ProgramOptimizerCard = memo(({
             </>
           )}
 
-          <p className="text-[8px] font-mono text-zinc-700 leading-relaxed flex items-start gap-1.5">
+          <p className="text-[8px] font-mono text-zinc-500 leading-relaxed flex items-start gap-1.5">
             <Gauge size={9} className="mt-0.5 shrink-0" /> Skor karar desteğidir. Bölgesel programlarda “örüntü” puanı bilinçli olarak düşük olabilir; otomatik düzeltmeler hareket silmez ve en az 2 seti korur.
           </p>
         </div>

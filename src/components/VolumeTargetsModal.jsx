@@ -23,7 +23,7 @@ const SatirDuzenleyici = memo(({ muscle, current, suggestion, onSave, onReset })
 
   const alan = (deger, ayarla, etiket) => (
     <label className="flex-1 min-w-0">
-      <span className="text-[8px] font-mono text-zinc-600 block mb-0.5">{etiket}</span>
+      <span className="text-[8px] font-mono text-zinc-400 block mb-0.5">{etiket}</span>
       <input
         type="number"
         inputMode="numeric"
@@ -170,7 +170,7 @@ const VolumeTargetsModal = memo(({
           })}
         </div>
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
           Sıralama bozulursa (örneğin tartışmalı sınır eşiğin altında kalırsa) değerler
           sessizce düzeltilir: sıralamayı bozan bir hedef, hacim
           çözümleyicisinde anlamsız sonuç üretirdi.

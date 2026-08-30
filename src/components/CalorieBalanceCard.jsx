@@ -146,7 +146,7 @@ const CalorieBalanceCard = memo(({ data, dateLabel, manualValue, onChangeManual,
                   placeholder="0"
                   className="w-16 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center font-mono text-red-400 text-[10px] outline-none focus:border-red-500"
                 />
-                <span className="text-zinc-600">kcal</span>
+                <span className="text-zinc-400">kcal</span>
               </span>
             </div>
             <div className="flex justify-between text-zinc-400 pt-1.5 border-t border-zinc-800 font-bold">
@@ -166,11 +166,11 @@ const CalorieBalanceCard = memo(({ data, dateLabel, manualValue, onChangeManual,
                   placeholder="0"
                   className="w-20 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center font-mono text-cyan-400 text-[10px] outline-none focus:border-cyan-500"
                 />
-                <span className="text-zinc-600">adım</span>
+                <span className="text-zinc-400">adım</span>
               </span>
             </div>
           )}
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Adım sayısı, yürüyüş gibi gün içi hareketliliği elle ekleyebilirsin.
             {stepsMode && ' Koşu/yürüyüş kardiyosu girdiysen o adımlar düşülür, iki kez sayılmaz.'}
           </p>
@@ -183,7 +183,7 @@ const CalorieBalanceCard = memo(({ data, dateLabel, manualValue, onChangeManual,
               <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex items-center">
                 <CalendarDays size={11} className="mr-1.5 text-cyan-400" /> Bu Hafta
               </span>
-              <span className="text-[9px] font-mono text-zinc-600">{data.week.days} gün kayıtlı</span>
+              <span className="text-[9px] font-mono text-zinc-400">{data.week.days} gün kayıtlı</span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className={`text-lg font-mono font-bold ${data.week.balance < 0 ? 'text-cyan-400' : data.week.balance > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>
@@ -193,15 +193,15 @@ const CalorieBalanceCard = memo(({ data, dateLabel, manualValue, onChangeManual,
                 kcal ≈ {data.week.kg > 0 ? '+' : ''}{data.week.kg} kg
               </span>
             </div>
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">
               Yalnızca kayıt girilen günler sayılır. Karar tek günden değil bu
               toplamdan verilir — günlük dalgalanma normaldir.
             </p>
           </div>
         ) : (
           <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 flex items-start gap-2">
-            <Info size={12} className="text-zinc-600 shrink-0 mt-0.5" />
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+            <Info size={12} className="text-zinc-400 shrink-0 mt-0.5" />
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
               Haftalık toplam için birkaç gün daha kayıt girmen yeterli.
             </p>
           </div>

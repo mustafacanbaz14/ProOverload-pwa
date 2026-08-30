@@ -116,7 +116,7 @@ const ExerciseCompareModal = memo(({ isOpen, onClose, allNames = [], workouts = 
 
             <div className="bg-zinc-900/60 border border-zinc-800/80 rounded-2xl overflow-hidden backdrop-blur-sm">
               <div className="grid grid-cols-12 px-3.5 py-2.5 border-b border-zinc-800/80 bg-zinc-950/60 gap-1">
-                <span className="col-span-4 text-[9px] font-mono text-zinc-600" />
+                <span className="col-span-4 text-[9px] font-mono text-zinc-400" />
                 <span className="col-span-4 text-[10px] font-bold text-zinc-300 truncate text-center">{karsilastirma.a.name}</span>
                 <span className="col-span-4 text-[10px] font-bold text-zinc-300 truncate text-center">{karsilastirma.b.name}</span>
               </div>
@@ -150,7 +150,7 @@ const ExerciseCompareModal = memo(({ isOpen, onClose, allNames = [], workouts = 
               </div>
             </div>
 
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
               Haftalık artış toplam farktan değil, ilk ve son ölçüm arasındaki
               süreye bölünerek hesaplanıyor: iki yıldır yaptığın hareket, iki
               aydır yaptığını her zaman yenerdi ve bu bir ilerleme farkı değil

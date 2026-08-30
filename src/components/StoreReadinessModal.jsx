@@ -99,14 +99,14 @@ const StoreReadinessModal = memo(({ isOpen, onClose, checklist = {}, onChangeChe
                 aria-pressed={check.automatic ? undefined : check.done}
                 className="w-full p-3.5 text-left flex items-start gap-3 disabled:cursor-default active:bg-zinc-800/30 transition-colors"
               >
-                <span className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ${check.done ? 'border-emerald-600 bg-emerald-950/60 text-emerald-400' : 'border-zinc-700 bg-zinc-950 text-zinc-700'}`}>
+                <span className={`mt-0.5 w-5 h-5 rounded-lg border flex items-center justify-center shrink-0 ${check.done ? 'border-emerald-600 bg-emerald-950/60 text-emerald-400' : 'border-zinc-700 bg-zinc-950 text-zinc-500'}`}>
                   {check.done && <Check size={13} strokeWidth={3} />}
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="text-[11px] font-bold text-zinc-200 block">{check.label}</span>
                   <span className="text-[9px] font-mono leading-relaxed text-zinc-400 block mt-0.5">{check.detail}</span>
                 </span>
-                {!check.automatic && <ChevronRight size={14} className="text-zinc-600 mt-1 shrink-0" />}
+                {!check.automatic && <ChevronRight size={14} className="text-zinc-400 mt-1 shrink-0" />}
               </button>
             ))}
           </div>

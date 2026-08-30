@@ -143,14 +143,14 @@ const SessionDesignCard = memo(({
           <span className={`text-[9px] font-bold block ${recommendations.length ? 'text-amber-300' : 'text-emerald-300'}`}>
             {recommendations.length ? `${recommendations.length} öneri` : 'Düzenli'}
           </span>
-          <span className="text-[8px] font-mono text-zinc-600">dokun ve aç</span>
+          <span className="text-[8px] font-mono text-zinc-400">dokun ve aç</span>
         </span>
       </button>
 
       {open && (
         <div className="border-t border-zinc-800/80 p-3 space-y-3">
           <div>
-            <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest block mb-1.5">1 · Sıralama amacı</span>
+            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest block mb-1.5">1 · Sıralama amacı</span>
             <div className="grid grid-cols-2 gap-1.5">
               {PROFILE_KEYS.map(key => {
                 const item = ORDER_PROFILES[key];
@@ -179,7 +179,7 @@ const SessionDesignCard = memo(({
 
           {(profile === 'priority' || profile === 'preExhaust') && muscles.length > 0 && (
             <div>
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest block mb-1.5">2 · Öncelikli kas</span>
+              <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest block mb-1.5">2 · Öncelikli kas</span>
               <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1">
                 {muscles.map(muscle => (
                   <button
@@ -187,7 +187,7 @@ const SessionDesignCard = memo(({
                     key={muscle}
                     onClick={() => setPriorityMuscle(muscle)}
                     aria-pressed={priorityMuscle === muscle}
-                    className={`shrink-0 rounded-lg border px-2 py-1.5 text-[8px] font-bold ${priorityMuscle === muscle ? 'border-amber-500 bg-amber-950/30 text-amber-200' : 'border-zinc-800 bg-zinc-950 text-zinc-600'}`}
+                    className={`shrink-0 rounded-lg border px-2 py-1.5 text-[8px] font-bold ${priorityMuscle === muscle ? 'border-amber-500 bg-amber-950/30 text-amber-200' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
                   >
                     {muscle}
                   </button>
@@ -199,8 +199,8 @@ const SessionDesignCard = memo(({
 
           <div>
             <div className="flex justify-between items-center gap-2 mb-1.5">
-              <span className="text-[8px] font-mono text-zinc-600 uppercase tracking-widest">3 · Süre hedefi</span>
-              <span className="text-[8px] font-mono text-zinc-600">tahmin ~{minutes} dk</span>
+              <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest">3 · Süre hedefi</span>
+              <span className="text-[8px] font-mono text-zinc-400">tahmin ~{minutes} dk</span>
             </div>
             <div className="grid grid-cols-5 gap-1">
               {TARGET_MINUTES.map(value => (
@@ -208,7 +208,7 @@ const SessionDesignCard = memo(({
                   type="button"
                   key={value}
                   onClick={() => setTargetMinutes(value)}
-                  className={`rounded-lg border py-1.5 text-[8px] font-mono ${targetMinutes === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-600'}`}
+                  className={`rounded-lg border py-1.5 text-[8px] font-mono ${targetMinutes === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
                 >
                   {value}
                 </button>
@@ -248,7 +248,7 @@ const SessionDesignCard = memo(({
                 <div key={exercise.uid || `${exercise.name}-${index}`} className="px-2.5 py-1.5 border-b border-zinc-900 last:border-0 flex items-center gap-2">
                   <span className="text-[8px] font-mono text-fuchsia-400 w-3 shrink-0">{index + 1}</span>
                   <span className="text-[9px] text-zinc-300 truncate flex-1">{exercise.name}</span>
-                  <span className="text-[7px] font-mono text-zinc-600 shrink-0">{ordering.reasons[index]}</span>
+                  <span className="text-[7px] font-mono text-zinc-400 shrink-0">{ordering.reasons[index]}</span>
                 </div>
               ))}
             </div>
@@ -269,9 +269,9 @@ const SessionDesignCard = memo(({
           )}
 
           <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-2 grid grid-cols-3 gap-2 text-center">
-            <span><strong className="text-[10px] font-mono text-zinc-200 block">{initialPreview.totalSets} → {preview.totalSets}</strong><span className="text-[7px] text-zinc-600">set</span></span>
-            <span><strong className="text-[10px] font-mono text-zinc-200 block">{initialMinutes} → {minutes}</strong><span className="text-[7px] text-zinc-600">dakika</span></span>
-            <span><strong className="text-[10px] font-mono text-zinc-200 block">{initialExercises.length} → {exercises.length}</strong><span className="text-[7px] text-zinc-600">hareket</span></span>
+            <span><strong className="text-[10px] font-mono text-zinc-200 block">{initialPreview.totalSets} → {preview.totalSets}</strong><span className="text-[7px] text-zinc-400">set</span></span>
+            <span><strong className="text-[10px] font-mono text-zinc-200 block">{initialMinutes} → {minutes}</strong><span className="text-[7px] text-zinc-400">dakika</span></span>
+            <span><strong className="text-[10px] font-mono text-zinc-200 block">{initialExercises.length} → {exercises.length}</strong><span className="text-[7px] text-zinc-400">hareket</span></span>
           </div>
 
           {message && <p className="rounded-lg border border-zinc-800 bg-zinc-950 px-2 py-1.5 text-[8px] font-mono text-zinc-500 leading-relaxed">{message}</p>}
@@ -285,7 +285,7 @@ const SessionDesignCard = memo(({
             <RotateCcw size={10} /> Sihirbaz Değişikliklerini Sıfırla
           </button>
 
-          <p className="text-[8px] font-mono text-zinc-700 leading-relaxed flex items-start gap-1.5">
+          <p className="text-[8px] font-mono text-zinc-500 leading-relaxed flex items-start gap-1.5">
             <History size={9} className="shrink-0 mt-0.5" /> Hiçbir öneri kendiliğinden uygulanmaz. Mevcut şablonu kaydedersen önceki hali sürüm geçmişine yazılır; ağırlık ve tekrar değerleri hareket adı değişmedikçe korunur.
           </p>
         </div>

@@ -270,7 +270,7 @@ const NutritionView = memo(({
         </div>
         <div className="flex items-end gap-1.5">
         <label className="text-right">
-          <span className="text-[9px] font-bold uppercase text-zinc-600 block mb-1">{weekdayName(currentNutritionForm.date)}</span>
+          <span className="text-[9px] font-bold uppercase text-zinc-400 block mb-1">{weekdayName(currentNutritionForm.date)}</span>
           <input
             type="date"
             value={currentNutritionForm.date}
@@ -303,7 +303,7 @@ const NutritionView = memo(({
           </div>
           <div className="text-right bg-zinc-950/70 border border-zinc-800 rounded-2xl px-3 py-2">
             <span className={`text-lg font-mono font-bold block ${scoreColor}`}>{dayScore ? dayScore.score : '—'}</span>
-            <span className="text-[8px] font-bold uppercase text-zinc-600 block">Günlük Uyum</span>
+            <span className="text-[8px] font-bold uppercase text-zinc-400 block">Günlük Uyum</span>
             {dayScore && <span className="text-[9px] font-mono text-zinc-500 block">{dayScore.label}</span>}
           </div>
         </div>
@@ -323,16 +323,16 @@ const NutritionView = memo(({
           ].map(item => (
             <div key={item.label} className="rounded-xl border border-zinc-800 bg-zinc-950/65 px-1 py-2 text-center min-w-0">
               <strong className={`text-[11px] font-mono block truncate ${item.color}`}>{item.value}</strong>
-              <span className="text-[7px] font-bold uppercase text-zinc-600 block mt-0.5">{item.label}</span>
+              <span className="text-[7px] font-bold uppercase text-zinc-400 block mt-0.5">{item.label}</span>
             </div>
           ))}
         </div>
-        <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-2">
+        <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-2">
           Gün farkı, bugünkü harcamanın korunum ortalamasından farkıdır; antrenman iki kez eklenmez.
           {' '}Toplam harcama: <span className="text-zinc-400">{calorieData?.ready ? calorieData.totalOut : '—'} kcal</span>.
         </p>
         <div className="flex items-center justify-between gap-2 mt-1.5 text-[8px] font-mono">
-          <span className="text-zinc-600 truncate">{targetSource}</span>
+          <span className="text-zinc-400 truncate">{targetSource}</span>
           <span className={`shrink-0 rounded-md border px-1.5 py-0.5 ${adaptiveTDEE && !adaptiveTDEE.insufficient ? 'border-emerald-900/60 text-emerald-500' : 'border-amber-900/60 text-amber-500'}`}>
             {adaptiveTDEE && !adaptiveTDEE.insufficient ? 'Kalibre' : 'Tahmini'}
           </span>
@@ -388,7 +388,7 @@ const NutritionView = memo(({
           onClick={() => onOpenEnergyDetail?.('days', currentNutritionForm.date)}
           className="w-full mt-3 rounded-xl border border-red-900/40 bg-red-950/15 px-3 py-2.5 text-left flex items-center justify-between active:bg-red-950/30"
         >
-          <span className="flex items-center gap-2"><BarChart3 size={14} className="text-red-400" /><span><strong className="text-[9px] text-zinc-300 block">Gün gün kalori detayı</strong><span className="text-[8px] font-mono text-zinc-600">Alınan, yakılan, denge ve harcama kaynakları</span></span></span>
+          <span className="flex items-center gap-2"><BarChart3 size={14} className="text-red-400" /><span><strong className="text-[9px] text-zinc-300 block">Gün gün kalori detayı</strong><span className="text-[8px] font-mono text-zinc-400">Alınan, yakılan, denge ve harcama kaynakları</span></span></span>
           <span className="text-[9px] font-bold text-red-400">Aç</span>
         </button>
       </section>
@@ -457,7 +457,7 @@ const NutritionView = memo(({
                 onClick={() => setEntryMode(mode.key)}
                 className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-colors ${
                   (currentNutritionForm.entryMode || 'meals') === mode.key
-                    ? 'bg-orange-600 text-white shadow-sm'
+                    ? 'bg-orange-700 text-white shadow-sm'
                     : 'text-zinc-500'
                 }`}
               >
@@ -664,7 +664,7 @@ const NutritionView = memo(({
                       aria-expanded={open}
                       className="flex-1 min-w-0 text-left flex items-center gap-2"
                     >
-                      <ChevronDown size={14} className={`text-zinc-600 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
+                      <ChevronDown size={14} className={`text-zinc-400 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
                       <span className="min-w-0">
                         <span className="text-[11px] font-bold text-zinc-200 block truncate">{meal.name || `${index + 1}. Öğün`}</span>
                         <span className="text-[9px] font-mono text-zinc-500 block">
@@ -685,7 +685,7 @@ const NutritionView = memo(({
                           meals: prev.meals.filter(item => item.id !== meal.id),
                         }))}
                         aria-label={`${meal.name || 'Öğünü'} sil`}
-                        className="p-2 text-zinc-600 active:text-red-500"
+                        className="p-2 text-zinc-400 active:text-red-500"
                       >
                         <Trash2 size={13} />
                       </button>
@@ -707,7 +707,7 @@ const NutritionView = memo(({
                           { key: 'fats', label: 'Yağ', color: 'text-purple-400' },
                         ].map(field => (
                           <label key={field.key}>
-                            <span className="text-[9px] font-bold text-zinc-600 uppercase block mb-1">{field.label}</span>
+                            <span className="text-[9px] font-bold text-zinc-400 uppercase block mb-1">{field.label}</span>
                             <input
                               type="number"
                               min={INPUT_LIMITS.macro.min}
@@ -749,7 +749,7 @@ const NutritionView = memo(({
       <button
         type="button"
         onClick={handleSaveNutrition}
-        className="w-full bg-orange-600 active:bg-orange-700 text-white font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center text-xs shadow-lg shadow-orange-950/30"
+        className="w-full bg-orange-700 active:bg-orange-800 text-white font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center text-xs shadow-lg shadow-orange-950/30"
       >
         <Save size={15} className="mr-2" /> {isToday ? 'Bugünün Kaydını Kaydet' : 'Geçmiş Kaydı Kaydet'}
       </button>
@@ -815,7 +815,7 @@ const NutritionView = memo(({
               ].map(item => (
                 <div key={item.label} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2 text-center">
                   <strong className={`text-[11px] font-mono block ${item.color}`}>{item.value}</strong>
-                  <span className="text-[8px] font-bold uppercase text-zinc-600">{item.label}</span>
+                  <span className="text-[8px] font-bold uppercase text-zinc-400">{item.label}</span>
                 </div>
               ))}
             </div>
@@ -862,17 +862,17 @@ const NutritionView = memo(({
                 ].map(item => (
                   <div key={item.label} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2">
                     <strong className="text-[10px] font-mono text-zinc-200 block">{item.value}</strong>
-                    <span className="text-[8px] text-zinc-600 uppercase">{item.label}</span>
+                    <span className="text-[8px] text-zinc-400 uppercase">{item.label}</span>
                   </div>
                 ))}
               </div>
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">{adaptiveTDEE.note}</p>
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">{adaptiveTDEE.note}</p>
             </div>
           )}
         </DisclosureCard>
       )}
 
-      <div className="flex items-start gap-2 px-1 pb-2 text-[9px] font-mono text-zinc-600 leading-relaxed">
+      <div className="flex items-start gap-2 px-1 pb-2 text-[9px] font-mono text-zinc-400 leading-relaxed">
         <Sparkles size={12} className="text-orange-400 shrink-0" />
         Basit görünüm yalnızca kartları kapalı başlatır; tüm hesaplar ve girişler kullanılmaya devam eder.
       </div>

@@ -32,7 +32,7 @@ const RepRangeEditor = memo(({ repRange, onChange }) => {
         <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Repeat2 size={12} className="mr-1.5 text-cyan-400" /> Hedef Tekrar
         </span>
-        <span className="text-[9px] font-mono text-zinc-600">
+        <span className="text-[9px] font-mono text-zinc-400">
           {repRange.source === 'exercise' ? 'bu harekete özel'
             : repRange.source === 'muscle' ? `${repRange.muscle} varsayılanı` : 'genel ayar'}
         </span>
@@ -45,7 +45,7 @@ const RepRangeEditor = memo(({ repRange, onChange }) => {
           aria-label="Alt tekrar sınırı"
           className="flex-1 bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-200 text-[12px] font-mono text-center outline-none focus:border-cyan-500"
         />
-        <span className="text-zinc-600 text-[11px] font-mono">–</span>
+        <span className="text-zinc-400 text-[11px] font-mono">–</span>
         <input
           type="number" inputMode="numeric" value={max}
           onChange={(e) => setMax(e.target.value)}
@@ -64,7 +64,7 @@ const RepRangeEditor = memo(({ repRange, onChange }) => {
           </button>
         )}
       </div>
-      <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+      <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
         Seans içi yük ayarı ve sıradaki set hedefi bu aralığı kullanıyor.
         Yazmazsan kas grubunun varsayılanı geçerli — aynı 6-10 bandını hem ağır
         çömelişe hem yan omuz kaldırışına dayatmak, tavsiyeyi ikincisinde
@@ -173,7 +173,7 @@ const ExerciseProfileModal = memo(({
           </section>
         ) : (
           <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/60 p-4 text-center backdrop-blur-sm">
-            <Dumbbell size={18} className="text-zinc-600 mx-auto mb-2" />
+            <Dumbbell size={18} className="text-zinc-400 mx-auto mb-2" />
             <p className="text-[10px] font-mono text-zinc-500">Trend için en az iki tamamlanmış seans gerekli.</p>
           </div>
         )}

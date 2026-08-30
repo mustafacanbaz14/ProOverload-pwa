@@ -22,7 +22,7 @@ const ExerciseRoiCard = memo(({ report }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Scale size={12} className="mr-1.5 text-amber-400" /> Hareket Getirisi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">
+        <span className="text-[9px] font-mono text-zinc-400">
           {report.items.length} hareket · {report.totalSets} set
         </span>
       </div>
@@ -62,9 +62,9 @@ const ExerciseRoiCard = memo(({ report }) => {
                       {r.name}
                     </span>
                     <span className="text-[9px] font-mono shrink-0">
-                      <span className="text-zinc-600">{r.sets} set · </span>
+                      <span className="text-zinc-400">{r.sets} set · </span>
                       <span className={r.roi > 0 ? 'text-emerald-400' : 'text-red-400'}>%{r.roi}</span>
-                      <span className="text-zinc-700"> /10 set</span>
+                      <span className="text-zinc-500"> /10 set</span>
                     </span>
                   </div>
                 ))}
@@ -82,7 +82,7 @@ const ExerciseRoiCard = memo(({ report }) => {
                   %{r.roi} /10 set
                 </span>
               </div>
-              <span className="text-[9px] font-mono text-zinc-600 block">
+              <span className="text-[9px] font-mono text-zinc-400 block">
                 {r.muscle} · {r.sessions} seans · {r.from} → {r.to} kg (%{r.gainPct}) · {r.sets} set
               </span>
             </div>
@@ -100,7 +100,7 @@ const ExerciseRoiCard = memo(({ report }) => {
         </p>
       )}
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
         Ölçü: on set yatırım başına tahmini 1RM yüzdesi. Set, seansta harcanan
         paranın birimi. Son {report.windowDays} güne bakılıyor ve en az dört
         seans, yirmi bir gün isteniyor — yeni bir harekette ilk haftalarda

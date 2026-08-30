@@ -33,14 +33,14 @@ const TrainingQualityCard = memo(({ workouts = [], customExercises = [], resolve
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Flame size={12} className="mr-1.5 text-amber-400" /> Şiddet ve Rotasyon
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600 shrink-0">son {efor.days} gün</span>
+        <span className="text-[9px] font-mono text-zinc-400 shrink-0">son {efor.days} gün</span>
       </div>
 
       {/* RIR dağılımı */}
       <div className="px-4 py-3 border-b border-zinc-800/70">
         <div className="flex justify-between items-baseline mb-1.5">
           <span className="text-[10px] font-bold text-zinc-300">RIR dağılımı</span>
-          <span className="text-[9px] font-mono text-zinc-600">
+          <span className="text-[9px] font-mono text-zinc-400">
             {efor.total} set{efor.withoutRir > 0 ? ` · ${efor.withoutRir} RIR'siz` : ''}
           </span>
         </div>
@@ -61,7 +61,7 @@ const TrainingQualityCard = memo(({ workouts = [], customExercises = [], resolve
             </div>
           </>
         ) : (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             RIR girilmiş çalışma seti yok. Dağılım, RIR alanı doldurulan setlerden
             çıkıyor; boş bir alanı herhangi bir kovaya koymak olmayan bir veriden
             sonuç üretmek olurdu.
@@ -69,7 +69,7 @@ const TrainingQualityCard = memo(({ workouts = [], customExercises = [], resolve
         )}
 
         {!efor.hasData && efor.total > 0 && (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1.5">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">
             Yorum için en az {efor.needed} set gerekiyor ({efor.total} var).
           </p>
         )}
@@ -102,7 +102,7 @@ const TrainingQualityCard = memo(({ workouts = [], customExercises = [], resolve
           <span className="text-[10px] font-bold text-zinc-300 flex items-center">
             <RefreshCw size={11} className="mr-1.5 text-zinc-500" /> Hareket yaşı
           </span>
-          <span className="text-[9px] font-mono text-zinc-600">{rotasyon.rows.length} hareket</span>
+          <span className="text-[9px] font-mono text-zinc-400">{rotasyon.rows.length} hareket</span>
         </div>
 
         {rotasyon.candidates.length > 0 ? (

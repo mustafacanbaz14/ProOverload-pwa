@@ -87,7 +87,7 @@ const GoalsCard = memo(({
       </div>
 
       <div className="p-4 space-y-3.5">
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           Dört değer birbirine bağlı. <strong className="text-zinc-400">İkisini gir</strong>,
           kalan ikisi otomatik hesaplanır. Hesaplananın üstüne yazarsan seninki geçerli olur.
         </p>
@@ -135,7 +135,7 @@ const GoalsCard = memo(({
                         : 'border-zinc-800 text-emerald-400 focus:border-emerald-500'
                     }`}
                   />
-                  {row.unit && <span className="text-[10px] font-mono text-zinc-600 w-4">{row.unit}</span>}
+                  {row.unit && <span className="text-[10px] font-mono text-zinc-400 w-4">{row.unit}</span>}
                   {row.isDerived && row.hasTarget ? (
                     <button
                       type="button"
@@ -210,7 +210,7 @@ const GoalsCard = memo(({
                           Haftada {row.trend.perWeek > 0 ? '+' : ''}{row.trend.perWeek}{row.unit} hızında
                           {' '}<strong>~{row.eta.weeks} hafta</strong> ({formatDay(row.eta.date, 'medium', { year: true })})
                           {row.trend.confidence === 'low' && (
-                            <span className="text-zinc-600"> · az veri, tahmin oynak</span>
+                            <span className="text-zinc-400"> · az veri, tahmin oynak</span>
                           )}
                         </span>
                       )}
@@ -226,14 +226,14 @@ const GoalsCard = memo(({
             çıkarılamıyorsa sebebi burada söyleniyor, satırlar sessizce boş
             kalmasın. */}
         {rows.some(r => r.hasTarget) && rows.every(r => !r.trend) && (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed pt-1 border-t border-zinc-800">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed pt-1 border-t border-zinc-800">
             Varış tahmini için son 6 hafta içinde en az üç ölçüm gerekiyor. Ölçüm
             biriktikçe her hedefin altında tahmini tarih görünecek.
           </p>
         )}
 
         {rows.every(r => !r.hasTarget) && (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Bir hedef gir, ilerlemen buradan takip edilir. İlerleme yüzdesi en eski
             ölçümünden bugüne kat ettiğin yola göre hesaplanır.
           </p>

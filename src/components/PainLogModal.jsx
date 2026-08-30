@@ -19,7 +19,7 @@ const TREND = {
   improving: { icon: TrendingDown, color: 'text-emerald-400', label: 'Azalıyor' },
   worsening: { icon: TrendingUp, color: 'text-red-400', label: 'Artıyor' },
   flat: { icon: Minus, color: 'text-zinc-500', label: 'Sabit' },
-  unknown: { icon: Minus, color: 'text-zinc-600', label: 'Yeni' },
+  unknown: { icon: Minus, color: 'text-zinc-400', label: 'Yeni' },
 };
 
 const severityColor = (n) => (n >= 7 ? 'text-red-400' : n >= 5 ? 'text-amber-400' : 'text-zinc-300');
@@ -111,7 +111,7 @@ const PainLogModal = memo(({
                     className="w-full accent-red-500"
                     aria-label="Ağrı şiddeti"
                   />
-                  <div className="flex justify-between text-[9px] font-mono text-zinc-600">
+                  <div className="flex justify-between text-[9px] font-mono text-zinc-400">
                     <span>Hafif</span><span>Şiddetli</span>
                   </div>
                 </div>

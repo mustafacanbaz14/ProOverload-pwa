@@ -47,7 +47,7 @@ class AppErrorBoundary extends React.Component {
               <RefreshCw size={15} /> Uygulamayı Yeniden Yükle
             </button>
           </div>
-          <details className="mt-4 text-[9px] font-mono text-zinc-600">
+          <details className="mt-4 text-[9px] font-mono text-zinc-400">
             <summary className="cursor-pointer">Teknik ayrıntı</summary>
             <p className="mt-2 break-words">{String(this.state.error?.message || this.state.error)}</p>
           </details>

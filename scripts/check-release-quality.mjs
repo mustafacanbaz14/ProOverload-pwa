@@ -18,7 +18,10 @@ const settingsModal = read('src/components/SettingsModal.jsx');
 const energyModal = read('src/components/EnergyDetailModal.jsx');
 const historyView = read('src/components/HistoryView.jsx');
 
-check(history.includes(`release(APP_VERSION, '2026-08-30'`), 'Güncel sürüm notu APP_VERSION kullanıyor');
+// Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
+// package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
+// olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
+check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
 check(roadmap.includes('## 9.6') && roadmap.includes('## 10.0'), 'UX yol haritası 9.6–10.0 kapsamını taşıyor');
 check(settingsModal.includes("activeSection === 'home'") && settingsModal.includes("key: 'method'"), 'Ayarlar kategori ana ekranı ve Koç & Yöntem ayrımı korunuyor');

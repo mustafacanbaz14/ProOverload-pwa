@@ -29,7 +29,7 @@ const Section = ({ icon, title, action, children, defaultOpen = true }) => {
           <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center min-w-0">
             <span className="mr-2 text-cyan-400 flex items-center">{icon}</span>{title}
           </h3>
-          <ChevronDown size={14} className={`text-zinc-600 transition-transform ${open ? 'rotate-180' : ''}`} />
+          <ChevronDown size={14} className={`text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
         {action && <div className="ml-2 shrink-0">{action}</div>}
       </div>
@@ -49,11 +49,11 @@ const inputClass = 'w-full bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 t
 
 const GoalEtaLine = ({ current, target, trend, unit }) => {
   if (!(parseNumber(current) > 0) || !(parseNumber(target) > 0)) return null;
-  if (!trend) return <p className="text-[8px] font-mono text-zinc-600 px-1">Tahmin için en az 3 ölçüm gerekir.</p>;
+  if (!trend) return <p className="text-[8px] font-mono text-zinc-400 px-1">Tahmin için en az 3 ölçüm gerekir.</p>;
   const eta = goalEta(current, target, trend.perWeek, { minRate: unit === 'mm' ? 0.05 : 0.02 });
   if (!eta || eta.reached) return <p className="text-[8px] font-mono text-emerald-400 px-1">Hedefe ulaşıldı.</p>;
   if (eta.wrongDirection) return <p className="text-[8px] font-mono text-amber-400 px-1">Eğilim hedefin ters yönünde.</p>;
-  if (eta.stalled || eta.tooFar) return <p className="text-[8px] font-mono text-zinc-600 px-1">Mevcut hızla güvenilir tarih hesaplanamıyor.</p>;
+  if (eta.stalled || eta.tooFar) return <p className="text-[8px] font-mono text-zinc-400 px-1">Mevcut hızla güvenilir tarih hesaplanamıyor.</p>;
   return <p className="text-[8px] font-mono text-cyan-500 px-1">Tahmini ~{eta.weeks} hafta · {formatDay(eta.date, 'medium', { year: true })}</p>;
 };
 
@@ -298,7 +298,7 @@ const MetricsView = memo(({
           </div>
 
           <div className="grid grid-cols-1 gap-2">
-            <div className="grid grid-cols-[1fr_70px_70px] gap-2 px-1 text-[8px] font-mono text-zinc-600 uppercase">
+            <div className="grid grid-cols-[1fr_70px_70px] gap-2 px-1 text-[8px] font-mono text-zinc-400 uppercase">
               <span>Nokta</span><span className="text-center">Şu an</span><span className="text-center">Hedef</span>
             </div>
             {visibleSites.map(site => (

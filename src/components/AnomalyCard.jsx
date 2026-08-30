@@ -18,7 +18,7 @@ const AnomalyCard = memo(({ report }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Radar size={12} className="mr-1.5 text-cyan-400" /> Sessiz Sinyaller
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">{report.checked} seri tarandı</span>
+        <span className="text-[9px] font-mono text-zinc-400">{report.checked} seri tarandı</span>
       </div>
 
       {report.quiet ? (
@@ -50,7 +50,7 @@ const AnomalyCard = memo(({ report }) => {
                   {f.baseline}{f.unit} → {f.current}{f.unit} · {f.points} ölçüm ·
                   {' '}{f.severity === 'high' ? 'belirgin sapma' : 'sapma'}
                 </p>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">{f.note}</p>
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">{f.note}</p>
               </div>
             );
           })}
@@ -58,13 +58,13 @@ const AnomalyCard = memo(({ report }) => {
       )}
 
       {report.pending.length > 0 && (
-        <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed border-t border-zinc-800">
+        <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed border-t border-zinc-800">
           Henüz taranamayan seriler ({report.pending.map(s => s.label.toLowerCase()).join(', ')}):
           dokuz ölçümün altında "normal" diye bir şey tanımlanamıyor.
         </p>
       )}
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
         Uygulamadaki diğer bütün uyarılar kural tabanlı: birinin önceden
         düşünüp yazması gerekiyor. Bu kart kural yazmıyor, DEĞİŞİM arıyor —
         son ölçümler kendi geçmişinin normal dalgalanmasına göre sıra dışı mı.

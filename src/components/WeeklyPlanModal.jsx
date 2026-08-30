@@ -255,7 +255,7 @@ const WeeklyPlanModal = memo(({
         )}
 
         {weightKg > 0 ? (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1">
             Kalori {weightKg} kg üzerinden ve dinlenmenin üstüne hesaplandı; ağırlık
             için 4.5 MET, kardiyo için aktivitenin MET'i seçilen tempoyla ölçeklendi.
             Ağırlık {result.totalKcal}, kardiyo {result.totalCardioKcal} kcal.
@@ -284,7 +284,7 @@ const WeeklyPlanModal = memo(({
                     <span className="min-w-0">
                       <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">{d.label}</span>
                       {d.slots.length === 0 ? (
-                        <span className="text-[12px] font-bold text-zinc-600 block">Dinlenme günü</span>
+                        <span className="text-[12px] font-bold text-zinc-400 block">Dinlenme günü</span>
                       ) : (
                         <span className="block space-y-0.5">
                           {d.workouts.map(w => (
@@ -312,13 +312,13 @@ const WeeklyPlanModal = memo(({
                         <span className="text-[10px] font-mono text-zinc-500">
                           {d.isActiveRest && <span className="text-indigo-400 block font-bold">Aktif Off Day</span>}
                           {d.sets > 0 && <>{d.sets} set · </>}~{d.minutes} dk
-                          {weightKg > 0 && <span className="text-zinc-600 block">{d.totalKcal} kcal</span>}
+                          {weightKg > 0 && <span className="text-zinc-400 block">{d.totalKcal} kcal</span>}
                           {cakisma && cakisma.level.key !== 'none' && cakisma.items.length > 0 && (
                             <span className={`block font-bold ${cakisma.level.text}`}>çakışma: {cakisma.level.label}</span>
                           )}
                         </span>
                       ) : (
-                        <Moon size={14} className="text-zinc-700" />
+                        <Moon size={14} className="text-zinc-500" />
                       )}
                     </span>
                   </button>
@@ -357,7 +357,7 @@ const WeeklyPlanModal = memo(({
                             )}
                             <button
                               onClick={() => slotSil(d.key, slot.id)}
-                              className="text-zinc-600 active:text-red-500 p-1 shrink-0"
+                              className="text-zinc-400 active:text-red-500 p-1 shrink-0"
                               aria-label="Bu girişi sil"
                             >
                               <Trash2 size={13} />
@@ -548,7 +548,7 @@ const WeeklyPlanModal = memo(({
         <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
           <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
             <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Kas Dökümü</h4>
-            <span className="text-[9px] font-mono text-zinc-600">tüm setler etkili varsayımı</span>
+            <span className="text-[9px] font-mono text-zinc-400">tüm setler etkili varsayımı</span>
           </div>
           <div className="divide-y divide-zinc-800/70">
             {result.statuses.map(s => {
@@ -564,7 +564,7 @@ const WeeklyPlanModal = memo(({
                   >
                     <span className="flex items-center gap-1.5 min-w-0">
                       {kaynakVar
-                        ? <ChevronDown size={11} className={`text-zinc-600 shrink-0 transition-transform ${acik ? 'rotate-180' : ''}`} />
+                        ? <ChevronDown size={11} className={`text-zinc-400 shrink-0 transition-transform ${acik ? 'rotate-180' : ''}`} />
                         : <span className="w-[11px] shrink-0" />}
                       <span className="text-[11px] font-bold text-zinc-200 truncate">{s.muscle}</span>
                       <span className={`text-[9px] px-1.5 py-0.5 rounded border shrink-0 ${STATUS_COLOR[s.status]}`}>
@@ -573,7 +573,7 @@ const WeeklyPlanModal = memo(({
                     </span>
                     <span className="text-[10px] font-mono text-zinc-400 shrink-0">
                       <strong className="text-zinc-100">{s.volume}</strong>
-                      <span className="text-zinc-600"> · MEV {s.mev} / MAV {s.mav}</span>
+                      <span className="text-zinc-400"> · MEV {s.mev} / MAV {s.mav}</span>
                     </span>
                   </button>
 
@@ -586,7 +586,7 @@ const WeeklyPlanModal = memo(({
                       {s.sources.map((src, i) => (
                         <div key={`${src.day}-${src.name}-${i}`} className="flex justify-between items-baseline gap-2 text-[10px] font-mono">
                           <span className="text-zinc-400 truncate min-w-0">
-                            <span className="text-zinc-600">{WEEKDAYS.find(w => w.key === src.day)?.short} · </span>
+                            <span className="text-zinc-400">{WEEKDAYS.find(w => w.key === src.day)?.short} · </span>
                             <span className="text-zinc-500">{src.templateName} · </span>{src.name}
                           </span>
                           <span className="text-zinc-500 shrink-0">

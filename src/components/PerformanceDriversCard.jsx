@@ -13,7 +13,7 @@ const STRENGTH_STYLE = {
   strong: 'text-emerald-400',
   moderate: 'text-cyan-400',
   weak: 'text-zinc-500',
-  none: 'text-zinc-600',
+  none: 'text-zinc-400',
 };
 
 const CONFIDENCE_LABEL = { high: 'sağlam veri', medium: 'orta veri', low: 'az veri' };
@@ -34,7 +34,7 @@ const PerformanceDriversCard = memo(({ report }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Activity size={12} className="mr-1.5 text-cyan-400" /> Performans Sürücüleri
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">{report.sessions} puanlanmış seans</span>
+        <span className="text-[9px] font-mono text-zinc-400">{report.sessions} puanlanmış seans</span>
       </div>
 
       {olculen.length === 0 ? (
@@ -57,7 +57,7 @@ const PerformanceDriversCard = memo(({ report }) => {
                 {aralik(d.lowRange, d.unit)} için performans %{d.lowPerformance},
                 {' '}{aralik(d.highRange, d.unit)} için %{d.highPerformance}.
               </p>
-              <span className="text-[8px] font-mono text-zinc-600">
+              <span className="text-[8px] font-mono text-zinc-400">
                 {d.samples} seans · {CONFIDENCE_LABEL[d.confidence]} · ilişki {d.strength.label}
               </span>
             </div>
@@ -81,12 +81,12 @@ const PerformanceDriversCard = memo(({ report }) => {
       )}
 
       {sessiz.length > 0 && (
-        <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed border-t border-zinc-800">
+        <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed border-t border-zinc-800">
           Ölçüldü ama belirgin bir ilişki bulunmadı: {sessiz.map(d => d.label.toLowerCase()).join(', ')}.
         </p>
       )}
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
         <Info size={9} className="inline mr-1" />
         Her seans KENDİ hareketlerinin son beş seansına göre puanlanıyor, yani
         bacak günüyle kol günü aynı ölçekte. Bunlar neden-sonuç değil birlikte

@@ -89,7 +89,7 @@ const MuscleHeatmap = memo(({
         </h3>
         <span className="flex items-center gap-2">
           <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest">{subtitle}</span>
-          <button onClick={() => setDepthMode(value => !value)} aria-pressed={depthMode} className={`px-2 py-1 rounded-lg border text-[9px] font-mono flex items-center gap-1 ${depthMode ? 'border-cyan-700 bg-cyan-950/30 text-cyan-400' : 'border-zinc-800 text-zinc-600'}`}>
+          <button onClick={() => setDepthMode(value => !value)} aria-pressed={depthMode} className={`px-2 py-1 rounded-lg border text-[9px] font-mono flex items-center gap-1 ${depthMode ? 'border-cyan-700 bg-cyan-950/30 text-cyan-400' : 'border-zinc-800 text-zinc-400'}`}>
             <Box size={10} /> 3B
           </button>
         </span>
@@ -98,7 +98,7 @@ const MuscleHeatmap = memo(({
       <div className="p-4 space-y-3">
         <div className="bg-zinc-950 rounded-xl border border-zinc-800/80 overflow-hidden">
           <div className="px-3 pt-2.5 flex items-center justify-between">
-            <span className="text-[9px] font-mono text-zinc-600">Bölgeye dokun · {gender === 'female' ? 'kadın' : 'erkek'} görünümü</span>
+            <span className="text-[9px] font-mono text-zinc-400">Bölgeye dokun · {gender === 'female' ? 'kadın' : 'erkek'} görünümü</span>
             <span className="text-[9px] font-mono text-cyan-600">{selected}</span>
           </div>
           <div className="flex justify-around items-start py-2.5">
@@ -222,7 +222,7 @@ const MuscleHeatmap = memo(({
             {onSelectMuscle && (
               <span className="text-[10px] font-mono text-cyan-500 block mt-0.5">Detay için dokun →</span>
             )}
-            <span className="text-[9px] font-mono text-zinc-600 block mt-1 leading-relaxed">
+            <span className="text-[9px] font-mono text-zinc-400 block mt-1 leading-relaxed">
               {MUSCLE_LOCATION[selected]}
             </span>
           </div>

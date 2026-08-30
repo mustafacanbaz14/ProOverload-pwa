@@ -19,7 +19,7 @@ const DeferredCardFallback = ({ height = 180, label = 'Bölüm hazırlanıyor' }
     style={{ minHeight: height }}
     role="status"
   >
-    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-700">{label}</span>
+    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500">{label}</span>
   </div>
 );
 
@@ -107,7 +107,7 @@ const HomeWeeklyOverview = memo(({
 
       {!isOpen && (
         <div className="border-t border-zinc-800/70 px-4 py-2 flex items-center justify-between gap-3 text-[8px] font-mono">
-          <span className="text-zinc-600">Harita, hacim ve denge ayrıntıları</span>
+          <span className="text-zinc-400">Harita, hacim ve denge ayrıntıları</span>
           <span className={acwrStatus.text}>{acwrStatus.label}</span>
         </div>
       )}
@@ -184,7 +184,7 @@ const HomeWeeklyOverview = memo(({
                 gender={gender}
               />
               {gender === 'female' && (
-                <p className="mt-2 px-1 text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="mt-2 px-1 text-[9px] font-mono text-zinc-400 leading-relaxed">
                   Kadınlara yalnız cinsiyet nedeniyle farklı set çarpanı uygulanmaz. Hacim, belirtiler ve kişisel toparlanma trendine göre ayarlanır.
                 </p>
               )}
@@ -198,7 +198,7 @@ const HomeWeeklyOverview = memo(({
                 {dashboardStats.hasEnoughData ? dashboardStats.acwr : '—'}
               </span>
               <div className={`text-[10px] font-bold uppercase tracking-widest ${acwrStatus.text}`}>{acwrStatus.label}</div>
-              <p className="text-[9px] font-mono text-zinc-600 leading-snug mt-1">{ACWR_HINT[acwrKey]}</p>
+              <p className="text-[9px] font-mono text-zinc-400 leading-snug mt-1">{ACWR_HINT[acwrKey]}</p>
             </div>
             <div className="bg-zinc-950/85 p-3.5 rounded-2xl border border-zinc-800/80 shadow-inner">
               <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">İtme / Çekme Oranı</span>
@@ -268,13 +268,13 @@ const HomeWeeklyOverview = memo(({
                               </span>
                               <span className="text-[10px] text-zinc-400 font-mono shrink-0">
                                 <strong className="text-zinc-100">{volume}</strong>/{landmark.mav}
-                                <span className="text-zinc-600"> (eşik {landmark.mev})</span>
+                                <span className="text-zinc-400"> (eşik {landmark.mev})</span>
                               </span>
                             </div>
                             {personal && (
                               <div className="flex justify-between gap-2 text-[9px] font-mono">
                                 <span className="text-purple-400">Kişisel öneri {personal.low}–{personal.high} set</span>
-                                <span className="text-zinc-600">{personal.confidence === 'high' ? 'yüksek' : 'orta'} güven</span>
+                                <span className="text-zinc-400">{personal.confidence === 'high' ? 'yüksek' : 'orta'} güven</span>
                               </div>
                             )}
                             <div className="w-full bg-zinc-950 rounded-full h-1.5 border border-zinc-800">

@@ -50,7 +50,7 @@ const SessionQualityCard = memo(({ workouts = [], customExercises = [] }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Gauge size={12} className="mr-1.5 text-cyan-400" /> Seans Kalitesi
         </h4>
-        {sonSeans && <span className="text-[9px] font-mono text-zinc-600 shrink-0">son seans</span>}
+        {sonSeans && <span className="text-[9px] font-mono text-zinc-400 shrink-0">son seans</span>}
       </div>
 
       {kalite?.efficiency && (
@@ -61,7 +61,7 @@ const SessionQualityCard = memo(({ workouts = [], customExercises = [] }) => {
             </span>
             <span className="text-[10px] font-mono shrink-0">
               <strong className={PACE[kalite.efficiency.pace].color}>{kalite.efficiency.minutesPerSet}</strong>
-              <span className="text-zinc-600"> dk/set · {PACE[kalite.efficiency.pace].label}</span>
+              <span className="text-zinc-400"> dk/set · {PACE[kalite.efficiency.pace].label}</span>
             </span>
           </div>
           <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">
@@ -100,7 +100,7 @@ const SessionQualityCard = memo(({ workouts = [], customExercises = [] }) => {
           <span className="text-[11px] font-bold text-zinc-200">RIR kalibrasyonu</span>
           <span className="text-[10px] font-mono shrink-0">
             <strong className={V.color}>{V.label}</strong>
-            {rir.hasData && <span className="text-zinc-600"> · {rir.pairs} çift</span>}
+            {rir.hasData && <span className="text-zinc-400"> · {rir.pairs} çift</span>}
           </span>
         </div>
         <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">
@@ -113,7 +113,7 @@ const SessionQualityCard = memo(({ workouts = [], customExercises = [] }) => {
             {rir.byExercise.map(x => (
               <div key={x.name} className="flex justify-between items-baseline gap-2 text-[9px] font-mono">
                 <span className="text-zinc-500 truncate min-w-0">{x.name}</span>
-                <span className="text-zinc-600 shrink-0">
+                <span className="text-zinc-400 shrink-0">
                   {x.bias > 0 ? '+' : ''}{x.bias} RIR · {x.pairs} çift
                 </span>
               </div>

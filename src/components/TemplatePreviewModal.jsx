@@ -98,7 +98,7 @@ const TemplatePreviewModal = memo(({
               Hangi Bölge Ne Kadar Çalışacak
             </h4>
             {ranked.length === 0 ? (
-              <div className="text-center py-6 text-zinc-600 text-[11px] font-mono">
+              <div className="text-center py-6 text-zinc-400 text-[11px] font-mono">
                 Bu şablonda set tanımlı değil.
               </div>
             ) : (
@@ -114,7 +114,7 @@ const TemplatePreviewModal = memo(({
                         <span className="text-[11px] font-bold text-zinc-200 truncate">{muscle}</span>
                         <span className="text-[10px] font-mono text-zinc-400 shrink-0">
                           <strong className="text-cyan-400">{vol}</strong> set
-                          {landmark && <span className="text-zinc-600"> · haftalığın %{weeklyShare}'i</span>}
+                          {landmark && <span className="text-zinc-400"> · haftalığın %{weeklyShare}'i</span>}
                         </span>
                       </div>
                       <div className="w-full bg-zinc-950 rounded-full h-1.5 border border-zinc-800">
@@ -148,7 +148,7 @@ const TemplatePreviewModal = memo(({
                 <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center gap-1.5">
                   <History size={11} className="text-amber-400" /> Sürüm Geçmişi
                 </h4>
-                <span className="text-[9px] font-mono text-zinc-600">{versions.length} kayıt</span>
+                <span className="text-[9px] font-mono text-zinc-400">{versions.length} kayıt</span>
               </div>
               <div className="divide-y divide-zinc-800/70">
                 {versions.map((v, i) => {
@@ -159,7 +159,7 @@ const TemplatePreviewModal = memo(({
                         <span className="text-[10px] text-zinc-300 block truncate">
                           {formatDay(v.savedAt.slice(0, 10), 'short')} · {v.exercises.length} hareket · {v.totalSets} set
                         </span>
-                        <span className="text-[9px] font-mono text-zinc-600 block truncate">
+                        <span className="text-[9px] font-mono text-zinc-400 block truncate">
                           {fark?.summary || v.label || 'Kayıtlı sürüm'}
                         </span>
                       </span>
@@ -173,7 +173,7 @@ const TemplatePreviewModal = memo(({
                   );
                 })}
               </div>
-              <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-900/40">
+              <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-900/40">
                 Geri dönmek de bir değişiklik: şu anki hal geçmişe yazılır, yani
                 geri aldıktan sonra yeni haline de dönebilirsin. Setlerin
                 ağırlık değerleri korunur.
@@ -191,7 +191,7 @@ const TemplatePreviewModal = memo(({
                 <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
                   Bugünkü Hedefler
                 </h4>
-                <span className="text-[9px] font-mono text-zinc-600">
+                <span className="text-[9px] font-mono text-zinc-400">
                   {nextTargets.loadIncreases > 0 ? `${nextTargets.loadIncreases} harekette ağırlık artıyor` : 'ağırlık artışı yok'}
                 </span>
               </div>
@@ -208,18 +208,18 @@ const TemplatePreviewModal = memo(({
                           {r.target.weight} kg × {r.target.reps}
                         </strong>
                         {r.lastBest && (
-                          <span className="text-zinc-600 block text-[9px]">
+                          <span className="text-zinc-400 block text-[9px]">
                             geçen: {r.lastBest.weight} × {r.lastBest.reps}
                           </span>
                         )}
                       </span>
                     ) : (
-                      <span className="text-[9px] font-mono text-zinc-600 shrink-0">veri yok</span>
+                      <span className="text-[9px] font-mono text-zinc-400 shrink-0">veri yok</span>
                     )}
                   </div>
                 ))}
               </div>
-              <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-900/40">
+              <p className="px-3.5 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-900/40">
                 Hedefler her hareketin kendi ilerleme kuralından çıkıyor; kuralı
                 hareketin profil ekranından değiştirebilirsin.
               </p>
@@ -263,7 +263,7 @@ const TemplatePreviewModal = memo(({
                           onClick={() => onReplaceExercise(template, ex.name)}
                           title="Hareketi değiştir"
                           aria-label={`${ex.name} hareketini değiştir`}
-                          className="text-zinc-600 active:text-emerald-400 p-0.5"
+                          className="text-zinc-400 active:text-emerald-400 p-0.5"
                         >
                           <RefreshCw size={12} />
                         </button>
@@ -288,13 +288,13 @@ const TemplatePreviewModal = memo(({
                   Hacmi haftaya yaymak toparlanma açısından daha verimli.
                 </p>
               )}
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                 Haftanın tamamını görmek için ana sayfadaki Haftalık Program'ı kullan.
               </p>
             </div>
           )}
 
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Süre tahmini set başına 45 sn ve {restSeconds} sn dinlenme varsayar.
             Süperset çiftlerinde araya dinlenme girmediği için o setler yarım sayılır.
           </p>

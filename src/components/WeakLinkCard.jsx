@@ -26,7 +26,7 @@ const WeakLinkCard = memo(({ report, onAction }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Target size={12} className="mr-1.5 text-red-400" /> Zayıf Halka
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">
+        <span className="text-[9px] font-mono text-zinc-400">
           {report.total} bulgu · önem sırasıyla
         </span>
       </div>
@@ -45,14 +45,14 @@ const WeakLinkCard = memo(({ report, onAction }) => {
           return (
             <div key={x.key} className="px-4 py-2.5 space-y-1.5">
               <div className="flex items-start gap-2">
-                <span className="text-[11px] font-mono text-zinc-600 shrink-0 mt-0.5">{i + 1}.</span>
+                <span className="text-[11px] font-mono text-zinc-400 shrink-0 mt-0.5">{i + 1}.</span>
                 <span className="min-w-0 flex-1">
                   <span className="text-[11px] font-bold text-zinc-200 block leading-snug">{x.title}</span>
                   <span className="flex flex-wrap items-center gap-1 mt-1">
                     <span className={`text-[8px] font-bold px-1.5 py-0.5 rounded border ${stil.chip}`}>
                       {stil.label}
                     </span>
-                    <span className="text-[8px] font-mono text-zinc-600">
+                    <span className="text-[8px] font-mono text-zinc-400">
                       {CONFIDENCE_LABEL[x.confidence] || ''} · {x.area}
                     </span>
                   </span>
@@ -61,7 +61,7 @@ const WeakLinkCard = memo(({ report, onAction }) => {
                   <button
                     onClick={() => onAction(x.action)}
                     aria-label={`${x.title} için ilgili ekranı aç`}
-                    className="shrink-0 text-zinc-600 active:text-cyan-400 p-1"
+                    className="shrink-0 text-zinc-400 active:text-cyan-400 p-1"
                   >
                     <ChevronRight size={14} />
                   </button>
@@ -73,7 +73,7 @@ const WeakLinkCard = memo(({ report, onAction }) => {
         })}
       </div>
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
         <AlertTriangle size={9} className="inline mr-1" />
         Sıralama etki × kesinlik: hacim eşiği gibi büyümeyi doğrudan durduran
         şeyler önce geliyor, az veriye dayanan tahminler ise yüksek etkili

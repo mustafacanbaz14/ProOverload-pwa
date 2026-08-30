@@ -29,7 +29,7 @@ const CycleSummaryCard = memo(({ summary, onOpen }) => {
                   : 'Belirti yükü düşük; yalnız faz nedeniyle programı değiştirme.'}
             </span>
             {summary.nextPeriodStart && (
-              <span className="text-[8px] font-mono text-zinc-600 block mt-1">
+              <span className="text-[8px] font-mono text-zinc-400 block mt-1">
                 Sonraki tahmin: {formatDay(summary.nextPeriodStart, 'short')} – {formatDay(summary.nextPeriodEnd, 'medium')}
                 {summary.daysUntilNext > 0 ? ` · ${summary.daysUntilNext} gün` : ''}
               </span>

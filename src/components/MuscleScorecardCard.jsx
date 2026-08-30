@@ -31,7 +31,7 @@ const MuscleScorecardCard = memo(({ report }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <GraduationCap size={12} className="mr-1.5 text-emerald-400" /> Kas Karnesi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600">
+        <span className="text-[9px] font-mono text-zinc-400">
           {report.weeks} hafta · ortalama {report.average}/100
         </span>
       </div>
@@ -52,12 +52,12 @@ const MuscleScorecardCard = memo(({ report }) => {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="text-[11px] font-bold text-zinc-200 block truncate">{r.muscle}</span>
-                    <span className="text-[9px] font-mono text-zinc-600 block truncate">
+                    <span className="text-[9px] font-mono text-zinc-400 block truncate">
                       sınırlayan: {r.limiting.label.toLowerCase()} · {r.weeklyVolume} set/hafta
                       {r.strengthChange !== null && ` · 1RM %${r.strengthChange > 0 ? '+' : ''}${r.strengthChange}`}
                     </span>
                   </span>
-                  <ChevronDown size={13} className={`shrink-0 text-zinc-600 transition-transform ${acik ? 'rotate-180' : ''}`} />
+                  <ChevronDown size={13} className={`shrink-0 text-zinc-400 transition-transform ${acik ? 'rotate-180' : ''}`} />
                 </div>
               </button>
 
@@ -88,14 +88,14 @@ const MuscleScorecardCard = memo(({ report }) => {
       </div>
 
       {report.incidental?.length > 0 && (
-        <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed border-t border-zinc-800">
+        <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed border-t border-zinc-800">
           Notlanmayanlar: {report.incidental.join(', ')} — bu kaslar başka
           hareketlerin yan etkisiyle yük alıyor ama hiçbir seansta iki set
           almıyorlar, yani programda hedeflenmiyorlar.
         </p>
       )}
 
-      <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+      <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
         Not üç bileşenden: hacim (40), tahmini 1RM ilerlemesi (40), sıklık (20).
         Notun kendisi kabaca bir özet; asıl bilgi sınırlayıcı etken — nota hangi
         bileşenin çektiği. İlerlemesi ölçülemeyen kaslara nötr puan veriliyor,

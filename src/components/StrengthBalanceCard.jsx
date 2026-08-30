@@ -30,7 +30,7 @@ const StrengthBalanceCard = memo(({ workouts = [], resolveLoad = null }) => {
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Scale size={12} className="mr-1.5 text-cyan-400" /> Kuvvet Dengesi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600 shrink-0">son {rapor.windowDays} gün</span>
+        <span className="text-[9px] font-mono text-zinc-400 shrink-0">son {rapor.windowDays} gün</span>
       </div>
 
       {rapor.hasData && rapor.issues.length === 0 && (
@@ -58,7 +58,7 @@ const StrengthBalanceCard = memo(({ workouts = [], resolveLoad = null }) => {
                 <strong className="text-[11px] text-zinc-200 truncate min-w-0">{r.label}</strong>
                 <span className="text-[10px] font-mono shrink-0">
                   <strong className={s.color}>{r.ratio}</strong>
-                  <span className="text-zinc-600"> · bant {r.min}–{r.max}</span>
+                  <span className="text-zinc-400"> · bant {r.min}–{r.max}</span>
                 </span>
               </div>
 
@@ -76,9 +76,9 @@ const StrengthBalanceCard = memo(({ workouts = [], resolveLoad = null }) => {
 
               <p className="text-[9px] font-mono text-zinc-500 mt-1.5">
                 {r.of.label} <strong className="text-zinc-300">{r.of.value} kg</strong>
-                <span className="text-zinc-700"> ({r.of.weight}×{r.of.reps}, {formatDay(r.of.date, 'short')}) </span>
+                <span className="text-zinc-500"> ({r.of.weight}×{r.of.reps}, {formatDay(r.of.date, 'short')}) </span>
                 / {r.to.label} <strong className="text-zinc-300">{r.to.value} kg</strong>
-                <span className="text-zinc-700"> ({r.to.weight}×{r.to.reps}, {formatDay(r.to.date, 'short')})</span>
+                <span className="text-zinc-500"> ({r.to.weight}×{r.to.reps}, {formatDay(r.to.date, 'short')})</span>
               </p>
 
               {r.advice && (
@@ -91,8 +91,8 @@ const StrengthBalanceCard = memo(({ workouts = [], resolveLoad = null }) => {
 
       {rapor.missing.length > 0 && (
         <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60 flex items-start gap-2">
-          <Info size={11} className="text-zinc-600 shrink-0 mt-0.5" />
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <Info size={11} className="text-zinc-400 shrink-0 mt-0.5" />
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Ölçülemeyen oranlar: {rapor.missing.map(m => `${m.label} (${m.need.join(', ')} eksik)`).join(' · ')}.
             Her iki taraf da en az üç çalışma setiyle kaydedilmeden oran kurulmuyor —
             tek taraflı bir sayıdan &quot;denge yok&quot; sonucu çıkarmak yanlış olurdu.
@@ -103,7 +103,7 @@ const StrengthBalanceCard = memo(({ workouts = [], resolveLoad = null }) => {
       {rapor.issues.length > 0 && (
         <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60 flex items-start gap-2">
           <AlertTriangle size={11} className="text-amber-500 shrink-0 mt-0.5" />
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Bantlar kişiye göre kayar: kol ve bacak uzunluğu oranı doğal olarak
             değiştirir. Bandın hemen dışındaki bir sayı acil bir sorun değil,
             hacmi hangi tarafa ekleyeceğine dair bir işaret.

@@ -36,7 +36,7 @@ const StrengthStandardsCard = memo(({ workouts = [], bodyWeightKg = 0, gender = 
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <Award size={12} className="mr-1.5 text-amber-400" /> Kuvvet Standartları
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600 shrink-0">son {rapor.windowDays} gün</span>
+        <span className="text-[9px] font-mono text-zinc-400 shrink-0">son {rapor.windowDays} gün</span>
       </div>
 
       {rapor.overall && (
@@ -45,7 +45,7 @@ const StrengthStandardsCard = memo(({ workouts = [], bodyWeightKg = 0, gender = 
           <span className="text-[10px] font-mono">
             <strong className={rapor.overall.level.color}>{rapor.overall.level.label}</strong>
             {rapor.overall.spread >= 2 && (
-              <span className="text-zinc-600"> · {rapor.overall.spread} seviye fark</span>
+              <span className="text-zinc-400"> · {rapor.overall.spread} seviye fark</span>
             )}
           </span>
         </div>
@@ -64,7 +64,7 @@ const StrengthStandardsCard = memo(({ workouts = [], bodyWeightKg = 0, gender = 
                   <strong className={r.level ? r.level.color : 'text-zinc-500'}>
                     {r.level ? r.level.label : 'Eşik altı'}
                   </strong>
-                  <span className="text-zinc-600"> · {r.ratio}× VA</span>
+                  <span className="text-zinc-400"> · {r.ratio}× VA</span>
                 </span>
               </div>
 
@@ -85,7 +85,7 @@ const StrengthStandardsCard = memo(({ workouts = [], bodyWeightKg = 0, gender = 
 
               <p className="text-[9px] font-mono text-zinc-500 mt-1.5">
                 En iyi <strong className="text-zinc-300">{r.best.value} kg</strong>
-                <span className="text-zinc-700"> ({r.best.weight}×{r.best.reps}, {formatDay(r.best.date, 'short')})</span>
+                <span className="text-zinc-500"> ({r.best.weight}×{r.best.reps}, {formatDay(r.best.date, 'short')})</span>
                 {r.next && r.kgToNext > 0 && (
                   <> · <span className={r.next.color}>{r.next.label}</span> için {r.kgToNext} kg</>
                 )}
@@ -96,8 +96,8 @@ const StrengthStandardsCard = memo(({ workouts = [], bodyWeightKg = 0, gender = 
       </div>
 
       <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60 flex items-start gap-2">
-        <Info size={11} className="text-zinc-600 shrink-0 mt-0.5" />
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+        <Info size={11} className="text-zinc-400 shrink-0 mt-0.5" />
+        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
           Standartlar vücut ağırlığının katı olarak veriliyor ve
           {gender === 'female' ? ' kadın' : ' erkek'} tablosu kullanılıyor.
           Kaynaklar arasında %10-15 sapma normal; yaş, kol uzunluğu ve teknik

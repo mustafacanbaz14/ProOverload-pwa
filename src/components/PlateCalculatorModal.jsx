@@ -117,11 +117,11 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
                 <div className="text-center mb-3">
                   <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">Barın Tek Tarafına</span>
                   <span className="text-2xl font-mono font-bold text-zinc-100">{result.achievable} kg</span>
-                  <span className="text-[10px] font-mono text-zinc-600 block">toplam ({bar} kg bar dahil)</span>
+                  <span className="text-[10px] font-mono text-zinc-400 block">toplam ({bar} kg bar dahil)</span>
                 </div>
 
                 {grouped.length === 0 ? (
-                  <div className="text-center py-4 text-zinc-600 text-[11px] font-mono">Plaka gerekmiyor</div>
+                  <div className="text-center py-4 text-zinc-400 text-[11px] font-mono">Plaka gerekmiyor</div>
                 ) : (
                   <div className="space-y-2">
                     {grouped.map(({ plate, count }) => (
@@ -135,7 +135,7 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
                   </div>
                 )}
 
-                <p className="text-[9px] font-mono text-zinc-600 mt-3 pt-3 border-t border-zinc-900 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 mt-3 pt-3 border-t border-zinc-900 leading-relaxed">
                   Listedeki plakalar <strong className="text-zinc-400">her iki tarafa ayrı ayrı</strong> takılır.
                 </p>
               </div>
@@ -143,7 +143,7 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
           ) : (
             <div className="space-y-2">
               {warmup.length === 0 ? (
-                <div className="text-center py-8 text-zinc-600 text-[11px] font-mono">
+                <div className="text-center py-8 text-zinc-400 text-[11px] font-mono">
                   Bu ağırlık için ısınma kademesi gerekmiyor.
                 </div>
               ) : (
@@ -172,13 +172,13 @@ const PlateCalculatorModal = memo(({ isOpen, onClose, initialWeight = 0, availab
                   {onAddWarmup && (
                     <button
                       onClick={() => { onAddWarmup(warmup); onClose(); }}
-                      className="w-full bg-orange-600 active:bg-orange-700 text-white font-bold py-3 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors mt-1"
+                      className="w-full bg-orange-700 active:bg-orange-800 text-white font-bold py-3 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors mt-1"
                     >
                       <Plus size={14} /> {warmup.length} ısınma setini ekle
                     </button>
                   )}
 
-                  <p className="text-[9px] font-mono text-zinc-600 mt-2 leading-relaxed">
+                  <p className="text-[9px] font-mono text-zinc-400 mt-2 leading-relaxed">
                     Isınma setleri tükenişe gitmez; amaç sinir sistemini hazırlamak, yorgunluk
                     biriktirmemek. Eklenen setler <strong className="text-zinc-400">W</strong> ile
                     işaretlenir ve hacme sayılmaz.

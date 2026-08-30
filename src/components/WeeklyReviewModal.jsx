@@ -228,7 +228,7 @@ const WeeklyReviewModal = memo(({
               </div>
             ))}
             {volume.statuses.every(s => s.volume === 0 && s.change === 0) && (
-              <p className="px-4 py-6 text-center text-[11px] font-mono text-zinc-600">
+              <p className="px-4 py-6 text-center text-[11px] font-mono text-zinc-400">
                 Bu hafta ağırlık antrenmanı kaydı yok.
               </p>
             )}
@@ -236,7 +236,7 @@ const WeeklyReviewModal = memo(({
         </div>
 
         <div className="bg-zinc-950 border border-zinc-800/80 rounded-2xl p-3 flex items-start gap-2.5">
-          <Dumbbell size={14} className="text-zinc-600 shrink-0 mt-0.5" />
+          <Dumbbell size={14} className="text-zinc-400 shrink-0 mt-0.5" />
           <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
             Varsayılan görünüm geçen tam hafta; içinde bulunduğun hafta bitmeden
             hacmi eksik saymak yanıltıcı olurdu. Oklarla geçmiş haftalara

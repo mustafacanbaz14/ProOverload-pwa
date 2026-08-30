@@ -314,7 +314,7 @@ const HistoryView = memo(({
       {historyTab === 'workouts' && (
         <div className="space-y-3">
           {filteredWorkouts.length === 0 ? (
-            <div className="text-center py-12 text-zinc-600 text-xs font-mono">Henüz antrenman kaydı yok</div>
+            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz antrenman kaydı yok</div>
           ) : (
             <WeekGroups key="workouts" items={filteredWorkouts} expandAll={Boolean(q)}>{w => {
               const tonnage = calcTonnage(w.exercises, loadOptsFor?.(w.date) || null);
@@ -364,7 +364,7 @@ const HistoryView = memo(({
                       <button
                         onClick={() => setDeleteConfirm({ isOpen: true, type: 'workout', id: w.id })}
                         title="Sil"
-                        className="text-zinc-600 active:text-red-500 p-2"
+                        className="text-zinc-400 active:text-red-500 p-2"
                       >
                         <Trash2 size={14} />
                       </button>
@@ -534,7 +534,7 @@ const HistoryView = memo(({
       {historyTab === 'metrics' && (
         <div className="space-y-3">
           {filteredMetrics.length === 0 ? (
-            <div className="text-center py-12 text-zinc-600 text-xs font-mono">Henüz ölçüm kaydı yok</div>
+            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz ölçüm kaydı yok</div>
           ) : (
             <WeekGroups key="metrics" items={filteredMetrics} expandAll={Boolean(q)}>{m => (
               <div key={m.id} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2">
@@ -547,7 +547,7 @@ const HistoryView = memo(({
                     <button onClick={() => handleEditMetric?.(m)} title="Bu ölçümü düzenle" aria-label="Bu ölçümü düzenle" className="text-zinc-500 active:text-cyan-400 p-2">
                       <Pencil size={14} />
                     </button>
-                    <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'metric', id: m.id })} title="Sil" aria-label="Ölçümü sil" className="text-zinc-600 active:text-red-500 p-2">
+                    <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'metric', id: m.id })} title="Sil" aria-label="Ölçümü sil" className="text-zinc-400 active:text-red-500 p-2">
                       <Trash2 size={14} />
                     </button>
                   </div>

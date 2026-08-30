@@ -81,14 +81,14 @@ const CycleView = memo(({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-2.5">
-            <span className="text-[8px] font-mono text-zinc-600 uppercase block">Sonraki regl tahmini</span>
+            <span className="text-[8px] font-mono text-zinc-400 uppercase block">Sonraki regl tahmini</span>
             <strong className="text-[11px] font-mono text-rose-300 block">
               {summary.nextPeriodStart ? `${formatDay(summary.nextPeriodStart, 'short')} – ${formatDay(summary.nextPeriodEnd, 'medium')}` : '—'}
             </strong>
-            {summary.daysUntilNext > 0 && <span className="text-[8px] font-mono text-zinc-600">yaklaşık {summary.daysUntilNext} gün sonra</span>}
+            {summary.daysUntilNext > 0 && <span className="text-[8px] font-mono text-zinc-400">yaklaşık {summary.daysUntilNext} gün sonra</span>}
           </div>
           <div className="bg-zinc-950/80 border border-zinc-800 rounded-xl p-2.5">
-            <span className="text-[8px] font-mono text-zinc-600 uppercase block">Tahmin niteliği</span>
+            <span className="text-[8px] font-mono text-zinc-400 uppercase block">Tahmin niteliği</span>
             <strong className="text-[11px] font-mono text-zinc-300">
               {summary.hormonalContraception ? 'Faz sınırlı' : summary.starts.length >= 3 ? 'Kişisel ortalama' : 'Takvim tahmini'}
             </strong>
@@ -111,7 +111,7 @@ const CycleView = memo(({
             <CalendarDays size={13} className="text-rose-400" /> Günlük Kayıt
           </h3>
           {records.some(record => record.date === selectedDate) && (
-            <button onClick={() => onDeleteDay?.(selectedDate)} aria-label="Bu döngü kaydını sil" className="p-1 text-zinc-600 active:text-red-400"><Trash2 size={13} /></button>
+            <button onClick={() => onDeleteDay?.(selectedDate)} aria-label="Bu döngü kaydını sil" className="p-1 text-zinc-400 active:text-red-400"><Trash2 size={13} /></button>
           )}
         </div>
         <div className="p-4 space-y-4">
@@ -161,7 +161,7 @@ const CycleView = memo(({
           </div>
 
           <input value={entry.note} onChange={event => update({ note: event.target.value })} maxLength={240} placeholder="Not: ilaç, antrenman hissi, olağandışı durum…" className={inputClass} />
-          <p className="text-[8px] font-mono text-zinc-600">Değişiklikler otomatik olarak yalnızca bu cihazda kaydedilir.</p>
+          <p className="text-[8px] font-mono text-zinc-400">Değişiklikler otomatik olarak yalnızca bu cihazda kaydedilir.</p>
         </div>
       </section>
 
@@ -177,12 +177,12 @@ const CycleView = memo(({
           <div className="space-y-1.5">
             {summary.futurePeriods.map((period, index) => (
               <div key={period.start} className="flex justify-between text-[9px] font-mono bg-zinc-950 border border-zinc-800 rounded-xl px-3 py-2">
-                <span className="text-zinc-600">{index + 1}. dönem</span>
+                <span className="text-zinc-400">{index + 1}. dönem</span>
                 <strong className="text-rose-300">{formatDay(period.start, 'short')} – {formatDay(period.end, 'medium')}</strong>
               </div>
             ))}
           </div>
-          <p className="text-[8px] font-mono text-zinc-600 mt-2">Tahmindir; gerçek başlangıcı kaydettikçe kişisel ortalama güncellenir.</p>
+          <p className="text-[8px] font-mono text-zinc-400 mt-2">Tahmindir; gerçek başlangıcı kaydettikçe kişisel ortalama güncellenir.</p>
         </section>
       )}
 
@@ -196,11 +196,11 @@ const CycleView = memo(({
       <section className="bg-zinc-900 border border-zinc-800 rounded-2xl p-4 space-y-3">
         <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center gap-2"><Sparkles size={13} className="text-rose-400" /> Tahmin Ayarları</h3>
         <div className="grid grid-cols-2 gap-2">
-          <label><span className="text-[8px] font-mono text-zinc-600 uppercase block mb-1">Döngü uzunluğu</span><input type="number" min="21" max="45" value={config.cycleLength} onChange={event => setConfig({ cycleLength: event.target.value })} onBlur={event => setConfig({ cycleLength: clampNumber(event.target.value, 21, 45) })} className={inputClass} /></label>
-          <label><span className="text-[8px] font-mono text-zinc-600 uppercase block mb-1">Regl süresi</span><input type="number" min="2" max="10" value={config.periodLength} onChange={event => setConfig({ periodLength: event.target.value })} onBlur={event => setConfig({ periodLength: clampNumber(event.target.value, 2, 10) })} className={inputClass} /></label>
+          <label><span className="text-[8px] font-mono text-zinc-400 uppercase block mb-1">Döngü uzunluğu</span><input type="number" min="21" max="45" value={config.cycleLength} onChange={event => setConfig({ cycleLength: event.target.value })} onBlur={event => setConfig({ cycleLength: clampNumber(event.target.value, 21, 45) })} className={inputClass} /></label>
+          <label><span className="text-[8px] font-mono text-zinc-400 uppercase block mb-1">Regl süresi</span><input type="number" min="2" max="10" value={config.periodLength} onChange={event => setConfig({ periodLength: event.target.value })} onBlur={event => setConfig({ periodLength: clampNumber(event.target.value, 2, 10) })} className={inputClass} /></label>
         </div>
         <button onClick={() => setConfig({ hormonalContraception: !config.hormonalContraception })} className="w-full bg-zinc-950 border border-zinc-800 rounded-xl p-3 flex justify-between items-center text-left">
-          <span><strong className="text-[10px] text-zinc-300 block">Hormonal doğum kontrolü kullanıyorum</strong><span className="text-[8px] font-mono text-zinc-600">Faz tahmininin güvenini sınırlar; belirti takibi devam eder.</span></span>
+          <span><strong className="text-[10px] text-zinc-300 block">Hormonal doğum kontrolü kullanıyorum</strong><span className="text-[8px] font-mono text-zinc-400">Faz tahmininin güvenini sınırlar; belirti takibi devam eder.</span></span>
           <span className={`w-10 h-6 rounded-full border relative ${config.hormonalContraception ? 'bg-rose-600 border-rose-500' : 'bg-zinc-950 border-zinc-700'}`}><span className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${config.hormonalContraception ? 'left-5' : 'left-1'}`} /></span>
         </button>
       </section>
@@ -211,8 +211,8 @@ const CycleView = memo(({
           <div className="divide-y divide-zinc-800">
             {[...records].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 12).map(record => (
               <button key={record.id} onClick={() => setSelectedDate(record.date)} className="w-full px-4 py-3 flex justify-between items-center text-left active:bg-zinc-800">
-                <span><strong className="text-[10px] text-zinc-200 block">{formatDay(record.date, 'medium')}</strong><span className="text-[8px] font-mono text-zinc-600">{BLEEDING_LEVELS.find(level => level.key === record.bleeding)?.label || 'Yok'} · ağrı {record.pain}/10 · enerji {record.energy}/10</span></span>
-                <ChevronRight size={13} className="text-zinc-600" />
+                <span><strong className="text-[10px] text-zinc-200 block">{formatDay(record.date, 'medium')}</strong><span className="text-[8px] font-mono text-zinc-400">{BLEEDING_LEVELS.find(level => level.key === record.bleeding)?.label || 'Yok'} · ağrı {record.pain}/10 · enerji {record.energy}/10</span></span>
+                <ChevronRight size={13} className="text-zinc-400" />
               </button>
             ))}
           </div>

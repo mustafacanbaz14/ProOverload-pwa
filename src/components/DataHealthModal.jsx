@@ -139,7 +139,7 @@ const DataHealthModal = memo(({
               </div>
             )}
 
-            <p className="text-[8px] font-mono text-zinc-600 leading-relaxed">
+            <p className="text-[8px] font-mono text-zinc-400 leading-relaxed">
               Eski sürüm anahtarları geri dönüş kopyası olarak korunur. Bütünlük uyarısı veriyi otomatik silmez.
             </p>
           </div>
@@ -181,7 +181,7 @@ const DataHealthModal = memo(({
                 >
                   <Trash2 size={13} /> Boş kayıtları sil
                 </button>
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                   Diğer bulgular otomatik düzeltilmiyor: hangisinin hata hangisinin
                   gerçek olduğuna ancak sen karar verebilirsin. Geçmiş sekmesinden
                   ilgili kaydı açıp düzeltebilirsin.

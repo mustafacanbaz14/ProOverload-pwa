@@ -16,7 +16,7 @@ const DeferredCardFallback = ({ height = 180, label = 'Bölüm hazırlanıyor' }
     style={{ minHeight: height }}
     role="status"
   >
-    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-700">{label}</span>
+    <span className="text-[9px] font-mono uppercase tracking-widest text-zinc-500">{label}</span>
   </div>
 );
 

@@ -137,7 +137,7 @@ const CoachBriefingCard = memo(({
               >
                 <span className="w-5 h-5 rounded-lg bg-zinc-900 text-[9px] font-mono text-cyan-400 flex items-center justify-center shrink-0">{index + 1}</span>
                 <span className="text-[9px] font-bold text-zinc-300 leading-snug flex-1">{item.title}</span>
-                {item.action && <ChevronRight size={11} className="text-zinc-600 shrink-0" />}
+                {item.action && <ChevronRight size={11} className="text-zinc-400 shrink-0" />}
               </button>
             ))}
           </div>
@@ -186,7 +186,7 @@ const CoachBriefingCard = memo(({
 
           <div className="space-y-1.5">
             {actions.length === 0 ? (
-              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-center text-[9px] font-mono text-zinc-600">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-center text-[9px] font-mono text-zinc-400">
                 Bu zaman ve konu süzgecinde madde yok.
               </div>
             ) : actions.map(item => {

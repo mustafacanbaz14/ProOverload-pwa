@@ -88,7 +88,7 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
                       <span className="font-sans font-bold text-zinc-400">Kilo:</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">{recordA.weight}kg</span>
-                        <ArrowRight size={11} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-400" />
                         <span className="font-bold text-zinc-100">{recordB.weight}kg</span>
                         {res && (
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff > 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : res.diff < 0 ? 'bg-orange-950/80 text-orange-400 border border-orange-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
@@ -108,7 +108,7 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
                       <span className="font-sans font-bold text-zinc-400">Yağ Oranı:</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">%{compA.activeBF}</span>
-                        <ArrowRight size={11} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-400" />
                         <span className="font-bold text-cyan-400">%{compB.activeBF}</span>
                         {res && (
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff < 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : res.diff > 0 ? 'bg-red-950/80 text-red-400 border border-red-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
@@ -128,7 +128,7 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
                       <span className="font-sans font-bold text-zinc-400">Kas (FFM):</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">{compA.ffm}kg</span>
-                        <ArrowRight size={11} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-400" />
                         <span className="font-bold text-emerald-400">{compB.ffm}kg</span>
                         {res && (
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff > 0 ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-800/60' : res.diff < 0 ? 'bg-red-950/80 text-red-400 border border-red-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
@@ -156,7 +156,7 @@ const MetricsComparisonModal = memo(({ isOpen, onClose, metricsHistory = [] }) =
                       <span className="font-sans font-bold text-zinc-400">{m.label}:</span>
                       <div className="flex items-center space-x-2">
                         <span className="text-zinc-500">{valA || '-'}cm</span>
-                        <ArrowRight size={11} className="text-zinc-600" />
+                        <ArrowRight size={11} className="text-zinc-400" />
                         <span className="font-bold text-zinc-100">{valB || '-'}cm</span>
                         {res && (
                           <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${res.diff > 0 ? 'bg-cyan-950/80 text-cyan-400 border border-cyan-800/60' : res.diff < 0 ? 'bg-orange-950/80 text-orange-400 border border-orange-800/60' : 'bg-zinc-800 text-zinc-400'}`}>
