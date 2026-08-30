@@ -223,17 +223,34 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           </button>
         )}
 
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2 pt-1">
           <button
+            type="button"
             onClick={() => data.cardioLabel && !planned
               ? onOpenCardio?.()
               : onStart?.(data.workoutTemplate || null)}
-            className="bg-cyan-600 active:bg-cyan-700 text-white rounded-xl px-3 py-2.5 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center"
+            className="bg-cyan-600 active:scale-[0.98] text-white rounded-2xl px-4 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center shadow-lg shadow-black/30 transition-all"
           >
-            {planned ? 'Planlananı Başlat' : data.cardioLabel ? 'Kardiyoyu Aç' : 'Serbest Başlat'} <ChevronRight size={12} className="ml-1" />
+            {planned ? 'Planlananı Başlat' : data.cardioLabel ? 'Kardiyoyu Aç' : 'Serbest Başlat'} <ChevronRight size={13} className="ml-1" />
           </button>
-          <button onClick={onOpenEnergy} aria-label="Enerji detayını aç" className="bg-zinc-950 border border-zinc-800 text-red-400 rounded-xl px-2.5 py-2 flex flex-col items-center justify-center gap-0.5"><Flame size={14} /><span className="text-[7px] font-bold">Kalori</span></button>
-          <button onClick={onOpenWellness} aria-label="Uyku ve toparlanmayı aç" className="bg-zinc-950 border border-zinc-800 text-indigo-400 rounded-xl p-2.5"><Moon size={15} /></button>
+          <button
+            type="button"
+            onClick={onOpenEnergy}
+            aria-label="Enerji detayını aç"
+            className="bg-zinc-950/90 border border-zinc-800/80 text-red-400 active:scale-[0.95] rounded-2xl px-3 py-2 flex flex-col items-center justify-center gap-0.5 shadow-sm transition-all hover:border-red-900/40"
+          >
+            <Flame size={15} />
+            <span className="text-[7px] font-bold uppercase tracking-wider">Kalori</span>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenWellness}
+            aria-label="Uyku ve toparlanmayı aç"
+            className="bg-zinc-950/90 border border-zinc-800/80 text-indigo-400 active:scale-[0.95] rounded-2xl px-3.5 py-2 flex flex-col items-center justify-center gap-0.5 shadow-sm transition-all hover:border-indigo-900/40"
+          >
+            <Moon size={15} />
+            <span className="text-[7px] font-bold uppercase tracking-wider">Uyku</span>
+          </button>
         </div>
       </div>
     </section>

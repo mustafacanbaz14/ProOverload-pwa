@@ -304,7 +304,7 @@ const AnalyticsView = memo(({
 
   return (
     <div data-view-scroll="progress" className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black`}>
-      <div className="luxury-segmented grid grid-cols-6 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+      <div className="luxury-segmented grid grid-cols-6 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md">
         {[
           { key: 'body', label: 'Vücut' },
           { key: '1rm', label: '1RM' },
@@ -315,8 +315,9 @@ const AnalyticsView = memo(({
         ].map(t => (
           <button
             key={t.key}
+            type="button"
             onClick={() => setAnalysisType(t.key)}
-            className={`flex-1 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wide transition-colors ${analysisType === t.key ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+            className={`py-2 rounded-xl text-[10px] font-bold uppercase tracking-wide transition-all active:scale-[0.96] ${analysisType === t.key ? 'bg-cyan-600 text-white shadow-sm font-black' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
             {t.label}
           </button>

@@ -11,24 +11,19 @@ import { VOLUME_PHILOSOPHIES, findPhilosophy } from '../utils/doseResponse';
 import { ACTIVITY_LEVELS } from '../utils/energyModel';
 
 const Toggle = ({ label, hint, checked, onChange }) => (
-  <label className="flex items-center justify-between gap-3 p-3 bg-zinc-950 rounded-xl border border-zinc-800 cursor-pointer">
+  <label className="flex items-center justify-between gap-3 p-3 bg-zinc-950/90 rounded-2xl border border-zinc-800/80 cursor-pointer shadow-sm hover:border-zinc-700/80 transition-colors">
     <span className="min-w-0">
-      <span className="text-zinc-200 text-[11px] font-bold block">{label}</span>
+      <span className="text-zinc-100 text-[11px] font-bold block">{label}</span>
       {hint && <span className="text-zinc-500 text-[10px] font-mono block mt-0.5 leading-snug">{hint}</span>}
     </span>
     <button
       type="button"
       onClick={(e) => { e.preventDefault(); onChange(!checked); }}
-      className={`w-11 h-6 rounded-full relative transition-colors shrink-0 ${checked ? 'bg-cyan-600' : 'bg-zinc-700'}`}
+      className={`w-11 h-6 rounded-full relative transition-colors shrink-0 shadow-inner ${checked ? 'bg-cyan-600' : 'bg-zinc-800 border border-zinc-700/50'}`}
     >
-      {/* Hata: `left` hiç yazılmadığı için nokta statik konumundan başlıyordu.
-          Buton ortalı olduğundan bu ~22px'e denk geliyor, üstüne binen translate
-          de noktayı rayın dışına taşırıyordu; kapalıyken de sola inmiyordu.
-          Konum artık doğrudan `left` ile veriliyor:
-          ray 44px − nokta 16px − 4px boşluk = kapalı 4px, açık 24px. */}
       <span
         style={{ left: checked ? 24 : 4 }}
-        className="w-4 h-4 rounded-full bg-white absolute top-1 transition-all duration-200"
+        className="w-4 h-4 rounded-full bg-white absolute top-1 transition-all duration-200 shadow-md"
       />
     </button>
   </label>

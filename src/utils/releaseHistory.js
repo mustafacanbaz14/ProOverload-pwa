@@ -169,7 +169,7 @@ const RELEASE_9_6 = release('9.6', '2026-08-30', 'Sade Ayarlar ve Gün Gün Ener
   item('PWA ve Kullanıcı Verisi Korundu', 'v9.6 yeni localStorage anahtarı veya kırıcı veri göçü eklemiyor; mevcut kayıt, yedek ve çevrimdışı güncelleme yapısı değişmiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Luxury Dark & Light UI ve Tam Tasarım Modernizasyonu', [
+const RELEASE_9_7 = release('9.7', '2026-08-30', 'Luxury Dark & Light UI ve Tam Tasarım Modernizasyonu', [
   item('Luxury Dark & Light UI', 'Tüm uygulama obsidyen–altın (karanlık) ve fildişi–bronz (aydınlık) renk temalarıyla lüks bir tasarım sistemine taşındı.'),
   item('24+ Modal ve Dialog Yenilendi', 'Bütün pencereler standart role="dialog", aria-modal="true", backdrop blur ve modern rounded-3xl cam gövde ile sıfırdan modernize edildi.'),
   item('Lüks Başlık ve Navigasyon', 'luxury-header, luxury-icon-button ve luxury-segmented tab barları ile dokunmatik dostu mikro-etkileşimler sağlandı.'),
@@ -178,6 +178,15 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Luxury D
   item('Veri Sağlığı ve İkame Motoru', 'Depolama bütünlüğü, kas grubu analizi ve hareket alternatifleri şık tipografi hiyerarşisiyle yeniden düzenlendi.'),
   item('Hızlı Kayıt ve Hızlı Eylemler', 'Dokunma hedefleri büyütüldü, aktif basma efektleri (active scale) ve görsel geri bildirimler güçlendirildi.'),
   item('Performans ve Sıfır Regresyon', '492 çekirdek doğrulama testi, 16 kas grubu kuralı ve sıkı performans bütçeleri eksiksiz korundu.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Arayüz Akıcılığı, Kart Estetiği ve Dokunsal Zarafet', [
+  item('Dokunsal Mikro-Etkileşimler', 'Hızlı işlemler, şablon kartları, sayaçlar ve sekmeler için fiziksel yay basma hissi veren active-scale ve mikro-geçişler entegre edildi.'),
+  item('Rafine Metrik & Koç Kartları', 'Günün Koçu, haftalık durum ve aktivite kartları cam derinliği, iç gölgeler ve yüksek kontrastlı tipografi ile zenginleştirildi.'),
+  item('Aktif Seans & Dinlenme Sayacı', 'Canlı antrenman dinlenme sayacı, tempo, set tipleri ve seans düğmeleri pürüzsüz dokunma alanlarına kavuşturuldu.'),
+  item('Şablon Kütüphanesi & Arama', 'Şablon arama, filtreleme, favori rozetleri ve sihirbaz eylemleri şık kart modülleri olarak yeniden işlendi.'),
+  item('Akıllı Ayar Anahtarları', 'Ayar anahtarları (toggle switches) ve kategori panoları modern dokunsal cam estetiğine uyarlandı.'),
+  item('Tüm Doğrulama Testleri Yeşil', '492 temel test, 16 kas grubu ve 56 hareket kuralı, mağaza ve performans kapıları eksiksiz korundu.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -254,6 +263,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_7,
   RELEASE_9_6,
   RELEASE_9_5,
   RELEASE_9_3,

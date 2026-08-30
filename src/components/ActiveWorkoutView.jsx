@@ -1044,15 +1044,17 @@ const ActiveWorkoutView = memo(({
         })}
 
         <button
+          type="button"
           onClick={() => setIsExerciseModalOpen(true)}
-          className="w-full bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs transition-colors"
+          className="w-full bg-zinc-900/90 hover:bg-zinc-800/90 active:scale-[0.98] border border-zinc-800/80 text-zinc-100 font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs transition-all shadow-md shadow-black/20"
         >
           <Plus size={16} className="mr-2 text-cyan-400" /> Hareket Ekle
         </button>
 
         <button
+          type="button"
           onClick={onOpenCardio}
-          className="w-full bg-zinc-900 active:bg-zinc-800 border border-zinc-800 text-zinc-200 font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs transition-colors"
+          className="w-full bg-zinc-900/90 active:scale-[0.98] border border-zinc-800/80 text-zinc-100 font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs transition-all shadow-md shadow-black/20"
         >
           <HeartPulse size={16} className="mr-2 text-red-400" />
           Kardiyo Ekle
@@ -1065,8 +1067,9 @@ const ActiveWorkoutView = memo(({
 
         {(activeWorkout.exercises || []).length > 0 && (
           <button
+            type="button"
             onClick={onSaveAsTemplate}
-            className="w-full bg-zinc-950 border border-zinc-800 text-zinc-400 active:bg-zinc-900 font-bold py-3 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-[11px] transition-colors"
+            className="w-full bg-zinc-950/80 border border-zinc-800/80 text-zinc-400 active:scale-[0.98] active:text-zinc-200 font-bold py-3 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-[11px] transition-all shadow-sm"
           >
             <BookmarkPlus size={15} className="mr-2 text-cyan-500" /> Bu Antrenmanı Şablon Yap
           </button>

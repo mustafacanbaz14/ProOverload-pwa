@@ -159,16 +159,16 @@ const HomeWeeklyOverview = memo(({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex flex-col justify-center relative overflow-hidden">
-              <div className="absolute -right-4 -top-4 opacity-5"><Activity size={64} /></div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1 z-10">Bu Hafta</span>
-              <span className="text-2xl font-mono text-zinc-100 z-10">{dashboardStats.thisWeekSessions} <span className="text-xs text-zinc-500">Antrenman</span></span>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-zinc-950/85 p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-center relative overflow-hidden shadow-inner">
+              <div className="absolute -right-3 -top-3 opacity-5"><Activity size={56} /></div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-0.5 z-10">Bu Hafta</span>
+              <span className="text-xl font-mono font-bold text-zinc-100 z-10">{dashboardStats.thisWeekSessions} <span className="text-[10px] text-zinc-500 font-normal">Antrenman</span></span>
             </div>
-            <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800 flex flex-col justify-center relative overflow-hidden">
-              <div className="absolute -right-4 -top-4 opacity-5"><Target size={64} /></div>
-              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 mb-1 z-10">Haftalık Hacim</span>
-              <span className="text-2xl font-mono text-cyan-400 z-10">{dashboardStats.thisWeekEffectiveSets} <span className="text-xs text-zinc-500">Set</span></span>
+            <div className="bg-zinc-950/85 p-3.5 rounded-2xl border border-zinc-800/80 flex flex-col justify-center relative overflow-hidden shadow-inner">
+              <div className="absolute -right-3 -top-3 opacity-5"><Target size={56} /></div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-0.5 z-10">Haftalık Hacim</span>
+              <span className="text-xl font-mono font-bold text-cyan-400 z-10">{dashboardStats.thisWeekEffectiveSets} <span className="text-[10px] text-zinc-500 font-normal">Set</span></span>
             </div>
           </div>
 
@@ -191,17 +191,17 @@ const HomeWeeklyOverview = memo(({
             </Suspense>
           </DeferredSection>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">Aşırı Yük Riski (ACWR)</span>
+          <div className="grid grid-cols-2 gap-2.5">
+            <div className="bg-zinc-950/85 p-3.5 rounded-2xl border border-zinc-800/80 shadow-inner">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">Aşırı Yük Riski (ACWR)</span>
               <span className={`text-xl font-mono font-bold block mb-1 ${acwrStatus.text}`}>
                 {dashboardStats.hasEnoughData ? dashboardStats.acwr : '—'}
               </span>
               <div className={`text-[10px] font-bold uppercase tracking-widest ${acwrStatus.text}`}>{acwrStatus.label}</div>
               <p className="text-[9px] font-mono text-zinc-600 leading-snug mt-1">{ACWR_HINT[acwrKey]}</p>
             </div>
-            <div className="bg-zinc-900 p-4 rounded-2xl border border-zinc-800">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">İtme / Çekme Oranı</span>
+            <div className="bg-zinc-950/85 p-3.5 rounded-2xl border border-zinc-800/80 shadow-inner">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1">İtme / Çekme Oranı</span>
               {(() => {
                 const { hasPushPullData, pushPullBalanced, pushPullRatio } = dashboardStats;
                 const tone = !hasPushPullData ? 'text-zinc-500' : pushPullBalanced ? 'text-emerald-500' : 'text-orange-400';
