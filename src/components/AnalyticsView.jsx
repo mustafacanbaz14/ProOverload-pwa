@@ -351,7 +351,7 @@ const AnalyticsView = memo(({
           <TrendChart data={chartData} color="#22d3ee" unit={unit} />
 
           {bodyMetricKey === 'weight' && showAverage && (
-            <p className="text-[10px] font-mono text-zinc-600 leading-relaxed px-1">
+            <p className="text-[10px] font-mono text-zinc-400 leading-relaxed px-1">
               Günlük kilo su, tuz ve sindirim yüzünden 1-2 kg oynar. Bulk/cut kararı
               ham veriden değil, bu ortalamanın eğiminden verilir.
             </p>
@@ -362,7 +362,7 @@ const AnalyticsView = memo(({
       {analysisType === 'muscle' && (
         <div className="space-y-3">
           <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800">
-            <label className="text-[10px] font-mono text-zinc-500 uppercase block mb-1">Kas Grubu</label>
+            <label className="text-[10px] font-mono text-zinc-400 uppercase block mb-1">Kas Grubu</label>
             <select
               value={muscleKey}
               onChange={(e) => setMuscleKey(e.target.value)}
@@ -383,14 +383,14 @@ const AnalyticsView = memo(({
               { k: 'mrv', label: 'Tartışmalı' },
             ].map(({ k, label }) => (
               <div key={k} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2">
-                <span className="text-[9px] font-mono text-zinc-500 uppercase block">{label}</span>
+                <span className="text-[9px] font-mono text-zinc-400 uppercase block">{label}</span>
                 <span className="text-sm font-mono font-bold text-zinc-200">
                   {getVolumeLandmarks(muscleKey, experienceLevel)[k]}
                 </span>
               </div>
             ))}
           </div>
-          <p className="text-[10px] font-mono text-zinc-600 leading-relaxed px-1">
+          <p className="text-[10px] font-mono text-zinc-400 leading-relaxed px-1">
             Her nokta bir haftanın toplam hacmi. Katkı ağırlıkları dahildir:
             birincil hedef 1, yardımcı 0.5, hafif 0.25 set sayılır.
           </p>
@@ -445,7 +445,7 @@ const AnalyticsView = memo(({
                   <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
                     Denemediğin Hareketler
                   </h4>
-                  <span className="text-[9px] font-mono text-zinc-600">
+                  <span className="text-[9px] font-mono text-zinc-400">
                     {discovery.knownCount}/{discovery.poolSize} hareket biliniyor
                   </span>
                 </div>
@@ -454,17 +454,17 @@ const AnalyticsView = memo(({
                     <div key={x.name} className="px-4 py-2">
                       <div className="flex justify-between items-baseline gap-2">
                         <span className="text-[10px] font-bold text-zinc-200 truncate min-w-0">{x.name}</span>
-                        <span className="text-[9px] font-mono text-zinc-600 shrink-0">
+                        <span className="text-[9px] font-mono text-zinc-400 shrink-0">
                           {x.muscle}{x.equipment ? ` · ${x.equipment}` : ''}
                         </span>
                       </div>
-                      <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">
+                      <span className="text-[9px] font-mono text-zinc-400 block leading-relaxed">
                         {x.reasons[0]}
                       </span>
                     </div>
                   ))}
                 </div>
-                <p className="px-4 py-2 text-[9px] font-mono text-zinc-600 leading-relaxed bg-zinc-950/40">
+                <p className="px-4 py-2 text-[9px] font-mono text-zinc-400 leading-relaxed bg-zinc-950/40">
                   Öneriler rastgele değil: geçmişteki boşluklardan (eşik altı
                   hacim, tek harekete bağımlılık, gerilme hareketi eksikliği)
                   çıkıyor ve
@@ -536,7 +536,7 @@ const AnalyticsView = memo(({
               <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
                 <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
                   <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Çalışma Sıklığı</h4>
-                  <span className="text-[9px] font-mono text-zinc-600">son {frequency.weeks} tam hafta</span>
+                  <span className="text-[9px] font-mono text-zinc-400">son {frequency.weeks} tam hafta</span>
                 </div>
 
                 <div className="divide-y divide-zinc-800/70">
@@ -548,7 +548,7 @@ const AnalyticsView = memo(({
                           <span className={FREQ_TONE[m.verdict] || 'text-zinc-400'}>
                             haftada {m.sessionsPerWeek}×
                           </span>
-                          <span className="text-zinc-600"> · {m.weeklyVolume} set</span>
+                          <span className="text-zinc-400"> · {m.weeklyVolume} set</span>
                         </span>
                       </div>
 
@@ -562,13 +562,13 @@ const AnalyticsView = memo(({
                       </div>
 
                       {m.advice && (
-                        <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">{m.advice}</p>
+                        <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">{m.advice}</p>
                       )}
                     </div>
                   ))}
                 </div>
 
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-4 py-2.5 border-t border-zinc-800">
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-4 py-2.5 border-t border-zinc-800">
                   Çubuk, haftalık hacmin en yoğun seansa ne kadar yığıldığını gösterir.
                   Bir kas ancak o gün en az 2 set aldıysa "çalışıldı" sayılır — yoksa
                   bench press'in tricepse yazdığı yarım set bile sıklığı şişirirdi.
@@ -586,14 +586,14 @@ const AnalyticsView = memo(({
         <div className="space-y-3">
           <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 space-y-2.5">
             <div className="flex justify-between items-baseline">
-              <label className="text-[10px] font-mono text-zinc-500 uppercase">Hareket Seçin</label>
-              <span className="text-[9px] font-mono text-zinc-600">
+              <label className="text-[10px] font-mono text-zinc-400 uppercase">Hareket Seçin</label>
+              <span className="text-[9px] font-mono text-zinc-400">
                 {exerciseQuery.trim() ? `${rmExercises.length} sonuç · tümü` : `${rmExercises.length} hareket · 2+ seans`}
               </span>
             </div>
 
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-400" size={14} />
               <input
                 type="text"
                 value={exerciseQuery}
@@ -605,7 +605,7 @@ const AnalyticsView = memo(({
 
             <div className="max-h-52 overflow-y-auto hide-scrollbar -mx-1 px-1 space-y-1">
               {rmExercises.length === 0 ? (
-                <p className="text-[10px] font-mono text-zinc-600 text-center py-4 leading-relaxed">
+                <p className="text-[10px] font-mono text-zinc-400 text-center py-4 leading-relaxed">
                   {exerciseQuery.trim()
                     ? 'Eşleşen hareket yok.'
                     : 'En az iki seansta yaptığın hareket yok. Grafik için aynı hareketi tekrar çalışman gerekiyor — aramayla tüm hareketlere ulaşabilirsin.'}
@@ -627,13 +627,13 @@ const AnalyticsView = memo(({
                       <span className={`text-[11px] font-mono block truncate ${analysisExercise === name ? 'text-cyan-400 font-bold' : 'text-zinc-300'}`}>
                         {name}
                       </span>
-                      <span className="text-[9px] font-mono text-zinc-600">{count} seans</span>
+                      <span className="text-[9px] font-mono text-zinc-400">{count} seans</span>
                     </button>
                     <button
                       onClick={() => onToggleHidden1RM?.(name)}
                       title={hidden ? 'Listede göster' : 'Listeden gizle'}
                       aria-label={hidden ? 'Listede göster' : 'Listeden gizle'}
-                      className="text-zinc-600 active:text-cyan-400 p-2 shrink-0"
+                      className="text-zinc-400 active:text-cyan-400 p-2 shrink-0"
                     >
                       {hidden ? <EyeOff size={13} /> : <Eye size={13} />}
                     </button>
@@ -646,7 +646,7 @@ const AnalyticsView = memo(({
           {analysisExercise ? (
             <TrendChart data={chartData} color="#34d399" unit="kg" />
           ) : (
-            <div className="text-center py-12 text-zinc-600 text-xs font-mono">Grafiği görmek için bir hareket seçin</div>
+            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Grafiği görmek için bir hareket seçin</div>
           )}
         </div>
       )}
@@ -804,10 +804,10 @@ const AnalyticsView = memo(({
       {analysisType === 'nutrition' && (
         <div className="space-y-3">
           {!nutritionAnalysis ? (
-            <div className="text-center py-12 text-zinc-600 text-xs font-mono leading-relaxed px-4">
+            <div className="text-center py-12 text-zinc-400 text-xs font-mono leading-relaxed px-4">
               Henüz beslenme kaydı yok.
               <br />
-              <span className="text-zinc-700">Beslenme sekmesinden bir gün girdiğinde analiz burada oluşur.</span>
+              <span className="text-zinc-400">Beslenme sekmesinden bir gün girdiğinde analiz burada oluşur.</span>
             </div>
           ) : (
             <>
@@ -818,18 +818,18 @@ const AnalyticsView = memo(({
                   { label: '30 Günlük Ort.', data: nutritionAnalysis.avg30 },
                 ].map(box => (
                   <div key={box.label} className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3">
-                    <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block mb-1">{box.label}</span>
+                    <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest block mb-1">{box.label}</span>
                     {box.data ? (
                       <>
                         <span className="text-lg font-mono font-bold text-cyan-400">{box.data.calories}</span>
-                        <span className="text-[10px] font-mono text-zinc-500 ml-1">kcal</span>
-                        <div className="text-[9px] font-mono text-zinc-500 mt-1.5 leading-relaxed">
+                        <span className="text-[10px] font-mono text-zinc-400 ml-1">kcal</span>
+                        <div className="text-[9px] font-mono text-zinc-300 mt-1.5 leading-relaxed">
                           P {box.data.protein}g · K {box.data.carbs}g · Y {box.data.fats}g
                         </div>
-                        <div className="text-[9px] font-mono text-zinc-600 mt-0.5">{box.data.days} gün kayıtlı</div>
+                        <div className="text-[9px] font-mono text-zinc-400 mt-0.5">{box.data.days} gün kayıtlı</div>
                       </>
                     ) : (
-                      <span className="text-[10px] font-mono text-zinc-600">Veri yok</span>
+                      <span className="text-[10px] font-mono text-zinc-400">Veri yok</span>
                     )}
                   </div>
                 ))}
@@ -838,7 +838,7 @@ const AnalyticsView = memo(({
               {/* Hedeflerle karşılaştırma */}
               {(nutritionAnalysis.targetCalories > 0 || nutritionAnalysis.targetProtein > 0) && nutritionAnalysis.avg7 && (
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2.5">
-                  <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Hedefe Göre Durum</h4>
+                  <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Hedefe Göre Durum</h4>
                   {[
                     {
                       label: 'Kalori', current: nutritionAnalysis.avg7.calories,
@@ -854,9 +854,9 @@ const AnalyticsView = memo(({
                       <div key={row.label} className="space-y-1">
                         <div className="flex justify-between items-center gap-2">
                           <span className="text-[11px] font-bold text-zinc-200">{row.label}</span>
-                          <span className="text-[10px] font-mono text-zinc-400">
+                          <span className="text-[10px] font-mono text-zinc-300">
                             <strong className="text-zinc-100">{row.current}</strong>
-                            <span className="text-zinc-600"> / {row.target} {row.unit} · %{pct}</span>
+                            <span className="text-zinc-400"> / {row.target} {row.unit} · %{pct}</span>
                           </span>
                         </div>
                         <div className="w-full bg-zinc-950 rounded-full h-1.5 border border-zinc-800">
@@ -866,7 +866,7 @@ const AnalyticsView = memo(({
                     );
                   })}
                   {nutritionAnalysis.proteinKg && (
-                    <p className="text-[9px] font-mono text-zinc-600 leading-relaxed pt-0.5">
+                    <p className="text-[9px] font-mono text-zinc-400 leading-relaxed pt-0.5">
                       Protein alımı vücut ağırlığının kilosu başına{' '}
                       <strong className="text-emerald-400">{nutritionAnalysis.proteinKg} g</strong>.
                     </p>
@@ -890,17 +890,17 @@ const AnalyticsView = memo(({
                   <div className={`border rounded-2xl p-3.5 space-y-2 ${tone}`}>
                     <div className="flex justify-between items-baseline">
                       <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">{stateLabel}</h4>
-                      <span className="text-[9px] font-mono text-zinc-500">7 günlük ortalamaya göre</span>
+                      <span className="text-[9px] font-mono text-zinc-400">7 günlük ortalamaya göre</span>
                     </div>
 
                     <div className="flex items-end gap-3">
                       <span className={`text-2xl font-mono font-bold ${valueColor}`}>
                         {b.balance > 0 ? '+' : ''}{b.balance}
                       </span>
-                      <span className="text-[10px] font-mono text-zinc-500 pb-1">
+                      <span className="text-[10px] font-mono text-zinc-400 pb-1">
                         kcal/gün
                         {b.weeklyKg !== 0 && (
-                          <span className="block text-zinc-600">
+                          <span className="block text-zinc-300">
                             ≈ haftada {b.weeklyKg > 0 ? '+' : ''}{b.weeklyKg} kg
                             {b.weeklyPct !== null && ` (%${b.weeklyPct})`}
                           </span>
@@ -912,7 +912,7 @@ const AnalyticsView = memo(({
                       <p
                         key={i}
                         className={`text-[10px] font-mono leading-relaxed ${
-                          b.severity === 'warn' && i === 0 ? 'text-orange-200' : 'text-zinc-400'
+                          b.severity === 'warn' && i === 0 ? 'text-orange-200' : 'text-zinc-300'
                         }`}
                       >
                         {note}
@@ -920,7 +920,7 @@ const AnalyticsView = memo(({
                     ))}
 
                     {b.state === 'deficit' && b.maxSafeDeficit > 0 && (
-                      <p className="text-[9px] font-mono text-zinc-600 leading-relaxed pt-1 border-t border-zinc-800/60">
+                      <p className="text-[9px] font-mono text-zinc-400 leading-relaxed pt-1 border-t border-zinc-800/60">
                         Güvenli aralık: günde 0 – {b.maxSafeDeficit} kcal açık
                         (haftada en fazla ağırlığının %{b.maxSafeLossPct}&apos;i).
                         Sınır yağ oranına göre belirlenir; yağ azaldıkça daralır.
@@ -931,9 +931,9 @@ const AnalyticsView = memo(({
                       const r = nutritionAnalysis.recommended;
                       return (
                         <div className="pt-1 border-t border-zinc-800/60 space-y-1">
-                          <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">
-                            <strong className="text-zinc-300">{r.label}</strong>
-                            {r.rateLabel && <> · <strong className="text-zinc-300">{r.rateLabel}</strong> hız (haftada %{r.weeklyPct})</>}
+                          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+                            <strong className="text-zinc-200">{r.label}</strong>
+                            {r.rateLabel && <> · <strong className="text-zinc-200">{r.rateLabel}</strong> hız (haftada %{r.weeklyPct})</>}
                             {' '}için önerilen alım:{' '}
                             <strong className="text-cyan-400">{r.target} kcal/gün</strong>
                             {r.offset !== 0 && (
@@ -942,12 +942,12 @@ const AnalyticsView = memo(({
                             )}.
                           </p>
                           {r.cappedBySafety && (
-                            <p className="text-[9px] font-mono text-amber-500/90 leading-relaxed">
+                            <p className="text-[9px] font-mono text-amber-400 leading-relaxed">
                               Seçtiğin hız yağ oranına göre güvenli sınırı (haftada %{r.safeLimitPct})
                               aştığı için otomatik kırpıldı. Daha hızlısını istiyorsan önce yağ oranını düşürmen gerekir.
                             </p>
                           )}
-                          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                             Hızı Ayarlar &gt; Beslenme Hedefleri&apos;nden değiştirebilirsin.
                           </p>
                         </div>
@@ -961,8 +961,8 @@ const AnalyticsView = memo(({
               {nutritionAnalysis.split && (
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
                   <div className="flex justify-between items-baseline">
-                    <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Makro Dağılımı</h4>
-                    <span className="text-[9px] font-mono text-zinc-600">kaloriye katkı</span>
+                    <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Makro Dağılımı</h4>
+                    <span className="text-[9px] font-mono text-zinc-400">kaloriye katkı</span>
                   </div>
                   {/* Tek çubukta üç renk: oranlar bir bakışta karşılaştırılabilir. */}
                   <div className="flex w-full h-2.5 rounded-full overflow-hidden border border-zinc-800 bg-zinc-950">
@@ -978,7 +978,7 @@ const AnalyticsView = memo(({
                     ].map(m => (
                       <div key={m.label}>
                         <span className={`text-sm font-mono font-bold ${m.color}`}>%{m.value}</span>
-                        <span className="text-[9px] font-mono text-zinc-500 block uppercase">{m.label}</span>
+                        <span className="text-[9px] font-mono text-zinc-400 block uppercase">{m.label}</span>
                       </div>
                     ))}
                   </div>
@@ -989,8 +989,8 @@ const AnalyticsView = memo(({
               {nutritionAnalysis.adherence && (
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5">
                   <div className="flex justify-between items-baseline mb-2">
-                    <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Son 30 Gün Tutarlılık</h4>
-                    <span className="text-[9px] font-mono text-zinc-600">hedefin ±%10&apos;u</span>
+                    <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Son 30 Gün Tutarlılık</h4>
+                    <span className="text-[9px] font-mono text-zinc-400">hedefin ±%10&apos;u</span>
                   </div>
                   <div className="grid grid-cols-3 gap-2 text-center">
                     {[
@@ -1000,11 +1000,11 @@ const AnalyticsView = memo(({
                     ].map(m => (
                       <div key={m.label} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2">
                         <span className={`text-sm font-mono font-bold ${m.color}`}>{m.value}</span>
-                        <span className="text-[9px] font-mono text-zinc-500 block uppercase">{m.label}</span>
+                        <span className="text-[9px] font-mono text-zinc-400 block uppercase">{m.label}</span>
                       </div>
                     ))}
                   </div>
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-2">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-2">
                     {nutritionAnalysis.adherence.logged} kayıtlı günün{' '}
                     <strong className="text-emerald-400">%{nutritionAnalysis.adherence.onTargetPct}</strong>&apos;i
                     hedef aralığında.
@@ -1014,7 +1014,7 @@ const AnalyticsView = memo(({
 
               {/* Grafik */}
               <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800">
-                <label className="text-[10px] font-mono text-zinc-500 uppercase block mb-1.5">Grafik</label>
+                <label className="text-[10px] font-mono text-zinc-400 uppercase block mb-1.5">Grafik</label>
                 <div className="grid grid-cols-4 gap-1.5">
                   {NUTRITION_METRICS.map(m => (
                     <button
@@ -1023,7 +1023,7 @@ const AnalyticsView = memo(({
                       className={`py-2 rounded-lg text-[9px] font-bold uppercase border transition-colors ${
                         nutritionMetric === m.key
                           ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20'
-                          : 'border-zinc-800 text-zinc-500'
+                          : 'border-zinc-800 text-zinc-400'
                       }`}
                     >
                       {m.key === 'carbs' ? 'Karb.' : m.label}
@@ -1034,7 +1034,7 @@ const AnalyticsView = memo(({
 
               <button
                 onClick={() => setShowAverage(v => !v)}
-                className={`w-full py-2.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider transition-colors ${showAverage ? 'bg-cyan-900/25 border-cyan-600 text-cyan-400' : 'bg-zinc-900 border-zinc-800 text-zinc-500'}`}
+                className={`w-full py-2.5 rounded-xl border text-[11px] font-bold uppercase tracking-wider transition-colors ${showAverage ? 'bg-cyan-900/25 border-cyan-600 text-cyan-400' : 'bg-zinc-900 border-zinc-800 text-zinc-400'}`}
               >
                 {showAverage ? '7 Günlük Ortalama (açık)' : 'Ham Günlük Veri'}
               </button>
@@ -1049,13 +1049,13 @@ const AnalyticsView = memo(({
               <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
                 <div className="px-3 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">
                   <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest">Günlük Tablo</h4>
-                  <span className="text-[9px] font-mono text-zinc-600">son {nutritionAnalysis.table.length} kayıt</span>
+                  <span className="text-[9px] font-mono text-zinc-400">son {nutritionAnalysis.table.length} kayıt</span>
                 </div>
                 {/* Tablo dar ekranda taşmasın diye kendi içinde yatay kayar. */}
                 <div className="overflow-x-auto hide-scrollbar">
                   <table className="w-full text-[10px] font-mono">
                     <thead>
-                      <tr className="text-zinc-500 uppercase">
+                      <tr className="text-zinc-400 uppercase">
                         <th className="text-left font-bold px-3 py-2">Tarih</th>
                         <th className="text-right font-bold px-2 py-2">Kcal</th>
                         <th className="text-right font-bold px-2 py-2">P</th>
@@ -1073,7 +1073,7 @@ const AnalyticsView = memo(({
                               : 'text-emerald-400';
                         return (
                           <tr key={d.date} className="border-t border-zinc-800/70">
-                            <td className="text-left px-3 py-2 text-zinc-400 whitespace-nowrap">
+                            <td className="text-left px-3 py-2 text-zinc-300 whitespace-nowrap">
                               {formatDay(d.date)}
                             </td>
                             <td className={`text-right px-2 py-2 font-bold ${kcalColor}`}>{Math.round(d.calories)}</td>
@@ -1087,7 +1087,7 @@ const AnalyticsView = memo(({
                   </table>
                 </div>
                 {nutritionAnalysis.targetCalories > 0 && (
-                  <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-3 py-2 border-t border-zinc-800">
+                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-3 py-2 border-t border-zinc-800">
                     Kalori rengi hedefe göre: mavi altında, yeşil hedefte, turuncu üstünde.
                     Hedef {nutritionAnalysis.targetCalories} kcal
                     {nutritionAnalysis.recommended?.label

@@ -73,7 +73,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
             </p>
           )}
           {data.planCalories > 0 && (
-            <p className="text-[9px] font-mono text-zinc-600 flex items-center">
+            <p className="text-[9px] font-mono text-zinc-400 flex items-center">
               <Flame size={10} className="mr-1.5 text-orange-400" /> Planlanan ek harcama ~{data.planCalories} kcal
             </p>
           )}
@@ -86,11 +86,11 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
             aria-expanded={showDetails}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950/55 px-3 py-2 text-left flex items-center justify-between gap-3 active:bg-zinc-900"
           >
-            <span className="text-[9px] font-mono text-zinc-400">
+            <span className="text-[9px] font-mono text-zinc-300">
               Koç ayrıntıları
-              {actions.length > 0 && <span className="text-zinc-600"> · {actions.length} öneri</span>}
+              {actions.length > 0 && <span className="text-cyan-400 font-bold"> · {actions.length} öneri</span>}
             </span>
-            <ChevronDown size={12} className={`text-zinc-500 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+            <ChevronDown size={12} className={`text-zinc-400 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
           </button>
         )}
 
@@ -100,17 +100,17 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
               <strong className={`text-lg font-mono block leading-none ${briefing.capacity.zone.tone}`}>
                 {briefing.capacity.score === null ? '—' : briefing.capacity.score}
               </strong>
-              <span className="text-[7px] font-mono text-zinc-600">kapasite</span>
+              <span className="text-[7px] font-mono text-zinc-400">kapasite</span>
             </div>
             <div className="min-w-0 flex-1">
               <div className="flex justify-between gap-2">
                 <span className={`text-[9px] font-bold ${briefing.capacity.zone.tone}`}>{briefing.capacity.zone.label}</span>
-                <span className="text-[8px] font-mono text-zinc-600">güven %{briefing.capacity.confidence}</span>
+                <span className="text-[8px] font-mono text-zinc-400">güven %{briefing.capacity.confidence}</span>
               </div>
               <div className="h-1 rounded-full bg-zinc-900 overflow-hidden mt-1">
                 <div className={`h-full ${briefing.capacity.zone.bar}`} style={{ width: `${briefing.capacity.score ?? 0}%` }} />
               </div>
-              <p className="text-[8px] font-mono text-zinc-600 truncate mt-1">
+              <p className="text-[8px] font-mono text-zinc-400 truncate mt-1">
                 {briefing.capacity.concerns[0]?.detail || briefing.capacity.positives[0]?.detail || 'Yeni kayıtlarla karar güveni artar.'}
               </p>
             </div>
@@ -135,20 +135,20 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                     <span className={`text-[10px] font-bold leading-snug ${item.tone.text}`}>{item.title}</span>
                     <ChevronDown
                       size={11}
-                      className={`shrink-0 mt-0.5 text-zinc-500 transition-transform ${openKey === item.key ? 'rotate-180' : ''}`}
+                      className={`shrink-0 mt-0.5 text-zinc-400 transition-transform ${openKey === item.key ? 'rotate-180' : ''}`}
                     />
                   </button>
                   {item.action && onAction && (
                     <button
                       onClick={() => onAction(item.action)}
-                      className="text-[9px] font-bold text-zinc-400 active:text-zinc-100 shrink-0 flex items-center"
+                      className="text-[9px] font-bold text-zinc-300 active:text-zinc-100 shrink-0 flex items-center"
                     >
                       Aç <ChevronRight size={10} />
                     </button>
                   )}
                 </div>
                 {openKey === item.key && (
-                  <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">{item.detail}</p>
+                  <p className="text-[9px] font-mono text-zinc-300 leading-relaxed mt-1.5">{item.detail}</p>
                 )}
                 {/* Erteleme ve kapatma: aynı maddeyi her gün aynı yerde görmek
                     bir süre sonra kartın tamamını görünmez yapıyordu. */}
@@ -160,7 +160,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                     {onApply && (
                       <button
                         onClick={() => onApply(item)}
-                        className="text-[9px] font-mono text-emerald-500 active:text-emerald-300 flex items-center gap-1"
+                        className="text-[9px] font-mono text-emerald-400 active:text-emerald-300 flex items-center gap-1"
                       >
                         <CheckCheck size={9} /> Uyguladım
                       </button>
@@ -168,7 +168,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                     {onSnooze && (
                       <button
                         onClick={() => onSnooze(item.key)}
-                        className="text-[9px] font-mono text-zinc-500 active:text-zinc-200 flex items-center gap-1"
+                        className="text-[9px] font-mono text-zinc-400 active:text-zinc-200 flex items-center gap-1"
                       >
                         <Clock3 size={9} /> Ertele
                       </button>
@@ -176,7 +176,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                     {onDismiss && (
                       <button
                         onClick={() => { onReject?.(item); onDismiss(item.key); }}
-                        className="text-[9px] font-mono text-zinc-500 active:text-zinc-200 flex items-center gap-1"
+                        className="text-[9px] font-mono text-zinc-400 active:text-zinc-200 flex items-center gap-1"
                       >
                         <BellOff size={9} /> Bir daha gösterme
                       </button>
@@ -189,11 +189,11 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                 tavsiyenin kaybolduğunu sanardı. Çelişki yüzünden susulan
                 maddeler ayrı sayılıyor çünkü onları kullanıcı kapatmadı. */}
             {hiddenCount > 0 && (
-              <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                 {conflictCount > 0 && `${conflictCount} madde bu haftaki kararla çeliştiği için susturuldu. `}
                 {hiddenCount - conflictCount > 0 && `${hiddenCount - conflictCount} madde ertelendi ya da kapatıldı. `}
                 {onRestoreCoach && (
-                  <button onClick={() => onRestoreCoach()} className="text-cyan-500 active:text-cyan-300 underline">
+                  <button onClick={() => onRestoreCoach()} className="text-cyan-400 active:text-cyan-300 underline font-bold">
                     Hepsini geri aç
                   </button>
                 )}
@@ -202,7 +202,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
             {actions.length > 3 && (
               <button
                 onClick={() => setShowAll(v => !v)}
-                className="w-full text-[9px] font-mono text-zinc-500 active:text-zinc-300 py-1 flex items-center justify-center gap-1"
+                className="w-full text-[9px] font-mono text-zinc-400 active:text-zinc-200 py-1 flex items-center justify-center gap-1"
               >
                 {showAll ? 'Daha az göster' : `${actions.length - 3} madde daha`}
                 <ChevronDown size={10} className={`transition-transform ${showAll ? 'rotate-180' : ''}`} />

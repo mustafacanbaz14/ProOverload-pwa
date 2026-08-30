@@ -493,25 +493,25 @@ const NutritionView = memo(({
             <Footprints size={14} className="text-emerald-400 shrink-0" />
             <span>
               <strong className="text-[10px] text-zinc-300 block">Günlük hareket ve NEAT</strong>
-              <span className="text-[8px] font-mono text-zinc-600 block">Yalnızca gerekiyorsa bu güne özel değiştir</span>
+              <span className="text-[8px] font-mono text-zinc-400 block">Yalnızca gerekiyorsa bu güne özel değiştir</span>
             </span>
           </span>
           <span className="flex items-center gap-1.5 shrink-0">
             {dayHasNeatOverride && <span className="text-[7px] font-bold uppercase text-cyan-400">Özel</span>}
-            <ChevronDown size={13} className={`text-zinc-600 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+            <ChevronDown size={13} className={`text-zinc-400 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
           </span>
         </button>
 
         {advancedOpen && <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 space-y-2">
           <div className="flex items-center justify-between">
-            <span className="flex items-center gap-2 text-[10px] font-bold text-zinc-400">
+            <span className="flex items-center gap-2 text-[10px] font-bold text-zinc-300">
               <Footprints size={14} className="text-emerald-400" /> Hareket Modu & Çarpanı
             </span>
-            <span className={`text-[8px] font-bold uppercase rounded-md border px-1.5 py-0.5 ${dayHasNeatOverride ? 'text-cyan-400 border-cyan-900/60 bg-cyan-950/20' : 'text-zinc-600 border-zinc-800'}`}>
+            <span className={`text-[8px] font-bold uppercase rounded-md border px-1.5 py-0.5 ${dayHasNeatOverride ? 'text-cyan-400 border-cyan-900/60 bg-cyan-950/20' : 'text-zinc-400 border-zinc-800'}`}>
               {dayHasNeatOverride ? 'Bu güne özel' : 'Genel ayar'}
             </span>
           </div>
-          <p className="text-[8px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[8px] font-mono text-zinc-400 leading-relaxed">
             Yalnız {formatDay(currentNutritionForm.date)} tarihini değiştirir. Boş seçenekler Ayarlar’daki {settings.neatMode || 'auto'} modu ve ×{settings.neatMultiplier || 1} çarpanını kullanır.
           </p>
           <div className="flex items-center justify-between gap-2 pt-1 border-t border-zinc-900">

@@ -359,7 +359,7 @@ const MetricsView = memo(({
           return (
             <div className="bg-zinc-950 p-3 rounded-xl border border-zinc-800 space-y-1.5">
               <div className="flex justify-between items-center">
-                <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
                   BMI · {bmi.mode === 'athletic' ? 'Sporcu' : 'Klasik'}
                 </span>
                 <span className="flex items-baseline gap-1.5">
@@ -368,7 +368,7 @@ const MetricsView = memo(({
                 </span>
               </div>
               {bmi.note && (
-                <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">{bmi.note}</p>
+                <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">{bmi.note}</p>
               )}
             </div>
           );
@@ -394,7 +394,7 @@ const MetricsView = memo(({
                 <span className="text-[10px] font-bold text-purple-300 uppercase tracking-wider">Omuz / Bel Oranı</span>
                 <strong className="text-lg font-mono text-purple-300">{ratio ? ratio.toFixed(2) : '—'}</strong>
               </div>
-              <p className="text-[9px] font-mono text-zinc-500 leading-relaxed mt-1">
+              <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1">
                 Omuz çevresi ÷ bel çevresi. Sayı yükseldikçe V görünümü belirginleşir; sağlık tanısı değildir ve ölçüm tekniğinden etkilenir.
                 {target > 0 && ` Hedef ölçülerinin oranı ${target.toFixed(2)}.`}
               </p>
@@ -434,11 +434,11 @@ const MetricsView = memo(({
         {isMeasurementGuideOpen && guideType === 'tape' && <MeasurementGuide type="tape" />}
 
         <div className="bg-cyan-950/15 border border-cyan-900/30 rounded-xl p-2.5 flex justify-between gap-3">
-          <p className="text-[8px] font-mono text-zinc-500 leading-relaxed">Hedef kutusunu elle yaz veya mevcut ölçümden ±1 cm hızlı hedef oluştur. Bel gibi küçülmesini istediğin yerde −1, kas çevresinde +1 kullan.</p>
+          <p className="text-[8px] font-mono text-zinc-400 leading-relaxed">Hedef kutusunu elle yaz veya mevcut ölçümden ±1 cm hızlı hedef oluştur. Bel gibi küçülmesini istediğin yerde −1, kas çevresinde +1 kullan.</p>
           <span className="text-[9px] font-bold text-cyan-400 shrink-0">{tapeGoalCount} hedef</span>
         </div>
 
-        <div className="grid grid-cols-[1fr_62px_62px] gap-2 px-1 text-[8px] font-mono text-zinc-600 uppercase">
+        <div className="grid grid-cols-[1fr_62px_62px] gap-2 px-1 text-[8px] font-mono text-zinc-400 uppercase">
           <span>Bölge</span><span className="text-center">Şu an</span><span className="text-center">Hedef</span>
         </div>
         <div className="space-y-2">

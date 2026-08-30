@@ -35,7 +35,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
         <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
           <HeartPulse size={12} className="mr-1.5 text-red-400" /> Kardiyo Koçu
         </h4>
-        <span className="text-[9px] font-mono text-zinc-600 shrink-0">bu hafta</span>
+        <span className="text-[9px] font-mono text-zinc-400 shrink-0">bu hafta</span>
       </div>
 
       {/* Hedef seçimi */}
@@ -50,7 +50,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
                   onClick={() => onChangeGoal({ preset: p.key, lowMinutes: '', highSessions: '' })}
                   title={p.detail}
                   aria-pressed={secili}
-                  className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${secili ? 'border-red-600 bg-red-950/25 text-red-300' : 'border-zinc-800 bg-zinc-950 text-zinc-500'}`}
+                  className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${secili ? 'border-red-600 bg-red-950/25 text-red-300' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
                 >
                   {p.label}
                 </button>
@@ -58,14 +58,14 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
             })}
           </div>
           {report.active && (
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1.5">{report.goal.detail}</p>
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">{report.goal.detail}</p>
           )}
         </div>
       )}
 
       {!report.active ? (
         <div className="p-3.5">
-          <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
+          <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">
             Kardiyo hedefi konmadı. Kayıtların kalori hesabına girmeye devam
             ediyor ama koç kardiyo tarafında bir şey söylemiyor. Yukarıdan bir
             amaç seçersen haftalık düşük şiddet dakikası ve yüksek şiddet seans
@@ -96,7 +96,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
                       <strong className={asim ? 'text-amber-400' : oran >= 1 ? 'text-emerald-400' : 'text-zinc-100'}>
                         {satir.value}
                       </strong>
-                      <span className="text-zinc-600">/{satir.target} {satir.unit}</span>
+                      <span className="text-zinc-400">/{satir.target} {satir.unit}</span>
                     </span>
                   </div>
                   <div className="h-1.5 bg-zinc-950 rounded-full border border-zinc-800 mt-1 overflow-hidden">
@@ -115,7 +115,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
             <div className="px-4 py-3 border-b border-zinc-800/70">
               <div className="flex justify-between items-baseline mb-1.5">
                 <span className="text-[10px] font-bold text-zinc-300">Şiddet dağılımı</span>
-                <span className="text-[9px] font-mono text-zinc-600">{toplam} dk toplam</span>
+                <span className="text-[9px] font-mono text-zinc-400">{toplam} dk toplam</span>
               </div>
               <div className="flex h-2 rounded-full overflow-hidden border border-zinc-800">
                 {INTENSITY_ORDER.map(sinif => {
@@ -191,9 +191,9 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
       <div className="px-4 py-2.5 bg-zinc-950/60">
         {maxHr ? (
           <>
-            <p className="text-[9px] font-mono text-zinc-500 mb-1.5">
-              Maksimum nabız <strong className="text-zinc-300">{maxHr}</strong> ({maxBilgi.source === 'manual' ? 'elle girildi' : 'Tanaka tahmini'})
-              {' · '}<strong className="text-zinc-300">{gecerliYontem.short}</strong> yöntemi
+            <p className="text-[9px] font-mono text-zinc-400 mb-1.5">
+              Maksimum nabız <strong className="text-zinc-200">{maxHr}</strong> ({maxBilgi.source === 'manual' ? 'elle girildi' : 'Tanaka tahmini'})
+              {' · '}<strong className="text-zinc-200">{gecerliYontem.short}</strong> yöntemi
             </p>
             <div className="grid grid-cols-5 gap-1">
               {HR_ZONES.map(z => {
@@ -201,18 +201,18 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
                 return (
                   <div key={z.key} title={z.purpose} className="bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 text-center">
                     <span className={`text-[9px] font-bold block ${z.color}`}>{z.label.replace('Zone ', 'Z')}</span>
-                    <span className="text-[8px] font-mono text-zinc-600 block">{r ? `${r.min}-${r.max}` : '—'}</span>
+                    <span className="text-[8px] font-mono text-zinc-400 block">{r ? `${r.min}-${r.max}` : '—'}</span>
                   </div>
                 );
               })}
             </div>
-            <p className="text-[9px] font-mono text-zinc-600 leading-relaxed mt-1.5">
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">
               Sınırlar bir TAHMİN; kişiler arası sapma ±10-12 atım. Nabız
               girmediğin kayıtlarda bölge, aktivite ve tempodan tahmin ediliyor.
             </p>
           </>
         ) : (
-          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
             Nabız bölgelerini görmek için Vücut ekranında yaşını gir. Bölge
             sınıflandırması yaş olmadan da çalışıyor — aktivite ve tempodan
             tahmin ediliyor.

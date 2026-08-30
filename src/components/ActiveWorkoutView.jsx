@@ -324,10 +324,10 @@ const ActiveWorkoutView = memo(({
         {sessionVolume?.hasData && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 space-y-1.5">
             <div className="flex justify-between items-baseline">
-              <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">
+              <span className="text-[9px] font-mono text-zinc-400 uppercase tracking-widest">
                 Bu Hafta Kalan
               </span>
-              <span className="text-[9px] font-mono text-zinc-600">planlananlar dahil</span>
+              <span className="text-[9px] font-mono text-zinc-400">planlananlar dahil</span>
             </div>
             <div className="flex flex-wrap gap-1">
               {sessionVolume.rows.slice(0, 8).map(r => (
@@ -340,7 +340,7 @@ const ActiveWorkoutView = memo(({
                         : 'border-emerald-900/60 bg-emerald-950/20 text-emerald-300'}`}
                 >
                   {r.muscle} {r.projected}/{r.mev}
-                  {r.planned > 0 && <span className="text-zinc-500"> (+{r.planned})</span>}
+                  {r.planned > 0 && <span className="text-zinc-400"> (+{r.planned})</span>}
                 </span>
               ))}
             </div>
@@ -378,25 +378,25 @@ const ActiveWorkoutView = memo(({
               <span className="text-[10px] font-bold text-zinc-200">
                 Isınma rutini · ~{warmupRoutine.minutes} dk
               </span>
-              <span className="text-[9px] font-mono text-zinc-600 ml-auto">
+              <span className="text-[9px] font-mono text-zinc-400 ml-auto">
                 {warmupRoutine.muscles.slice(0, 3).join(', ')}
               </span>
             </summary>
             <div className="px-3 pb-3 space-y-2.5 border-t border-zinc-800 pt-2.5">
               {warmupRoutine.blocks.map(b => (
                 <div key={b.key}>
-                  <span className="text-[9px] font-bold text-zinc-400 uppercase tracking-widest block mb-1">
+                  <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-widest block mb-1">
                     {b.label} · {b.minutes} dk
                   </span>
                   <ul className="space-y-0.5">
                     {b.items.map(item => (
-                      <li key={item} className="text-[9px] font-mono text-zinc-500 leading-relaxed">• {item}</li>
+                      <li key={item} className="text-[9px] font-mono text-zinc-400 leading-relaxed">• {item}</li>
                     ))}
                   </ul>
-                  {b.note && <p className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-1">{b.note}</p>}
+                  {b.note && <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-1">{b.note}</p>}
                 </div>
               ))}
-              <p className="text-[8px] font-mono text-zinc-600 leading-relaxed">{warmupRoutine.note}</p>
+              <p className="text-[8px] font-mono text-zinc-400 leading-relaxed">{warmupRoutine.note}</p>
             </div>
           </details>
         )}
@@ -615,15 +615,15 @@ const ActiveWorkoutView = memo(({
                       placeholder="Bu harekete not… (sehpa deliği, sıkışma, ayar)"
                       maxLength={240}
                       aria-label={`${ex.name} için seans notu`}
-                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-[9px] font-mono text-zinc-300 outline-none focus:border-cyan-600 placeholder:text-zinc-700"
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2 py-1 text-[9px] font-mono text-zinc-300 outline-none focus:border-cyan-600 placeholder:text-zinc-500"
                     />
                   )}
 
                   {/* Geçmiş notlar: kalıcı kurulum notundan farklı, o seansa
                       ait gözlemler. Dört ay öncesinden eskisi gösterilmiyor. */}
                   {pastNotesFor?.(ex.name)?.map(n => (
-                    <p key={n.date} className="text-[9px] font-mono text-zinc-500 leading-relaxed">
-                      <span className="text-zinc-600">{n.label}:</span> {n.note}
+                    <p key={n.date} className="text-[9px] font-mono text-zinc-400 leading-relaxed">
+                      <span className="text-zinc-300 font-bold">{n.label}:</span> {n.note}
                     </p>
                   ))}
                 </div>

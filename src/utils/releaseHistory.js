@@ -207,12 +207,21 @@ const RELEASE_10_0 = release('10.0', '2026-08-30', 'ProOverload 10.0 — Üst D�
   item('492/492 Test ve Tam Güvenilirlik', 'Tüm biyomekanik kurallar, enerji formülleri, veri kurtarma ve performans sınırları eksiksiz doğrulandı.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Haftalık Planlama & Program Sihirbazı Zarafeti', [
+const RELEASE_10_1 = release('10.1', '2026-08-30', 'Haftalık Planlama & Program Sihirbazı Zarafeti', [
   item('Haftalık Plan & Gün Atama', 'Haftalık program özeti, antrenman ve kardiyo slot ekleme butonları lüks cam paneller ve sezgisel dokunma efektleriyle yenilendi.'),
   item('Yönlendirmeli Program Sihirbazı', 'Sihirbazın adım navigasyonu ve "Önce Düzenle / Direkt Kur" aksiyon butonları zengin mor–indigo gradyanlar ve derin gölgelerle zenginleştirildi.'),
   item('Haftalık Çakışma & Uyum Analizi', 'Seans çakışma asistanı ve kas hacmi dağılımı görsel uyarı rozetleriyle netleştirildi.'),
   item('Gelişmiş Dokunma Geri Bildirimi', 'Tüm modal butonlarında fiziksel basma hissi veren mikro-ölçeklendirmeler (active:scale-[0.98]) standartlaştırıldı.'),
   item('Tam Doğrulama ve Sıfır Regresyon', '492 birim testi, 16 kas grubu ve 56 hareket kuralı, mağaza ve performans kapıları başarıyla geçti.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Üstün Metin Okunabilirliği ve Tipografi Netliği', [
+  item('Yüksek Kontrastlı Metin Hiyerarşisi', 'Koyu arayüz zeminlerinde okunması güç olan soluk ve karanlık metin renkleri yüksek kontrastlı, kristal netliğinde tipografiyle yenilendi.'),
+  item('Koç ve Kapasite Sinyalleri', 'Koç brifingi, kapasite puanı, dayanaklar, kısıtlamalar ve öneri ayrıntıları her türlü ekran parlaklığında kusursuz okunabilir kılındı.'),
+  item('Geçmiş ve Zaman Çizelgesi Netliği', 'Arşiv zaman çizelgesi, hafta ve ay gruplamaları, aktivite ve enerji dökümleri belirgin etiketlerle güçlendirildi.'),
+  item('Analiz ve İlerleme Görselleri', 'Kas hacim eşikleri, çalışma sıklığı, 1RM seans sayıları ve beslenme analizi tabloları geliştirilmiş kontrast ile yeniden tasarlandı.'),
+  item('Seans İçi İpuçları ve Notlar', 'Aktif antrenman ekranındaki seans hacmi, ısınma rehberi ve hareket notu giriş alanları net ve erişilebilir hale getirildi.'),
+  item('492/492 Test ve Bütünlük', 'Tüm birim testleri, 16 kas grubu kuralı ve performans bütçeleri sıfır hata ile doğrulandı.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -289,6 +298,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_1,
   RELEASE_10_0,
   RELEASE_9_9,
   RELEASE_9_8,

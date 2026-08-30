@@ -99,7 +99,7 @@ const TrainingView = memo(({
             <button onClick={() => onPreview?.(recommendation.template)} className="rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 active:bg-zinc-800">Planı İncele</button>
             <button onClick={() => onStart?.(recommendation.template)} className="rounded-xl bg-emerald-600 py-2.5 text-[9px] font-black uppercase text-white active:bg-emerald-700 flex items-center justify-center gap-1.5"><Play size={12} /> Başlat</button>
           </div>
-          <p className="text-[8px] font-mono text-zinc-600">Puan; haftalık hacim açığı, tavan riski ve son 48 saat yüklenmesini birlikte tartar.</p>
+          <p className="text-[8px] font-mono text-zinc-400">Puan; haftalık hacim açığı, tavan riski ve son 48 saat yüklenmesini birlikte tartar.</p>
         </section>
       )}
 
@@ -123,7 +123,7 @@ const TrainingView = memo(({
           <span className="flex-1 min-w-0">
             <span className="text-[9px] font-bold uppercase tracking-wider text-emerald-400 block">Son Seansı Tekrarla</span>
             <strong className="text-[11px] text-zinc-200 block truncate">{recentWorkout.name || 'Serbest Antrenman'}</strong>
-            <span className="text-[9px] font-mono text-zinc-500">
+            <span className="text-[9px] font-mono text-zinc-400">
               {formatDay(recentWorkout.date, 'short', { year: true })} · {(recentWorkout.exercises || []).length} hareket
             </span>
           </span>
@@ -138,7 +138,7 @@ const TrainingView = memo(({
               <strong className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-cyan-300">
                 <TrendingUp size={12} /> Etkin İlerleme Blokları
               </strong>
-              <span className="mt-0.5 block text-[8px] font-mono text-zinc-600">{progressionBlocks.length} hareket · hedef ve uyum tek yerde</span>
+              <span className="mt-0.5 block text-[8px] font-mono text-zinc-400">{progressionBlocks.length} hareket · hedef ve uyum tek yerde</span>
             </span>
             <span className="rounded-lg border border-cyan-900/50 bg-cyan-950/30 px-2 py-1 text-[9px] font-mono text-cyan-300">
               {progressionBlocks.filter(block => !block.complete).length} sürüyor
@@ -159,25 +159,25 @@ const TrainingView = memo(({
                   </span>
                   <span className="min-w-0 flex-1">
                     <strong className="block truncate text-[10px] text-zinc-200">{block.plan.exerciseName}</strong>
-                    <span className="mt-0.5 block truncate text-[8px] font-mono text-zinc-500">
+                    <span className="mt-0.5 block truncate text-[8px] font-mono text-zinc-400">
                       {block.complete
                         ? 'blok tamamlandı'
                         : `${block.completedSessions + 1}/${block.totalSessions}. seans · ${first?.weight > 0 ? `${first.weight} kg × ` : ''}${first?.reps || '—'} tekrar`}
                     </span>
                   </span>
                   <span className="shrink-0 text-right">
-                    <strong className={`block text-[10px] font-mono ${block.adherence === null ? 'text-zinc-600' : block.adherence >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    <strong className={`block text-[10px] font-mono ${block.adherence === null ? 'text-zinc-400' : block.adherence >= 80 ? 'text-emerald-400' : 'text-amber-400'}`}>
                       {block.adherence === null ? '—' : `%${block.adherence}`}
                     </strong>
-                    <span className="text-[7px] font-bold uppercase text-zinc-700">uyum</span>
+                    <span className="text-[7px] font-bold uppercase text-zinc-400">uyum</span>
                   </span>
-                  <ChevronRight size={13} className="shrink-0 text-zinc-700" />
+                  <ChevronRight size={13} className="shrink-0 text-zinc-400" />
                 </button>
               );
             })}
           </div>
           {progressionBlocks.length > 6 && (
-            <p className="border-t border-cyan-900/25 px-3.5 py-2 text-center text-[8px] font-mono text-zinc-600">
+            <p className="border-t border-cyan-900/25 px-3.5 py-2 text-center text-[8px] font-mono text-zinc-400">
               İlk 6 blok gösteriliyor; diğerleri hareket profillerinde duruyor.
             </p>
           )}
@@ -271,7 +271,7 @@ const TrainingView = memo(({
                   <button key={item.label} onClick={item.action} className="bg-zinc-900 border border-zinc-800 active:bg-zinc-800 rounded-xl p-3 text-left">
                     <Icon size={15} className="text-cyan-400 mb-1.5" />
                     <strong className="text-[10px] text-zinc-200 block">{item.label}</strong>
-                    <span className="text-[8px] font-mono text-zinc-600">{item.hint}</span>
+                    <span className="text-[8px] font-mono text-zinc-400">{item.hint}</span>
                   </button>
                 );
               })}
@@ -284,7 +284,7 @@ const TrainingView = memo(({
         <div className="px-4 py-3.5 border-b border-zinc-800 bg-zinc-950/70 flex justify-between items-center gap-2">
           <div>
             <h3 className="text-[11px] font-bold text-zinc-100 uppercase tracking-wider">Şablon Kütüphanesi</h3>
-            <span className="text-[8px] font-mono text-zinc-500">{templates.length} şablon · {favoriteCount} favori</span>
+            <span className="text-[8px] font-mono text-zinc-400">{templates.length} şablon · {favoriteCount} favori</span>
           </div>
           <button
             onClick={onWizard}
@@ -297,7 +297,7 @@ const TrainingView = memo(({
         {templates.length > 0 && (
           <div className="p-3 border-b border-zinc-800 space-y-2 bg-zinc-950/30">
             <div className="relative">
-              <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+              <Search size={13} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-400" />
               <input
                 value={query}
                 onChange={event => { setQuery(event.target.value); setTemplateLimit(TEMPLATE_BATCH); }}
@@ -310,14 +310,14 @@ const TrainingView = memo(({
               <button
                 type="button"
                 onClick={() => { setFavoritesOnly(false); setTemplateLimit(TEMPLATE_BATCH); }}
-                className={`rounded-lg py-1.5 text-[9px] font-bold transition-all ${!favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-500'}`}
+                className={`rounded-lg py-1.5 text-[9px] font-bold transition-all ${!favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-400'}`}
               >
                 Tümü ({templates.length})
               </button>
               <button
                 type="button"
                 onClick={() => { setFavoritesOnly(true); setTemplateLimit(TEMPLATE_BATCH); }}
-                className={`rounded-lg py-1.5 text-[9px] font-bold transition-all ${favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-500'}`}
+                className={`rounded-lg py-1.5 text-[9px] font-bold transition-all ${favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-400'}`}
               >
                 Favoriler ({favoriteCount})
               </button>
@@ -326,12 +326,12 @@ const TrainingView = memo(({
         )}
 
         {templates.length === 0 ? (
-          <button onClick={onWizard} className="w-full p-8 text-center text-[10px] font-mono text-zinc-500">
+          <button onClick={onWizard} className="w-full p-8 text-center text-[10px] font-mono text-zinc-400">
             Henüz şablon yok · ilk şablonu oluştur
           </button>
         ) : visibleTemplates.length === 0 ? (
           <div className="p-6 text-center space-y-2">
-            <p className="text-[10px] font-mono text-zinc-500">Bu filtreye uyan şablon yok.</p>
+            <p className="text-[10px] font-mono text-zinc-400">Bu filtreye uyan şablon yok.</p>
             <button onClick={() => { setQuery(''); setFavoritesOnly(false); setTemplateLimit(TEMPLATE_BATCH); }} className="text-[9px] font-bold text-cyan-400">Filtreyi Temizle</button>
           </div>
         ) : (
@@ -348,17 +348,17 @@ const TrainingView = memo(({
                       onClick={() => onToggleFavorite?.(template)}
                       aria-label={`${template.name} ${template.favorite ? 'favorilerden çıkar' : 'favorilere ekle'}`}
                       title={template.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                      className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 active:scale-[0.92] transition-all ${template.favorite ? 'border-amber-700/60 bg-amber-950/30 text-amber-400 shadow-sm' : 'border-zinc-800 text-zinc-600'}`}
+                      className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 active:scale-[0.92] transition-all ${template.favorite ? 'border-amber-700/60 bg-amber-950/30 text-amber-400 shadow-sm' : 'border-zinc-800 text-zinc-500'}`}
                     >
                       <Star size={14} fill={template.favorite ? 'currentColor' : 'none'} />
                     </button>
                     <button type="button" onClick={() => onPreview?.(template)} className="flex-1 min-w-0 text-left">
                       <strong className="text-[11px] font-bold text-zinc-100 block truncate">{template.name}</strong>
-                      <span className="text-[9px] font-mono text-zinc-500 block truncate mt-0.5">
+                      <span className="text-[9px] font-mono text-zinc-400 block truncate mt-0.5">
                         {(template.exercises || []).length} hareket · ~{minutes} dk{weightKg > 0 ? ` · ~${kcal} kcal` : ''}
                       </span>
                       {template.useCount > 0 && (
-                        <span className="text-[8px] font-mono text-zinc-600 block mt-0.5">
+                        <span className="text-[8px] font-mono text-zinc-400 block mt-0.5">
                           {template.useCount} kez tamamlandı{template.lastUsedAt ? ` · son ${formatDay(template.lastUsedAt, 'short')}` : ''}
                         </span>
                       )}
@@ -376,21 +376,21 @@ const TrainingView = memo(({
                   {interfaceMode === 'detailed' ? (
                     <div className="grid grid-cols-4 gap-1.5 pl-10">
                       <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-1.5 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:scale-[0.96] transition-all"><Wand2 size={10} /> Sihirbaz</button>
-                      <button onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all"><Pencil size={10} /> Düzenle</button>
-                      <button onClick={() => onDuplicate?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all"><Copy size={10} /> Kopyala</button>
-                      <button onClick={() => onDelete?.(template)} className="rounded-lg border border-red-950/70 py-1.5 text-[8px] font-bold text-red-500/80 flex items-center justify-center gap-1 active:bg-red-950/30 active:scale-[0.96] transition-all"><Trash2 size={10} /> Sil</button>
+                      <button onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all"><Pencil size={10} /> Düzenle</button>
+                      <button onClick={() => onDuplicate?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all"><Copy size={10} /> Kopyala</button>
+                      <button onClick={() => onDelete?.(template)} className="rounded-lg border border-red-950/70 py-1.5 text-[8px] font-bold text-red-400 flex items-center justify-center gap-1 active:bg-red-950/30 active:scale-[0.96] transition-all"><Trash2 size={10} /> Sil</button>
                     </div>
                   ) : (
                     <div className="pl-10 space-y-1.5">
                       <div className="grid grid-cols-2 gap-1.5">
                         <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-2 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:scale-[0.96] transition-all"><Wand2 size={10} /> Sihirbazla Düzenle</button>
-                        <button onClick={() => setOpenTemplateMenu(menuOpen ? null : template.id)} aria-expanded={menuOpen} className="rounded-lg border border-zinc-800 py-2 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all">Diğer <ChevronDown size={10} className={menuOpen ? 'rotate-180' : ''} /></button>
+                        <button onClick={() => setOpenTemplateMenu(menuOpen ? null : template.id)} aria-expanded={menuOpen} className="rounded-lg border border-zinc-800 py-2 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all">Diğer <ChevronDown size={10} className={menuOpen ? 'rotate-180' : ''} /></button>
                       </div>
                       {menuOpen && (
                         <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950/55 p-1.5">
-                          <button onClick={() => { setOpenTemplateMenu(null); onEdit?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Pencil size={10} /> Elle Düzenle</button>
-                          <button onClick={() => { setOpenTemplateMenu(null); onDuplicate?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Copy size={10} /> Kopyala</button>
-                          <button onClick={() => { setOpenTemplateMenu(null); onDelete?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-red-500/80 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
+                          <button onClick={() => { setOpenTemplateMenu(null); onEdit?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400"><Pencil size={10} /> Elle Düzenle</button>
+                          <button onClick={() => { setOpenTemplateMenu(null); onDuplicate?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400"><Copy size={10} /> Kopyala</button>
+                          <button onClick={() => { setOpenTemplateMenu(null); onDelete?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-red-400 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
                         </div>
                       )}
                     </div>

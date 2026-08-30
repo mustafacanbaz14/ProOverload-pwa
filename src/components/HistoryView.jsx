@@ -50,10 +50,10 @@ const WeekGroups = ({ items, getDate, children, expandAll = false }) => {
                 <FolderArchive size={14} className="text-cyan-500 shrink-0" />
                 <span>
                   <strong className="text-[11px] text-zinc-200 uppercase tracking-wider block">{month.label}</strong>
-                  <span className="text-[8px] font-mono text-zinc-600">{month.weeks.length} hafta · {month.itemCount} kayıt</span>
+                  <span className="text-[8px] font-mono text-zinc-400">{month.weeks.length} hafta · {month.itemCount} kayıt</span>
                 </span>
               </span>
-              <ChevronDown size={15} className={`text-zinc-600 transition-transform ${monthOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={15} className={`text-zinc-400 transition-transform ${monthOpen ? 'rotate-180' : ''}`} />
             </button>
 
             {monthOpen && (
@@ -67,13 +67,13 @@ const WeekGroups = ({ items, getDate, children, expandAll = false }) => {
                         aria-expanded={weekOpen}
                         className="w-full px-3 py-2.5 flex items-center gap-2 text-left active:bg-zinc-900"
                       >
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest shrink-0">{group.label}</span>
+                        <span className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest shrink-0">{group.label}</span>
                         {group.partial && (
                           <span title={`Tam hafta: ${group.fullLabel}`} className="text-[8px] font-mono text-amber-400 border border-amber-900/50 bg-amber-950/20 rounded px-1 py-0.5 shrink-0">kısmi</span>
                         )}
                         <span className="h-px flex-1 bg-zinc-800" />
-                        <span className="text-[9px] font-mono text-zinc-600 shrink-0">{group.items.length}</span>
-                        <ChevronDown size={13} className={`text-zinc-700 transition-transform ${weekOpen ? 'rotate-180' : ''}`} />
+                        <span className="text-[9px] font-mono text-zinc-400 shrink-0">{group.items.length}</span>
+                        <ChevronDown size={13} className={`text-zinc-400 transition-transform ${weekOpen ? 'rotate-180' : ''}`} />
                       </button>
                       {weekOpen && <div className="p-2.5 space-y-2.5 border-t border-zinc-800">{group.items.map(children)}</div>}
                     </div>
@@ -249,14 +249,14 @@ const HistoryView = memo(({
             <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">Aynı güne ait antrenman, aktivite, ölçüm, beslenme ve enerji kaydı tek kartta. Ay ve hafta başlıklarına dokunarak arşivi aç.</p>
           </div>
           {filteredArchiveDays.length === 0 ? (
-            <div className="text-center py-12 text-zinc-600 text-xs font-mono">Eşleşen günlük kayıt yok</div>
+            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Eşleşen günlük kayıt yok</div>
           ) : (
             <WeekGroups key="all" items={filteredArchiveDays} expandAll={Boolean(q)}>{day => (
               <article key={day.date} className="defer-card-render bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
                 <header className="px-3.5 py-3 bg-zinc-950/60 border-b border-zinc-800 flex items-center justify-between gap-2">
                   <div>
                     <strong className="text-[11px] text-zinc-200 block">{formatDay(day.date, 'long')}</strong>
-                    <span className="text-[8px] font-mono text-zinc-600">
+                    <span className="text-[8px] font-mono text-zinc-400">
                       {day.workouts.length} antrenman · {day.cardio.length} aktivite · {day.metrics.length} ölçüm · {day.nutrition.length} besin
                     </span>
                   </div>
@@ -270,8 +270,8 @@ const HistoryView = memo(({
                   {day.workouts.map(workout => (
                     <div key={`w-${workout.id}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
                       <Dumbbell size={13} className="text-cyan-400 shrink-0" />
-                      <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block truncate">{workout.name || 'Serbest Antrenman'}</strong><span className="text-[8px] font-mono text-zinc-600">{(workout.exercises || []).length} hareket · {calcEffectiveSets(workout.exercises)} etkili set</span></div>
-                      <button onClick={() => handleEditOldWorkout?.(workout)} aria-label="Antrenmanı düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                      <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block truncate">{workout.name || 'Serbest Antrenman'}</strong><span className="text-[8px] font-mono text-zinc-400">{(workout.exercises || []).length} hareket · {calcEffectiveSets(workout.exercises)} etkili set</span></div>
+                      <button onClick={() => handleEditOldWorkout?.(workout)} aria-label="Antrenmanı düzenle" className="p-2 text-zinc-400 active:text-cyan-400"><Pencil size={12} /></button>
                     </div>
                   ))}
                   {day.cardio.map(record => {
@@ -279,16 +279,16 @@ const HistoryView = memo(({
                     return (
                       <div key={`c-${record.workoutId}-${record.cardio.id}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
                         <HeartPulse size={13} className="text-red-400 shrink-0" />
-                        <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block truncate">{activity?.label || record.cardio.type}</strong><span className="text-[8px] font-mono text-zinc-600">{record.cardio.minutes || 0} dk · ~{cardioEntryCalories(record.cardio, weightForDate(day.date))} kcal</span></div>
-                        <button onClick={() => onEditCardio?.(record)} aria-label="Aktiviteyi düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                        <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block truncate">{activity?.label || record.cardio.type}</strong><span className="text-[8px] font-mono text-zinc-400">{record.cardio.minutes || 0} dk · ~{cardioEntryCalories(record.cardio, weightForDate(day.date))} kcal</span></div>
+                        <button onClick={() => onEditCardio?.(record)} aria-label="Aktiviteyi düzenle" className="p-2 text-zinc-400 active:text-cyan-400"><Pencil size={12} /></button>
                       </div>
                     );
                   })}
                   {day.metrics.map(metric => (
                     <div key={`m-${metric.id || metric.date}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
                       <Scale size={13} className="text-emerald-400 shrink-0" />
-                      <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block">Vücut ölçümü</strong><span className="text-[8px] font-mono text-zinc-600">{parseNumber(metric.weight) || '—'} kg · %{parseNumber(metric.bodyFat) || '—'} yağ</span></div>
-                      <button onClick={() => handleEditMetric?.(metric)} aria-label="Ölçümü düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                      <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block">Vücut ölçümü</strong><span className="text-[8px] font-mono text-zinc-400">{parseNumber(metric.weight) || '—'} kg · %{parseNumber(metric.bodyFat) || '—'} yağ</span></div>
+                      <button onClick={() => handleEditMetric?.(metric)} aria-label="Ölçümü düzenle" className="p-2 text-zinc-400 active:text-cyan-400"><Pencil size={12} /></button>
                     </div>
                   ))}
                   {day.nutrition.map(record => {
@@ -298,9 +298,9 @@ const HistoryView = memo(({
                     return (
                       <div key={`n-${record.id || record.date}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
                         <Beef size={13} className="text-orange-400 shrink-0" />
-                        <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block">Beslenme & enerji</strong><span className="text-[8px] font-mono text-zinc-600">{Math.round(totals.calories)} kcal · P {Math.round(totals.protein)}g{balance !== null ? ` · denge ${balance > 0 ? '+' : ''}${balance}` : ''}</span></div>
-                        <button onClick={() => onOpenEnergyDay?.(day.date)} aria-label="Bu günün enerji detayını aç" className="p-2 text-red-500 active:text-red-300"><Flame size={12} /></button>
-                        <button onClick={() => handleEditNutrition?.(record)} aria-label="Beslenmeyi düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                        <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block">Beslenme & enerji</strong><span className="text-[8px] font-mono text-zinc-400">{Math.round(totals.calories)} kcal · P {Math.round(totals.protein)}g{balance !== null ? ` · denge ${balance > 0 ? '+' : ''}${balance}` : ''}</span></div>
+                        <button onClick={() => onOpenEnergyDay?.(day.date)} aria-label="Bu günün enerji detayını aç" className="p-2 text-red-400 active:text-red-300"><Flame size={12} /></button>
+                        <button onClick={() => handleEditNutrition?.(record)} aria-label="Beslenmeyi düzenle" className="p-2 text-zinc-400 active:text-cyan-400"><Pencil size={12} /></button>
                       </div>
                     );
                   })}
@@ -461,13 +461,13 @@ const HistoryView = memo(({
                   <div key={label} className="bg-zinc-950/80 border border-zinc-800 rounded-xl py-2">
                     <span className="flex justify-center text-red-400 mb-0.5">{icon}</span>
                     <strong className="text-[11px] font-mono text-zinc-100 block">{value}</strong>
-                    <span className="text-[8px] font-mono text-zinc-600 uppercase">{label}</span>
+                    <span className="text-[8px] font-mono text-zinc-400 uppercase">{label}</span>
                   </div>
                 ))}
               </div>
               <div className="space-y-1">
                 {cardioSummary.activities.map(item => (
-                  <div key={item.type} className="flex justify-between text-[9px] font-mono text-zinc-500">
+                  <div key={item.type} className="flex justify-between text-[9px] font-mono text-zinc-400">
                     <span>{findActivity(item.type)?.label || item.type}</span>
                     <span>{item.count} kayıt · ort. {Math.round(item.minutes / item.count)} dk</span>
                   </div>
@@ -476,7 +476,7 @@ const HistoryView = memo(({
             </section>
           )}
           {filteredCardio.length === 0 ? (
-            <div className="text-center py-12 text-zinc-600 text-xs font-mono">Henüz kardiyo veya aktivite kaydı yok</div>
+            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz kardiyo veya aktivite kaydı yok</div>
           ) : <WeekGroups key="cardio" items={filteredCardio} expandAll={Boolean(q)}>{record => {
             const activity = findActivity(record.cardio.type);
             const effort = findEffort(record.cardio);
@@ -489,11 +489,11 @@ const HistoryView = memo(({
                 <div className="flex justify-between items-start gap-2">
                   <div>
                     <h4 className="text-sm font-bold text-red-400 flex items-center"><HeartPulse size={14} className="mr-1.5" />{activity?.label || record.cardio.type}</h4>
-                    <span className="text-[10px] font-mono text-zinc-500">{formatDay(record.date, 'medium', { year: true })}</span>
+                    <span className="text-[10px] font-mono text-zinc-400">{formatDay(record.date, 'medium', { year: true })}</span>
                   </div>
                   <div className="flex items-center shrink-0">
-                    <button onClick={() => onEditCardio?.(record)} aria-label="Kardiyo kaydını düzenle" title="Düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={14} /></button>
-                    <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'cardio', id: `${record.workoutId}::${record.cardio.id}` })} aria-label="Kardiyo kaydını sil" className="p-2 text-zinc-600 active:text-red-500"><Trash2 size={14} /></button>
+                    <button onClick={() => onEditCardio?.(record)} aria-label="Kardiyo kaydını düzenle" title="Düzenle" className="p-2 text-zinc-400 active:text-cyan-400"><Pencil size={14} /></button>
+                    <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'cardio', id: `${record.workoutId}::${record.cardio.id}` })} aria-label="Kardiyo kaydını sil" className="p-2 text-zinc-400 active:text-red-500"><Trash2 size={14} /></button>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-2 text-center">
@@ -501,7 +501,7 @@ const HistoryView = memo(({
                     ['Süre', `${record.cardio.minutes} dk`],
                     ['Tempo', effort?.label || 'Orta'],
                     ['Yakım', historicalWeight > 0 ? `${calories} kcal` : '—'],
-                  ].map(([label, value]) => <div key={label} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2"><span className="text-[8px] font-mono text-zinc-600 uppercase block">{label}</span><strong className="text-[10px] font-mono text-zinc-200">{value}</strong></div>)}
+                  ].map(([label, value]) => <div key={label} className="bg-zinc-950 border border-zinc-800 rounded-xl py-2"><span className="text-[8px] font-mono text-zinc-400 uppercase block">{label}</span><strong className="text-[10px] font-mono text-zinc-200">{value}</strong></div>)}
                 </div>
                 {evaluation.stats.count > 1 && (
                   <div className={`rounded-xl border px-3 py-2 ${evaluation.tone === 'harder'
@@ -569,7 +569,7 @@ const HistoryView = memo(({
       {historyTab === 'nutrition' && (
         <div className="space-y-3">
           {filteredNutrition.length === 0 ? (
-            <div className="text-center py-12 text-zinc-600 text-xs font-mono">Henüz beslenme kaydı yok</div>
+            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz beslenme kaydı yok</div>
           ) : (
             <WeekGroups key="nutrition" items={filteredNutrition} expandAll={Boolean(q)}>{n => {
               // Toplamlar öğünlerden hesaplanır. Eskiden kayıttaki üst düzey
@@ -583,18 +583,18 @@ const HistoryView = memo(({
                     <div className="flex items-center space-x-2 min-w-0">
                       <Beef size={14} className="text-cyan-400 shrink-0" />
                       <span className="text-xs font-bold text-zinc-200 font-mono">{formatDay(n.date, 'medium', { year: true })}</span>
-                      <span className="text-[9px] font-mono text-zinc-600 uppercase shrink-0">
+                      <span className="text-[9px] font-mono text-zinc-400 uppercase shrink-0">
                         {isDaily ? 'günlük toplam' : `${(n.meals || []).length} öğün`}
                       </span>
                     </div>
                     <div className="flex items-center shrink-0">
-                      <button onClick={() => onOpenEnergyDay?.(n.date)} title="Bu günün enerji detayını aç" aria-label="Bu günün enerji detayını aç" className="text-red-500 active:text-red-300 p-2">
+                      <button onClick={() => onOpenEnergyDay?.(n.date)} title="Bu günün enerji detayını aç" aria-label="Bu günün enerji detayını aç" className="text-red-400 active:text-red-300 p-2">
                         <Flame size={14} />
                       </button>
-                      <button onClick={() => handleEditNutrition?.(n)} title="Bu kaydı düzenle" aria-label="Bu kaydı düzenle" className="text-zinc-500 active:text-cyan-400 p-2">
+                      <button onClick={() => handleEditNutrition?.(n)} title="Bu kaydı düzenle" aria-label="Bu kaydı düzenle" className="text-zinc-400 active:text-cyan-400 p-2">
                         <Pencil size={14} />
                       </button>
-                      <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'nutrition', id: n.id })} title="Sil" aria-label="Sil" className="text-zinc-600 active:text-red-500 p-2">
+                      <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'nutrition', id: n.id })} title="Sil" aria-label="Sil" className="text-zinc-400 active:text-red-500 p-2">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -636,7 +636,7 @@ const HistoryView = memo(({
                     return (
                       <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 space-y-1.5">
                         <div className="flex justify-between items-center text-[10px] font-mono">
-                          <span className="text-zinc-500 uppercase tracking-wider text-[9px] font-bold">Enerji Dengesi</span>
+                          <span className="text-zinc-400 uppercase tracking-wider text-[9px] font-bold">Enerji Dengesi</span>
                           {balance !== null && (
                             <span className={`font-bold ${tone}`}>
                               {balance > 0 ? '+' : ''}{balance} kcal · {etiket}
@@ -644,25 +644,25 @@ const HistoryView = memo(({
                           )}
                         </div>
 
-                        <div className="flex justify-between text-[10px] font-mono text-zinc-500">
+                        <div className="flex justify-between text-[10px] font-mono text-zinc-400">
                           <span>Toplam günlük harcama</span>
-                          <span className="text-zinc-300">{totalOut} kcal</span>
+                          <span className="text-zinc-200">{totalOut} kcal</span>
                         </div>
 
                         {energyBody.metricDate && (
-                          <div className="flex justify-between text-[9px] font-mono text-zinc-600">
+                          <div className="flex justify-between text-[9px] font-mono text-zinc-400">
                             <span>Vücut verisi</span>
                             <span>{formatDay(energyBody.metricDate)} · {Math.round(parseNumber(energyBody.weight) * 10) / 10} kg</span>
                           </div>
                         )}
                         {recalculated?.historicalSource && (
-                          <div className="flex justify-between text-[8px] font-mono text-zinc-600">
+                          <div className="flex justify-between text-[8px] font-mono text-zinc-400">
                             <span>Hesap bağlamı</span>
                             <span>{recalculated.historicalSource === 'snapshot' ? 'Kayıt anında sabitlendi' : 'Tarihsel veriden hesaplandı'}</span>
                           </div>
                         )}
 
-                        <div className="flex justify-between items-center text-[10px] font-mono text-zinc-500">
+                        <div className="flex justify-between items-center text-[10px] font-mono text-zinc-400">
                           <span>Elle eklenen</span>
                           <span className="flex items-center gap-1.5">
                             <input
@@ -678,19 +678,19 @@ const HistoryView = memo(({
                               placeholder="0"
                               className="w-16 bg-zinc-900 border border-zinc-800 rounded-lg py-1 text-center font-mono text-red-400 text-[10px] outline-none focus:border-red-500"
                             />
-                            <span className="text-zinc-600">kcal</span>
+                            <span className="text-zinc-400">kcal</span>
                           </span>
                         </div>
 
                         {balance !== null ? (
-                          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                             {Math.round(t.calories)} alındı − {totalOut} toplam harcandı. Genel ayar ve o tarihteki son ölçüm kullanıldı.
                             {weeklyKg !== 0 && (
                               <> Bu tempo sürseydi haftada {weeklyKg > 0 ? '+' : ''}{weeklyKg} kg.</>
                             )}
                           </p>
                         ) : (
-                          <p className="text-[9px] font-mono text-zinc-600 leading-relaxed">
+                          <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">
                             Denge için korunum kalorisi gerekiyor — Vücut sekmesinden ölçüm gir.
                           </p>
                         )}

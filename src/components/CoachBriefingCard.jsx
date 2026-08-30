@@ -11,14 +11,14 @@ const SIGNAL_STYLE = {
   good: 'border-emerald-900/50 bg-emerald-950/15 text-emerald-400',
   watch: 'border-amber-900/50 bg-amber-950/15 text-amber-400',
   risk: 'border-red-900/50 bg-red-950/15 text-red-400',
-  missing: 'border-zinc-800 bg-zinc-950 text-zinc-600',
+  missing: 'border-zinc-800 bg-zinc-950 text-zinc-400',
 };
 
 const EVIDENCE_STYLE = {
   direct: 'text-emerald-400 border-emerald-900/50 bg-emerald-950/20',
   trend: 'text-cyan-400 border-cyan-900/50 bg-cyan-950/20',
   model: 'text-violet-400 border-violet-900/50 bg-violet-950/20',
-  rule: 'text-zinc-400 border-zinc-700 bg-zinc-900',
+  rule: 'text-zinc-300 border-zinc-700 bg-zinc-900',
 };
 
 const CoachBriefingCard = memo(({
@@ -76,17 +76,17 @@ const CoachBriefingCard = memo(({
             <strong className={`text-xl font-mono ${capacity.zone.tone}`}>
               {capacity.score === null ? '—' : capacity.score}
             </strong>
-            <span className="text-[8px] font-mono text-zinc-600">/100</span>
+            <span className="text-[8px] font-mono text-zinc-400">/100</span>
           </div>
           <div className="min-w-0">
             <div className="flex justify-between items-baseline gap-2">
               <strong className={`text-[11px] uppercase tracking-wider ${capacity.zone.tone}`}>{capacity.zone.label}</strong>
-              <span className="text-[8px] font-mono text-zinc-600">veri güveni %{capacity.confidence}</span>
+              <span className="text-[8px] font-mono text-zinc-400">veri güveni %{capacity.confidence}</span>
             </div>
             <div className="h-1.5 rounded-full bg-zinc-950 border border-zinc-800 overflow-hidden mt-1.5">
               <div className={`h-full rounded-full ${capacity.zone.bar}`} style={{ width: `${capacity.score ?? 0}%` }} />
             </div>
-            <p className="text-[8px] font-mono text-zinc-500 leading-relaxed mt-1.5">
+            <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-1.5">
               {capacity.available}/{capacity.total} sinyal kullanılabilir. Eksik sinyaller puana sıfır olarak yazılmaz.
             </p>
           </div>
@@ -97,10 +97,10 @@ const CoachBriefingCard = memo(({
           onClick={() => setShowSignals(v => !v)}
           className="w-full mt-3 flex items-center justify-between text-left rounded-xl border border-zinc-800 bg-zinc-950/70 px-3 py-2"
         >
-          <span className="text-[9px] font-bold text-zinc-400 flex items-center gap-1.5">
-            <Gauge size={11} className="text-cyan-500" /> Puanı oluşturan sinyaller
+          <span className="text-[9px] font-bold text-zinc-300 flex items-center gap-1.5">
+            <Gauge size={11} className="text-cyan-400" /> Puanı oluşturan sinyaller
           </span>
-          <ChevronDown size={12} className={`text-zinc-600 transition-transform ${showSignals ? 'rotate-180' : ''}`} />
+          <ChevronDown size={12} className={`text-zinc-400 transition-transform ${showSignals ? 'rotate-180' : ''}`} />
         </button>
 
         {showSignals && (
@@ -111,8 +111,8 @@ const CoachBriefingCard = memo(({
                   <span className="text-[9px] font-bold truncate">{row.label}</span>
                   <strong className="text-[10px] font-mono shrink-0">{row.score === null ? '—' : row.score}</strong>
                 </div>
-                <p className="text-[8px] font-mono text-zinc-500 leading-relaxed mt-1">{row.detail}</p>
-                <span className="text-[7px] font-mono text-zinc-700 block mt-1 uppercase">{row.source}</span>
+                <p className="text-[8px] font-mono text-zinc-300 leading-relaxed mt-1">{row.detail}</p>
+                <span className="text-[7px] font-mono text-zinc-400 block mt-1 uppercase">{row.source}</span>
               </div>
             ))}
           </div>
@@ -125,7 +125,7 @@ const CoachBriefingCard = memo(({
             <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
               <Target size={11} className="text-amber-400" /> Üç Öncelik
             </span>
-            <span className="text-[8px] font-mono text-zinc-600">etki sırasıyla</span>
+            <span className="text-[8px] font-mono text-zinc-400">etki sırasıyla</span>
           </div>
           <div className="space-y-1.5">
             {missions.map((item, index) => (
@@ -226,9 +226,9 @@ const CoachBriefingCard = memo(({
                   </div>
                   {open && (
                     <div className="border-t border-zinc-800/70 bg-zinc-950/70 px-3 py-2.5 space-y-1">
-                      <p className="text-[8px] font-mono text-zinc-400"><strong className="text-zinc-300">Dayanak:</strong> {item.evidence.why}</p>
-                      <p className="text-[8px] font-mono text-zinc-600"><strong className="text-zinc-500">Sınır:</strong> {item.evidence.caveat}</p>
-                      <p className="text-[8px] font-mono text-zinc-600">Güven sınıfı: {item.evidence.confidence}</p>
+                      <p className="text-[8px] font-mono text-zinc-300"><strong className="text-zinc-200">Dayanak:</strong> {item.evidence.why}</p>
+                      <p className="text-[8px] font-mono text-zinc-400"><strong className="text-zinc-300">Sınır:</strong> {item.evidence.caveat}</p>
+                      <p className="text-[8px] font-mono text-zinc-400">Güven sınıfı: {item.evidence.confidence}</p>
                     </div>
                   )}
                 </div>
