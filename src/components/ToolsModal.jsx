@@ -101,63 +101,67 @@ const ToolsModal = memo(({ isOpen, onClose, onSelect, showCycle = false }) => {
   const sonucSayisi = gruplar.reduce((t, g) => t + g.items.length, 0);
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[94] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Wrench size={15} className="mr-2 text-cyan-400" /> Araçlar
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
-
-      <div className="px-3 pt-3 shrink-0">
-        <div className="relative">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Araç ara..."
-            className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-8 pr-3 py-2.5 text-xs text-zinc-100 font-mono outline-none focus:border-cyan-600 transition-colors"
-          />
+    <div role="dialog" aria-modal="true" aria-labelledby="tools-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[94] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="tools-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Wrench size={16} className="mr-2 text-cyan-400" /> Araçlar & Yardımcılar
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
         </div>
-      </div>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-4 pb-safe">
-        {sonucSayisi === 0 && (
-          <p className="text-[10px] font-mono text-zinc-500 text-center py-8 leading-relaxed">
-            &quot;{query}&quot; ile eşleşen araç yok.
-          </p>
-        )}
-        {gruplar.map(group => (
-          <div key={group.title} className="space-y-1.5">
-            <h4 className="text-[10px] font-bold text-zinc-500 uppercase tracking-widest px-1">{group.title}</h4>
-            <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden divide-y divide-zinc-800">
-              {group.items.map(item => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.key}
-                    onClick={() => { onSelect(item.key); onClose(); }}
-                    className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-zinc-800 transition-colors text-left"
-                  >
-                    <Icon size={17} className={`${item.color} shrink-0`} />
-                    <span className="min-w-0">
-                      <span className="text-[12px] font-bold text-zinc-100 block truncate">{item.label}</span>
-                      <span className="text-[10px] font-mono text-zinc-500 block truncate">{item.hint}</span>
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+        <div className="px-4 pt-3.5 shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Araç ara (örn. mezosiklik, kalori, deload)..."
+              className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl pl-9 pr-3 py-2.5 text-xs text-zinc-100 font-mono outline-none focus:border-cyan-500 transition-colors shadow-inner"
+            />
           </div>
-        ))}
+        </div>
 
-        <p className="text-[9px] font-mono text-zinc-600 leading-relaxed px-1">
-          Bu araçların çoğuna ilgili sekmeden de ulaşabilirsin — kalori detayı
-          Beslenme&apos;de, kıyaslama ve rehber Vücut&apos;ta duruyor.
-        </p>
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
+          {sonucSayisi === 0 && (
+            <p className="text-[10px] font-mono text-zinc-500 text-center py-8 leading-relaxed">
+              &quot;{query}&quot; ile eşleşen araç bulunamadı.
+            </p>
+          )}
+          {gruplar.map(group => (
+            <div key={group.title} className="space-y-2">
+              <h4 className="text-[10px] font-black text-zinc-400 uppercase tracking-widest px-1">{group.title}</h4>
+              <div className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 overflow-hidden divide-y divide-zinc-800/60 shadow-lg">
+                {group.items.map(item => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={() => { onSelect(item.key); onClose(); }}
+                      className="w-full flex items-center gap-3.5 px-4 py-3.5 active:bg-zinc-800/60 hover:bg-zinc-800/30 transition-all text-left group"
+                    >
+                      <span className="w-8 h-8 rounded-xl bg-zinc-950 border border-zinc-800/80 flex items-center justify-center shrink-0 shadow-inner group-active:scale-95 transition-transform">
+                        <Icon size={16} className={`${item.color} shrink-0`} />
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="text-[12px] font-bold text-zinc-100 block truncate leading-tight">{item.label}</span>
+                        <span className="text-[10px] font-mono text-zinc-500 block truncate mt-0.5">{item.hint}</span>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
+          <p className="text-[9px] font-mono text-zinc-500 leading-relaxed px-1">
+            Bu araçların çoğuna ilgili sekmeden de ulaşabilirsin — kalori detayı
+            Beslenme&apos;de, kıyaslama ve rehber Vücut&apos;ta duruyor.
+          </p>
+        </div>
       </div>
     </div>
   );

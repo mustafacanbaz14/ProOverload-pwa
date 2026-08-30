@@ -16,10 +16,10 @@ const MODE_STYLE = {
 };
 
 const Stat = ({ icon, value, label }) => (
-  <div className="rounded-xl border border-zinc-800 bg-zinc-950 px-2 py-2.5 text-center min-w-0">
-    <div className="flex justify-center mb-1">{icon}</div>
-    <strong className="text-[12px] font-mono text-zinc-100 block truncate">{value}</strong>
-    <span className="text-[8px] font-mono text-zinc-600 block truncate">{label}</span>
+  <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/90 px-2.5 py-3 text-center min-w-0 shadow-sm">
+    <div className="flex justify-center mb-1.5">{icon}</div>
+    <strong className="text-[12px] font-mono font-black text-zinc-100 block truncate tracking-tight">{value}</strong>
+    <span className="text-[8px] font-mono text-zinc-500 block truncate mt-0.5">{label}</span>
   </div>
 );
 
@@ -46,20 +46,21 @@ const CoachCenterModal = memo(({
   const style = MODE_STYLE[proposal.mode] || MODE_STYLE.hold;
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[96] flex flex-col h-[100dvh] max-w-[440px] mx-auto">
-      <header className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <div>
-          <span className="text-[8px] font-mono text-cyan-500 uppercase tracking-[0.18em]">ProOverload {APP_VERSION}</span>
-          <h3 className="text-[13px] font-black text-zinc-100 uppercase tracking-wider flex items-center gap-2">
-            <BrainCircuit size={16} className="text-cyan-400" /> Koç Merkezi
-          </h3>
-        </div>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Koç merkezini kapat">
-          <X size={20} />
-        </button>
-      </header>
+    <div role="dialog" aria-modal="true" aria-labelledby="coach-center-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[96] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <header className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <div>
+            <span className="text-[8px] font-mono text-cyan-400 uppercase tracking-[0.2em] font-bold">ProOverload v{APP_VERSION}</span>
+            <h3 id="coach-center-title" className="text-[13px] font-black text-zinc-100 uppercase tracking-widest flex items-center gap-2 mt-0.5">
+              <BrainCircuit size={16} className="text-cyan-400" /> Koç Merkezi
+            </h3>
+          </div>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Koç merkezini kapat">
+            <X size={18} />
+          </button>
+        </header>
 
-      <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
+        <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4 pb-safe">
         <CoachBriefingCard
           briefing={briefing}
           compact
@@ -190,6 +191,7 @@ const CoachCenterModal = memo(({
         )}
       </div>
     </div>
+  </div>
   );
 });
 

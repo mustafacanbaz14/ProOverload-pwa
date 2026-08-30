@@ -209,23 +209,23 @@ const FoodSearchModal = memo(({
   const isFavorite = (food) => favoriteFoods.some(item => item.name === food.name);
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh]">
+    <div role="dialog" aria-modal="true" aria-labelledby="food-search-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
 
-        <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950 shrink-0">
-          <h3 className="text-[11px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-            <Utensils size={15} className="mr-2 text-orange-400" /> Besin Ekle
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="food-search-title" className="text-[11px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Utensils size={15} className="mr-2 text-orange-400" /> Besin & Makro Ekle
           </h3>
-          <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
             <X size={18} />
           </button>
         </div>
 
-        <div className="p-3 space-y-3 border-b border-zinc-800 bg-zinc-950 shrink-0">
-          <div className="flex bg-zinc-900 p-1 rounded-xl border border-zinc-800">
+        <div className="p-4 space-y-3.5 border-b border-zinc-800/80 bg-zinc-950/95 shrink-0">
+          <div className="luxury-segmented flex gap-1 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800 shadow-inner">
             {[
               { key: 'local', label: 'Hazır Liste', icon: Database },
-              { key: 'online', label: 'İnternette Ara', icon: Globe },
+              { key: 'online', label: 'İnternet', icon: Globe },
               { key: 'custom', label: 'Kendi Besinim', icon: Plus },
             ].map(t => {
               const active = tab === t.key;
@@ -234,9 +234,9 @@ const FoodSearchModal = memo(({
                 <button
                   key={t.key}
                   onClick={() => { setTab(t.key); setErrorMsg(''); }}
-                  className={`flex-1 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-colors flex items-center justify-center ${active ? 'bg-orange-600 text-white' : 'text-zinc-500'}`}
+                  className={`flex-1 py-2 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center ${active ? 'bg-orange-600 text-white shadow-md shadow-orange-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
                 >
-                  <TabIcon size={11} className="mr-1" /> {t.label}
+                  <TabIcon size={12} className="mr-1.5" /> {t.label}
                 </button>
               );
             })}

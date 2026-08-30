@@ -76,40 +76,41 @@ const ExerciseLibraryModal = memo(({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-zinc-950 z-[92] flex flex-col h-[100dvh] max-w-[420px] mx-auto">
-
-      <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
-        <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Dumbbell size={15} className="mr-2 text-cyan-400" />
-          {selectMode ? 'Hareket Seç' : 'Hareket Kütüphanesi'}
-        </h3>
-        <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
-          <X size={20} />
-        </button>
-      </div>
-
-      <div className="p-3 space-y-2.5 border-b border-zinc-800 bg-zinc-950 shrink-0">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => { setQuery(e.target.value); setVisibleLimit(LIST_BATCH); }}
-            placeholder="Hareket ara..."
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-10 pr-3 text-zinc-100 outline-none font-mono text-xs h-11 focus:border-cyan-500 transition-colors"
-          />
+    <div role="dialog" aria-modal="true" aria-labelledby="exercise-library-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[90] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="luxury-header px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
+          <h3 id="exercise-library-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
+            <Dumbbell size={16} className="mr-2 text-cyan-400" />
+            {selectMode ? 'Hareket Seç' : 'Hareket Kütüphanesi'}
+          </h3>
+          <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
+            <X size={18} />
+          </button>
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1">
-          {['Tümü', ...MUSCLE_GROUPS].map(m => (
-            <button
-              key={m}
-              onClick={() => { setMuscleFilter(m); setVisibleLimit(LIST_BATCH); }}
-              className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide border transition-colors ${muscleFilter === m ? 'border-cyan-600 text-cyan-400 bg-cyan-950/20' : 'border-zinc-800 text-zinc-500'}`}
-            >
-              {m}
-            </button>
-          ))}
+        <div className="p-4 space-y-3 border-b border-zinc-800/80 bg-zinc-950/95 shrink-0">
+          <div className="relative">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" size={16} />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => { setQuery(e.target.value); setVisibleLimit(LIST_BATCH); }}
+              placeholder="Hareket ara..."
+              className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl pl-11 pr-3 text-zinc-100 outline-none font-mono text-xs h-11 focus:border-cyan-500 transition-colors shadow-inner"
+            />
+          </div>
+
+          <div className="flex gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1">
+            {['Tümü', ...MUSCLE_GROUPS].map(m => (
+              <button
+                key={m}
+                onClick={() => { setMuscleFilter(m); setVisibleLimit(LIST_BATCH); }}
+                className={`shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider border transition-all active:scale-[0.97] ${muscleFilter === m ? 'border-cyan-500 text-cyan-300 bg-cyan-950/40 shadow-sm shadow-cyan-950/40' : 'border-zinc-800 text-zinc-500 bg-zinc-950'}`}
+              >
+                {m}
+              </button>
+            ))}
+          </div>
         </div>
 
         {suggestionModes.length > 0 && (
