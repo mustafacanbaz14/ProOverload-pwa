@@ -150,7 +150,7 @@ const MetricsView = memo(({
   return (
     <div data-view-scroll="progress" className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-28 h-full overflow-y-auto hide-scrollbar bg-black`}>
 
-      <div className="luxury-feature-card bg-gradient-to-br from-cyan-950/35 to-zinc-900 border border-cyan-900/35 rounded-2xl p-4">
+      <div className="luxury-feature-card bg-gradient-to-br from-cyan-950/40 via-zinc-900 to-zinc-950 border border-cyan-900/40 rounded-3xl p-4 shadow-xl">
         <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest">Son Durum</span>
         <div className="grid grid-cols-4 gap-2 mt-2 text-center">
           {[
@@ -158,20 +158,27 @@ const MetricsView = memo(({
             ['Yağ', computedComp.activeBF || '—', '%'],
             ['FFMI', computedComp.ffmi || '—', ''],
             ['BMI', computeBMI(form.weight, form.height)?.bmi || '—', ''],
-          ].map(([label, value, unit]) => <div key={label}><strong className="text-sm font-mono text-zinc-100 block">{value}<small className="text-[8px] text-zinc-500 ml-0.5">{unit}</small></strong><span className="text-[8px] font-mono text-zinc-600 uppercase">{label}</span></div>)}
+          ].map(([label, value, unit]) => (
+            <div key={label} className="bg-zinc-950/60 rounded-2xl border border-zinc-800/70 p-2 shadow-inner">
+              <strong className="text-sm font-mono font-black text-zinc-100 block">{value}<small className="text-[8px] text-zinc-500 ml-0.5">{unit}</small></strong>
+              <span className="text-[8px] font-mono text-zinc-500 uppercase block mt-0.5">{label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         <button
+          type="button"
           onClick={() => setGoalCenterOpen(true)}
-          className="bg-cyan-950/30 active:bg-cyan-900/40 border border-cyan-900/50 text-cyan-300 font-bold py-3 px-3 rounded-2xl flex justify-center items-center text-[10px]"
+          className="bg-cyan-950/40 active:scale-[0.98] border border-cyan-900/60 text-cyan-300 font-bold py-3.5 px-3 rounded-2xl flex justify-center items-center text-[10px] shadow-sm transition-all"
         >
           <Target size={14} className="mr-1.5" /> Hedef Merkezi
         </button>
         <button
+          type="button"
           onClick={() => setIsComparisonOpen(true)}
-          className="bg-zinc-900 active:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold py-3 px-3 rounded-2xl flex justify-center items-center text-[10px]"
+          className="bg-zinc-900/90 active:scale-[0.98] border border-zinc-800/80 text-zinc-200 font-bold py-3.5 px-3 rounded-2xl flex justify-center items-center text-[10px] shadow-sm transition-all"
         >
           <ArrowRightLeft size={14} className="mr-1.5" /> Kıyasla
         </button>

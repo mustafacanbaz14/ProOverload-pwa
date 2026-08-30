@@ -197,51 +197,49 @@ const HistoryView = memo(({
           </div>
         )}
       </section>
-      <div className="luxury-segmented grid grid-cols-5 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800 shadow-inner">
-        <button
-          onClick={() => setHistoryTab('all')}
-          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'all' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
-        >
-          Tümü ({archiveDays.length})
-        </button>
-        <button
-          onClick={() => setHistoryTab('workouts')}
-          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'workouts' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
-        >
-          Ağırlık ({strengthWorkouts.length})
-        </button>
-        <button
-          onClick={() => setHistoryTab('cardio')}
-          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'cardio' ? 'bg-red-600 text-white' : 'text-zinc-500'}`}
-        >
-          Aktivite ({cardioRecords.length})
-        </button>
-        <button
-          onClick={() => setHistoryTab('metrics')}
-          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'metrics' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
-        >
-          Ölçüm ({metricsHistory.length})
-        </button>
-        <button
-          onClick={() => setHistoryTab('nutrition')}
-          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'nutrition' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
-        >
-          Besin ({nutritionHistory.length})
-        </button>
+      <div className="luxury-segmented grid grid-cols-5 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md">
+        {[
+          { key: 'all', label: `Tümü (${archiveDays.length})`, activeBg: 'bg-cyan-600' },
+          { key: 'workouts', label: `Ağırlık (${strengthWorkouts.length})`, activeBg: 'bg-cyan-600' },
+          { key: 'cardio', label: `Aktivite (${cardioRecords.length})`, activeBg: 'bg-red-600' },
+          { key: 'metrics', label: `Ölçüm (${metricsHistory.length})`, activeBg: 'bg-cyan-600' },
+          { key: 'nutrition', label: `Besin (${nutritionHistory.length})`, activeBg: 'bg-cyan-600' },
+        ].map(tab => (
+          <button
+            key={tab.key}
+            type="button"
+            onClick={() => setHistoryTab(tab.key)}
+            className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-all active:scale-[0.96] ${historyTab === tab.key ? `${tab.activeBg} text-white shadow-sm font-black` : 'text-zinc-500 hover:text-zinc-300'}`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       <button
         type="button"
         onClick={() => onOpenEnergyDay?.('')}
-        className="w-full rounded-xl border border-red-900/35 bg-red-950/10 px-3 py-2.5 flex items-center justify-between text-left active:bg-red-950/25"
+        className="w-full rounded-2xl border border-red-900/40 bg-red-950/15 px-3.5 py-3 flex items-center justify-between text-left active:scale-[0.98] transition-all shadow-sm hover:border-red-800/50"
       >
-        <span className="flex items-center gap-2"><Flame size={14} className="text-red-400" /><span><strong className="text-[9px] text-zinc-300 block">Gün gün kalori ve harcama</strong><span className="text-[8px] font-mono text-zinc-600">Geçmiş günlerin enerji dökümünü tek tabloda aç</span></span></span>
-        <span className="text-[9px] font-bold text-red-400">Aç</span>
+        <span className="flex items-center gap-2.5">
+          <Flame size={15} className="text-red-400 shrink-0" />
+          <span>
+            <strong className="text-[10px] font-bold text-zinc-200 block">Gün gün kalori ve harcama</strong>
+            <span className="text-[8px] font-mono text-zinc-500 block">Geçmiş günlerin enerji dökümünü tek tabloda aç</span>
+          </span>
+        </span>
+        <span className="text-[9px] font-bold text-red-400 bg-red-950/50 border border-red-900/50 rounded-lg px-2 py-1">Aç</span>
       </button>
 
       <div className="relative">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
-        <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tarih, hareket, öğün veya kayıt ara…" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-zinc-200 outline-none focus:border-cyan-600" />
+        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Tarih, hareket, öğün veya kayıt ara…"
+          aria-label="Geçmişte ara"
+          className="w-full bg-zinc-950/90 border border-zinc-800/80 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs text-zinc-200 outline-none focus:border-cyan-500 shadow-inner"
+        />
       </div>
 
       {historyTab === 'all' && (

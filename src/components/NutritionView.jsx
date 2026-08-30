@@ -375,11 +375,11 @@ const NutritionView = memo(({
               key={item.label}
               type="button"
               onClick={item.action}
-              className="bg-zinc-900 border border-zinc-800 rounded-2xl py-3 px-1 flex flex-col items-center gap-1 active:bg-zinc-800 transition-colors"
+              className="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl py-3.5 px-2 flex flex-col items-center gap-1.5 active:scale-[0.96] transition-all shadow-md shadow-black/20 hover:border-zinc-700/80"
             >
-              <Icon size={16} className={item.color} />
-              <span className="text-[9px] font-bold text-zinc-400 leading-tight text-center">{item.label}</span>
-              <span className="text-[7px] font-mono text-zinc-600 leading-tight text-center">{item.note}</span>
+              <Icon size={17} className={item.color} />
+              <span className="text-[10px] font-bold text-zinc-200 leading-tight text-center">{item.label}</span>
+              <span className="text-[8px] font-mono text-zinc-500 leading-tight text-center">{item.note}</span>
             </button>
           );
         })}
@@ -401,16 +401,16 @@ const NutritionView = memo(({
           ].map(item => {
             const Icon = item.icon;
             return (
-              <button key={item.label} type="button" onClick={item.action} disabled={!item.enabled} className="rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-left disabled:opacity-35 active:bg-zinc-900">
+              <button key={item.label} type="button" onClick={item.action} disabled={!item.enabled} className="rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-left disabled:opacity-35 active:scale-[0.97] transition-all">
                 <Icon size={13} className={`${item.color} mb-1`} />
-                <span className="text-[9px] font-bold text-zinc-400">{item.label}</span>
+                <span className="text-[9px] font-bold text-zinc-300">{item.label}</span>
               </button>
             );
           })}
         </div>
       </DisclosureCard>
 
-      <section className="bg-zinc-900 rounded-2xl border border-zinc-800 p-3.5 space-y-3">
+      <section className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4 space-y-3.5 shadow-xl">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-xs font-bold text-zinc-100">{isToday ? 'Bugünün kaydı' : 'Geçmiş gün kaydı'}</h3>
@@ -427,7 +427,7 @@ const NutritionView = memo(({
                 onClick={() => setEntryMode(mode.key)}
                 className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-colors ${
                   (currentNutritionForm.entryMode || 'meals') === mode.key
-                    ? 'bg-orange-600 text-white'
+                    ? 'bg-orange-600 text-white shadow-sm'
                     : 'text-zinc-500'
                 }`}
               >
@@ -437,11 +437,34 @@ const NutritionView = memo(({
           </div>
         </div>
 
-        <div className="flex items-center justify-between bg-zinc-950 border border-zinc-800 rounded-xl p-2.5">
-          <span className="flex items-center gap-2 text-[10px] font-bold text-zinc-400">
-            <Droplets size={14} className="text-cyan-400" /> Su
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-zinc-950/85 border border-zinc-800/80 rounded-2xl p-3 shadow-inner">
+          <span className="flex items-center gap-2 text-[10px] font-bold text-zinc-300">
+            <Droplets size={15} className="text-cyan-400 shrink-0" /> Su Takibi
+            <span className="text-[9px] font-mono text-zinc-500">/ {dayScore?.waterTarget || 2500} ml</span>
           </span>
-          <span className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto justify-between sm:justify-end">
+            <div className="flex gap-1">
+              <button
+                type="button"
+                onClick={() => setCurrentNutritionForm(prev => ({
+                  ...prev,
+                  waterMl: Math.min(10000, (parseNumber(prev.waterMl) || 0) + 250),
+                }))}
+                className="px-2 py-1 bg-zinc-900/90 border border-cyan-900/50 text-cyan-400 rounded-lg text-[9px] font-mono font-bold active:scale-[0.94] transition-all"
+              >
+                +250
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentNutritionForm(prev => ({
+                  ...prev,
+                  waterMl: Math.min(10000, (parseNumber(prev.waterMl) || 0) + 500),
+                }))}
+                className="px-2 py-1 bg-zinc-900/90 border border-cyan-900/50 text-cyan-400 rounded-lg text-[9px] font-mono font-bold active:scale-[0.94] transition-all"
+              >
+                +500
+              </button>
+            </div>
             <input
               type="number"
               inputMode="numeric"
@@ -455,10 +478,9 @@ const NutritionView = memo(({
               }))}
               placeholder="0"
               aria-label="İçilen su miktarı"
-              className="w-20 bg-zinc-900 border border-zinc-800 rounded-lg py-1.5 text-center font-mono text-cyan-400 text-[11px] outline-none focus:border-cyan-500"
+              className="w-20 bg-zinc-900 border border-zinc-800 rounded-xl py-1.5 text-center font-mono text-cyan-400 text-[11px] font-bold outline-none focus:border-cyan-500 shadow-inner"
             />
-            <span className="text-[9px] font-mono text-zinc-600">/ {dayScore?.waterTarget || 2500} ml</span>
-          </span>
+          </div>
         </div>
 
         <button

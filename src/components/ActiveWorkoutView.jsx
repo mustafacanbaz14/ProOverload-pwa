@@ -476,11 +476,11 @@ const ActiveWorkoutView = memo(({
           const muscleParts = Object.entries(contributions || {}).sort((a, b) => b[1] - a[1]);
 
           return (
-            <div key={ex.id} className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-              <div className="bg-zinc-950 px-3 py-2 border-b border-zinc-800 flex justify-between items-center gap-2">
+            <div key={ex.id} className="luxury-feature-card bg-zinc-900/95 rounded-3xl border border-zinc-800/90 overflow-hidden shadow-xl">
+              <div className="bg-zinc-950/80 px-3.5 py-2.5 border-b border-zinc-800/80 flex justify-between items-center gap-2">
                 <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wide truncate min-w-0 flex items-center">
                   {ex.supersetId && <Link2 size={12} className="mr-1.5 text-purple-400 shrink-0" />}
-                  <span className="text-cyan-500 mr-1">{exIndex + 1}.</span>
+                  <span className="text-cyan-400 mr-1">{exIndex + 1}.</span>
                   <span className="truncate">{ex.name}</span>
                 </h3>
                 <div className="flex items-center shrink-0">
@@ -999,25 +999,28 @@ const ActiveWorkoutView = memo(({
                   );
                 })}
 
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 pt-1">
                   <button
+                    type="button"
                     onClick={() => addSet(ex.id)}
-                    className="flex-1 py-2 bg-zinc-950 hover:bg-zinc-900 active:bg-zinc-800 text-cyan-400 border border-dashed border-zinc-800 rounded-xl font-bold text-xs flex items-center justify-center uppercase tracking-wider transition-colors"
+                    className="flex-1 py-2.5 bg-zinc-950/80 hover:bg-zinc-900 active:scale-[0.98] text-cyan-400 border border-dashed border-cyan-900/40 rounded-xl font-bold text-xs flex items-center justify-center uppercase tracking-wider transition-all shadow-sm"
                   >
                     <Plus size={14} className="mr-1" /> Set Ekle
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       // Son çalışma setinin ağırlığıyla aç; yoksa bugünkü hedefle.
                       const lastWorking = [...(ex.sets || [])].reverse().find(s => isWorkingSet(s) && parseNumber(s.weight) > 0);
                       onOpenPlateCalc?.(parseNumber(lastWorking?.weight) || target?.weight || 0, ex.id);
                     }}
                     title="Plaka hesaplayıcı ve ısınma"
-                    className="px-3 py-2 bg-zinc-950 active:bg-zinc-800 text-cyan-500 border border-cyan-900/50 rounded-xl transition-colors shrink-0"
+                    className="px-3 py-2.5 bg-zinc-950/80 active:scale-[0.95] text-cyan-400 border border-cyan-900/50 rounded-xl transition-all shrink-0 shadow-sm hover:border-cyan-700"
                   >
-                    <Layers size={14} />
+                    <Layers size={15} />
                   </button>
                   <button
+                    type="button"
                     onClick={() => {
                       const index = Math.max(0, restOverrideOptions.indexOf(restOverride));
                       const next = restOverrideOptions[(index + 1) % restOverrideOptions.length];
@@ -1025,15 +1028,16 @@ const ActiveWorkoutView = memo(({
                     }}
                     title={restOverride ? `Harekete özel ${restOverride} sn — değiştirmek için dokun` : 'Harekete özel dinlenme süresi belirle'}
                     aria-label="Harekete özel dinlenme süresini değiştir"
-                    className={`px-2 py-2 bg-zinc-950 active:bg-zinc-800 border rounded-xl transition-colors shrink-0 flex items-center gap-1 ${restOverride ? 'border-amber-800 text-amber-400' : 'border-zinc-800 text-zinc-600'}`}
+                    className={`px-2.5 py-2.5 bg-zinc-950/80 active:scale-[0.95] border rounded-xl transition-all shrink-0 flex items-center gap-1 shadow-sm ${restOverride ? 'border-amber-800 text-amber-400' : 'border-zinc-800 text-zinc-500'}`}
                   >
-                    <SlidersHorizontal size={12} />
-                    <span className="text-[8px] font-bold">{restOverride ? `${restOverride}s` : 'Özel'}</span>
+                    <SlidersHorizontal size={13} />
+                    <span className="text-[9px] font-bold">{restOverride ? `${restOverride}s` : 'Özel'}</span>
                   </button>
                   <button
+                    type="button"
                     onClick={() => startRest(restHint.seconds, restHint.reason)}
                     title={restHint.reason}
-                    className={`px-3 py-2 bg-zinc-950 active:bg-zinc-800 border border-zinc-800 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-colors shrink-0 ${restHint.tier.text}`}
+                    className={`px-3 py-2.5 bg-zinc-950/80 active:scale-[0.95] border border-zinc-800 rounded-xl font-bold text-[11px] uppercase tracking-wider transition-all shrink-0 shadow-sm ${restHint.tier.text}`}
                   >
                     {restHint.seconds}s{restOverride ? ' •' : ''}
                   </button>

@@ -180,13 +180,22 @@ const RELEASE_9_7 = release('9.7', '2026-08-30', 'Luxury Dark & Light UI ve Tam 
   item('Performans ve Sıfır Regresyon', '492 çekirdek doğrulama testi, 16 kas grubu kuralı ve sıkı performans bütçeleri eksiksiz korundu.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Arayüz Akıcılığı, Kart Estetiği ve Dokunsal Zarafet', [
+const RELEASE_9_8 = release('9.8', '2026-08-30', 'Arayüz Akıcılığı, Kart Estetiği ve Dokunsal Zarafet', [
   item('Dokunsal Mikro-Etkileşimler', 'Hızlı işlemler, şablon kartları, sayaçlar ve sekmeler için fiziksel yay basma hissi veren active-scale ve mikro-geçişler entegre edildi.'),
   item('Rafine Metrik & Koç Kartları', 'Günün Koçu, haftalık durum ve aktivite kartları cam derinliği, iç gölgeler ve yüksek kontrastlı tipografi ile zenginleştirildi.'),
   item('Aktif Seans & Dinlenme Sayacı', 'Canlı antrenman dinlenme sayacı, tempo, set tipleri ve seans düğmeleri pürüzsüz dokunma alanlarına kavuşturuldu.'),
   item('Şablon Kütüphanesi & Arama', 'Şablon arama, filtreleme, favori rozetleri ve sihirbaz eylemleri şık kart modülleri olarak yeniden işlendi.'),
   item('Akıllı Ayar Anahtarları', 'Ayar anahtarları (toggle switches) ve kategori panoları modern dokunsal cam estetiğine uyarlandı.'),
   item('Tüm Doğrulama Testleri Yeşil', '492 temel test, 16 kas grubu ve 56 hareket kuralı, mağaza ve performans kapıları eksiksiz korundu.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Kullanıcı Deneyimi, Hızlı Kayıt ve Ergonomi Odaklı Geliştirmeler', [
+  item('Hızlı Su Ekleme Kısayolları', 'Beslenme ekranında tek dokunuşla +250ml ve +500ml su ekleme kısayolları ile hidrasyon takibi kolaylaştırıldı.'),
+  item('Gelişmiş Seans & Plaka Ergonomisi', 'Aktif antrenman ekranında hareket kartları, plaka hesaplayıcı ve özel dinlenme süresi kontrolleri tek dokunuşla erişilebilir kılındı.'),
+  item('Geçmiş & Arşiv Navigasyonu', 'Tüm kayıtlar, ağırlık, aktivite, ölçüm ve besin sekmeleri rafine dokunsal geri bildirim ve hızlı arama ile yenilendi.'),
+  item('Vücut Ölçüm & Hedef Merkezi', 'Son durum özeti ve kıyaslama butonları cam kart morfolojisi ve yüksek netlikli metrik kutularıyla güncellendi.'),
+  item('Pürüzsüz Mikro-Animasyonlar', 'Dokunmatik butonlarda ve kartlarda akıcı yay efektleri (active-scale) ile dokunma ergonomisi güçlendirildi.'),
+  item('Eksiksiz Doğrulama ve Sıfır Regresyon', '492 çekirdek test, 16 kas grubu ve 56 hareket kuralı, mağaza hazırlık kapıları sıfır hata ile korundu.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -263,6 +272,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_8,
   RELEASE_9_7,
   RELEASE_9_6,
   RELEASE_9_5,
