@@ -105,12 +105,24 @@ const RELEASE_8_9 = release('8.9', '2026-08-29', 'Sadeleştirme: Duvar Yerine Li
   item('Hiçbir Özellik Kaldırılmadı', 'Bu sürüm bir sadeleştirme sürümü ama hiçbir analiz, kart ya da araç silinmedi. Değişen tek şey varsayılan olarak neyin açık geldiği: uygulama artık her şeyi aynı anda anlatmak yerine sorulunca anlatıyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-29', 'Yayın Güvenilirliği', [
+const RELEASE_9_0 = release('9.0', '2026-08-29', 'Yayın Güvenilirliği', [
   item('Vercel Yanlış Negatifi Düzeltildi', 'Mağaza güvenlik denetimi vercel.json dosyasındaki boşluklara bağımlı metin araması yapıyordu; Vercel dosyayı sıkıştırınca doğru yapı yanlış biçimde hatalı sayılıyordu.'),
   item('Semantik Yapı Denetimi', 'Başlık kuralları ve SPA yönlendirmesi artık JSON olarak ayrıştırılıyor; girinti, satır sonu veya anahtarlar arasındaki boşluk değişse de aynı yapı aynı sonucu veriyor.'),
   item('Güvenlik Başlıkları Korundu', 'X-Content-Type-Options, X-Frame-Options, Referrer-Policy ve Permissions-Policy kontrolleri kaldırılmadı; yalnız kırılgan doğrulama yöntemi düzeltildi.'),
   item('Yerel ve Bulut Build Eşitliği', 'Bilgisayarda geçen üretim kapısının Vercel Linux ortamında da aynı yapı için geçmesi sağlandı; yayın sonucu artık dosya biçimlendirmesine bağlı değil.'),
   item('PWA ve Kullanıcı Verisi Değişmedi', 'Bu bakım sürümü localStorage anahtarlarına, veri şemasına, PWA önbellek modeline veya Claude ile eklenen v8.9 arayüz sadeleştirmelerine dokunmuyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Bugün Odaklı Ana Ekran', [
+  item('Basit Mod Gerçekten Basit', 'Ana ekran artık bütün analizleri aynı anda göstermiyor; günün kararı, planı ve yapılacak ilk iş üstte kalırken ayrıntılar istenince açılıyor.'),
+  item('Tek Haftalık Durum Kapısı', 'Hazır oluşluk, deload, kas haritası, ACWR, itme–çekme dengesi ve kas hacmi tek Haftalık Durum bölümünde toplandı.'),
+  item('Kapalıyken Anlamlı Özet', 'Haftalık bölüm kapalıyken antrenman, etkili set, eşik altındaki kaslar, tavan aşımı, toparlanma uyarısı ve yük durumu tek bakışta görülebiliyor.'),
+  item('Koç Ayrıntıları İsteğe Bağlı', 'Kapasite puanı, uzun koç önerileri ve karar defteri basit modda tek Koç Ayrıntıları düğmesinin arkasına alındı; hiçbir öneri silinmedi.'),
+  item('Üç Görev Odaklı Kısayol', 'Antrenman, Hızlı Kayıt ve Araçlar ana ekranda eşit ve belirgin dokunma alanlarıyla doğrudan erişilebilir hale getirildi.'),
+  item('Ayrıntılı Mod Korundu', 'Ayrıntılı arayüzü seçen kullanıcı koç içeriğini ve haftalık analizleri açık görmeye devam ediyor; uzman kullanım akışı daraltılmadı.'),
+  item('Harita İhtiyaç Anında', 'İnteraktif SVG kas haritası basit modda haftalık ayrıntı açılmadan yüklenmiyor; ilk ekranın gereksiz değerlendirme işi azaltıldı.'),
+  item('Veri ve PWA Yapısı Korundu', 'Bu arayüz sürümü localStorage anahtarlarını, kullanıcı kayıtlarını, yedek biçimini veya çevrimdışı PWA davranışını değiştirmiyor.'),
+  item('Beş Sürümlük UX Yol Haritası', 'Antrenman kurma, beslenme ve enerji, gelişim ve arşiv ile mağaza kalitesini kapsayan sonraki dört sadeleştirme sürümü belgelenerek sabitlendi.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -187,6 +199,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_0,
   RELEASE_8_9,
   RELEASE_8_8,
   RELEASE_8_7,

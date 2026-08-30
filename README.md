@@ -98,7 +98,7 @@ o uyarıyı gördüğünde **İndir**'e bas.
 
 ## App Store ve Google Play hazırlığı
 
-Sürüm 9.0 ile Ayarlar → **Gizlilik & Mağaza → Mağaza Hazırlık Merkezi**
+Sürüm 9.1 ile Ayarlar → **Gizlilik & Mağaza → Mağaza Hazırlık Merkezi**
 içinde web temeli, iOS ve Android adımları ayrı ayrı izlenir. Kamuya açık
 sayfalar doğrudan da açılabilir:
 

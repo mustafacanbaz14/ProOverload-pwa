@@ -4150,6 +4150,7 @@ export default function App() {
               experienceLevel={settings.experienceLevel}
               onOpenTemplateBuilder={() => { setBuilderWizardMode(false); setIsBuilderOpen(true); }}
               onOpenTools={() => setIsToolsOpen(true)}
+              onQuickCapture={() => setIsQuickCaptureOpen(true)}
               readiness={readiness}
               personalVolume={personalVolume}
               todayCoach={todayCoach}

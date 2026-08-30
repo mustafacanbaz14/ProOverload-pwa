@@ -12,8 +12,10 @@ const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
 
 const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEnergy, onOpenWellness, onOpenCardio,
   onSnooze, onDismiss, onRestoreCoach, hiddenCount = 0, conflictCount = 0,
-  onApply, onReject, focus = null, onOpenLedger, ledgerOpenCount = 0, briefing = null }) => {
+  onApply, onReject, focus = null, onOpenLedger, ledgerOpenCount = 0, briefing = null,
+  compact = false }) => {
   const [showAll, setShowAll] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   // Açık madde: aynı anda yalnızca biri. Ölçüldüğünde ana ekranda beş uzun
   // paragraf vardı (ortalama 160, en uzunu 307 karakter) ve birincil eylem
   // 2.5 ekran aşağıdaydı. Koç maddelerinin GEREKÇESİ değerli ama her gün
@@ -22,6 +24,8 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
   const [openKey, setOpenKey] = useState(null);
   if (!data) return null;
   const planned = Boolean(data.workoutTemplate);
+  const detailsVisible = !compact || showDetails;
+  const hasDetails = Boolean(briefing?.capacity || actions.length > 0 || (ledgerOpenCount > 0 && onOpenLedger));
   return (
     <section className="luxury-feature-card bg-gradient-to-br from-cyan-950/45 via-zinc-900 to-zinc-900 rounded-3xl border border-cyan-900/40 overflow-hidden shadow-lg shadow-cyan-950/10">
       <div className="px-4 py-3 border-b border-zinc-800/80 flex justify-between items-center gap-3">
@@ -49,29 +53,6 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           <p className="text-[10px] font-mono text-zinc-500 leading-relaxed mt-1">{data.detail}</p>
         </div>
 
-        {briefing?.capacity && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 flex items-center gap-3">
-            <div className="text-center shrink-0">
-              <strong className={`text-lg font-mono block leading-none ${briefing.capacity.zone.tone}`}>
-                {briefing.capacity.score === null ? '—' : briefing.capacity.score}
-              </strong>
-              <span className="text-[7px] font-mono text-zinc-600">kapasite</span>
-            </div>
-            <div className="min-w-0 flex-1">
-              <div className="flex justify-between gap-2">
-                <span className={`text-[9px] font-bold ${briefing.capacity.zone.tone}`}>{briefing.capacity.zone.label}</span>
-                <span className="text-[8px] font-mono text-zinc-600">güven %{briefing.capacity.confidence}</span>
-              </div>
-              <div className="h-1 rounded-full bg-zinc-900 overflow-hidden mt-1">
-                <div className={`h-full ${briefing.capacity.zone.bar}`} style={{ width: `${briefing.capacity.score ?? 0}%` }} />
-              </div>
-              <p className="text-[8px] font-mono text-zinc-600 truncate mt-1">
-                {briefing.capacity.concerns[0]?.detail || briefing.capacity.positives[0]?.detail || 'Yeni kayıtlarla karar güveni artar.'}
-              </p>
-            </div>
-          </div>
-        )}
-
         <div className="grid grid-cols-3 gap-2">
           <Metric icon={<Moon size={10} className="mr-1 text-indigo-400" />} label="Uyku" value={data.sleepLabel} tone={data.sleepTone} />
           <Metric icon={<BrainCircuit size={10} className="mr-1 text-amber-400" />} label="Hazır Oluş" value={data.readinessLabel} tone={data.readinessTone} />
@@ -98,11 +79,49 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           )}
         </div>
 
+        {compact && hasDetails && (
+          <button
+            type="button"
+            onClick={() => setShowDetails(value => !value)}
+            aria-expanded={showDetails}
+            className="w-full rounded-xl border border-zinc-800 bg-zinc-950/55 px-3 py-2 text-left flex items-center justify-between gap-3 active:bg-zinc-900"
+          >
+            <span className="text-[9px] font-mono text-zinc-400">
+              Koç ayrıntıları
+              {actions.length > 0 && <span className="text-zinc-600"> · {actions.length} öneri</span>}
+            </span>
+            <ChevronDown size={12} className={`text-zinc-500 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
+          </button>
+        )}
+
+        {detailsVisible && briefing?.capacity && (
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-950/80 px-3 py-2.5 flex items-center gap-3">
+            <div className="text-center shrink-0">
+              <strong className={`text-lg font-mono block leading-none ${briefing.capacity.zone.tone}`}>
+                {briefing.capacity.score === null ? '—' : briefing.capacity.score}
+              </strong>
+              <span className="text-[7px] font-mono text-zinc-600">kapasite</span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <div className="flex justify-between gap-2">
+                <span className={`text-[9px] font-bold ${briefing.capacity.zone.tone}`}>{briefing.capacity.zone.label}</span>
+                <span className="text-[8px] font-mono text-zinc-600">güven %{briefing.capacity.confidence}</span>
+              </div>
+              <div className="h-1 rounded-full bg-zinc-900 overflow-hidden mt-1">
+                <div className={`h-full ${briefing.capacity.zone.bar}`} style={{ width: `${briefing.capacity.score ?? 0}%` }} />
+              </div>
+              <p className="text-[8px] font-mono text-zinc-600 truncate mt-1">
+                {briefing.capacity.concerns[0]?.detail || briefing.capacity.positives[0]?.detail || 'Yeni kayıtlarla karar güveni artar.'}
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* Sıralanmış eylem listesi. Kart tek cümleyle "planın hazır" diyordu
             ama günün asıl kararı çoğu zaman başka yerde oluyor: uyku kötüyse
             planın hazır olması bir şey ifade etmiyor. İlk iki madde açık,
             gerisi istenirse açılıyor — kart ikinci bir ekrana dönüşmesin. */}
-        {actions.length > 0 && (
+        {detailsVisible && actions.length > 0 && (
           <div className="space-y-1.5">
             {(showAll ? actions : actions.slice(0, 3)).map(item => (
               <div key={item.key} className={`rounded-xl border p-2.5 ${item.tone.chip}`}>
@@ -192,7 +211,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           </div>
         )}
 
-        {ledgerOpenCount > 0 && onOpenLedger && (
+        {detailsVisible && ledgerOpenCount > 0 && onOpenLedger && (
           <button
             onClick={onOpenLedger}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950/70 px-3 py-2 text-left active:bg-zinc-900"
