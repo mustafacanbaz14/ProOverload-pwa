@@ -9,7 +9,7 @@
     "androidPackageName": "tech.afacan.prooverload"
   },
   "urls": {
-    "productionOrigin": "",
+    "productionOrigin": "https://afacanprooverload-pwa.vercel.app",
     "privacyPath": "/privacy.html",
     "supportPath": "/support.html",
     "termsPath": "/terms.html",
@@ -33,6 +33,6 @@
     "iosBuildRequirement": "Xcode 26 ve iOS 26 SDK veya üzeri",
     "androidTargetApi": 36,
     "publicSupportEmail": "",
-    "notes": "productionOrigin ve publicSupportEmail mağaza kaydı açılmadan önce doldurulmalıdır."
+    "notes": "publicSupportEmail mağaza kaydı açılmadan önce doldurulmalıdır."
   }
 }
