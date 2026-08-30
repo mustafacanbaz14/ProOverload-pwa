@@ -132,50 +132,50 @@ const SettingsModal = memo(({
   };
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
-      <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh]">
+    <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[80] flex items-center justify-center p-4">
+      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh] shadow-2xl shadow-black/80">
 
-        <div className="px-3 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950 shrink-0">
+        <div className="px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
           <div className="flex items-center min-w-0">
             {activeSection !== 'home' && (
               <button
                 type="button"
                 onClick={() => { setActiveSection('home'); setSearchQuery(''); setHelpOpen(false); }}
                 aria-label="Ayar kategorilerine dön"
-                className="p-2 mr-1 text-zinc-400 active:text-cyan-400 rounded-xl"
+                className="p-2 mr-1 text-zinc-400 active:text-cyan-400 rounded-xl transition-colors"
               >
                 <ArrowLeft size={17} />
               </button>
             )}
-            <h3 id="settings-title" className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center truncate">
+            <h3 id="settings-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-wider flex items-center truncate">
               <Settings size={16} className="mr-2 text-cyan-400 shrink-0" />
               {activeHelp?.title || 'Ayarlar'}
             </h3>
           </div>
-          <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
+          <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1 transition-colors" aria-label="Kapat">
             <X size={20} />
           </button>
         </div>
 
         {activeSection === 'home' ? (
-          <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-950/95 shrink-0 space-y-1.5">
+          <div className="px-4 py-3 border-b border-zinc-800/80 bg-zinc-950/95 shrink-0 space-y-1.5">
             <div className="relative">
-              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
               <input
                 value={searchQuery}
                 onChange={event => setSearchQuery(event.target.value)}
                 placeholder="Ayar ara: dinlenme, tema, NEAT…"
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 pl-9 pr-3 text-[10px] text-zinc-200 outline-none focus:border-cyan-600"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 pl-9 pr-3 text-[10px] text-zinc-200 outline-none focus:border-cyan-500"
               />
             </div>
-            <span className="text-[8px] font-mono text-zinc-600 px-1">Önce konu seç; yalnız o konunun ayarları açılır.</span>
+            <span className="text-[8px] font-mono text-zinc-500 px-1">Önce konu seç; yalnız o konunun ayarları açılır.</span>
           </div>
         ) : (
-          <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-950/95 shrink-0 space-y-2">
-            <button type="button" onClick={() => setHelpOpen(value => !value)} aria-expanded={helpOpen} className="w-full flex items-start gap-2 text-left bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5">
-              <Sparkles size={12} className="text-cyan-500 shrink-0 mt-0.5" />
-              <span className="min-w-0 flex-1"><strong className="text-[9px] text-zinc-300 block">{activeHelp?.title}</strong><span className="text-[8px] font-mono text-zinc-600 leading-relaxed block">{activeHelp?.summary}</span>{helpOpen && <span className="text-[8px] font-mono text-zinc-500 leading-relaxed block mt-1 pt-1 border-t border-zinc-800">{activeHelp?.detail}</span>}</span>
-              <ChevronDown size={12} className={`text-zinc-600 shrink-0 transition-transform ${helpOpen ? 'rotate-180' : ''}`} />
+          <div className="px-4 py-3 border-b border-zinc-800/80 bg-zinc-950/95 shrink-0 space-y-2">
+            <button type="button" onClick={() => setHelpOpen(value => !value)} aria-expanded={helpOpen} className="w-full flex items-start gap-2 text-left bg-zinc-900 border border-zinc-800 rounded-2xl px-3 py-2.5 shadow-inner">
+              <Sparkles size={12} className="text-cyan-400 shrink-0 mt-0.5" />
+              <span className="min-w-0 flex-1"><strong className="text-[9px] font-bold text-zinc-200 block">{activeHelp?.title}</strong><span className="text-[8px] font-mono text-zinc-500 leading-relaxed block">{activeHelp?.summary}</span>{helpOpen && <span className="text-[8px] font-mono text-zinc-400 leading-relaxed block mt-1 pt-1 border-t border-zinc-800">{activeHelp?.detail}</span>}</span>
+              <ChevronDown size={12} className={`text-zinc-500 shrink-0 transition-transform ${helpOpen ? 'rotate-180' : ''}`} />
             </button>
           </div>
         )}
@@ -185,13 +185,14 @@ const SettingsModal = memo(({
           {activeSection === 'home' && (
             <div className="space-y-3">
               <div className="px-1">
-                <span className="text-[10px] font-bold text-zinc-200 block">Neyi değiştirmek istiyorsun?</span>
-                <span className="text-[9px] font-mono text-zinc-600">Gelişmiş kontroller kaldırılmadı; başlıkların içine yerleştirildi.</span>
+                <span className="text-[11px] font-black text-zinc-100 block tracking-tight">Neyi değiştirmek istiyorsun?</span>
+                <span className="text-[9px] font-mono text-zinc-500">Gelişmiş kontroller başlıkların içine kategorize edildi.</span>
               </div>
+
               {filteredSections.length === 0 ? (
                 <div className="py-10 text-center"><Search size={20} className="text-zinc-700 mx-auto mb-2" /><p className="text-[10px] font-mono text-zinc-600">Bu aramayla eşleşen ayar başlığı yok.</p></div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-2 gap-2.5">
                   {filteredSections.map(section => {
                     const Icon = section.icon;
                     return (
@@ -199,14 +200,14 @@ const SettingsModal = memo(({
                         key={section.key}
                         type="button"
                         onClick={() => { setActiveSection(section.key); setSearchQuery(''); setHelpOpen(false); }}
-                        className="min-h-28 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-left active:bg-zinc-900 flex flex-col"
+                        className="min-h-28 rounded-2xl border border-zinc-800/80 bg-gradient-to-b from-zinc-900/90 to-zinc-950 p-3.5 text-left active:scale-[0.97] transition-all flex flex-col shadow-sm hover:border-zinc-700"
                       >
-                        <span className="flex items-center justify-between mb-3">
-                          <span className={`w-8 h-8 rounded-xl border border-zinc-800 bg-zinc-900 flex items-center justify-center ${section.tone}`}><Icon size={15} /></span>
-                          <ChevronRight size={14} className="text-zinc-700" />
+                        <span className="flex items-center justify-between mb-2.5">
+                          <span className={`w-8 h-8 rounded-xl border border-zinc-800 bg-zinc-900 flex items-center justify-center shadow-inner ${section.tone}`}><Icon size={15} /></span>
+                          <ChevronRight size={14} className="text-zinc-600" />
                         </span>
-                        <strong className="text-[10px] text-zinc-200 block leading-tight">{section.label}</strong>
-                        <span className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-1">{section.summary}</span>
+                        <strong className="text-[10px] font-bold text-zinc-200 block leading-tight">{section.label}</strong>
+                        <span className="text-[8px] font-mono text-zinc-500 leading-relaxed mt-1">{section.summary}</span>
                       </button>
                     );
                   })}

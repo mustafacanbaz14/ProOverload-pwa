@@ -14,20 +14,20 @@ const HydrationCard = memo(({ summary, target, onAdd, onToggleHeat, heat = false
   const litre = (ml) => (ml / 1000).toFixed(1);
 
   return (
-    <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline gap-2">
-        <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
-          <Droplets size={12} className="mr-1.5 text-sky-400" /> Su
+    <div className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
+      <div className="px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/50 backdrop-blur-md flex justify-between items-baseline gap-2">
+        <h4 className="text-[10px] font-black text-zinc-200 uppercase tracking-widest flex items-center">
+          <Droplets size={13} className="mr-1.5 text-sky-400" /> Günlük Su Takibi
         </h4>
-        <span className="text-[9px] font-mono text-zinc-500">
+        <span className="text-[10px] font-mono font-bold text-sky-400">
           {litre(summary.today)} / {litre(target.ml)} L
         </span>
       </div>
 
-      <div className="p-3 space-y-2.5">
-        <div className="h-2 bg-zinc-950 rounded-full border border-zinc-800 overflow-hidden">
+      <div className="p-4 space-y-3">
+        <div className="h-2.5 bg-zinc-950 rounded-full border border-zinc-800/80 overflow-hidden shadow-inner">
           <div
-            className="h-full bg-sky-500 rounded-full transition-all"
+            className="h-full bg-gradient-to-r from-sky-500 to-cyan-400 rounded-full transition-all duration-300 shadow-sm"
             style={{ width: `${summary.percent}%` }}
           />
         </div>
@@ -37,9 +37,9 @@ const HydrationCard = memo(({ summary, target, onAdd, onToggleHeat, heat = false
             <button
               key={ml}
               onClick={() => onAdd?.(ml)}
-              className="rounded-xl border border-sky-900/50 bg-sky-950/20 py-2 text-[10px] font-bold text-sky-300 active:bg-sky-900/30"
+              className="rounded-xl border border-sky-900/50 bg-gradient-to-b from-sky-950/40 to-zinc-950 py-2.5 text-[10px] font-black tracking-wide text-sky-300 active:scale-[0.97] transition-all shadow-sm"
             >
-              <Plus size={9} className="inline" />{ml}
+              <Plus size={9} className="inline mr-0.5" />{ml}ml
             </button>
           ))}
         </div>
