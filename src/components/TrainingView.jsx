@@ -3,7 +3,7 @@ import {
   Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play,
   ChevronRight, ChevronDown, Copy, Wand2, Sparkles, Search, Star, Trash2,
   RotateCcw, SlidersHorizontal, Target, AlertTriangle, ShieldCheck,
-  TrendingUp,
+  TrendingUp, Settings2,
 } from 'lucide-react';
 import { estimateDuration } from '../utils/templates';
 import { estimateLiftingCalories } from '../utils/cardio';
@@ -39,6 +39,7 @@ const TrainingView = memo(({
   onDuplicate,
   onDelete,
   onToggleFavorite,
+  onOpenSettings,
 }) => {
   const [query, setQuery] = useState('');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -64,10 +65,13 @@ const TrainingView = memo(({
 
   return (
     <div data-view-scroll="training" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
-      <div>
+      <div className="flex items-start justify-between gap-3">
+        <div>
         <span className="luxury-eyebrow text-[10px] uppercase">Antrenman Merkezi</span>
         <h2 className="luxury-title text-xl font-black mt-0.5">Bugünkü çalışmanı yönet</h2>
         <p className="luxury-subtitle text-[10px] mt-1">Başlat, kaldığın yerden devam et veya programını düzenle.</p>
+        </div>
+        {onOpenSettings && <button onClick={onOpenSettings} aria-label="Antrenman ayarlarını aç" className="w-9 h-9 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center shrink-0"><Settings2 size={15} /></button>}
       </div>
 
       {recommendation && (

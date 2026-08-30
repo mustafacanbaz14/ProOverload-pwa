@@ -1,11 +1,10 @@
 import React, { memo, useState } from 'react';
-import { User, Scale, Ruler, Info, Save, ArrowRightLeft, Calendar, Droplet, History, ChevronDown } from 'lucide-react';
+import { User, Scale, Ruler, Info, Save, ArrowRightLeft, Calendar, Droplet, History, ChevronDown, Target, Settings2 } from 'lucide-react';
 import { BODY_METRICS, FAT_METHOD_LABELS } from '../utils/constants';
 import { parseNumber, clampNumber, INPUT_LIMITS } from '../utils/helpers';
 import MeasurementGuide from './MeasurementGuide';
-import GoalsCard from './GoalsCard';
 import BodyRatiosCard from './BodyRatiosCard';
-import StrengthGoalsCard from './StrengthGoalsCard';
+import GoalCenterModal from './GoalCenterModal';
 import { computeBMI, BMI_STATUS_COLOR, goalEta } from '../utils/goals';
 import { formatDay } from '../utils/dates';
 
@@ -73,15 +72,16 @@ const MetricsView = memo(({
   settings = {},
   setSettings,
   goalValues = {},
-  weeklyKg = 0,
   allExerciseNames = [],
   personalRecords,
   workouts = [],
   onDateChange,
+  onOpenSettings,
   embedded = false,
 }) => {
   const form = currentMetricsForm;
   const [guideType, setGuideType] = useState('tape');
+  const [goalCenterOpen, setGoalCenterOpen] = useState(false);
   const tapeGoalCount = Object.values(settings.goalMeasurements || {}).filter(value => parseNumber(value) > 0).length;
   const skinfoldGoalCount = Object.values(settings.goalSkinfolds || {}).filter(value => parseNumber(value) > 0).length;
 
@@ -162,12 +162,26 @@ const MetricsView = memo(({
         </div>
       </div>
 
-      <button
-        onClick={() => setIsComparisonOpen(true)}
-        className="w-full bg-zinc-900 active:bg-zinc-800 border border-zinc-800 text-cyan-400 font-bold py-3 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-[11px] transition-colors"
-      >
-        <ArrowRightLeft size={15} className="mr-2" /> Dönemsel Kıyaslama
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setGoalCenterOpen(true)}
+          className="bg-cyan-950/30 active:bg-cyan-900/40 border border-cyan-900/50 text-cyan-300 font-bold py-3 px-3 rounded-2xl flex justify-center items-center text-[10px]"
+        >
+          <Target size={14} className="mr-1.5" /> Hedef Merkezi
+        </button>
+        <button
+          onClick={() => setIsComparisonOpen(true)}
+          className="bg-zinc-900 active:bg-zinc-800 border border-zinc-800 text-zinc-300 font-bold py-3 px-3 rounded-2xl flex justify-center items-center text-[10px]"
+        >
+          <ArrowRightLeft size={14} className="mr-1.5" /> Kıyasla
+        </button>
+      </div>
+
+      {onOpenSettings && (
+        <button onClick={onOpenSettings} className="w-full text-[9px] font-mono text-zinc-500 flex items-center justify-center gap-1.5 py-1">
+          <Settings2 size={11} /> Vücut ve hesaplama ayarları
+        </button>
+      )}
 
       {/* --- KAYIT TARİHİ --- */}
       <Section icon={<Calendar size={13} />}
@@ -397,24 +411,6 @@ const MetricsView = memo(({
         gender={gender}
       />
 
-      <GoalsCard
-        settings={settings}
-        setSettings={setSettings}
-        current={goalValues.current}
-        earliest={goalValues.earliest}
-        weeklyKg={weeklyKg}
-        heightCm={form.height}
-        trends={goalValues.trends}
-      />
-
-      <StrengthGoalsCard
-        settings={settings}
-        setSettings={setSettings}
-        allExerciseNames={allExerciseNames}
-        personalRecords={personalRecords}
-        workouts={workouts}
-      />
-
       {/* --- ÇEVRE ÖLÇÜLERİ --- */}
       <Section icon={<Ruler size={13} />}
         title="Çevre Ölçüleri (cm)"
@@ -477,6 +473,22 @@ const MetricsView = memo(({
       >
         <Save size={16} className="mr-2" /> {isExistingRecord ? 'Kaydı Güncelle' : 'Ölçümü Kaydet'}
       </button>
+
+      {goalCenterOpen && (
+        <GoalCenterModal
+          isOpen={goalCenterOpen}
+          onClose={() => setGoalCenterOpen(false)}
+          settings={settings}
+          setSettings={setSettings}
+          goalValues={goalValues}
+          heightCm={form.height}
+          measurements={form.measurements}
+          skinfolds={form.skinfolds}
+          allExerciseNames={allExerciseNames}
+          personalRecords={personalRecords}
+          workouts={workouts}
+        />
+      )}
     </div>
   );
 });

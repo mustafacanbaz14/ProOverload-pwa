@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { Target, Check, TrendingDown, TrendingUp, Sparkles, AlertTriangle, RotateCcw } from 'lucide-react';
+import { Target, Check, TrendingDown, TrendingUp, Sparkles, AlertTriangle, RotateCcw, Lock, Unlock } from 'lucide-react';
 import { GOAL_FIELDS, goalProgress, deriveGoalSet, goalEta } from '../utils/goals';
 import { formatDay } from '../utils/dates';
 import { clampNumber, parseNumber } from '../utils/helpers';
@@ -109,11 +109,10 @@ const GoalsCard = memo(({
               <div className="flex justify-between items-center gap-2">
                 <span className="text-[11px] font-bold text-zinc-200 min-w-0 truncate flex items-center gap-1.5">
                   {row.label}
-                  {row.isDerived && (
-                    <span className="text-[8px] font-mono text-cyan-500 uppercase tracking-wider flex items-center gap-0.5 shrink-0">
-                      <Sparkles size={8} /> hesaplandı
-                    </span>
-                  )}
+                  <span className={`text-[8px] font-mono uppercase tracking-wider flex items-center gap-0.5 shrink-0 ${row.isDerived ? 'text-cyan-500' : 'text-emerald-500'}`}>
+                    {row.isDerived ? <Sparkles size={8} /> : <Lock size={8} />}
+                    {row.isDerived ? 'otomatik' : parseNumber(settings[row.key]) > 0 ? 'sabit' : 'boş'}
+                  </span>
                 </span>
                 <span className="flex items-center gap-1.5 shrink-0">
                   <input
@@ -137,6 +136,27 @@ const GoalsCard = memo(({
                     }`}
                   />
                   {row.unit && <span className="text-[10px] font-mono text-zinc-600 w-4">{row.unit}</span>}
+                  {row.isDerived && row.hasTarget ? (
+                    <button
+                      type="button"
+                      onClick={() => setGoal(row.key, row.target)}
+                      title="Hesaplanan değeri sabitle"
+                      aria-label={`${row.label} otomatik hedefini sabitle`}
+                      className="w-7 h-7 rounded-lg border border-cyan-900/50 text-cyan-500 flex items-center justify-center"
+                    >
+                      <Lock size={11} />
+                    </button>
+                  ) : parseNumber(settings[row.key]) > 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => setGoal(row.key, '')}
+                      title="Sabidi kaldır, otomatik hesaba dön"
+                      aria-label={`${row.label} sabit hedefini kaldır`}
+                      className="w-7 h-7 rounded-lg border border-zinc-800 text-zinc-500 flex items-center justify-center"
+                    >
+                      <Unlock size={11} />
+                    </button>
+                  ) : null}
                 </span>
               </div>
 

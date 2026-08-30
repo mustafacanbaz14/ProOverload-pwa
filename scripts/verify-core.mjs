@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { APP_VERSION, DEFAULT_EXERCISES, getVolumeLandmarks, BACKUP_KEYS } from '../src/utils/constants.js';
 import { LATEST_RELEASE_NOTES, RELEASE_HISTORY, findRelease } from '../src/utils/releaseHistory.js';
+import { buildArchiveDays, filterArchiveDays } from '../src/utils/archiveTimeline.js';
 import { buildCoachActions } from '../src/utils/coach.js';
 import { pickGhost, buildGhostRace, ghostTargetFor } from '../src/utils/ghostSession.js';
 import { planTimeCrunch, describeTimeCrunch } from '../src/utils/timeCrunch.js';
@@ -6943,6 +6944,22 @@ test('program taslağı özeti en son güncellenen akışı seçiyor', () => {
   assert.equal(status.latest.kind, 'builder');
   assert.equal(status.latest.name, 'Güç');
   assert.equal(status.latest.dayCount, 1);
+});
+
+test('birleşik arşiv aynı günün kayıtlarını tek kartta topluyor', () => {
+  const days = buildArchiveDays({
+    workouts: [{ id: 'w1', date: '2026-08-30', name: 'Üst', exercises: [{ name: 'Bench', sets: [] }], cardio: [{ id: 'c1', type: 'walk', minutes: 20 }] }],
+    metrics: [{ id: 'm1', date: '2026-08-30', weight: 80 }],
+    nutrition: [{ id: 'n1', date: '2026-08-30', meals: [{ name: 'Yulaf' }] }, { id: 'n2', date: '2026-08-29', meals: [] }],
+  });
+  assert.equal(days.length, 2);
+  assert.equal(days[0].date, '2026-08-30');
+  assert.equal(days[0].workouts.length, 1);
+  assert.equal(days[0].cardio.length, 1);
+  assert.equal(days[0].metrics.length, 1);
+  assert.equal(days[0].nutrition.length, 1);
+  assert.equal(filterArchiveDays(days, 'bench', type => type).length, 1);
+  assert.equal(filterArchiveDays(days, 'yulaf', type => type)[0].date, '2026-08-30');
 });
 
 test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {

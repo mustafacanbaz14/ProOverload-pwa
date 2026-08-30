@@ -1,5 +1,5 @@
 import React, { memo, useCallback, useMemo, useState } from 'react';
-import { Trash2, Calendar, Scale, Beef, Pencil, Copy, BookmarkPlus, HeartPulse, Search, Timer, Flame, Activity, Plus, Dumbbell, X, ChevronDown, FolderArchive } from 'lucide-react';
+import { Trash2, Calendar, Scale, Beef, Pencil, Copy, BookmarkPlus, HeartPulse, Search, Timer, Flame, Activity, Plus, Dumbbell, X, ChevronDown, FolderArchive, Layers3, ArrowRightLeft } from 'lucide-react';
 import { calcTonnage, calcEffectiveSets, isCompletedWorkingSet, foldForSearch, getLocalDateString } from '../utils/helpers';
 import {
   findActivity, findEffort, effortDelta, cardioEntryCalories, totalCardioCalories,
@@ -9,6 +9,7 @@ import { dailyTotals } from '../utils/nutritionStats';
 import { parseNumber, clampNumber } from '../utils/helpers';
 import { formatDay, weekdayName, groupIntoWeeks, groupWeeksIntoMonths } from '../utils/dates';
 import { dayMindCalories } from '../utils/wellness';
+import { buildArchiveDays, filterArchiveDays } from '../utils/archiveTimeline';
 
 /**
  * Listeyi haftalara bölüp araya başlık koyar.
@@ -114,6 +115,7 @@ const HistoryView = memo(({
   onUpdateNutrition,
   bodyContextForDate,
   energyForRecord,
+  onCompareMetrics,
 }) => {
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
@@ -131,6 +133,14 @@ const HistoryView = memo(({
     foldForSearch(`${m.date} ${m.weight} ${m.bodyFat || ''}`).includes(q)), [metricsHistory, q]);
   const filteredNutrition = useMemo(() => !q ? nutritionHistory : nutritionHistory.filter(n =>
     foldForSearch(`${n.date} ${(n.meals || []).map(meal => meal.name).join(' ')}`).includes(q)), [nutritionHistory, q]);
+  const archiveDays = useMemo(
+    () => buildArchiveDays({ workouts, metrics: metricsHistory, nutrition: nutritionHistory }),
+    [workouts, metricsHistory, nutritionHistory],
+  );
+  const filteredArchiveDays = useMemo(
+    () => filterArchiveDays(archiveDays, query, type => findActivity(type)?.label || type),
+    [archiveDays, query],
+  );
   const weightForDate = useCallback(
     (date) => bodyContextForDate?.(date)?.weight || latestWeight,
     [bodyContextForDate, latestWeight],
@@ -186,28 +196,34 @@ const HistoryView = memo(({
           </div>
         )}
       </section>
-      <div className="luxury-segmented grid grid-cols-4 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+      <div className="luxury-segmented grid grid-cols-5 bg-zinc-900 p-1 rounded-2xl border border-zinc-800">
+        <button
+          onClick={() => setHistoryTab('all')}
+          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'all' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+        >
+          Tümü ({archiveDays.length})
+        </button>
         <button
           onClick={() => setHistoryTab('workouts')}
-          className={`py-2 rounded-xl text-[9px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'workouts' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'workouts' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
         >
           Ağırlık ({strengthWorkouts.length})
         </button>
         <button
           onClick={() => setHistoryTab('cardio')}
-          className={`py-2 rounded-xl text-[9px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'cardio' ? 'bg-red-600 text-white' : 'text-zinc-500'}`}
+          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'cardio' ? 'bg-red-600 text-white' : 'text-zinc-500'}`}
         >
           Aktivite ({cardioRecords.length})
         </button>
         <button
           onClick={() => setHistoryTab('metrics')}
-          className={`py-2 rounded-xl text-[9px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'metrics' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'metrics' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
         >
           Ölçüm ({metricsHistory.length})
         </button>
         <button
           onClick={() => setHistoryTab('nutrition')}
-          className={`py-2 rounded-xl text-[9px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'nutrition' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+          className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-colors ${historyTab === 'nutrition' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
         >
           Besin ({nutritionHistory.length})
         </button>
@@ -217,6 +233,74 @@ const HistoryView = memo(({
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tarih, hareket, öğün veya kayıt ara…" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-zinc-200 outline-none focus:border-cyan-600" />
       </div>
+
+      {historyTab === 'all' && (
+        <div className="space-y-3">
+          <div className="bg-cyan-950/15 border border-cyan-900/30 rounded-xl p-3 flex items-start gap-2">
+            <Layers3 size={14} className="text-cyan-400 shrink-0 mt-0.5" />
+            <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">Aynı güne ait antrenman, aktivite, ölçüm, beslenme ve enerji kaydı tek kartta. Ay ve hafta başlıklarına dokunarak arşivi aç.</p>
+          </div>
+          {filteredArchiveDays.length === 0 ? (
+            <div className="text-center py-12 text-zinc-600 text-xs font-mono">Eşleşen günlük kayıt yok</div>
+          ) : (
+            <WeekGroups key="all" items={filteredArchiveDays} expandAll={Boolean(q)}>{day => (
+              <article key={day.date} className="defer-card-render bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                <header className="px-3.5 py-3 bg-zinc-950/60 border-b border-zinc-800 flex items-center justify-between gap-2">
+                  <div>
+                    <strong className="text-[11px] text-zinc-200 block">{formatDay(day.date, 'long')}</strong>
+                    <span className="text-[8px] font-mono text-zinc-600">
+                      {day.workouts.length} antrenman · {day.cardio.length} aktivite · {day.metrics.length} ölçüm · {day.nutrition.length} besin
+                    </span>
+                  </div>
+                  {day.metrics.length > 0 && onCompareMetrics && (
+                    <button onClick={onCompareMetrics} className="h-8 px-2 rounded-lg border border-zinc-800 text-[8px] font-bold text-cyan-400 flex items-center gap-1">
+                      <ArrowRightLeft size={10} /> Kıyasla
+                    </button>
+                  )}
+                </header>
+                <div className="p-2.5 space-y-2">
+                  {day.workouts.map(workout => (
+                    <div key={`w-${workout.id}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
+                      <Dumbbell size={13} className="text-cyan-400 shrink-0" />
+                      <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block truncate">{workout.name || 'Serbest Antrenman'}</strong><span className="text-[8px] font-mono text-zinc-600">{(workout.exercises || []).length} hareket · {calcEffectiveSets(workout.exercises)} etkili set</span></div>
+                      <button onClick={() => handleEditOldWorkout?.(workout)} aria-label="Antrenmanı düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                    </div>
+                  ))}
+                  {day.cardio.map(record => {
+                    const activity = findActivity(record.cardio.type);
+                    return (
+                      <div key={`c-${record.workoutId}-${record.cardio.id}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
+                        <HeartPulse size={13} className="text-red-400 shrink-0" />
+                        <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block truncate">{activity?.label || record.cardio.type}</strong><span className="text-[8px] font-mono text-zinc-600">{record.cardio.minutes || 0} dk · ~{cardioEntryCalories(record.cardio, weightForDate(day.date))} kcal</span></div>
+                        <button onClick={() => onEditCardio?.(record)} aria-label="Aktiviteyi düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                      </div>
+                    );
+                  })}
+                  {day.metrics.map(metric => (
+                    <div key={`m-${metric.id || metric.date}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
+                      <Scale size={13} className="text-emerald-400 shrink-0" />
+                      <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block">Vücut ölçümü</strong><span className="text-[8px] font-mono text-zinc-600">{parseNumber(metric.weight) || '—'} kg · %{parseNumber(metric.bodyFat) || '—'} yağ</span></div>
+                      <button onClick={() => handleEditMetric?.(metric)} aria-label="Ölçümü düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                    </div>
+                  ))}
+                  {day.nutrition.map(record => {
+                    const totals = dailyTotals(record);
+                    const energy = energyForRecord?.(record);
+                    const balance = energy ? Math.round(totals.calories - parseNumber(energy.total)) : null;
+                    return (
+                      <div key={`n-${record.id || record.date}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
+                        <Beef size={13} className="text-orange-400 shrink-0" />
+                        <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block">Beslenme & enerji</strong><span className="text-[8px] font-mono text-zinc-600">{Math.round(totals.calories)} kcal · P {Math.round(totals.protein)}g{balance !== null ? ` · denge ${balance > 0 ? '+' : ''}${balance}` : ''}</span></div>
+                        <button onClick={() => handleEditNutrition?.(record)} aria-label="Beslenmeyi düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </article>
+            )}</WeekGroups>
+          )}
+        </div>
+      )}
 
       {historyTab === 'workouts' && (
         <div className="space-y-3">

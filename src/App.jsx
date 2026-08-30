@@ -309,7 +309,7 @@ export default function App() {
   });
   const [isViewPending, beginViewTransition] = useTransition();
   const viewScrollPositionsRef = useRef(new Map());
-  const [historyTab, setHistoryTab] = useState('workouts');
+  const [historyTab, setHistoryTab] = useState('all');
   const [analysisType, setAnalysisType] = useState('body');
   const [progressTab, setProgressTab] = useState('body');
   // Antrenman sekmesi iki bölüme ayrıldı: ağırlık ve kardiyo. Kardiyonun
@@ -344,6 +344,7 @@ export default function App() {
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [settingsSection, setSettingsSection] = useState('all');
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isFoodSearchOpen, setIsFoodSearchOpen] = useState(false);
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
@@ -423,6 +424,11 @@ export default function App() {
     setBuilderDraft(null);
     setBuilderWizardMode(false);
     setIsWizardOpen(true);
+  }, []);
+
+  const openSettings = useCallback((section = 'all') => {
+    setSettingsSection(section);
+    setIsSettingsModalOpen(true);
   }, []);
 
   useEffect(() => {
@@ -4150,7 +4156,7 @@ export default function App() {
             <button onClick={() => setIsGlobalSearchOpen(true)} aria-label="Uygulamada ara" className="luxury-icon-button">
               <Search size={18} />
             </button>
-            <button onClick={() => setIsSettingsModalOpen(true)} aria-label="Ayarları aç" className="luxury-icon-button">
+            <button onClick={() => openSettings('all')} aria-label="Ayarları aç" className="luxury-icon-button">
               <Settings size={18} />
             </button>
           </div>
@@ -4168,7 +4174,7 @@ export default function App() {
               needsBackup={needsBackup}
               dashboardStats={dashboardStats}
               templates={templates}
-              setIsSettingsModalOpen={setIsSettingsModalOpen}
+              setIsSettingsModalOpen={(open) => open ? openSettings('all') : setIsSettingsModalOpen(false)}
               handleStartRequest={handleStartRequest}
               setDeleteConfirm={setDeleteConfirm}
               onSelectMuscle={setDetailMuscle}
@@ -4292,6 +4298,7 @@ export default function App() {
               onDuplicate={handleDuplicateTemplate}
               onDelete={(template) => setDeleteConfirm({ isOpen: true, type: 'template', id: template.id })}
               onToggleFavorite={handleToggleTemplateFavorite}
+              onOpenSettings={() => openSettings('training')}
             />
                 )}
               </div>
@@ -4341,6 +4348,7 @@ export default function App() {
               waterTarget={waterTarget}
               onAddWater={handleAddWater}
               onToggleWaterHeat={(v) => setSettings(prev => ({ ...prev, waterHeatBonus: v }))}
+              onOpenSettings={() => openSettings('nutrition')}
             />
           )}
 
@@ -4377,6 +4385,7 @@ export default function App() {
                 allExerciseNames: allExercisesNames,
                 personalRecords,
                 workouts,
+                onOpenSettings: () => openSettings('body'),
               }}
               analyticsProps={{
                 recordTimeline,
@@ -4465,6 +4474,7 @@ export default function App() {
               onUpdateNutrition={handleUpdateNutritionField}
               bodyContextForDate={bodyContextForDate}
               energyForRecord={energyForNutritionRecord}
+              onCompareMetrics={() => setIsComparisonOpen(true)}
             />
           )}
           </Suspense>
@@ -4590,14 +4600,22 @@ export default function App() {
         {isOnboardingOpen && <OnboardingModal
           isOpen={isOnboardingOpen}
           settings={settings}
-          onFinish={(patch) => {
+          status={{
+            profile: metricsHistory.length > 0,
+            program: templates.length > 0,
+            workout: workouts.some(workout => (workout.exercises || []).length > 0),
+            backup: Boolean(lastBackupDate),
+          }}
+          onFinish={(patch, starterKey) => {
             setSettings(prev => ({ ...prev, ...patch }));
             setIsOnboardingOpen(false);
+            if (starterKey) handleInstallStarter(starterKey);
           }}
         />}
 
         {/* SETTINGS MODAL */}
         {isSettingsModalOpen && <SettingsModal
+          key={settingsSection}
           isOpen={isSettingsModalOpen}
           onClose={() => setIsSettingsModalOpen(false)}
           settings={settings}
@@ -4629,6 +4647,7 @@ export default function App() {
           notificationState={notificationPermission()}
           onExportCsv={handleExportCsv}
           profileGender={profileGender}
+          initialSection={settingsSection}
         />}
 
         {/* RELEASE NOTES MODAL */}

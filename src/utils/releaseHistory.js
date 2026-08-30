@@ -125,7 +125,7 @@ const RELEASE_9_1 = release('9.1', '2026-08-30', 'Bugün Odaklı Ana Ekran', [
   item('Beş Sürümlük UX Yol Haritası', 'Antrenman kurma, beslenme ve enerji, gelişim ve arşiv ile mağaza kalitesini kapsayan sonraki dört sadeleştirme sürümü belgelenerek sabitlendi.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Program Akışı ve Günlük Beslenme', [
+const RELEASE_9_3 = release('9.3', '2026-08-30', 'Program Akışı ve Günlük Beslenme', [
   item('Tek Yönlendirmeli Program Akışı', 'Antrenman Merkezi program amacı, taslak, hareket düzenleme ve haftalık kontrolü tek baskın başlangıç kartında sıralıyor; dağınık oluşturma yolları ikincil seçeneklere indi.'),
   item('Kayıpsız Sihirbaz Taslağı', 'Program sihirbazındaki gün, düzen, ekipman, kas önceliği, hareket sırası, takvim ve ikame seçimleri her değişiklikte cihazda otomatik korunuyor.'),
   item('Kayıpsız Elle Program Taslağı', 'Program adı, günler, hareketler, setler, sıralama ve haftalık plan tercihi kaydediliyor; pencere kapansa veya uygulama yenilense bile taslak geri yükleniyor.'),
@@ -138,6 +138,22 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Program 
   item('Geçmiş Gün Doğrudan Düzenleme', 'Tarih seçici, günlük özet ve kayıt alanı aynı akışta kaldı; geçmiş günün öğünleri, toplam makroları, suyu ve enerji girdileri ayrı arşiv yolculuğu olmadan değiştirilebiliyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'Yeni taslaklar ayrı ve güvenli localStorage anahtarlarında tutuluyor; mevcut antrenman, şablon, beslenme, yedek ve çevrimdışı çalışma şemaları değiştirilmedi.'),
   item('491 Çekirdek Kontrol', 'Taslak sınırlandırma, bozuk hareket temizleme ve en güncel akışı seçme senaryoları regresyon ağına eklendi; mevcut kas sınıflandırma ve mağaza kontrolleri korunuyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Hedef Merkezi, Birleşik Arşiv ve İlk Kullanım', [
+  item('Tek Hedef Merkezi', 'Kilo, yağ oranı, yağsız kütle, FFMI, çevre, kaliper ve hareket ağırlığı hedefleri dört sekmeli tek bir merkezde toplandı; mevcut hedef kayıtları değiştirilmedi.'),
+  item('Otomatik ve Sabit Hedef Ayrımı', 'İlişkili kompozisyon hedefleri artık otomatik hesaplanan veya kullanıcı tarafından sabitlenen olarak açıkça etiketleniyor; tek dokunuşla sabitleme ve otomatik hesaba dönüş var.'),
+  item('Birleşik Gün Arşivi', 'Antrenman, kardiyo, vücut ölçümü, beslenme ve enerji aynı gün kartında gösteriliyor; mevcut tür bazlı arşiv ekranları ayrıntılı kullanım için korunuyor.'),
+  item('Ay, Hafta ve Gün Dili', 'Birleşik arşiv mevcut ay ve hafta katmanlarını kullanıyor, her günlük kartta tarih ile haftanın gününü birlikte gösteriyor ve ortak arama bütün kayıt türlerini tarıyor.'),
+  item('Karttan Doğrudan Düzenleme', 'Birleşik gün kartındaki antrenman, aktivite, ölçüm ve beslenme satırları ilgili düzenleme ekranını tek dokunuşla açıyor; ölçüm varsa kıyaslama da doğrudan erişilebilir.'),
+  item('Dört Adımlı İlk Kurulum', 'Kısa ilk kullanım turu hedef, deneyim, arayüz ve başlangıç listesini kapsıyor; koruma hedefindeki eski anahtar tutarsızlığı da giderildi.'),
+  item('Güvenli Örnek Program', 'Yeni kullanıcı isterse düzenlenebilir bir başlangıç programı kurabiliyor; örnek özellik sahte antrenman veya beslenme geçmişi üretmediği için analiz verisini kirletmiyor.'),
+  item('Aranabilir ve Filtrelenebilir Ayarlar', 'Ayarlar sekiz anlamlı kategoriye ayrıldı; dinlenme, tema veya NEAT gibi terimler yazıldığında ilgili grup ve bağımlı açıklamalar birlikte gösteriliyor.'),
+  item('Bağlamsal Ayar Kısayolları', 'Antrenman, beslenme ve vücut ekranları kendi ayar kategorisini doğrudan açıyor; kullanıcı uzun ayar listesinin başından hedefini aramak zorunda kalmıyor.'),
+  item('İki Katmanlı Yardım', 'Ayar kategorileri önce kısa bir özet gösteriyor, ayrıntılı açıklama yalnız kullanıcı açarsa görünüyor; ileri bilgi korunurken ilk bakıştaki metin yükü azaltıldı.'),
+  item('Yayın Kalite Kapısı', 'PWA güncellemesi, çevrimdışı fallback, aktif antrenman koruması, yedek akışı, erişilebilir yazı ölçeği, güvenli alan ve sürüm notları her üretim buildinde otomatik denetleniyor.'),
+  item('Mobil Yayın Kontrolü', 'Gerçek cihazda yedek geri yükleme, çevrimdışı açılış, iPhone güvenli alanı, büyük yazı, kamera izni ve güncelleme senaryoları için kalıcı yayın kontrol listesi eklendi.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v9.5 yeni bir kalıcı veri anahtarı veya kırıcı şema eklemiyor; mevcut localStorage kayıtları, yedek biçimi ve ana ekrana kurulmuş PWA güncelleme akışı korunuyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -214,6 +230,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_3,
   RELEASE_9_1,
   RELEASE_9_0,
   RELEASE_8_9,

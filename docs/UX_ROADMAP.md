@@ -46,6 +46,8 @@ Durum: Uygulandı.
 
 ## 9.4 — Gelişim, hedefler ve arşiv
 
+Durum: Uygulandı (v9.5 birleşik yayını).
+
 - Kilo, yağ oranı, FFMI, çevre, kaliper ve güç hedeflerini tek hedef merkezinde topla.
 - İlişkili hedeflerin otomatik hesaplanan ve kullanıcı tarafından sabitlenen alanlarını ayır.
 - Arşivi ay → hafta → gün düzeninde, ortak arama ve filtrelerle sadeleştir.
@@ -53,6 +55,8 @@ Durum: Uygulandı.
 - Düzenleme ve karşılaştırma eylemlerini kayıt kartından tek dokunuşla aç.
 
 ## 9.5 — İlk kullanım, ayarlar ve mağaza kalitesi
+
+Durum: Uygulandı.
 
 - İlk açılışta kısa kurulum, örnek veri ve tamamlanabilir başlangıç kontrol listesi sun.
 - Ayarları ara, kategoriye göre filtrele ve ilgili ekrandan bağlamsal ayara git.

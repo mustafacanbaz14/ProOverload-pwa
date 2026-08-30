@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import {
   Activity, BarChart3, Beef, BookOpen, ChevronDown, Copy,
-  Droplets, Flame, Plus, Save, Search, Sparkles, Trash2, TrendingUp, Footprints,
+  Droplets, Flame, Plus, Save, Search, Sparkles, Trash2, TrendingUp, Footprints, Settings2,
 } from 'lucide-react';
 import {
   parseNumber, clampNumber, INPUT_LIMITS, getLocalDateString,
@@ -64,6 +64,7 @@ const NutritionView = memo(({
   waterTarget = null,
   onAddWater,
   onToggleWaterHeat,
+  onOpenSettings,
 }) => {
   const safeMeals = Array.isArray(currentNutritionForm.meals) ? currentNutritionForm.meals : [];
   const isDaily = currentNutritionForm.entryMode === 'daily';
@@ -267,6 +268,7 @@ const NutritionView = memo(({
           <h2 className="luxury-title text-xl font-black mt-0.5">Beslenme</h2>
           <p className="luxury-subtitle text-[10px] mt-1">Önce {isToday ? 'bugünün' : 'seçili günün'} özeti, ayrıntılar aşağıda.</p>
         </div>
+        <div className="flex items-end gap-1.5">
         <label className="text-right">
           <span className="text-[9px] font-bold uppercase text-zinc-600 block mb-1">{weekdayName(currentNutritionForm.date)}</span>
           <input
@@ -277,6 +279,8 @@ const NutritionView = memo(({
             className="bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-zinc-300 font-mono text-[10px] outline-none focus:border-orange-500"
           />
         </label>
+        {onOpenSettings && <button onClick={onOpenSettings} aria-label="Beslenme ayarlarını aç" className="w-9 h-9 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center"><Settings2 size={14} /></button>}
+        </div>
       </header>
 
       <section className="luxury-feature-card bg-gradient-to-br from-orange-950/40 via-zinc-900 to-zinc-900 rounded-3xl border border-orange-900/30 p-4 shadow-lg shadow-black/20">

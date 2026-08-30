@@ -1,6 +1,6 @@
 import { REST_ALERT_INTENSITIES, REST_ALERT_TONES } from '../lockScreen';
 import React, { memo, useState } from 'react';
-import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles, Volume2, CheckCircle2, AlertTriangle, ShieldCheck, ExternalLink } from 'lucide-react';
+import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles, Volume2, CheckCircle2, AlertTriangle, ShieldCheck, ExternalLink, Search, ChevronDown } from 'lucide-react';
 import { exportAppleHealthXML, exportGoogleFitJSON } from '../utils/healthSync';
 import { EXPERIENCE_LEVELS, APP_VERSION } from '../utils/constants';
 import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plates';
@@ -34,7 +34,7 @@ const Toggle = ({ label, hint, checked, onChange }) => (
   </label>
 );
 
-const Group = ({ icon, title, children }) => (
+const Group = ({ icon, title, children, visible = true }) => !visible ? null : (
   <div className="space-y-2.5">
     <h4 className="text-[11px] font-bold text-zinc-400 uppercase tracking-wider flex items-center border-b border-zinc-800 pb-1.5">
       <span className="mr-1.5 flex items-center">{icon}</span>{title}
@@ -42,6 +42,17 @@ const Group = ({ icon, title, children }) => (
     {children}
   </div>
 );
+
+const SETTINGS_SECTIONS = [
+  { key: 'all', label: 'Tümü', title: 'Tüm ayarlar', summary: 'Bir kategori seç veya ayar adını ara.', detail: 'Arama, ilgili ayar grubunu bütünüyle gösterir; böylece bulunan ayarın açıklaması ve bağlı kontrolleri kaybolmaz.' },
+  { key: 'data', label: 'Veri', title: 'Veri, hedef ve aktarım', summary: 'Yedek, CSV, program kodu ve temel antrenman yaklaşımı.', detail: 'JSON yedeği geri yükleme içindir; CSV analiz içindir. Program kodu yalnız program yapısını taşır.' },
+  { key: 'appearance', label: 'Görünüm', title: 'Görünüm', summary: 'Tema, yazı boyutu ve basit/detaylı arayüz.', detail: 'Basit mod özellik silmez; ileri kartları ihtiyaç anına kadar kapalı tutar.' },
+  { key: 'body', label: 'Vücut', title: 'Vücut ve hesaplama', summary: 'BMI, NEAT ve enerji hesabı varsayımları.', detail: 'Bu ayarlar tahmin yöntemini değiştirir. Geçmiş kayıtlardaki dondurulmuş vücut verileri korunur.' },
+  { key: 'training', label: 'Antrenman', title: 'Antrenman', summary: 'Set, dinlenme, ses, yük ve ilerleme davranışı.', detail: 'Hareket bazında yazılan özel ayarlar genel varsayılanlardan önceliklidir.' },
+  { key: 'nutrition', label: 'Beslenme', title: 'Beslenme hedefleri', summary: 'Dönem hedefi, hız ve protein çarpanları.', detail: 'Hız seçimi vücut ağırlığının haftalık yüzdesidir; güvenli sınır analizde ayrıca denetlenir.' },
+  { key: 'device', label: 'Cihaz', title: 'Cihaz ve sağlık', summary: 'Kilit ekranı, ekran açıklığı ve sağlık dışa aktarımı.', detail: 'Sağlık dışa aktarımı tek yönlü dosya üretir; uygulama diğer sağlık uygulamalarını doğrudan okuyamaz.' },
+  { key: 'privacy', label: 'Güven', title: 'Gizlilik ve sürüm', summary: 'Politikalar, mağaza hazırlığı ve sürüm notları.', detail: 'Kişisel kayıtlar cihazda tutulur. Uygulama sağlık tahminleri sunar; tıbbi cihaz değildir.' },
+];
 
 const SettingsModal = memo(({
   isOpen,
@@ -76,12 +87,28 @@ const SettingsModal = memo(({
   trainingGoal = 'hypertrophy',
   onChangeTrainingGoal,
   onImportProgramCode,
+  initialSection = 'all',
 }) => {
   const [programCode, setProgramCode] = useState('');
   const [soundTest, setSoundTest] = useState(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeSection, setActiveSection] = useState(
+    SETTINGS_SECTIONS.some(section => section.key === initialSection) ? initialSection : 'all',
+  );
+  const [helpOpen, setHelpOpen] = useState(false);
   if (!isOpen) return null;
 
   const set = (patch) => setSettings(s => ({ ...s, ...patch }));
+  const normalizedQuery = searchQuery.trim().toLocaleLowerCase('tr-TR');
+  const sectionVisible = (key) => {
+    const section = SETTINGS_SECTIONS.find(item => item.key === key);
+    if (!section) return false;
+    const categoryMatch = normalizedQuery ? true : activeSection === 'all' || activeSection === key;
+    const searchMatch = !normalizedQuery || `${section.label} ${section.title} ${section.summary} ${section.detail}`.toLocaleLowerCase('tr-TR').includes(normalizedQuery);
+    return categoryMatch && searchMatch;
+  };
+  const visibleCount = SETTINGS_SECTIONS.filter(section => section.key !== 'all' && sectionVisible(section.key)).length;
+  const activeHelp = SETTINGS_SECTIONS.find(section => section.key === activeSection) || SETTINGS_SECTIONS[0];
 
   const testSound = async (patch = {}) => {
     const result = await onTestRestAlert?.({
@@ -109,11 +136,11 @@ const SettingsModal = memo(({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh]">
 
         <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950 shrink-0">
-          <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
+          <h3 id="settings-title" className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
             <Settings size={16} className="mr-2 text-cyan-400" /> Ayarlar
           </h3>
           <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
@@ -121,10 +148,29 @@ const SettingsModal = memo(({
           </button>
         </div>
 
+        <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-950/95 shrink-0 space-y-2">
+          <div className="relative">
+            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
+            <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Ayarlarda ara: dinlenme, tema, NEAT…" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 pl-9 pr-3 text-[10px] text-zinc-200 outline-none focus:border-cyan-600" />
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-0.5">
+            {SETTINGS_SECTIONS.map(section => (
+              <button key={section.key} onClick={() => { setActiveSection(section.key); setSearchQuery(''); setHelpOpen(false); }} className={`shrink-0 px-2.5 py-1.5 rounded-lg border text-[8px] font-bold ${activeSection === section.key ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}>{section.label}</button>
+            ))}
+          </div>
+          <button type="button" onClick={() => setHelpOpen(value => !value)} aria-expanded={helpOpen} className="w-full flex items-start gap-2 text-left bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
+            <Sparkles size={12} className="text-cyan-500 shrink-0 mt-0.5" />
+            <span className="min-w-0 flex-1"><strong className="text-[9px] text-zinc-300 block">{activeHelp.title}</strong><span className="text-[8px] font-mono text-zinc-600 leading-relaxed block">{activeHelp.summary}</span>{helpOpen && <span className="text-[8px] font-mono text-zinc-500 leading-relaxed block mt-1 pt-1 border-t border-zinc-800">{activeHelp.detail}</span>}</span>
+            <ChevronDown size={12} className={`text-zinc-600 shrink-0 transition-transform ${helpOpen ? 'rotate-180' : ''}`} />
+          </button>
+        </div>
+
         <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-5">
 
+          {visibleCount === 0 && <div className="py-12 text-center"><Search size={20} className="text-zinc-700 mx-auto mb-2" /><p className="text-[10px] font-mono text-zinc-600">Bu aramayla eşleşen ayar grubu yok.</p></div>}
+
           {/* Veri yedekleme en üstte: veri yalnızca bu cihazda tutuluyor. */}
-          <div className="bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-3">
+          <div className={`${sectionVisible('data') ? '' : 'hidden'} bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-3`}>
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center">
                 <Database size={13} className="mr-1.5" /> Veri Yedekleme
@@ -376,7 +422,7 @@ const SettingsModal = memo(({
           </div>
 
           {/* --- GÖRÜNÜM --- */}
-          <Group icon={<Sun size={12} className="text-amber-400" />} title="Görünüm">
+          <Group visible={sectionVisible('appearance')} icon={<Sun size={12} className="text-amber-400" />} title="Görünüm">
             <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
               <span className="text-zinc-200 text-[11px] font-bold block mb-2">Tema</span>
               <div className="grid grid-cols-2 gap-2">
@@ -487,7 +533,7 @@ const SettingsModal = memo(({
           </Group>
 
           {/* --- VÜCUT & HESAPLAMA --- */}
-          <Group icon={<Beef size={12} className="text-cyan-400" />} title="Vücut & Hesaplama">
+          <Group visible={sectionVisible('body')} icon={<Beef size={12} className="text-cyan-400" />} title="Vücut & Hesaplama">
             <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
               <span className="text-zinc-200 text-[11px] font-bold block">BMI Değerlendirmesi</span>
               <span className="text-zinc-500 text-[10px] font-mono block mt-0.5 mb-2 leading-snug">
@@ -603,7 +649,7 @@ const SettingsModal = memo(({
           </Group>
 
           {/* --- ANTRENMAN --- */}
-          <Group icon={<Dumbbell size={12} className="text-cyan-400" />} title="Antrenman">
+          <Group visible={sectionVisible('training')} icon={<Dumbbell size={12} className="text-cyan-400" />} title="Antrenman">
             <Toggle
               label="Son Seti Kopyala"
               hint="Yeni set eklerken önceki setin değerlerini klonlar."
@@ -975,7 +1021,7 @@ const SettingsModal = memo(({
           </Group>
 
           {/* --- BESLENME --- */}
-          <Group icon={<Beef size={12} className="text-orange-400" />} title="Beslenme Hedefleri">
+          <Group visible={sectionVisible('nutrition')} icon={<Beef size={12} className="text-orange-400" />} title="Beslenme Hedefleri">
             <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
               <span className="text-zinc-200 text-[11px] font-bold block mb-2">Dönem Hedefi</span>
               <div className="grid grid-cols-3 gap-2">
@@ -1057,7 +1103,7 @@ const SettingsModal = memo(({
           </Group>
 
           {/* --- CİHAZ --- */}
-          <Group icon={<Smartphone size={12} className="text-emerald-400" />} title="Cihaz">
+          <Group visible={sectionVisible('device')} icon={<Smartphone size={12} className="text-emerald-400" />} title="Cihaz">
             <Toggle
               label="Kilit Ekranı Kartı"
               hint="Ekran kapalıyken süre, hareket ve dinlenme kilit ekranında görünür."
@@ -1073,7 +1119,7 @@ const SettingsModal = memo(({
           </Group>
 
           {/* --- SAĞLIK DIŞA AKTARIM --- */}
-          <Group icon={<HeartPulse size={12} className="text-red-400" />} title="Sağlık Uygulamaları">
+          <Group visible={sectionVisible('device')} icon={<HeartPulse size={12} className="text-red-400" />} title="Sağlık Uygulamaları">
             <div className="grid grid-cols-2 gap-2">
               <button
                 onClick={() => downloadBlob(exportAppleHealthXML(workouts, nutritionHistory), 'application/xml', 'Apple_Health_Export.xml')}
@@ -1093,7 +1139,7 @@ const SettingsModal = memo(({
           {/* Mağaza politikaları uygulamanın içinde kolay erişilebilir olmalı.
               Bağlantılar statik sayfaya gider; uygulama durumu veya localStorage
               bozulsa bile politika ve destek içeriği açılabilir. */}
-          <Group icon={<ShieldCheck size={12} className="text-emerald-400" />} title="Gizlilik & Mağaza">
+          <Group visible={sectionVisible('privacy')} icon={<ShieldCheck size={12} className="text-emerald-400" />} title="Gizlilik & Mağaza">
             <div className="grid grid-cols-3 gap-2">
               {[
                 { href: '/privacy.html', label: 'Gizlilik' },
@@ -1126,7 +1172,7 @@ const SettingsModal = memo(({
           </Group>
 
           {/* --- SÜRÜM BİLGİSİ --- */}
-          <Group icon={<Sparkles size={12} className="text-cyan-400" />} title="Sürüm & Güncelleme">
+          <Group visible={sectionVisible('privacy')} icon={<Sparkles size={12} className="text-cyan-400" />} title="Sürüm & Güncelleme">
             <div className="flex items-center justify-between bg-zinc-950 p-3 rounded-xl border border-zinc-800">
               <div>
                 <span className="text-[11px] font-bold text-zinc-200 block">ProOverload v{APP_VERSION}</span>
