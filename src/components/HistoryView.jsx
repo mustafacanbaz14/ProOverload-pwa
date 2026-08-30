@@ -116,6 +116,7 @@ const HistoryView = memo(({
   bodyContextForDate,
   energyForRecord,
   onCompareMetrics,
+  onOpenEnergyDay,
 }) => {
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
@@ -229,6 +230,15 @@ const HistoryView = memo(({
         </button>
       </div>
 
+      <button
+        type="button"
+        onClick={() => onOpenEnergyDay?.('')}
+        className="w-full rounded-xl border border-red-900/35 bg-red-950/10 px-3 py-2.5 flex items-center justify-between text-left active:bg-red-950/25"
+      >
+        <span className="flex items-center gap-2"><Flame size={14} className="text-red-400" /><span><strong className="text-[9px] text-zinc-300 block">Gün gün kalori ve harcama</strong><span className="text-[8px] font-mono text-zinc-600">Geçmiş günlerin enerji dökümünü tek tabloda aç</span></span></span>
+        <span className="text-[9px] font-bold text-red-400">Aç</span>
+      </button>
+
       <div className="relative">
         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
         <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Tarih, hareket, öğün veya kayıt ara…" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl pl-9 pr-3 py-2.5 text-xs text-zinc-200 outline-none focus:border-cyan-600" />
@@ -291,6 +301,7 @@ const HistoryView = memo(({
                       <div key={`n-${record.id || record.date}`} className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 flex items-center gap-2">
                         <Beef size={13} className="text-orange-400 shrink-0" />
                         <div className="min-w-0 flex-1"><strong className="text-[10px] text-zinc-300 block">Beslenme & enerji</strong><span className="text-[8px] font-mono text-zinc-600">{Math.round(totals.calories)} kcal · P {Math.round(totals.protein)}g{balance !== null ? ` · denge ${balance > 0 ? '+' : ''}${balance}` : ''}</span></div>
+                        <button onClick={() => onOpenEnergyDay?.(day.date)} aria-label="Bu günün enerji detayını aç" className="p-2 text-red-500 active:text-red-300"><Flame size={12} /></button>
                         <button onClick={() => handleEditNutrition?.(record)} aria-label="Beslenmeyi düzenle" className="p-2 text-zinc-500 active:text-cyan-400"><Pencil size={12} /></button>
                       </div>
                     );
@@ -579,6 +590,9 @@ const HistoryView = memo(({
                       </span>
                     </div>
                     <div className="flex items-center shrink-0">
+                      <button onClick={() => onOpenEnergyDay?.(n.date)} title="Bu günün enerji detayını aç" aria-label="Bu günün enerji detayını aç" className="text-red-500 active:text-red-300 p-2">
+                        <Flame size={14} />
+                      </button>
                       <button onClick={() => handleEditNutrition?.(n)} title="Bu kaydı düzenle" aria-label="Bu kaydı düzenle" className="text-zinc-500 active:text-cyan-400 p-2">
                         <Pencil size={14} />
                       </button>

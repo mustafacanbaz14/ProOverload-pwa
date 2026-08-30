@@ -140,7 +140,7 @@ const RELEASE_9_3 = release('9.3', '2026-08-30', 'Program Akışı ve Günlük B
   item('491 Çekirdek Kontrol', 'Taslak sınırlandırma, bozuk hareket temizleme ve en güncel akışı seçme senaryoları regresyon ağına eklendi; mevcut kas sınıflandırma ve mağaza kontrolleri korunuyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Hedef Merkezi, Birleşik Arşiv ve İlk Kullanım', [
+const RELEASE_9_5 = release('9.5', '2026-08-30', 'Hedef Merkezi, Birleşik Arşiv ve İlk Kullanım', [
   item('Tek Hedef Merkezi', 'Kilo, yağ oranı, yağsız kütle, FFMI, çevre, kaliper ve hareket ağırlığı hedefleri dört sekmeli tek bir merkezde toplandı; mevcut hedef kayıtları değiştirilmedi.'),
   item('Otomatik ve Sabit Hedef Ayrımı', 'İlişkili kompozisyon hedefleri artık otomatik hesaplanan veya kullanıcı tarafından sabitlenen olarak açıkça etiketleniyor; tek dokunuşla sabitleme ve otomatik hesaba dönüş var.'),
   item('Birleşik Gün Arşivi', 'Antrenman, kardiyo, vücut ölçümü, beslenme ve enerji aynı gün kartında gösteriliyor; mevcut tür bazlı arşiv ekranları ayrıntılı kullanım için korunuyor.'),
@@ -154,6 +154,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Hedef Me
   item('Yayın Kalite Kapısı', 'PWA güncellemesi, çevrimdışı fallback, aktif antrenman koruması, yedek akışı, erişilebilir yazı ölçeği, güvenli alan ve sürüm notları her üretim buildinde otomatik denetleniyor.'),
   item('Mobil Yayın Kontrolü', 'Gerçek cihazda yedek geri yükleme, çevrimdışı açılış, iPhone güvenli alanı, büyük yazı, kamera izni ve güncelleme senaryoları için kalıcı yayın kontrol listesi eklendi.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v9.5 yeni bir kalıcı veri anahtarı veya kırıcı şema eklemiyor; mevcut localStorage kayıtları, yedek biçimi ve ana ekrana kurulmuş PWA güncelleme akışı korunuyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Sade Ayarlar ve Gün Gün Enerji', [
+  item('Ayarlar Artık Bir Ana Menü', 'Ayarlar açıldığında bütün kontroller tek uzun sayfaya yığılmıyor; sekiz büyük konu kartı gösteriliyor ve yalnız seçilen kategorinin içeriği açılıyor.'),
+  item('Koç Yöntemi Veriden Ayrıldı', 'Antrenman hedefi, hacim felsefesi, kademeli etkili set ve koç odağı yedekleme araçlarından ayrılıp Koç & Yöntem başlığında toplandı.'),
+  item('Daha Anlaşılır Ayar Araması', 'Arama yalnız başlıklara değil NEAT, punto, kilit ekranı, dinlenme ve program kodu gibi günlük kullanılan terimlere de bakıyor.'),
+  item('Kategori İçinde Kaybolmadan Gezinme', 'Seçili ayarın adı başlıkta gösteriliyor; sabit geri düğmesi kategori ana ekranına tek dokunuşla dönüyor ve bağlamsal Antrenman, Beslenme, Vücut kısayolları korunuyor.'),
+  item('Beslenmeden Gün Gün Enerji', 'Beslenme ekranının üst özetine alınan, yakılan, denge ve harcama kaynaklarını doğrudan Gün Gün sekmesinde açan görünür bir kısayol eklendi.'),
+  item('Arşivden Tarihe Doğrudan Geçiş', 'Geçmiş ekranı genel Gün Gün Kalori düğmesi taşıyor; günlük beslenme satırındaki alev düğmesi seçilen tarihin harcama dökümünü doğrudan açıyor.'),
+  item('Ana Ekranda Yazılı Kalori Kısayolu', 'Koç kartındaki yalnız ikon olan enerji düğmesi Kalori etiketi kazandı; işlevi bilmek için simgeyi tahmin etmek gerekmiyor.'),
+  item('Bir Yıllık Enerji Görünümü', 'Gün Gün enerji tablosu son 60 gün yerine son 365 günü kapsıyor; geçmiş vücut bağlamı, harcama kaynakları ve güne özel NEAT düzenlemesi korunuyor.'),
+  item('Beş Sürümlük Sadeleştirme Planı', 'Aktif antrenman, koç ve analiz, günlük arşiv ve mağaza öncesi ürün bütünlüğünü kapsayan v9.7–v10.0 yol haritası belgelendi.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v9.6 yeni localStorage anahtarı veya kırıcı veri göçü eklemiyor; mevcut kayıt, yedek ve çevrimdışı güncelleme yapısı değişmiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -230,6 +243,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_5,
   RELEASE_9_3,
   RELEASE_9_1,
   RELEASE_9_0,

@@ -63,3 +63,51 @@ Durum: Uygulandı.
 - Yardım metinlerini kısa açıklama + isteğe bağlı ayrıntılı rehber olarak iki katmanlı yap.
 - Erişilebilirlik, çevrimdışı kullanım, güncelleme, yedek/geri yükleme ve veri kaybı senaryolarını mağaza sürümü öncesi uçtan uca test et.
 - Her yayın için sürüm notu, performans bütçesi ve mobil görsel regresyon kontrolü uygula.
+
+## 9.6 — Ayarlar ve enerjiye kısa erişim
+
+Durum: Uygulandı.
+
+- Ayarlar açıldığında bütün kontrolleri tek uzun sayfaya yığmak yerine sekiz konu kartı göster.
+- Veri aktarımı ile koç/hesap yöntemlerini ayrı başlıklara ayır; kategori içinden tek dokunuşla geri dön.
+- Aramayı kategori adları, açıklamalar ve günlük kullanılan terimler üzerinden çalıştır.
+- Kalori ayrıntısını ana ekran, Beslenme ve Geçmiş içinden görünür metinli kısayollarla aç.
+- Geçmişteki bir beslenme kaydından doğrudan seçilen günün harcama dökümüne geç.
+- Gün Gün enerji tablosunun erişimini son 60 günden son 365 güne çıkar; mevcut güne özel NEAT düzenleme işlevini koru.
+
+## 9.7 — Aktif antrenman sadeliği
+
+Durum: Planlandı.
+
+- Aktif antrenmanda sıradaki set, kilo, tekrar ve RIR girişini tek baskın çalışma alanında topla.
+- Isınma, not, plaka, süperset ve hareket değiştirme işlevlerini bağlamsal ikinci katmana al.
+- Dinlenme sayacını seans akışına sabitle; ses ve bildirim sorunlarını aynı yerde tanılanabilir yap.
+- Tek elle kullanım, büyük yazı ve iPhone güvenli alanlarını gerçek seans akışıyla doğrula.
+
+## 9.8 — Koç ve analiz karar hiyerarşisi
+
+Durum: Planlandı.
+
+- Koç ekranında önce karar, sonra gerekçe, en sonda ham veri düzenini kullan.
+- Aynı sinyali farklı kartlarda tekrarlamak yerine tek kaynak ve bağlamsal kısayollar oluştur.
+- Analizleri “şimdi ne yapmalıyım?” sorusuna göre gruplandır; bilimsel ayrıntıları açılır kanıt katmanında koru.
+- Eksik veriyi risk veya başarısızlık gibi göstermeyen ortak güven dili kullan.
+
+## 9.9 — Günlük kayıt ve arşiv akışı
+
+Durum: Planlandı.
+
+- Antrenman, kardiyo, beslenme, enerji, vücut ve uyku için ortak günlük merkez oluştur.
+- Kayıt ekleme ve düzenlemeyi aynı tarih bağlamında tut; sekmeler arası gidip gelmeyi azalt.
+- Arşiv araması, kayıt türü ve tarih filtrelerini kalıcı olmayan tek kontrol satırında birleştir.
+- Ay → hafta → gün katmanlarını küçük ekran ve büyük yazıda yeniden doğrula.
+
+## 10.0 — Mağaza öncesi ürün bütünlüğü
+
+Durum: Planlandı.
+
+- Alt gezinme, başlık, modal ve boş durumlar için ortak tasarım bileşenleri ve metin dili uygula.
+- İlk kullanım turunu gerçek görevlerle ölç; kurulumdan ilk kayda kadar gereksiz adımları kaldır.
+- Erişilebilirlik, çevrimdışı açılış, PWA güncelleme, yedek kurtarma ve performans bütçesini yayın kapısına bağla.
+- App Store ve Play Store ekran görüntülerinden önce karanlık/açık tema ve kadın/erkek görsel varyantlarını uçtan uca denetle.
+- Hiçbir mevcut kayıt türünü veya ileri özelliği kaldırmadan v10 ürün yüzeyini sabitle.

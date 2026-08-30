@@ -353,6 +353,14 @@ const NutritionView = memo(({
             {isToday ? 'Bugün' : 'Bu gün'} öncelik: <strong className="text-zinc-300">{dayScore.next.join(' ve ')}</strong>.
           </p>
         )}
+        <button
+          type="button"
+          onClick={() => onOpenEnergyDetail?.('days', currentNutritionForm.date)}
+          className="w-full mt-3 rounded-xl border border-red-900/40 bg-red-950/15 px-3 py-2.5 text-left flex items-center justify-between active:bg-red-950/30"
+        >
+          <span className="flex items-center gap-2"><BarChart3 size={14} className="text-red-400" /><span><strong className="text-[9px] text-zinc-300 block">Gün gün kalori detayı</strong><span className="text-[8px] font-mono text-zinc-600">Alınan, yakılan, denge ve harcama kaynakları</span></span></span>
+          <span className="text-[9px] font-bold text-red-400">Aç</span>
+        </button>
       </section>
 
       <section className="grid grid-cols-3 gap-2" aria-label="Hızlı işlemler">
@@ -389,7 +397,7 @@ const NutritionView = memo(({
             { label: 'Şablon & Tarif', icon: BookOpen, action: () => setTemplatesOpen(true), enabled: true, color: 'text-purple-400' },
             { label: 'Dünü Kopyala', icon: Copy, action: copyYesterday, enabled: Boolean(yesterdayRecord), color: 'text-cyan-400' },
             { label: 'Geçen Haftayı Kopyala', icon: Copy, action: () => copyRecord(previousWeekRecord), enabled: Boolean(previousWeekRecord), color: 'text-blue-400' },
-            { label: 'Kalori Detayı', icon: BarChart3, action: onOpenEnergyDetail, enabled: true, color: 'text-red-400' },
+            { label: 'Kalori Detayı', icon: BarChart3, action: () => onOpenEnergyDetail?.('days', currentNutritionForm.date), enabled: true, color: 'text-red-400' },
           ].map(item => {
             const Icon = item.icon;
             return (
@@ -729,7 +737,7 @@ const NutritionView = memo(({
         />
         <button
           type="button"
-          onClick={() => onOpenEnergyDetail?.()}
+          onClick={() => onOpenEnergyDetail?.('today', currentNutritionForm.date)}
           className="w-full mt-2.5 bg-zinc-950 border border-zinc-800 text-zinc-300 font-bold py-2.5 rounded-xl text-[10px] flex items-center justify-center"
         >
           <BarChart3 size={13} className="mr-1.5 text-red-400" /> Günlük ve Haftalık Tüm Detaylar

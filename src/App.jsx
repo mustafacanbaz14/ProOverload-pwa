@@ -344,7 +344,7 @@ export default function App() {
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [settingsSection, setSettingsSection] = useState('all');
+  const [settingsSection, setSettingsSection] = useState('home');
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isFoodSearchOpen, setIsFoodSearchOpen] = useState(false);
   const [isComparisonOpen, setIsComparisonOpen] = useState(false);
@@ -362,6 +362,7 @@ export default function App() {
   const [isCardioOpen, setIsCardioOpen] = useState(false);
   const [cardioContext, setCardioContext] = useState(null);
   const [isEnergyDetailOpen, setIsEnergyDetailOpen] = useState(false);
+  const [energyDetailEntry, setEnergyDetailEntry] = useState({ tab: 'today', date: '' });
   const [isToolsOpen, setIsToolsOpen] = useState(false);
   const [prCelebration, setPrCelebration] = useState(null);
   const [isWeekPlanOpen, setIsWeekPlanOpen] = useState(false);
@@ -426,9 +427,14 @@ export default function App() {
     setIsWizardOpen(true);
   }, []);
 
-  const openSettings = useCallback((section = 'all') => {
-    setSettingsSection(section);
+  const openSettings = useCallback((section = 'home') => {
+    setSettingsSection(section === 'all' ? 'home' : section);
     setIsSettingsModalOpen(true);
+  }, []);
+
+  const openEnergyDetail = useCallback((tab = 'today', date = '') => {
+    setEnergyDetailEntry({ tab, date });
+    setIsEnergyDetailOpen(true);
   }, []);
 
   useEffect(() => {
@@ -2816,11 +2822,11 @@ export default function App() {
       metrics: () => handleAddHistoricalMetric(today),
       sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
       mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
-      energy: () => setIsEnergyDetailOpen(true),
+      energy: () => openEnergyDetail('today'),
       plan: () => setIsWeekPlanOpen(true),
     }[key];
     action?.();
-  }, [handleStartRequest, handleChangeView, handleAddHistoricalMetric]);
+  }, [handleStartRequest, handleChangeView, handleAddHistoricalMetric, openEnergyDetail]);
 
   // --- KARDİYO ---
   const {
@@ -4156,7 +4162,7 @@ export default function App() {
             <button onClick={() => setIsGlobalSearchOpen(true)} aria-label="Uygulamada ara" className="luxury-icon-button">
               <Search size={18} />
             </button>
-            <button onClick={() => openSettings('all')} aria-label="Ayarları aç" className="luxury-icon-button">
+            <button onClick={() => openSettings('home')} aria-label="Ayarları aç" className="luxury-icon-button">
               <Settings size={18} />
             </button>
           </div>
@@ -4174,7 +4180,7 @@ export default function App() {
               needsBackup={needsBackup}
               dashboardStats={dashboardStats}
               templates={templates}
-              setIsSettingsModalOpen={(open) => open ? openSettings('all') : setIsSettingsModalOpen(false)}
+              setIsSettingsModalOpen={(open) => open ? openSettings('home') : setIsSettingsModalOpen(false)}
               handleStartRequest={handleStartRequest}
               setDeleteConfirm={setDeleteConfirm}
               onSelectMuscle={setDetailMuscle}
@@ -4204,7 +4210,7 @@ export default function App() {
               coachHiddenCount={coachView.hiddenCount}
               coachConflictCount={coachView.conflictCount}
               onCoachAction={handleCoachAction}
-              onOpenEnergy={() => setIsEnergyDetailOpen(true)}
+              onOpenEnergy={() => openEnergyDetail('today')}
               onOpenWellness={() => { setWellnessTab('sleep'); setIsWellnessOpen(true); }}
               onOpenCardio={() => setIsCardioOpen(true)}
               gender={profileGender}
@@ -4337,7 +4343,7 @@ export default function App() {
               maintenanceCalories={maintenanceCalories}
               neatOpts={neatOpts}
               energyForRecord={energyForNutritionRecord}
-              onOpenEnergyDetail={() => setIsEnergyDetailOpen(true)}
+              onOpenEnergyDetail={(tab = 'today', date = '') => openEnergyDetail(tab, date)}
               bodyContextForDate={bodyContextForDate}
               mealTemplates={mealTemplates}
               setMealTemplates={setMealTemplates}
@@ -4475,6 +4481,7 @@ export default function App() {
               bodyContextForDate={bodyContextForDate}
               energyForRecord={energyForNutritionRecord}
               onCompareMetrics={() => setIsComparisonOpen(true)}
+              onOpenEnergyDay={(date = '') => openEnergyDetail('days', date)}
             />
           )}
           </Suspense>
@@ -4573,7 +4580,7 @@ export default function App() {
             const action = {
               library: () => setIsLibraryOpen(true),
               weekPlan: () => setIsWeekPlanOpen(true),
-              energy: () => setIsEnergyDetailOpen(true),
+              energy: () => openEnergyDetail('today'),
               sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
@@ -5116,7 +5123,7 @@ export default function App() {
               weekPlan: () => setIsWeekPlanOpen(true),
               plates: () => setPlateCalc({ weight: 0 }),
               cardio: () => setIsCardioOpen(true),
-              energy: () => setIsEnergyDetailOpen(true),
+              energy: () => openEnergyDetail('today'),
               compare: () => setIsComparisonOpen(true),
               guide: () => setIsMeasurementGuideOpen(true),
               report: () => setIsReportCardOpen(true),
@@ -5147,8 +5154,11 @@ export default function App() {
 
         {/* KALORİ DETAYI */}
         {isEnergyDetailOpen && <EnergyDetailModal
+          key={`${energyDetailEntry.tab}-${energyDetailEntry.date || 'current'}`}
           isOpen={isEnergyDetailOpen}
           onClose={() => setIsEnergyDetailOpen(false)}
+          initialTab={energyDetailEntry.tab}
+          initialDate={energyDetailEntry.date}
           nutritionHistory={sortedNutrition}
           todayForm={currentNutritionForm}
           maintenance={maintenanceCalories}

@@ -14,10 +14,16 @@ const app = read('src/App.jsx');
 const css = read('src/index.css');
 const history = read('src/utils/releaseHistory.js');
 const roadmap = read('docs/UX_ROADMAP.md');
+const settingsModal = read('src/components/SettingsModal.jsx');
+const energyModal = read('src/components/EnergyDetailModal.jsx');
+const historyView = read('src/components/HistoryView.jsx');
 
 check(history.includes(`release(APP_VERSION, '2026-08-30'`), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 9.4') && roadmap.includes('## 9.5'), 'UX yol haritası 9.4 ve 9.5 kapsamını taşıyor');
+check(roadmap.includes('## 9.6') && roadmap.includes('## 10.0'), 'UX yol haritası 9.6–10.0 kapsamını taşıyor');
+check(settingsModal.includes("activeSection === 'home'") && settingsModal.includes("key: 'method'"), 'Ayarlar kategori ana ekranı ve Koç & Yöntem ayrımı korunuyor');
+check(app.includes('energyDetailEntry') && app.includes("openEnergyDetail('days'"), 'Kalori detayı tarih ve sekme bağlamıyla açılıyor');
+check(historyView.includes('onOpenEnergyDay') && energyModal.includes('days: 365'), 'Arşivden Gün Gün enerji erişimi ve bir yıllık görünüm korunuyor');
 check(vite.includes("registerType: 'autoUpdate'"), 'PWA otomatik güncelleme açık');
 check(vite.includes('cleanupOutdatedCaches: true'), 'Eski PWA önbellekleri temizleniyor');
 check(vite.includes("navigateFallback: 'index.html'"), 'Çevrimdışı SPA fallback tanımlı');

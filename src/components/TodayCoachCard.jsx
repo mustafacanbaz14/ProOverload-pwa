@@ -232,7 +232,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           >
             {planned ? 'Planlananı Başlat' : data.cardioLabel ? 'Kardiyoyu Aç' : 'Serbest Başlat'} <ChevronRight size={12} className="ml-1" />
           </button>
-          <button onClick={onOpenEnergy} aria-label="Enerji detayını aç" className="bg-zinc-950 border border-zinc-800 text-red-400 rounded-xl p-2.5"><Flame size={15} /></button>
+          <button onClick={onOpenEnergy} aria-label="Enerji detayını aç" className="bg-zinc-950 border border-zinc-800 text-red-400 rounded-xl px-2.5 py-2 flex flex-col items-center justify-center gap-0.5"><Flame size={14} /><span className="text-[7px] font-bold">Kalori</span></button>
           <button onClick={onOpenWellness} aria-label="Uyku ve toparlanmayı aç" className="bg-zinc-950 border border-zinc-800 text-indigo-400 rounded-xl p-2.5"><Moon size={15} /></button>
         </div>
       </div>

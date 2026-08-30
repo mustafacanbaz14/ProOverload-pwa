@@ -1,6 +1,6 @@
 import { REST_ALERT_INTENSITIES, REST_ALERT_TONES } from '../lockScreen';
 import React, { memo, useState } from 'react';
-import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles, Volume2, CheckCircle2, AlertTriangle, ShieldCheck, ExternalLink, Search, ChevronDown } from 'lucide-react';
+import { X, Settings, Download, Upload, Smartphone, HeartPulse, Database, Dumbbell, Beef, Sun, Moon, Footprints, Layers3, Sparkles, Volume2, CheckCircle2, AlertTriangle, ShieldCheck, ExternalLink, Search, ChevronDown, ChevronRight, ArrowLeft, SlidersHorizontal } from 'lucide-react';
 import { exportAppleHealthXML, exportGoogleFitJSON } from '../utils/healthSync';
 import { EXPERIENCE_LEVELS, APP_VERSION } from '../utils/constants';
 import { PLATE_OPTIONS, AVAILABLE_PLATES, smallestPlateOf } from '../utils/plates';
@@ -44,14 +44,14 @@ const Group = ({ icon, title, children, visible = true }) => !visible ? null : (
 );
 
 const SETTINGS_SECTIONS = [
-  { key: 'all', label: 'Tümü', title: 'Tüm ayarlar', summary: 'Bir kategori seç veya ayar adını ara.', detail: 'Arama, ilgili ayar grubunu bütünüyle gösterir; böylece bulunan ayarın açıklaması ve bağlı kontrolleri kaybolmaz.' },
-  { key: 'data', label: 'Veri', title: 'Veri, hedef ve aktarım', summary: 'Yedek, CSV, program kodu ve temel antrenman yaklaşımı.', detail: 'JSON yedeği geri yükleme içindir; CSV analiz içindir. Program kodu yalnız program yapısını taşır.' },
-  { key: 'appearance', label: 'Görünüm', title: 'Görünüm', summary: 'Tema, yazı boyutu ve basit/detaylı arayüz.', detail: 'Basit mod özellik silmez; ileri kartları ihtiyaç anına kadar kapalı tutar.' },
-  { key: 'body', label: 'Vücut', title: 'Vücut ve hesaplama', summary: 'BMI, NEAT ve enerji hesabı varsayımları.', detail: 'Bu ayarlar tahmin yöntemini değiştirir. Geçmiş kayıtlardaki dondurulmuş vücut verileri korunur.' },
-  { key: 'training', label: 'Antrenman', title: 'Antrenman', summary: 'Set, dinlenme, ses, yük ve ilerleme davranışı.', detail: 'Hareket bazında yazılan özel ayarlar genel varsayılanlardan önceliklidir.' },
-  { key: 'nutrition', label: 'Beslenme', title: 'Beslenme hedefleri', summary: 'Dönem hedefi, hız ve protein çarpanları.', detail: 'Hız seçimi vücut ağırlığının haftalık yüzdesidir; güvenli sınır analizde ayrıca denetlenir.' },
-  { key: 'device', label: 'Cihaz', title: 'Cihaz ve sağlık', summary: 'Kilit ekranı, ekran açıklığı ve sağlık dışa aktarımı.', detail: 'Sağlık dışa aktarımı tek yönlü dosya üretir; uygulama diğer sağlık uygulamalarını doğrudan okuyamaz.' },
-  { key: 'privacy', label: 'Güven', title: 'Gizlilik ve sürüm', summary: 'Politikalar, mağaza hazırlığı ve sürüm notları.', detail: 'Kişisel kayıtlar cihazda tutulur. Uygulama sağlık tahminleri sunar; tıbbi cihaz değildir.' },
+  { key: 'data', label: 'Veri & Aktarım', title: 'Veri ve aktarım', summary: 'Yedek, cihaz aktarımı, program kodu ve CSV.', detail: 'JSON yedeği geri yükleme içindir; CSV analiz içindir. Program kodu yalnız program yapısını taşır.', icon: Database, tone: 'text-cyan-400', keywords: 'yedek yükle indir aktar csv kod' },
+  { key: 'method', label: 'Koç & Yöntem', title: 'Koç ve hesap yöntemi', summary: 'Antrenman hedefi, hacim yaklaşımı ve koç önceliği.', detail: 'Bu seçimler verini silmez; önerilerin nasıl sıralandığını ve varsayılanların nasıl üretildiğini değiştirir.', icon: SlidersHorizontal, tone: 'text-violet-400', keywords: 'koç hacim felsefesi etkili set hedef yöntem' },
+  { key: 'appearance', label: 'Görünüm', title: 'Görünüm', summary: 'Tema, yazı boyutu ve basit/detaylı arayüz.', detail: 'Basit mod özellik silmez; ileri kartları ihtiyaç anına kadar kapalı tutar.', icon: Sun, tone: 'text-amber-400', keywords: 'tema koyu açık pembe yazı punto arayüz' },
+  { key: 'body', label: 'Vücut & Enerji', title: 'Vücut ve hesaplama', summary: 'BMI, NEAT ve enerji hesabı varsayımları.', detail: 'Bu ayarlar tahmin yöntemini değiştirir. Geçmiş kayıtlardaki dondurulmuş vücut verileri korunur.', icon: Footprints, tone: 'text-emerald-400', keywords: 'bmi neat adım aktivite kalori çarpan' },
+  { key: 'training', label: 'Antrenman', title: 'Antrenman', summary: 'Set, dinlenme, ses, yük ve ilerleme davranışı.', detail: 'Hareket bazında yazılan özel ayarlar genel varsayılanlardan önceliklidir.', icon: Dumbbell, tone: 'text-cyan-400', keywords: 'set tekrar rir dinlenme ses plaka yük ilerleme' },
+  { key: 'nutrition', label: 'Beslenme', title: 'Beslenme hedefleri', summary: 'Dönem hedefi, hız ve protein çarpanları.', detail: 'Hız seçimi vücut ağırlığının haftalık yüzdesidir; güvenli sınır analizde ayrıca denetlenir.', icon: Beef, tone: 'text-orange-400', keywords: 'protein kalori kilo alma verme koruma' },
+  { key: 'device', label: 'Cihaz & Sağlık', title: 'Cihaz ve sağlık', summary: 'Kilit ekranı, ekran açıklığı ve sağlık dışa aktarımı.', detail: 'Sağlık dışa aktarımı tek yönlü dosya üretir; uygulama diğer sağlık uygulamalarını doğrudan okuyamaz.', icon: Smartphone, tone: 'text-blue-400', keywords: 'kilit ekran wake lock apple health google fit' },
+  { key: 'privacy', label: 'Gizlilik & Sürüm', title: 'Gizlilik ve sürüm', summary: 'Politikalar, mağaza hazırlığı ve sürüm notları.', detail: 'Kişisel kayıtlar cihazda tutulur. Uygulama sağlık tahminleri sunar; tıbbi cihaz değildir.', icon: ShieldCheck, tone: 'text-emerald-400', keywords: 'gizlilik destek mağaza güncelleme sürüm' },
 ];
 
 const SettingsModal = memo(({
@@ -87,28 +87,24 @@ const SettingsModal = memo(({
   trainingGoal = 'hypertrophy',
   onChangeTrainingGoal,
   onImportProgramCode,
-  initialSection = 'all',
+  initialSection = 'home',
 }) => {
   const [programCode, setProgramCode] = useState('');
   const [soundTest, setSoundTest] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const requestedSection = initialSection === 'all' ? 'home' : initialSection;
   const [activeSection, setActiveSection] = useState(
-    SETTINGS_SECTIONS.some(section => section.key === initialSection) ? initialSection : 'all',
+    SETTINGS_SECTIONS.some(section => section.key === requestedSection) ? requestedSection : 'home',
   );
   const [helpOpen, setHelpOpen] = useState(false);
   if (!isOpen) return null;
 
   const set = (patch) => setSettings(s => ({ ...s, ...patch }));
   const normalizedQuery = searchQuery.trim().toLocaleLowerCase('tr-TR');
-  const sectionVisible = (key) => {
-    const section = SETTINGS_SECTIONS.find(item => item.key === key);
-    if (!section) return false;
-    const categoryMatch = normalizedQuery ? true : activeSection === 'all' || activeSection === key;
-    const searchMatch = !normalizedQuery || `${section.label} ${section.title} ${section.summary} ${section.detail}`.toLocaleLowerCase('tr-TR').includes(normalizedQuery);
-    return categoryMatch && searchMatch;
-  };
-  const visibleCount = SETTINGS_SECTIONS.filter(section => section.key !== 'all' && sectionVisible(section.key)).length;
-  const activeHelp = SETTINGS_SECTIONS.find(section => section.key === activeSection) || SETTINGS_SECTIONS[0];
+  const sectionVisible = (key) => activeSection === key;
+  const filteredSections = SETTINGS_SECTIONS.filter(section => !normalizedQuery
+    || `${section.label} ${section.title} ${section.summary} ${section.detail} ${section.keywords || ''}`.toLocaleLowerCase('tr-TR').includes(normalizedQuery));
+  const activeHelp = SETTINGS_SECTIONS.find(section => section.key === activeSection) || null;
 
   const testSound = async (patch = {}) => {
     const result = await onTestRestAlert?.({
@@ -139,39 +135,89 @@ const SettingsModal = memo(({
     <div role="dialog" aria-modal="true" aria-labelledby="settings-title" className="fixed inset-0 bg-black/85 backdrop-blur-sm z-[80] flex items-center justify-center p-4">
       <div className="bg-zinc-900 border border-zinc-800 rounded-3xl w-full max-w-sm overflow-hidden flex flex-col max-h-[88dvh]">
 
-        <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950 shrink-0">
-          <h3 id="settings-title" className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-            <Settings size={16} className="mr-2 text-cyan-400" /> Ayarlar
-          </h3>
+        <div className="px-3 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-950 shrink-0">
+          <div className="flex items-center min-w-0">
+            {activeSection !== 'home' && (
+              <button
+                type="button"
+                onClick={() => { setActiveSection('home'); setSearchQuery(''); setHelpOpen(false); }}
+                aria-label="Ayar kategorilerine dön"
+                className="p-2 mr-1 text-zinc-400 active:text-cyan-400 rounded-xl"
+              >
+                <ArrowLeft size={17} />
+              </button>
+            )}
+            <h3 id="settings-title" className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center truncate">
+              <Settings size={16} className="mr-2 text-cyan-400 shrink-0" />
+              {activeHelp?.title || 'Ayarlar'}
+            </h3>
+          </div>
           <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
             <X size={20} />
           </button>
         </div>
 
-        <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-950/95 shrink-0 space-y-2">
-          <div className="relative">
-            <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
-            <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} placeholder="Ayarlarda ara: dinlenme, tema, NEAT…" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 pl-9 pr-3 text-[10px] text-zinc-200 outline-none focus:border-cyan-600" />
+        {activeSection === 'home' ? (
+          <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-950/95 shrink-0 space-y-1.5">
+            <div className="relative">
+              <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-600" />
+              <input
+                value={searchQuery}
+                onChange={event => setSearchQuery(event.target.value)}
+                placeholder="Ayar ara: dinlenme, tema, NEAT…"
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 pl-9 pr-3 text-[10px] text-zinc-200 outline-none focus:border-cyan-600"
+              />
+            </div>
+            <span className="text-[8px] font-mono text-zinc-600 px-1">Önce konu seç; yalnız o konunun ayarları açılır.</span>
           </div>
-          <div className="flex gap-1.5 overflow-x-auto hide-scrollbar pb-0.5">
-            {SETTINGS_SECTIONS.map(section => (
-              <button key={section.key} onClick={() => { setActiveSection(section.key); setSearchQuery(''); setHelpOpen(false); }} className={`shrink-0 px-2.5 py-1.5 rounded-lg border text-[8px] font-bold ${activeSection === section.key ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-900 text-zinc-500'}`}>{section.label}</button>
-            ))}
+        ) : (
+          <div className="px-3 py-3 border-b border-zinc-800 bg-zinc-950/95 shrink-0 space-y-2">
+            <button type="button" onClick={() => setHelpOpen(value => !value)} aria-expanded={helpOpen} className="w-full flex items-start gap-2 text-left bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5">
+              <Sparkles size={12} className="text-cyan-500 shrink-0 mt-0.5" />
+              <span className="min-w-0 flex-1"><strong className="text-[9px] text-zinc-300 block">{activeHelp?.title}</strong><span className="text-[8px] font-mono text-zinc-600 leading-relaxed block">{activeHelp?.summary}</span>{helpOpen && <span className="text-[8px] font-mono text-zinc-500 leading-relaxed block mt-1 pt-1 border-t border-zinc-800">{activeHelp?.detail}</span>}</span>
+              <ChevronDown size={12} className={`text-zinc-600 shrink-0 transition-transform ${helpOpen ? 'rotate-180' : ''}`} />
+            </button>
           </div>
-          <button type="button" onClick={() => setHelpOpen(value => !value)} aria-expanded={helpOpen} className="w-full flex items-start gap-2 text-left bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2">
-            <Sparkles size={12} className="text-cyan-500 shrink-0 mt-0.5" />
-            <span className="min-w-0 flex-1"><strong className="text-[9px] text-zinc-300 block">{activeHelp.title}</strong><span className="text-[8px] font-mono text-zinc-600 leading-relaxed block">{activeHelp.summary}</span>{helpOpen && <span className="text-[8px] font-mono text-zinc-500 leading-relaxed block mt-1 pt-1 border-t border-zinc-800">{activeHelp.detail}</span>}</span>
-            <ChevronDown size={12} className={`text-zinc-600 shrink-0 transition-transform ${helpOpen ? 'rotate-180' : ''}`} />
-          </button>
-        </div>
+        )}
 
         <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-5">
 
-          {visibleCount === 0 && <div className="py-12 text-center"><Search size={20} className="text-zinc-700 mx-auto mb-2" /><p className="text-[10px] font-mono text-zinc-600">Bu aramayla eşleşen ayar grubu yok.</p></div>}
+          {activeSection === 'home' && (
+            <div className="space-y-3">
+              <div className="px-1">
+                <span className="text-[10px] font-bold text-zinc-200 block">Neyi değiştirmek istiyorsun?</span>
+                <span className="text-[9px] font-mono text-zinc-600">Gelişmiş kontroller kaldırılmadı; başlıkların içine yerleştirildi.</span>
+              </div>
+              {filteredSections.length === 0 ? (
+                <div className="py-10 text-center"><Search size={20} className="text-zinc-700 mx-auto mb-2" /><p className="text-[10px] font-mono text-zinc-600">Bu aramayla eşleşen ayar başlığı yok.</p></div>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {filteredSections.map(section => {
+                    const Icon = section.icon;
+                    return (
+                      <button
+                        key={section.key}
+                        type="button"
+                        onClick={() => { setActiveSection(section.key); setSearchQuery(''); setHelpOpen(false); }}
+                        className="min-h-28 rounded-2xl border border-zinc-800 bg-zinc-950 p-3 text-left active:bg-zinc-900 flex flex-col"
+                      >
+                        <span className="flex items-center justify-between mb-3">
+                          <span className={`w-8 h-8 rounded-xl border border-zinc-800 bg-zinc-900 flex items-center justify-center ${section.tone}`}><Icon size={15} /></span>
+                          <ChevronRight size={14} className="text-zinc-700" />
+                        </span>
+                        <strong className="text-[10px] text-zinc-200 block leading-tight">{section.label}</strong>
+                        <span className="text-[8px] font-mono text-zinc-600 leading-relaxed mt-1">{section.summary}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Veri yedekleme en üstte: veri yalnızca bu cihazda tutuluyor. */}
-          <div className={`${sectionVisible('data') ? '' : 'hidden'} bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-3`}>
-            <div className="flex items-center justify-between">
+          <div className={`${sectionVisible('data') || sectionVisible('method') ? '' : 'hidden'} bg-zinc-950 border border-zinc-800 rounded-2xl p-3.5 space-y-3`}>
+            <div className={`${sectionVisible('data') ? 'flex' : 'hidden'} items-center justify-between`}>
               <span className="text-[11px] font-bold text-cyan-400 uppercase tracking-wider flex items-center">
                 <Database size={13} className="mr-1.5" /> Veri Yedekleme
               </span>
@@ -179,11 +225,11 @@ const SettingsModal = memo(({
                 {lastBackupDate ? `Son: ${lastBackupDate}` : 'Hiç alınmadı'}
               </span>
             </div>
-            <p className="text-[10px] font-mono text-zinc-500 leading-relaxed">
+            <p className={`${sectionVisible('data') ? '' : 'hidden'} text-[10px] font-mono text-zinc-500 leading-relaxed`}>
               Veriler yalnızca bu cihazda tutulur. Telefon değiştirmeden veya tarayıcıyı
               sıfırlamadan önce mutlaka indir.
             </p>
-            <div className="grid grid-cols-2 gap-2">
+            <div className={`${sectionVisible('data') ? 'grid' : 'hidden'} grid-cols-2 gap-2`}>
               <button
                 onClick={handleExportData}
                 className="bg-zinc-900 border border-zinc-700 text-cyan-400 active:bg-zinc-800 font-bold py-3 rounded-xl flex items-center justify-center gap-1.5 uppercase tracking-wider text-[11px] transition-colors"
@@ -197,10 +243,17 @@ const SettingsModal = memo(({
             </div>
             <button
               onClick={() => { onClose(); setIsQRModalOpen(true); }}
-              className="w-full bg-cyan-950/40 border border-cyan-900/50 text-cyan-400 active:bg-cyan-900/60 font-bold py-2.5 rounded-xl flex items-center justify-center gap-2 uppercase tracking-wider text-[11px] transition-colors"
+              className={`${sectionVisible('data') ? 'flex' : 'hidden'} w-full bg-cyan-950/40 border border-cyan-900/50 text-cyan-400 active:bg-cyan-900/60 font-bold py-2.5 rounded-xl items-center justify-center gap-2 uppercase tracking-wider text-[11px] transition-colors`}
             >
               <Smartphone size={14} /> Metin ile Cihaz Aktarımı
             </button>
+
+            {sectionVisible('method') && (
+              <div className="flex items-center gap-2 pb-1">
+                <SlidersHorizontal size={13} className="text-violet-400" />
+                <span className="text-[11px] font-bold text-violet-300 uppercase tracking-wider">Koç ve Hesap Yöntemleri</span>
+              </div>
+            )}
 
             {/* CSV yedek değil ANALİZ içindir: JSON tek satırda tüm durumu
                 taşıyor ve elektronik tabloda açılamıyor. Burada her satır bir
@@ -210,7 +263,7 @@ const SettingsModal = memo(({
                 varsayılan. Mod değiştirince altı ayrı ayarı elle değiştirmek
                 gerekiyordu ve biri unutulduğunda sistem kendi içinde
                 çelişiyordu. */}
-            {onChangeTrainingGoal && (
+            {sectionVisible('method') && onChangeTrainingGoal && (
               <div className="pt-2.5 border-t border-zinc-800 space-y-2">
                 <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
                   Antrenman Hedefi
@@ -255,7 +308,7 @@ const SettingsModal = memo(({
                 fazla set daha fazla kas" diyor, diğeri doğrudan test edince
                 fark bulamıyor. Tek bir sayı dayatmak yerine kullanıcı hangi
                 hatta yaslanacağını seçiyor. */}
-            {onChangeVolumePhilosophy && (
+            {sectionVisible('method') && onChangeVolumePhilosophy && (
               <div className="pt-2.5 border-t border-zinc-800 space-y-2">
                 <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
                   Hacim Felsefesi
@@ -293,7 +346,7 @@ const SettingsModal = memo(({
             {/* Kademeli etkili set. Eski ikili kural RIR 0 ile RIR 3'ü aynı
                 sayıyor, RIR 4'ü hiç saymıyordu. Yakınlık meta-regresyonu
                 hipertrofinin yetmezliğe yaklaştıkça arttığını buluyor. */}
-            {onToggleGradedSets && (
+            {sectionVisible('method') && onToggleGradedSets && (
               <div className="pt-2.5 border-t border-zinc-800 space-y-2">
                 <button
                   onClick={onToggleGradedSets}
@@ -323,7 +376,7 @@ const SettingsModal = memo(({
                 sabitler herkes için aynıydı; oysa kas kazanmaya çalışan biriyle
                 omzunu bir daha sakatlamamaya çalışan biri aynı sırayı
                 istemiyor. */}
-            {onChangeCoachFocus && (
+            {sectionVisible('method') && onChangeCoachFocus && (
               <div className="pt-2.5 border-t border-zinc-800 space-y-2">
                 <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
                   Koç Odağı
@@ -358,7 +411,7 @@ const SettingsModal = memo(({
             {/* Program kodu: şablonlar cihazda kilitliydi. QR yedeğin tamamını
                 taşıyor; tek bir programı vermek için bütün veriyi paylaşmak
                 makul değil. */}
-            {onImportProgramCode && (
+            {sectionVisible('data') && onImportProgramCode && (
               <div className="pt-2.5 border-t border-zinc-800 space-y-2">
                 <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
                   Program Kodu İçe Aktar
@@ -391,12 +444,12 @@ const SettingsModal = memo(({
               </div>
             )}
 
-            {onExportCsv && (
+            {sectionVisible('data') && onExportCsv && (
               <div className="pt-2.5 border-t border-zinc-800 space-y-2">
                 <span className="text-[10px] font-mono text-zinc-500 uppercase tracking-widest block">
                   Elektronik Tablo (CSV)
                 </span>
-                <div className="grid grid-cols-3 gap-1.5">
+                <div className="grid grid-cols-2 gap-1.5">
                   {[
                     { key: 'workouts', label: 'Setler' },
                     { key: 'metrics', label: 'Ölçüm' },

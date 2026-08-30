@@ -44,16 +44,18 @@ const EnergyDetailModal = memo(({
   // Güne özel NEAT çarpanını yazan geri çağrı; verilmezse kontrol gizlenir.
   onSetDayNeat,
   defaultNeatMultiplier = 1,
+  initialTab = 'today',
+  initialDate = '',
 }) => {
-  const [tab, setTab] = useState('today');
+  const [tab, setTab] = useState(() => TABS.some(item => item.key === initialTab) ? initialTab : 'today');
   // Tabloda açılan gün — geçmiş günün dökümünü satır altında gösterir.
-  const [openDay, setOpenDay] = useState(null);
+  const [openDay, setOpenDay] = useState(initialDate || null);
   const [pendingNeats, setPendingNeats] = useState({});
   const bmr = parseNumber(computedComp?.bmr);
 
   const series = useMemo(
     () => buildEnergySeries(nutritionHistory, {
-      maintenance, bmr, dayCalories, days: 60, neatOpts, estimatedMacros, energyForRecord,
+      maintenance, bmr, dayCalories, days: 365, neatOpts, estimatedMacros, energyForRecord,
     }),
     [nutritionHistory, maintenance, bmr, dayCalories, neatOpts, estimatedMacros, energyForRecord]);
 
@@ -279,6 +281,13 @@ const EnergyDetailModal = memo(({
             <p className="text-center py-10 text-[11px] font-mono text-zinc-600">Kayıt yok.</p>
           ) : (
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
+              <div className="px-3 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex items-center justify-between gap-3">
+                <div>
+                  <strong className="text-[9px] text-zinc-300 block">Günlük kalori dökümü</strong>
+                  <span className="text-[8px] font-mono text-zinc-600">Bir güne dokun: harcama kaynakları ve o günün NEAT ayarı açılır.</span>
+                </div>
+                <span className="text-[8px] font-mono text-zinc-600 shrink-0">Son 365 gün</span>
+              </div>
               <div className="overflow-x-auto hide-scrollbar">
                 <table className="w-full text-[10px] font-mono">
                   <thead>
