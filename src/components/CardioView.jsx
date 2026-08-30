@@ -109,7 +109,7 @@ const CardioView = memo(({
     <div className={`${embedded ? '' : 'luxury-screen'} h-full flex flex-col bg-black`}>
       <div className="px-4 pt-4 pb-2 shrink-0">
         <span className="luxury-eyebrow text-[10px] uppercase">Kardiyo & Aktivite</span>
-        <div className="luxury-segmented grid grid-cols-3 bg-zinc-900 p-1 rounded-2xl border border-zinc-800 mt-2">
+        <div className="luxury-segmented grid grid-cols-3 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800 shadow-inner mt-2">
           {[
             { key: 'coach', label: 'Koç', icon: HeartPulse },
             { key: 'targets', label: 'Hedefler', icon: Target },
@@ -120,7 +120,11 @@ const CardioView = memo(({
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${tab === t.key ? 'bg-red-600 text-white' : 'text-zinc-500'}`}
+                className={`py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex justify-center items-center gap-1.5 transition-all ${
+                  tab === t.key
+                    ? 'bg-red-600 text-white shadow-md shadow-red-950/50'
+                    : 'text-zinc-500 hover:text-zinc-300'
+                }`}
               >
                 <Icon size={14} /> {t.label}
               </button>
@@ -133,7 +137,7 @@ const CardioView = memo(({
 
         <button
           onClick={() => onOpenCardio?.()}
-          className="w-full bg-red-600 active:bg-red-700 text-white rounded-2xl p-3.5 flex items-center justify-center gap-2 font-bold text-[12px] uppercase tracking-wider"
+          className="w-full bg-gradient-to-r from-red-600 to-rose-600 active:scale-[0.98] text-white rounded-2xl p-3.5 flex items-center justify-center gap-2 font-black text-[12px] uppercase tracking-widest shadow-lg shadow-red-950/40 transition-all"
         >
           <Plus size={16} /> Kardiyo / Aktivite Ekle
         </button>

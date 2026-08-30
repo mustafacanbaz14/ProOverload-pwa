@@ -36,27 +36,27 @@ const AnalyticsSection = memo(({
   if (count === 0) return null;
 
   return (
-    <section className="bg-zinc-900/60 rounded-2xl border border-zinc-800 overflow-hidden">
+    <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
       <button
         type="button"
         onClick={() => setOpen(v => !v)}
         aria-expanded={open}
-        className="w-full px-4 py-3 flex items-center gap-3 text-left active:bg-zinc-800/60 transition-colors"
+        className="w-full px-4 py-3.5 flex items-center gap-3 text-left active:bg-zinc-800/60 transition-colors"
       >
         {Icon && (
-          <span className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0">
-            <Icon size={13} className={accentClass} />
+          <span className="w-8 h-8 rounded-xl bg-zinc-950 border border-zinc-800 flex items-center justify-center shrink-0 shadow-inner">
+            <Icon size={14} className={accentClass} />
           </span>
         )}
         <span className="min-w-0 flex-1">
-          <span className="text-[11px] font-bold text-zinc-100 block uppercase tracking-wider">{title}</span>
+          <span className="text-[11px] font-black text-zinc-100 block uppercase tracking-widest">{title}</span>
           <span className="text-[9px] font-mono text-zinc-500 block mt-0.5 truncate">
             {summary || `${count} kart`}
           </span>
         </span>
         <ChevronDown size={15} className={`text-zinc-500 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} />
       </button>
-      {open && <div className="p-2.5 pt-0 space-y-2.5">{children}</div>}
+      {open && <div className="p-3.5 pt-1 space-y-3">{children}</div>}
     </section>
   );
 });
