@@ -20,12 +20,15 @@ const TrainingView = memo(({
   interfaceMode = 'simple',
   recommendation = null,
   progressionBlocks = [],
+  programDraft = null,
   onOpenExercise,
   onStart,
   onRepeat,
   onLibrary,
   onBuilder,
   onWizard,
+  onResumeDraft,
+  onFreshProgram,
   onStarter,
   onWeekPlan,
   onCardio,
@@ -43,6 +46,7 @@ const TrainingView = memo(({
   // Kullanıcı bu ekranda elle açıp kapatana kadar Ayarlar'daki bilgi yoğunluğunu
   // canlı izler. Böylece Basit/Detaylı değişikliği sayfa yenilemeden uygulanır.
   const [plannerOverride, setPlannerOverride] = useState(null);
+  const [openTemplateMenu, setOpenTemplateMenu] = useState(null);
   const plannerOpen = plannerOverride ?? interfaceMode === 'detailed';
 
   const favoriteCount = templates.filter(template => template.favorite).length;
@@ -51,6 +55,12 @@ const TrainingView = memo(({
     [templates, query, favoritesOnly],
   );
   const displayedTemplates = visibleTemplates.slice(0, templateLimit);
+  const latestDraft = programDraft?.latest;
+  const draftSummary = latestDraft?.kind === 'builder'
+    ? `${latestDraft.name || 'Adsız program'} · ${latestDraft.dayCount || 1} gün`
+    : latestDraft?.kind === 'wizard'
+      ? `Sihirbaz · ${latestDraft.step || 1}. adım`
+      : '';
 
   return (
     <div data-view-scroll="training" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
@@ -170,6 +180,60 @@ const TrainingView = memo(({
         </section>
       )}
 
+      <section className="luxury-feature-card rounded-3xl border border-violet-800/50 bg-gradient-to-br from-violet-950/45 via-zinc-900 to-cyan-950/20 p-4 space-y-3 shadow-lg shadow-violet-950/15">
+        <div className="flex items-start gap-3">
+          <span className="w-11 h-11 rounded-2xl border border-violet-700/60 bg-violet-500/15 text-violet-300 flex items-center justify-center shrink-0">
+            <Wand2 size={20} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="text-[9px] font-mono uppercase tracking-widest text-violet-400">Tek Akışta Program Kur</span>
+            <strong className="text-sm text-zinc-100 block mt-0.5">Programını adım adım hazırla</strong>
+            <span className="text-[9px] font-mono text-zinc-500 block mt-1">Seçimlerin otomatik kaydolur; çıkıp geri dönebilirsin.</span>
+          </span>
+        </div>
+
+        <div className="grid grid-cols-4 gap-1" aria-label="Program oluşturma adımları">
+          {['Tercihler', 'Taslak', 'Hareketler', 'Haftalık'].map((label, index) => (
+            <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-950/55 px-1 py-2 text-center">
+              <span className="w-4 h-4 rounded-full bg-violet-950 border border-violet-800 text-[8px] font-mono text-violet-300 inline-flex items-center justify-center">{index + 1}</span>
+              <span className="text-[7px] font-bold text-zinc-500 block mt-1 truncate">{label}</span>
+            </div>
+          ))}
+        </div>
+
+        {programDraft?.hasAny ? (
+          <div className="space-y-2">
+            <button onClick={onResumeDraft} className="w-full rounded-2xl bg-violet-600 active:bg-violet-700 p-3 text-left flex items-center gap-3 text-white">
+              <span className="flex-1 min-w-0">
+                <strong className="text-[12px] block">Taslağa Devam Et</strong>
+                <span className="text-[9px] font-mono text-violet-100 block truncate mt-0.5">{draftSummary}</span>
+              </span>
+              <ChevronRight size={17} />
+            </button>
+            <button onClick={onFreshProgram} className="w-full rounded-xl border border-zinc-800 bg-zinc-950/60 py-2 text-[9px] font-bold text-zinc-500 active:text-violet-300">
+              Taslağı bırakıp sıfırdan başla
+            </button>
+          </div>
+        ) : (
+          <button onClick={onWizard} className="w-full rounded-2xl bg-violet-600 active:bg-violet-700 p-3 text-[11px] font-black uppercase tracking-wide text-white flex items-center justify-center gap-2">
+            <Wand2 size={15} /> Yönlendirmeli Program Oluştur
+          </button>
+        )}
+
+        <div className="grid grid-cols-2 gap-2">
+          <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-amber-950/15 p-2.5 text-left active:bg-amber-900/30">
+            <Sparkles size={14} className="mb-1 text-amber-400" />
+            <strong className="block text-[9px] text-zinc-200">Hazır Program</strong>
+            <span className="text-[8px] font-mono text-zinc-600">Hızlı başlangıç</span>
+          </button>
+          <button onClick={onBuilder} className="rounded-xl border border-cyan-900/50 bg-cyan-950/15 p-2.5 text-left active:bg-cyan-900/30">
+            <BookmarkPlus size={14} className="mb-1 text-cyan-400" />
+            <strong className="block text-[9px] text-zinc-200">Elle Kur</strong>
+            <span className="text-[8px] font-mono text-zinc-600">Tam kontrol</span>
+          </button>
+        </div>
+      </section>
+
       <section className="luxury-feature-card rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
         <button
           type="button"
@@ -182,8 +246,8 @@ const TrainingView = memo(({
               <SlidersHorizontal size={16} />
             </span>
             <span>
-              <strong className="text-[11px] text-zinc-200 block">Programlama ve Araçlar</strong>
-              <span className="text-[9px] font-mono text-zinc-500">Sihirbaz · haftalık plan · hareketler · kardiyo</span>
+              <strong className="text-[11px] text-zinc-200 block">Program Araçları</strong>
+              <span className="text-[9px] font-mono text-zinc-500">Kütüphane · takvim · kardiyo · koç</span>
             </span>
           </span>
           <ChevronDown size={15} className={`text-zinc-500 shrink-0 transition-transform ${plannerOpen ? 'rotate-180' : ''}`} />
@@ -191,30 +255,6 @@ const TrainingView = memo(({
 
         {plannerOpen && (
           <div className="border-t border-zinc-800 p-3 space-y-3 bg-zinc-950/35">
-            <button onClick={onWizard} className="w-full rounded-2xl border border-violet-700/60 bg-gradient-to-r from-violet-950/55 to-fuchsia-950/15 p-3.5 text-left active:bg-violet-900/40 flex items-center gap-3">
-              <span className="w-10 h-10 rounded-xl bg-violet-500/15 border border-violet-700/50 flex items-center justify-center shrink-0">
-                <Wand2 size={18} className="text-violet-300" />
-              </span>
-              <span className="flex-1 min-w-0">
-                <strong className="text-[12px] text-zinc-100 block">Akıllı Program Sihirbazı</strong>
-                <span className="text-[9px] font-mono text-zinc-400 block mt-0.5">Düzeni seç, taslağı gör, hareketleri değiştir</span>
-              </span>
-              <ChevronRight size={16} className="text-violet-400 shrink-0" />
-            </button>
-
-            <div className="grid grid-cols-2 gap-2">
-              <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-amber-950/20 p-3 text-left active:bg-amber-900/30">
-                <Sparkles size={15} className="mb-1.5 text-amber-400" />
-                <strong className="block text-[10px] text-zinc-100">Hazırdan Başla</strong>
-                <span className="text-[8px] font-mono text-zinc-500">Tek dokunuşla kur</span>
-              </button>
-              <button onClick={onBuilder} className="rounded-xl border border-cyan-900/50 bg-cyan-950/20 p-3 text-left active:bg-cyan-900/30">
-                <BookmarkPlus size={15} className="mb-1.5 text-cyan-400" />
-                <strong className="block text-[10px] text-zinc-100">Boş Program</strong>
-                <span className="text-[8px] font-mono text-zinc-500">Toplu hareket seç</span>
-              </button>
-            </div>
-
             <div className="grid grid-cols-2 gap-2">
               {[
                 { label: 'Hareketler', hint: 'Kütüphane & ince ayar', icon: Library, action: onLibrary },
@@ -242,7 +282,7 @@ const TrainingView = memo(({
             <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider">Şablon Kütüphanesi</h3>
             <span className="text-[8px] font-mono text-zinc-600">{templates.length} şablon · {favoriteCount} favori</span>
           </div>
-          <button onClick={onBuilder} className="text-[9px] font-bold text-cyan-400 bg-cyan-950/40 border border-cyan-900/50 rounded-lg px-2.5 py-1.5">
+          <button onClick={onWizard} className="text-[9px] font-bold text-cyan-400 bg-cyan-950/40 border border-cyan-900/50 rounded-lg px-2.5 py-1.5">
             + Yeni
           </button>
         </div>
@@ -267,7 +307,7 @@ const TrainingView = memo(({
         )}
 
         {templates.length === 0 ? (
-          <button onClick={onBuilder} className="w-full p-7 text-center text-[10px] font-mono text-zinc-500">
+          <button onClick={onWizard} className="w-full p-7 text-center text-[10px] font-mono text-zinc-500">
             Henüz şablon yok · ilk şablonu oluştur
           </button>
         ) : visibleTemplates.length === 0 ? (
@@ -280,6 +320,7 @@ const TrainingView = memo(({
             {displayedTemplates.map(template => {
               const minutes = estimateDuration(template.exercises || [], restSeconds);
               const kcal = estimateLiftingCalories(minutes, weightKg);
+              const menuOpen = openTemplateMenu === template.id;
               return (
                 <article key={template.id} className="p-3 space-y-2.5">
                   <div className="flex items-center gap-2">
@@ -305,12 +346,28 @@ const TrainingView = memo(({
                     <button onClick={() => onStart?.(template)} aria-label={`${template.name} başlat`} className="w-9 h-9 rounded-xl bg-cyan-950 text-cyan-400 border border-cyan-900 flex items-center justify-center shrink-0"><Play size={14} /></button>
                   </div>
 
-                  <div className="grid grid-cols-4 gap-1.5 pl-10">
-                    <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-1.5 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:bg-violet-950/35"><Wand2 size={10} /> Sihirbaz</button>
-                    <button onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Pencil size={10} /> Düzenle</button>
-                    <button onClick={() => onDuplicate?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Copy size={10} /> Kopyala</button>
-                    <button onClick={() => onDelete?.(template)} className="rounded-lg border border-red-950/70 py-1.5 text-[8px] font-bold text-red-500/80 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
-                  </div>
+                  {interfaceMode === 'detailed' ? (
+                    <div className="grid grid-cols-4 gap-1.5 pl-10">
+                      <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-1.5 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:bg-violet-950/35"><Wand2 size={10} /> Sihirbaz</button>
+                      <button onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Pencil size={10} /> Düzenle</button>
+                      <button onClick={() => onDuplicate?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Copy size={10} /> Kopyala</button>
+                      <button onClick={() => onDelete?.(template)} className="rounded-lg border border-red-950/70 py-1.5 text-[8px] font-bold text-red-500/80 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
+                    </div>
+                  ) : (
+                    <div className="pl-10 space-y-1.5">
+                      <div className="grid grid-cols-2 gap-1.5">
+                        <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-2 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:bg-violet-950/35"><Wand2 size={10} /> Sihirbazla Düzenle</button>
+                        <button onClick={() => setOpenTemplateMenu(menuOpen ? null : template.id)} aria-expanded={menuOpen} className="rounded-lg border border-zinc-800 py-2 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400">Diğer <ChevronDown size={10} className={menuOpen ? 'rotate-180' : ''} /></button>
+                      </div>
+                      {menuOpen && (
+                        <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950/55 p-1.5">
+                          <button onClick={() => { setOpenTemplateMenu(null); onEdit?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Pencil size={10} /> Elle Düzenle</button>
+                          <button onClick={() => { setOpenTemplateMenu(null); onDuplicate?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-500 flex items-center justify-center gap-1 active:text-cyan-400"><Copy size={10} /> Kopyala</button>
+                          <button onClick={() => { setOpenTemplateMenu(null); onDelete?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-red-500/80 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </article>
               );
             })}

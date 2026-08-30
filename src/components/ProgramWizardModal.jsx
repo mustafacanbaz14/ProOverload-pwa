@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useEffect, useState, useMemo, memo } from 'react';
 import {
   X, Wand2, ChevronLeft, ChevronRight, Check, AlertTriangle, CalendarRange,
   Layers, Dumbbell, Target, Pencil, Lock, Unlock, RefreshCw, Ban, Clock, ArrowRight,
@@ -14,6 +14,7 @@ import { SUBSTITUTION_GOALS, suggestSubstitutesByGoal } from '../utils/substitut
 import { ORDER_PROFILES, suggestOrderByProfile } from '../utils/exerciseOrder';
 import { WEEKDAYS } from '../utils/weekPlan';
 import { lengthBias, LENGTH_BIAS_LABEL } from '../utils/selectionAudit';
+import { clearProgramDraft, loadProgramDraft, saveProgramDraft } from '../utils/programDraftStorage';
 
 /**
  * Program sihirbazı.
@@ -48,33 +49,75 @@ const ProgramWizardModal = memo(({
   activePlan = null,
   templates = [],
   painExclusions = EMPTY_LIST,
+  onDraftChange,
 }) => {
-  const [adim, setAdim] = useState(0);
-  const [daysPerWeek, setDaysPerWeek] = useState(4);
-  const [splitId, setSplitId] = useState(() => findSplitPreset(null, 4).id);
-  const [equipment, setEquipment] = useState('full');
-  const [priority, setPriority] = useState([]);
-  const [preferPerformed, setPreferPerformed] = useState(true);
-  const [openDay, setOpenDay] = useState(0);
-  const [sessionLength, setSessionLength] = useState('long');
+  const [draftSeed] = useState(() => loadProgramDraft('wizard'));
+  const [restoredDraft, setRestoredDraft] = useState(Boolean(draftSeed));
+  const [adim, setAdim] = useState(draftSeed?.adim ?? 0);
+  const [daysPerWeek, setDaysPerWeek] = useState(draftSeed?.daysPerWeek ?? 4);
+  const [splitId, setSplitId] = useState(() => draftSeed?.splitId || findSplitPreset(null, draftSeed?.daysPerWeek ?? 4).id);
+  const [equipment, setEquipment] = useState(draftSeed?.equipment || 'full');
+  const [priority, setPriority] = useState(draftSeed?.priority || []);
+  const [preferPerformed, setPreferPerformed] = useState(draftSeed?.preferPerformed !== false);
+  const [openDay, setOpenDay] = useState(draftSeed?.openDay ?? 0);
+  const [sessionLength, setSessionLength] = useState(draftSeed?.sessionLength || 'long');
   // Yapılamayan hareketler: havuzdan tamamen çıkıyor.
-  const [excluded, setExcluded] = useState(EMPTY_LIST);
+  const [excluded, setExcluded] = useState(draftSeed?.excluded || EMPTY_LIST);
   // Beğenilip sabitlenen hareketler: { 'Gün Adı': ['Hareket'] }.
-  const [locked, setLocked] = useState(EMPTY_LOCKS);
+  const [locked, setLocked] = useState(draftSeed?.locked || EMPTY_LOCKS);
   // Yeniden üretim sayacı: değişince useMemo yeniden çalışıyor ve kilitli
   // olmayan hareketler baştan seçiliyor.
-  const [regenSeed, setRegenSeed] = useState(0);
+  const [regenSeed, setRegenSeed] = useState(draftSeed?.regenSeed ?? 0);
   // Kullanıcının seçtiği antrenman günleri; boşken bölmenin hazır takvimi.
-  const [weekdays, setWeekdays] = useState(EMPTY_LIST);
+  const [weekdays, setWeekdays] = useState(draftSeed?.weekdays || EMPTY_LIST);
   // Tek hareketi değiştirme paneli açık olan hareket.
   const [swapping, setSwapping] = useState(null);
   // Elle yapılan tekil değişimler: { 'Gün Adı::Eski Ad': 'Yeni Ad' }.
-  const [swaps, setSwaps] = useState(EMPTY_LOCKS);
+  const [swaps, setSwaps] = useState(draftSeed?.swaps || EMPTY_LOCKS);
   // Hareket sırası ayrı bir karar: aynı hareket ve set listesi farklı amaçlarla
   // farklı dizilebilir. Elle taşıma yapılınca yalnız o günün ad sırası saklanır.
-  const [orderProfile, setOrderProfile] = useState('performance');
-  const [manualOrders, setManualOrders] = useState(EMPTY_LOCKS);
-  const [substitutionGoal, setSubstitutionGoal] = useState('closest');
+  const [orderProfile, setOrderProfile] = useState(draftSeed?.orderProfile || 'performance');
+  const [manualOrders, setManualOrders] = useState(draftSeed?.manualOrders || EMPTY_LOCKS);
+  const [substitutionGoal, setSubstitutionGoal] = useState(draftSeed?.substitutionGoal || 'closest');
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const snapshot = {
+      adim, daysPerWeek, splitId, equipment, priority, preferPerformed, openDay,
+      sessionLength, excluded, locked, regenSeed, weekdays, swaps, orderProfile,
+      manualOrders, substitutionGoal,
+    };
+    if (saveProgramDraft('wizard', snapshot)) onDraftChange?.({ kind: 'wizard', step: adim + 1 });
+  }, [isOpen, adim, daysPerWeek, splitId, equipment, priority, preferPerformed,
+    openDay, sessionLength, excluded, locked, regenSeed, weekdays, swaps,
+    orderProfile, manualOrders, substitutionGoal, onDraftChange]);
+
+  const clearDraft = () => {
+    clearProgramDraft('wizard');
+    onDraftChange?.(null);
+  };
+
+  const resetWizard = () => {
+    clearDraft();
+    setRestoredDraft(false);
+    setAdim(0);
+    setDaysPerWeek(4);
+    setSplitId(findSplitPreset(null, 4).id);
+    setEquipment('full');
+    setPriority([]);
+    setPreferPerformed(true);
+    setOpenDay(0);
+    setSessionLength('long');
+    setExcluded([]);
+    setLocked({});
+    setRegenSeed(0);
+    setWeekdays([]);
+    setSwapping(null);
+    setSwaps({});
+    setOrderProfile('performance');
+    setManualOrders({});
+    setSubstitutionGoal('closest');
+  };
 
   const splitOptions = useMemo(() => getSplitOptions(daysPerWeek), [daysPerWeek]);
 
@@ -270,6 +313,15 @@ const ProgramWizardModal = memo(({
             </span>
           </div>
         ))}
+      </div>
+
+      <div className="px-3 py-2 border-b border-zinc-800 bg-violet-950/10 flex items-center justify-between gap-3">
+        <span className="text-[8px] font-mono text-zinc-500">
+          {restoredDraft ? 'Kaldığın taslak geri yüklendi' : 'Her seçim bu cihazda otomatik kaydedilir'}
+        </span>
+        <button type="button" onClick={resetWizard} className="text-[8px] font-bold text-violet-400 active:text-violet-200 shrink-0">
+          Sıfırdan Başla
+        </button>
       </div>
 
       <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
@@ -1062,18 +1114,21 @@ const ProgramWizardModal = memo(({
           onClick={() => (adim === 0 ? onClose() : setAdim(a => a - 1))}
           className="px-4 py-3 rounded-2xl bg-zinc-800 active:bg-zinc-700 text-zinc-300 font-bold text-[11px] uppercase tracking-wider flex items-center gap-1"
         >
-          <ChevronLeft size={14} /> {adim === 0 ? 'Vazgeç' : 'Geri'}
+          <ChevronLeft size={14} /> {adim === 0 ? 'Kaydet ve Çık' : 'Geri'}
         </button>
         {sonAdim ? (
           <>
             <button
-              onClick={() => onCustomize?.({
-                ...built,
-                split: {
-                  ...built.split,
-                  schedule: weekdays.length === daysPerWeek ? schedule : built.split.schedule,
-                },
-              })}
+              onClick={() => {
+                clearDraft();
+                onCustomize?.({
+                  ...built,
+                  split: {
+                    ...built.split,
+                    schedule: weekdays.length === daysPerWeek ? schedule : built.split.schedule,
+                  },
+                });
+              }}
               className="flex-1 py-3 rounded-2xl border border-violet-800/60 bg-violet-950/30 active:bg-violet-900/40 text-violet-300 font-bold text-[10px] uppercase tracking-wide flex items-center justify-center gap-1"
             >
               <Pencil size={13} /> Önce Düzenle
@@ -1082,6 +1137,7 @@ const ProgramWizardModal = memo(({
               onClick={() => {
                 // Takvim ancak bölmenin gün sayısı kadar gün seçilmişse
                 // geçerli; eksikse bölmenin hazır takvimi kullanılıyor.
+                clearDraft();
                 onInstall(built, { schedule: weekdays.length === daysPerWeek ? schedule : null });
                 onClose();
               }}

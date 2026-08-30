@@ -79,6 +79,10 @@ import {
   draftSupersetIds, draftFlagsFromSupersetIds, moveDraftExerciseToEdge,
   moveDraftExerciseToDay, draftWeeklyVolume, draftFromStarterProgram,
 } from '../src/utils/programDraft.js';
+import {
+  normalizeBuilderDraft, normalizeWizardDraft, programDraftStatus,
+  PROGRAM_DRAFT_KEYS,
+} from '../src/utils/programDraftStorage.js';
 import { findStarterProgram } from '../src/utils/starterPrograms.js';
 import { regionsLoadedBy, activePainRegions, painWarningFor, scanSessionForPain } from '../src/utils/painGuard.js';
 import { buildSessionPace, compareSessions, findComparableSessions } from '../src/utils/sessionPace.js';
@@ -6892,6 +6896,53 @@ test('ETA anlık görüntüsü aynı günü tekilleştirir ve geçmişi 36 kayı
   assert.equal(updated.predictionHistory.length, 36);
   assert.equal(updated.predictionHistory.at(-1).confidence, 'high');
   assert.deepEqual(normalizePredictionHistory({ bad: true }), []);
+});
+
+test('program sihirbazı taslağı bozuk sınırları güvenli aralığa çekiyor', () => {
+  const draft = normalizeWizardDraft({
+    adim: 99,
+    daysPerWeek: 1,
+    priority: ['Göğüs', 'Göğüs', 'Kanat'],
+    preferPerformed: false,
+    weekdays: ['mon', 'mon', 'wed'],
+  });
+  assert.equal(draft.adim, 5);
+  assert.equal(draft.daysPerWeek, 2);
+  assert.deepEqual(draft.priority, ['Göğüs', 'Kanat']);
+  assert.deepEqual(draft.weekdays, ['mon', 'wed']);
+  assert.equal(draft.preferPerformed, false);
+  assert.equal(normalizeWizardDraft(null), null);
+});
+
+test('program düzenleyici taslağı geçersiz hareketleri atıp setleri sınırlıyor', () => {
+  const draft = normalizeBuilderDraft({
+    name: '  Yaz Programı  ',
+    activeDay: 9,
+    days: [{
+      name: 'Pazartesi',
+      exercises: [{ name: 'Bench Press', sets: 99 }, { sets: 3 }, null],
+    }],
+  });
+  assert.equal(draft.name, 'Yaz Programı');
+  assert.equal(draft.activeDay, 0);
+  assert.equal(draft.days[0].exercises.length, 1);
+  assert.equal(draft.days[0].exercises[0].sets, 12);
+  assert.equal(normalizeBuilderDraft({ days: [] }), null);
+});
+
+test('program taslağı özeti en son güncellenen akışı seçiyor', () => {
+  const values = new Map([
+    [PROGRAM_DRAFT_KEYS.wizard, JSON.stringify({ updatedAt: '2026-08-29T10:00:00.000Z', adim: 2 })],
+    [PROGRAM_DRAFT_KEYS.builder, JSON.stringify({
+      updatedAt: '2026-08-30T10:00:00.000Z', name: 'Güç', days: [{ name: 'A', exercises: [] }],
+    })],
+  ]);
+  const storage = { getItem: key => values.get(key) ?? null, removeItem: key => values.delete(key) };
+  const status = programDraftStatus(storage);
+  assert.equal(status.hasAny, true);
+  assert.equal(status.latest.kind, 'builder');
+  assert.equal(status.latest.name, 'Güç');
+  assert.equal(status.latest.dayCount, 1);
 });
 
 test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {

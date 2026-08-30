@@ -26,6 +26,8 @@ Durum: Uygulandı.
 
 ## 9.2 — Antrenman ve program oluşturma akışı
 
+Durum: Uygulandı.
+
 - Şablon, sihirbaz ve hareket kütüphanesini tek yönlendirilmiş akışta birleştir.
 - Program amacı → günler → hareketler → setler → haftalık kontrol adımlarını kullan.
 - Taslağı otomatik koru; çıkıp dönünce kayıp yaşanmasın.
@@ -33,6 +35,8 @@ Durum: Uygulandı.
 - Mevcut programı sihirbazla düzenlemeyi, sıfırdan kurmakla aynı kolaylığa getir.
 
 ## 9.3 — Beslenme ve enerji sadeleştirmesi
+
+Durum: Uygulandı.
 
 - Günlük hedef, alınan, yakılan ve kalan enerjiyi tek denklemde göster.
 - Besin, öğün toplamı, barkod ve manuel günlük toplamı tek hızlı ekleme kapısından aç.

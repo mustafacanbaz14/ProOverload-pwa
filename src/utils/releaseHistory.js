@@ -113,7 +113,7 @@ const RELEASE_9_0 = release('9.0', '2026-08-29', 'Yayın Güvenilirliği', [
   item('PWA ve Kullanıcı Verisi Değişmedi', 'Bu bakım sürümü localStorage anahtarlarına, veri şemasına, PWA önbellek modeline veya Claude ile eklenen v8.9 arayüz sadeleştirmelerine dokunmuyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Bugün Odaklı Ana Ekran', [
+const RELEASE_9_1 = release('9.1', '2026-08-30', 'Bugün Odaklı Ana Ekran', [
   item('Basit Mod Gerçekten Basit', 'Ana ekran artık bütün analizleri aynı anda göstermiyor; günün kararı, planı ve yapılacak ilk iş üstte kalırken ayrıntılar istenince açılıyor.'),
   item('Tek Haftalık Durum Kapısı', 'Hazır oluşluk, deload, kas haritası, ACWR, itme–çekme dengesi ve kas hacmi tek Haftalık Durum bölümünde toplandı.'),
   item('Kapalıyken Anlamlı Özet', 'Haftalık bölüm kapalıyken antrenman, etkili set, eşik altındaki kaslar, tavan aşımı, toparlanma uyarısı ve yük durumu tek bakışta görülebiliyor.'),
@@ -123,6 +123,21 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Bugün O
   item('Harita İhtiyaç Anında', 'İnteraktif SVG kas haritası basit modda haftalık ayrıntı açılmadan yüklenmiyor; ilk ekranın gereksiz değerlendirme işi azaltıldı.'),
   item('Veri ve PWA Yapısı Korundu', 'Bu arayüz sürümü localStorage anahtarlarını, kullanıcı kayıtlarını, yedek biçimini veya çevrimdışı PWA davranışını değiştirmiyor.'),
   item('Beş Sürümlük UX Yol Haritası', 'Antrenman kurma, beslenme ve enerji, gelişim ve arşiv ile mağaza kalitesini kapsayan sonraki dört sadeleştirme sürümü belgelenerek sabitlendi.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-30', 'Program Akışı ve Günlük Beslenme', [
+  item('Tek Yönlendirmeli Program Akışı', 'Antrenman Merkezi program amacı, taslak, hareket düzenleme ve haftalık kontrolü tek baskın başlangıç kartında sıralıyor; dağınık oluşturma yolları ikincil seçeneklere indi.'),
+  item('Kayıpsız Sihirbaz Taslağı', 'Program sihirbazındaki gün, düzen, ekipman, kas önceliği, hareket sırası, takvim ve ikame seçimleri her değişiklikte cihazda otomatik korunuyor.'),
+  item('Kayıpsız Elle Program Taslağı', 'Program adı, günler, hareketler, setler, sıralama ve haftalık plan tercihi kaydediliyor; pencere kapansa veya uygulama yenilense bile taslak geri yükleniyor.'),
+  item('Taslağa Tek Dokunuşla Dönüş', 'Antrenman Merkezi en son değiştirilen sihirbaz veya düzenleyici taslağını tanıyor, adım ve gün özetini göstererek doğru ekrana geri götürüyor.'),
+  item('Mevcut Şablonlarda Sade Eylemler', 'Basit görünümde şablon kartı önce başlatma ve sihirbazla düzenlemeyi gösteriyor; elle düzenleme, kopyalama ve silme tek Diğer menüsünde korunuyor.'),
+  item('Tek Günlük Kalori Denklemi', 'Baz hedef, bugünün ortalamadan harcama farkı, alınan enerji ve kalan kalori aynı satırda gösteriliyor; egzersizin iki kez eklenmediği açıkça belirtiliyor.'),
+  item('Üç Ana Beslenme Eylemi', 'Besin veya barkod ekleme, günlük toplam makro girişi ve kaydetme ekranın tek hızlı işlem sırası oldu; aynı işi tekrarlayan görünüm seçicileri kaldırıldı.'),
+  item('Kademeli Ayrıntı Katmanı', 'Şablonlar, geçmişten kopyalama, kalori ayrıntısı ve güne özel NEAT ayarları kapalı özetlerin arkasında duruyor; ileri özellikler silinmeden ilk ekran sadeleşti.'),
+  item('Tahmin Kaynağı ve Güveni', 'Kalori hedefi kilo eğilimiyle kalibre edilmişse güven düzeyiyle, yeterli veri yoksa vücut ölçümü ve aktiviteden üretilen tahmin olarak işaretleniyor.'),
+  item('Geçmiş Gün Doğrudan Düzenleme', 'Tarih seçici, günlük özet ve kayıt alanı aynı akışta kaldı; geçmiş günün öğünleri, toplam makroları, suyu ve enerji girdileri ayrı arşiv yolculuğu olmadan değiştirilebiliyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'Yeni taslaklar ayrı ve güvenli localStorage anahtarlarında tutuluyor; mevcut antrenman, şablon, beslenme, yedek ve çevrimdışı çalışma şemaları değiştirilmedi.'),
+  item('491 Çekirdek Kontrol', 'Taslak sınırlandırma, bozuk hareket temizleme ve en güncel akışı seçme senaryoları regresyon ağına eklendi; mevcut kas sınıflandırma ve mağaza kontrolleri korunuyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -199,6 +214,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_9_1,
   RELEASE_9_0,
   RELEASE_8_9,
   RELEASE_8_8,

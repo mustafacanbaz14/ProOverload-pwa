@@ -1,4 +1,4 @@
-import React, { useState, useMemo, memo } from 'react';
+import React, { useEffect, useState, useMemo, memo } from 'react';
 import { X, Plus, Trash2, Save, Clock, Layers, Calendar, ChevronUp, ChevronDown, ArrowUp, ArrowDown, ChevronsUp, ChevronsDown, Flame, Copy, RefreshCw, Link2, MoveRight, AlertTriangle, CheckCircle2, LifeBuoy, Zap, SlidersHorizontal } from 'lucide-react';
 import { getVolumeLandmarks } from '../utils/constants';
 import { previewTemplateVolume, estimateDuration } from '../utils/templates';
@@ -20,6 +20,7 @@ import PlanningGuide from './PlanningGuide';
 import TemplateAssistantCard from './TemplateAssistantCard';
 import ProgramOptimizerCard from './ProgramOptimizerCard';
 import SessionDesignCard from './SessionDesignCard';
+import { clearProgramDraft, loadProgramDraft, saveProgramDraft } from '../utils/programDraftStorage';
 
 const DAY_NAMES = ['1. Gün', '2. Gün', '3. Gün', '4. Gün', '5. Gün', '6. Gün', '7. Gün'];
 
@@ -48,8 +49,11 @@ const TemplateBuilderModal = memo(({
   optimalProfile = null,
   libraryProps = {},
   wizardMode = false,
+  onDraftChange,
 }) => {
-  const [programName, setProgramName] = useState(editing?.name || initialDraft?.name || '');
+  const [storedDraft] = useState(() => (!editing && !initialDraft ? loadProgramDraft('builder') : null));
+  const draftSeed = initialDraft || storedDraft;
+  const [programName, setProgramName] = useState(editing?.name || draftSeed?.name || '');
   const [days, setDays] = useState(() => editing
     ? [{
       uid: generateId(),
@@ -72,27 +76,39 @@ const TemplateBuilderModal = memo(({
         ...(ex.repRange ? { repRange: ex.repRange } : {}),
       })),
     }]
-    : initialDraft?.days?.length
-      ? initialDraft.days.map((day, index) => ({
+    : draftSeed?.days?.length
+      ? draftSeed.days.map((day, index) => ({
         uid: day.uid || generateId(),
         name: day.name || DAY_NAMES[index],
-        weekday: day.weekday || suggestedWeekdays(initialDraft.days.length)[index],
+        weekday: day.weekday || suggestedWeekdays(draftSeed.days.length)[index],
         exercises: (day.exercises || []).map(ex => ({ ...ex, uid: ex.uid || generateId(), sets: ex.sets || 3 })),
       }))
       : [{ uid: generateId(), name: DAY_NAMES[0], weekday: 'mon', exercises: [] }]);
-  const [activeDay, setActiveDay] = useState(0);
+  const [activeDay, setActiveDay] = useState(draftSeed?.activeDay || 0);
   // Kütüphane bu bileşenin içinden açılır; böylece seçilen hareket bir üst
   // bileşene çıkıp geri dönmek zorunda kalmaz (render sırasında yan etki olurdu).
   const [pickerMode, setPickerMode] = useState(null); // { type: 'add' } | { type: 'replace', uid }
   const [selectedExercises, setSelectedExercises] = useState(() => new Set());
   const [defaultSets, setDefaultSets] = useState(3);
-  const [createWeekPlan, setCreateWeekPlan] = useState(!editing);
+  const [createWeekPlan, setCreateWeekPlan] = useState(editing ? false : draftSeed?.createWeekPlan !== false);
   const [removeArmed, setRemoveArmed] = useState(false);
   // Açık olan "başka güne taşı" menüsünün hareketi.
   const [moveTarget, setMoveTarget] = useState(null);
   // Hareket başına plan paneli (yedek hareket, teknik, tekrar aralığı).
   const [planTarget, setPlanTarget] = useState(null);
   const [replaceGoal, setReplaceGoal] = useState('closest');
+
+  useEffect(() => {
+    if (!isOpen || editing) return;
+    if (saveProgramDraft('builder', { name: programName, days, activeDay, createWeekPlan })) {
+      onDraftChange?.({ kind: 'builder', name: programName, dayCount: days.length });
+    }
+  }, [isOpen, editing, programName, days, activeDay, createWeekPlan, onDraftChange]);
+
+  const finishDraft = () => {
+    clearProgramDraft('builder');
+    onDraftChange?.(null);
+  };
 
   // Haftalık toplam: gün gün bakarak program yazan biri, her günü makul görünen
   // ama haftalık toplamı MEV altında kalan bir program üretebiliyordu. Hook
@@ -232,6 +248,15 @@ const TemplateBuilderModal = memo(({
           placeholder={editing ? 'Şablon adı' : 'Program adı (örn. Push Pull Legs)'}
           className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-zinc-100 outline-none font-mono text-xs focus:border-cyan-500 transition-colors"
         />
+
+        {!editing && (
+          <div className="flex items-center justify-between gap-2 px-1">
+            <span className="text-[8px] font-mono text-zinc-600">
+              {storedDraft ? 'Kaydedilmiş taslak geri yüklendi' : 'Değişiklikler bu cihazda otomatik korunur'}
+            </span>
+            <span className="text-[8px] font-bold text-emerald-500">Taslak açık</span>
+          </div>
+        )}
 
         {!editing && (
         <div className="flex gap-1.5 overflow-x-auto hide-scrollbar -mx-1 px-1 items-center">
@@ -783,7 +808,10 @@ const TemplateBuilderModal = memo(({
           disabled={!canSave}
           onClick={() => {
             if (editing) onUpdate(editing.id, programName.trim(), days[0].exercises, { emphasis: days[0].emphasis });
-            else onSave(programName.trim(), days, { createWeekPlan });
+            else {
+              onSave(programName.trim(), days, { createWeekPlan });
+              finishDraft();
+            }
             onClose();
           }}
           className="w-full bg-cyan-600 active:bg-cyan-700 disabled:bg-zinc-800 disabled:text-zinc-600 text-white font-bold py-3.5 rounded-xl uppercase text-[11px] tracking-wider flex items-center justify-center gap-2 transition-colors"

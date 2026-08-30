@@ -128,6 +128,7 @@ import {
   duplicateTemplate, markTemplateUsed, toggleTemplateFavorite,
 } from './utils/templateLibrary';
 import { draftFromGeneratedProgram, draftFromStarterProgram, instantiateDraftProgram, draftSupersetIds } from './utils/programDraft';
+import { clearProgramDraft, programDraftStatus } from './utils/programDraftStorage';
 import { findMergeCandidates, previewExerciseMerge, applyExerciseMerge } from './utils/exerciseMerge';
 
 import {
@@ -379,6 +380,7 @@ export default function App() {
   const [isScenarioOpen, setIsScenarioOpen] = useState(false);
   const [isEvidenceOpen, setIsEvidenceOpen] = useState(false);
   const [isWizardOpen, setIsWizardOpen] = useState(false);
+  const [programDraft, setProgramDraft] = useState(() => programDraftStatus());
   const [isWeeklyReviewOpen, setIsWeeklyReviewOpen] = useState(false);
   const [isCoachCenterOpen, setIsCoachCenterOpen] = useState(false);
   // Seans bitince gösterilen rapor; kapatılana kadar duruyor.
@@ -395,6 +397,33 @@ export default function App() {
   const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false);
   const [isStoreReadinessOpen, setIsStoreReadinessOpen] = useState(false);
   const [pendingImport, setPendingImport] = useState(null);
+
+  const handleProgramDraftChange = useCallback(() => {
+    setProgramDraft(programDraftStatus());
+  }, []);
+
+  const handleResumeProgramDraft = useCallback(() => {
+    const status = programDraftStatus();
+    setProgramDraft(status);
+    setEditingTemplate(null);
+    setBuilderDraft(null);
+    if (status.latest?.kind === 'builder') {
+      setBuilderWizardMode(true);
+      setIsBuilderOpen(true);
+      return;
+    }
+    setIsWizardOpen(true);
+  }, []);
+
+  const handleStartFreshProgram = useCallback(() => {
+    clearProgramDraft('wizard');
+    clearProgramDraft('builder');
+    setProgramDraft(programDraftStatus());
+    setEditingTemplate(null);
+    setBuilderDraft(null);
+    setBuilderWizardMode(false);
+    setIsWizardOpen(true);
+  }, []);
 
   useEffect(() => {
     try {
@@ -4244,12 +4273,15 @@ export default function App() {
               interfaceMode={settings.interfaceMode}
               recommendation={templateRecommendation}
               progressionBlocks={progressionBlocks}
+              programDraft={programDraft}
               onOpenExercise={setProfileExercise}
               onStart={handleStartRequest}
               onRepeat={handleRepeatWorkout}
               onLibrary={() => setIsLibraryOpen(true)}
               onBuilder={() => { setBuilderWizardMode(false); setIsBuilderOpen(true); }}
               onWizard={() => setIsWizardOpen(true)}
+              onResumeDraft={handleResumeProgramDraft}
+              onFreshProgram={handleStartFreshProgram}
               onStarter={() => setIsStarterOpen(true)}
               onWeekPlan={() => setIsWeekPlanOpen(true)}
               onCardio={() => setIsCardioOpen(true)}
@@ -4791,6 +4823,7 @@ export default function App() {
           weightKg={latestWeight}
           optimalProfile={optimalVolumeProfile}
           wizardMode={builderWizardMode}
+          onDraftChange={handleProgramDraftChange}
           libraryProps={{
             allExerciseNames: allExercisesNames,
             getContributions: getExerciseContributions,
@@ -4849,6 +4882,7 @@ export default function App() {
           activePlan={activePlan}
           templates={templates}
           painExclusions={painExclusionSuggestions}
+          onDraftChange={handleProgramDraftChange}
         />}
 
         {isPainOpen && <PainLogModal
