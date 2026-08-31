@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.12 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.13 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -82,6 +82,18 @@ Durum: Uygulandı.
 - Boş arşiv durumlarında ilgili kayıt eylemini; sonuçsuz aramada filtre temizlemeyi göster.
 - Beslenmede veri giriş yolları ile kaydetme eylemini görsel olarak ayır.
 - Kalori denklemi, makro etiketleri ve sık kullanılan beslenme kontrollerini büyüt.
+- PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
+
+## 10.13 — Odaklı görev ekranları
+
+Durum: Uygulandı.
+
+- Basit görünümde antrenman önerisinin kanıtını ve kas haritasını isteğe bağlı katmana al.
+- İlerleme bloklarını uzun liste yerine sayılı özet başlığıyla kapalı başlat.
+- Program kurmada yönlendirmeli yolu öne çıkar; hazır ve elle kurma seçeneklerini ikinci katmanda koru.
+- Vücut ekranında hızlı kaydetmeyi yukarı taşı; tarih, profil, kompozisyon ve oranları özet başlıklarına dönüştür.
+- Geçmişe kayıt eklemeyi sürekli kart yerine başlık eylemiyle açılan panele çevir.
+- Şablon ve su kontrollerindeki küçük dokunma hedeflerini büyüt.
 - PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları

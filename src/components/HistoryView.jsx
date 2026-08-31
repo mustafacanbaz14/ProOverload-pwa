@@ -137,6 +137,10 @@ const HistoryView = memo(({
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [addDate, setAddDate] = useState(getLocalDateString);
+  const openAddPanel = () => {
+    setAddOpen(true);
+    requestAnimationFrame(() => document.querySelector('[data-view-scroll="history"]')?.scrollTo({ top: 0, behavior: 'smooth' }));
+  };
   const q = foldForSearch(query).trim();
   const strengthWorkouts = useMemo(() => workouts.filter(w => (w.exercises || []).length > 0), [workouts]);
   const cardioRecords = useMemo(() => workouts.flatMap(workout => (workout.cardio || []).map(cardio => ({
@@ -172,31 +176,31 @@ const HistoryView = memo(({
         eyebrow="Kayıt Arşivi"
         title="Geçmiş"
         subtitle="Günlerini ara, incele veya geçmiş bir kaydı düzenle."
+        action={(
+          <button
+            type="button"
+            onClick={() => setAddOpen(value => !value)}
+            aria-expanded={addOpen}
+            className={`min-h-11 rounded-xl border px-3 flex items-center gap-1.5 text-[10px] font-bold ${addOpen ? 'border-cyan-700 bg-cyan-600 text-white' : 'border-zinc-800 bg-zinc-900 text-cyan-400'}`}
+          >
+            {addOpen ? <X size={15} /> : <Plus size={15} />} {addOpen ? 'Kapat' : 'Geçmişe Ekle'}
+          </button>
+        )}
       />
 
-      <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
-        <button
-          onClick={() => setAddOpen(value => !value)}
-          className="w-full p-3.5 flex items-center justify-between text-left active:bg-zinc-800/60 transition-colors"
-          aria-expanded={addOpen}
-        >
-          <span className="flex items-center gap-2.5 min-w-0">
-            <span className="w-8 h-8 rounded-xl bg-cyan-950/60 border border-cyan-800/50 text-cyan-400 flex items-center justify-center shrink-0 shadow-sm"><Plus size={16} /></span>
-            <span>
+      {addOpen && (
+        <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
+          <div className="p-3.5 space-y-3 bg-zinc-950/60">
+            <div>
               <strong className="text-[12px] font-bold text-zinc-100 block">Geçmişe kayıt ekle</strong>
-              <span className="text-[9px] font-mono text-zinc-500">Tarihi seç; kayıt türünü tek dokunuşla aç</span>
-            </span>
-          </span>
-          {addOpen ? <X size={16} className="text-zinc-500" /> : <Plus size={16} className="text-zinc-500" />}
-        </button>
-        {addOpen && (
-          <div className="border-t border-zinc-800 p-3.5 space-y-3 bg-zinc-950/60">
+              <span className="text-[9px] font-mono text-zinc-500">Tarihi seç, ardından kayıt türüne dokun.</span>
+            </div>
             <div className="flex items-center justify-between gap-3">
               <div>
                 <span className="text-[9px] font-mono text-zinc-500 uppercase tracking-widest block">Kayıt tarihi</span>
                 <strong className="text-[11px] font-mono text-cyan-400">{formatDay(addDate, 'medium', { year: true })}</strong>
               </div>
-              <input type="date" value={addDate} max={getLocalDateString()} onChange={(event) => setAddDate(event.target.value)} className="bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-[10px] font-mono text-zinc-300 outline-none focus:border-cyan-500" />
+              <input type="date" value={addDate} max={getLocalDateString()} onChange={(event) => setAddDate(event.target.value)} className="min-h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-[10px] font-mono text-zinc-300 outline-none focus:border-cyan-500" />
             </div>
             <div className="grid grid-cols-2 gap-2">
               {[
@@ -205,15 +209,15 @@ const HistoryView = memo(({
                 { key: 'nutrition', label: 'Beslenme', icon: Beef, tone: 'text-emerald-400 border-emerald-900/50 bg-gradient-to-b from-emerald-950/30 to-zinc-950', action: onAddNutrition },
                 { key: 'metric', label: 'Vücut Ölçümü', icon: Scale, tone: 'text-purple-400 border-purple-900/50 bg-gradient-to-b from-purple-950/30 to-zinc-950', action: onAddMetric },
               ].map(item => (
-                <button key={item.key} onClick={() => { item.action?.(addDate); setAddOpen(false); }} className={`border rounded-2xl p-3 flex items-center gap-2 text-[10px] font-bold active:scale-[0.97] transition-all shadow-sm ${item.tone}`}>
+                <button key={item.key} onClick={() => { item.action?.(addDate); setAddOpen(false); }} className={`min-h-12 border rounded-2xl p-3 flex items-center gap-2 text-[10px] font-bold active:scale-[0.97] transition-all shadow-sm ${item.tone}`}>
                   {React.createElement(item.icon, { size: 14 })} {item.label}
                 </button>
               ))}
             </div>
             <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">O tarihte beslenme veya ölçüm varsa yeni kopya açmak yerine mevcut kayıt düzenlemeye yüklenir.</p>
           </div>
-        )}
-      </section>
+        </section>
+      )}
       <div className="luxury-segmented flex gap-1.5 overflow-x-auto hide-scrollbar bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md" aria-label="Arşiv kayıt türü">
         {[
           { key: 'all', label: 'Tümü', count: archiveDays.length, activeBg: 'bg-cyan-600' },
@@ -273,7 +277,7 @@ const HistoryView = memo(({
               title={q ? 'Aramana uyan kayıt yok' : 'Arşiv henüz boş'}
               detail={q ? 'Başka bir tarih, hareket veya öğün adı dene.' : 'İlk kaydını eklediğinde günler burada ay ve hafta halinde düzenlenecek.'}
               actionLabel={q ? 'Aramayı temizle' : 'Kayıt seçeneklerini aç'}
-              onAction={q ? () => setQuery('') : () => setAddOpen(true)}
+              onAction={q ? () => setQuery('') : openAddPanel}
             />
           ) : (
             <WeekGroups key="all" items={filteredArchiveDays} expandAll={Boolean(q)}>{day => (

@@ -158,7 +158,7 @@ const HomeView = memo(({
               <button
                 type="button"
                 onClick={() => onAddWater?.(250)}
-                className="px-3 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200 text-[10px] font-bold active:scale-[0.95] transition-transform"
+                className="min-h-11 px-3 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 text-[10px] font-bold active:scale-[0.95] transition-transform"
                 title="+250 ml su ekle"
               >
                 +250ml
@@ -166,7 +166,7 @@ const HomeView = memo(({
               <button
                 type="button"
                 onClick={() => onAddWater?.(500)}
-                className="px-3 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200 text-[10px] font-bold active:scale-[0.95] transition-transform"
+                className="min-h-11 px-3 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-200 text-[10px] font-bold active:scale-[0.95] transition-transform"
                 title="+500 ml su ekle"
               >
                 +500ml
@@ -175,7 +175,8 @@ const HomeView = memo(({
                 <button
                   type="button"
                   onClick={onOpenNutrition}
-                  className="p-1 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 active:scale-[0.95] transition-colors"
+                  aria-label="Beslenme ekranına git"
+                  className="w-11 h-11 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 hover:text-zinc-200 active:scale-[0.95] transition-colors flex items-center justify-center"
                   title="Beslenme ekranına git"
                 >
                   <ChevronRight size={13} />

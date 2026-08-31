@@ -1,5 +1,5 @@
-import React, { useMemo, memo } from 'react';
-import { Ruler, TrendingUp, TrendingDown, Minus, Info } from 'lucide-react';
+import React, { useMemo, useState, memo } from 'react';
+import { Ruler, TrendingUp, TrendingDown, Minus, Info, ChevronDown } from 'lucide-react';
 import { buildBodyRatios } from '../utils/bodyRatios';
 import { BODY_METRICS } from '../utils/constants';
 
@@ -25,7 +25,8 @@ const KIND_LABEL = {
 
 const olcuAdi = (key) => BODY_METRICS.find(m => m.key === key)?.label || key;
 
-const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male' }) => {
+const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male', defaultOpen = true }) => {
+  const [open, setOpen] = useState(defaultOpen);
   const rapor = useMemo(
     () => buildBodyRatios(metrics, { gender, previous }),
     [metrics, gender, previous]);
@@ -34,14 +35,20 @@ const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male' }) => {
 
   return (
     <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
-      <div className="px-4 py-3 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline gap-2">
-        <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
-          <Ruler size={12} className="mr-1.5 text-cyan-400" /> Vücut Oranları
-        </h4>
-        {rapor.dateLabel && <span className="text-[9px] font-mono text-zinc-400 shrink-0">{rapor.dateLabel}</span>}
-      </div>
+      <button type="button" onClick={() => setOpen(value => !value)} aria-expanded={open} className={`w-full px-4 py-3 bg-zinc-950/60 flex items-center justify-between gap-2 text-left active:bg-zinc-900 ${open ? 'border-b border-zinc-800' : ''}`}>
+        <span className="min-w-0">
+          <h4 className="text-[10px] font-bold text-zinc-300 uppercase tracking-widest flex items-center">
+            <Ruler size={12} className="mr-1.5 text-cyan-400" /> Vücut Oranları
+          </h4>
+          <span className="text-[9px] font-mono text-zinc-500 block mt-0.5">{rapor.hasData ? `${rapor.rows.length} oran hesaplandı` : 'Çevre ölçüsü girilince hesaplanır'}</span>
+        </span>
+        <span className="flex items-center gap-2 shrink-0">
+          {rapor.dateLabel && <span className="text-[9px] font-mono text-zinc-400">{rapor.dateLabel}</span>}
+          <ChevronDown size={14} className={`text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
 
-      {rapor.hasData ? (
+      {open && (rapor.hasData ? (
         <div className="divide-y divide-zinc-800/70">
           {rapor.rows.map(r => {
             const s = STATUS[r.status];
@@ -89,9 +96,9 @@ const BodyRatiosCard = memo(({ metrics, previous = null, gender = 'male' }) => {
             Oran hesaplamak için çevre ölçüleri gerekiyor.
           </p>
         </div>
-      )}
+      ))}
 
-      {rapor.missing.length > 0 && (
+      {open && rapor.missing.length > 0 && (
         <div className="px-4 py-2.5 border-t border-zinc-800 bg-zinc-950/60 flex items-start gap-2">
           <Info size={11} className="text-zinc-400 shrink-0 mt-0.5" />
           <p className="text-[9px] font-mono text-zinc-400 leading-relaxed">

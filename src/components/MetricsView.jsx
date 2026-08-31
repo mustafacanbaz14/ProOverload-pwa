@@ -20,15 +20,19 @@ const SKINFOLD_SITES = [
   { key: 'subscapular', label: 'Subskapular', male3: false, female3: false },
 ];
 
-const Section = ({ icon, title, action, children, defaultOpen = true }) => {
+const Section = ({ icon, title, summary, action, children, defaultOpen = true }) => {
   const [open, setOpen] = useState(defaultOpen);
   return (
     <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
       <div className={`flex justify-between items-center px-3 border-zinc-800 bg-zinc-950/60 ${open ? 'border-b' : ''}`}>
         <button onClick={() => setOpen(value => !value)} aria-expanded={open} className="flex-1 py-3 text-left flex items-center justify-between min-w-0">
-          <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider flex items-center min-w-0">
-            <span className="mr-2 text-cyan-400 flex items-center">{icon}</span>{title}
-          </h3>
+          <span className="flex items-center min-w-0">
+            <span className="mr-2 text-cyan-400 flex items-center shrink-0">{icon}</span>
+            <span className="min-w-0">
+              <h3 className="text-[11px] font-bold text-zinc-200 uppercase tracking-wider truncate">{title}</h3>
+              {summary && <span className="text-[9px] font-mono text-zinc-500 block mt-0.5 truncate">{summary}</span>}
+            </span>
+          </span>
           <ChevronDown size={14} className={`text-zinc-400 transition-transform ${open ? 'rotate-180' : ''}`} />
         </button>
         {action && <div className="ml-2 shrink-0">{action}</div>}
@@ -80,6 +84,7 @@ const MetricsView = memo(({
   embedded = false,
 }) => {
   const form = currentMetricsForm;
+  const detailed = settings.interfaceMode === 'detailed';
   const [guideType, setGuideType] = useState('tape');
   const [goalCenterOpen, setGoalCenterOpen] = useState(false);
   const tapeGoalCount = Object.values(settings.goalMeasurements || {}).filter(value => parseNumber(value) > 0).length;
@@ -184,15 +189,27 @@ const MetricsView = memo(({
         </button>
       </div>
 
+      {!detailed && (
+        <button
+          type="button"
+          onClick={handleSaveMetrics}
+          className="min-h-12 w-full bg-cyan-600 active:bg-cyan-700 text-white font-bold px-4 rounded-2xl flex justify-center items-center text-[11px] shadow-lg shadow-cyan-900/20"
+        >
+          <Save size={15} className="mr-2" /> {isExistingRecord ? 'Bugünkü Kaydı Güncelle' : 'Bugünkü Ölçümü Kaydet'}
+        </button>
+      )}
+
       {onOpenSettings && (
-        <button onClick={onOpenSettings} className="w-full text-[9px] font-mono text-zinc-500 flex items-center justify-center gap-1.5 py-1">
-          <Settings2 size={11} /> Vücut ve hesaplama ayarları
+        <button onClick={onOpenSettings} className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/55 text-[10px] font-mono text-zinc-400 flex items-center justify-center gap-1.5 px-3 active:bg-zinc-900">
+          <Settings2 size={13} /> Vücut ve hesaplama ayarları
         </button>
       )}
 
       {/* --- KAYIT TARİHİ --- */}
-      <Section icon={<Calendar size={13} />}
+      <Section key={`date-${detailed}-${isExistingRecord}`} icon={<Calendar size={13} />}
         title="Kayıt Tarihi"
+        summary={formatDay(form.date, 'long')}
+        defaultOpen={detailed || isExistingRecord}
         action={
           latestMetrics && (
             <button
@@ -219,7 +236,13 @@ const MetricsView = memo(({
       </Section>
 
       {/* --- PROFİL --- */}
-      <Section icon={<User size={13} />} title="Profil">
+      <Section
+        key={`profile-${detailed}-${Boolean(latestMetrics)}`}
+        icon={<User size={13} />}
+        title="Profil"
+        summary={`${form.gender === 'female' ? 'Kadın' : 'Erkek'} · ${form.age || '—'} yaş · ${form.height || '—'} cm · ${form.weight || '—'} kg`}
+        defaultOpen={detailed || !latestMetrics}
+      >
         <div className="grid grid-cols-2 gap-3">
           <Field label="Cinsiyet">
             <select value={form.gender} onChange={(e) => updateField('gender', e.target.value)} className={inputClass}>
@@ -241,6 +264,7 @@ const MetricsView = memo(({
 
       {/* --- YAĞ ORANI YÖNTEMİ --- */}
       <Section
+        key={`fat-${detailed}`}
         icon={<Droplet size={13} />}
         title="Yağ Oranı & Kaliper"
         defaultOpen={settings.interfaceMode === 'detailed'}
@@ -333,7 +357,13 @@ const MetricsView = memo(({
       </Section>
 
       {/* --- HESAPLANAN KOMPOZİSYON --- */}
-      <Section icon={<Scale size={13} />} title="Hesaplanan Kompozisyon">
+      <Section
+        key={`composition-${detailed}`}
+        icon={<Scale size={13} />}
+        title="Hesaplanan Kompozisyon"
+        summary={`Yağ %${computedComp.activeBF || '—'} · FFMI ${computedComp.ffmi || '—'} · BMR ${computedComp.bmr || '—'} kcal`}
+        defaultOpen={detailed}
+      >
         <div className="grid grid-cols-2 gap-2">
           {[
             { label: 'Aktif Yağ Oranı', value: `%${computedComp.activeBF}`, color: 'text-cyan-400' },
@@ -413,13 +443,15 @@ const MetricsView = memo(({
       {/* Vücut oranları: tek tek çevre ölçüleri "kol 39 oldu" diyor, oranlar
           görünümün nasıl değiştiğini söylüyor. */}
       <BodyRatiosCard
+        key={`ratios-${detailed}`}
         metrics={latestMetrics || currentMetricsForm}
         previous={previousMetrics}
         gender={gender}
+        defaultOpen={detailed}
       />
 
       {/* --- ÇEVRE ÖLÇÜLERİ --- */}
-      <Section icon={<Ruler size={13} />}
+      <Section key={`tape-${detailed}`} icon={<Ruler size={13} />}
         title="Çevre Ölçüleri (cm)"
         defaultOpen={settings.interfaceMode === 'detailed'}
         action={

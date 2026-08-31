@@ -32,13 +32,15 @@ const viewHeader = read('src/components/ViewHeader.jsx');
 const trainingView = read('src/components/TrainingView.jsx');
 const nutritionView = read('src/components/NutritionView.jsx');
 const progressHub = read('src/components/ProgressHubView.jsx');
+const metricsView = read('src/components/MetricsView.jsx');
+const bodyRatios = read('src/components/BodyRatiosCard.jsx');
 
 // Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
 // package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
 // olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 10.7') && roadmap.includes('## 10.12') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
+check(roadmap.includes('## 10.7') && roadmap.includes('## 10.13') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
 check(app.includes('<span>Ekle</span>') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
 check(!app.includes('isAppMenuOpen') && !existsSync(resolve(root, 'src/components/AppMenuModal.jsx')), 'Tekrarlanan uygulama menüsü kaldırıldı');
 check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => navbar.includes(`key: '${key}'`)), 'Beş ana bölüm yalnız alt gezinmede korunuyor');
@@ -60,6 +62,11 @@ check(viewHeader.includes('luxury-title') && [trainingView, nutritionView, histo
 check(historyView.includes('overflow-x-auto') && historyView.includes('aria-pressed') && historyView.includes('ArchiveEmptyState'), 'Arşiv filtreleri okunabilir ve boş durumlar eylem odaklı');
 check(nutritionView.includes('Hızlı beslenme işlemleri') && nutritionView.includes('Değişiklikleri sakla') && nutritionView.includes('min-h-11'), 'Beslenme giriş ve kaydetme hiyerarşisi ile dokunma hedefleri korunuyor');
 check(progressHub.includes('Gelişim Merkezi') && progressHub.includes('Gelişim görünümü'), 'Gelişim ekranı başlık ve alt görünüm bağlamı taşıyor');
+check(trainingView.includes('recommendationOverride') && trainingView.includes('progressionOverride') && trainingView.includes('programOptionsOverride'), 'Basit antrenman görünümü öneri, blok ve kurulum ayrıntılarını katmanlıyor');
+check(trainingView.includes('Neden bu seans? Kas haritasını göster') && trainingView.includes('Hazır program ve elle kurma seçenekleri'), 'Antrenman ayrıntıları açık ve anlaşılır eylemlerle erişilebilir');
+check(metricsView.includes('Bugünkü Ölçümü Kaydet') && metricsView.includes('summary={`Yağ %') && bodyRatios.includes('defaultOpen'), 'Vücut kaydı üst eylem ve katlanabilir özetlerle sadeleşiyor');
+check(historyView.includes("addOpen ? 'Kapat' : 'Geçmişe Ekle'") && historyView.includes('openAddPanel'), 'Geçmiş kayıt ekleme başlık eyleminden açılıyor');
+check(homeView.includes('min-h-11') && homeView.includes('aria-label="Beslenme ekranına git"'), 'Ana sayfa su kontrolleri erişilebilir dokunma hedefi taşıyor');
 check(app.includes('energyDetailEntry') && app.includes("openEnergyDetail('days'"), 'Kalori detayı tarih ve sekme bağlamıyla açılıyor');
 check(historyView.includes('onOpenEnergyDay') && energyModal.includes('days: 365'), 'Arşivden Gün Gün enerji erişimi ve bir yıllık görünüm korunuyor');
 check(vite.includes("registerType: 'autoUpdate'"), 'PWA otomatik güncelleme açık');

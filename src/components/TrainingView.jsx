@@ -54,8 +54,14 @@ const TrainingView = memo(({
   // Kullanıcı bu ekranda elle açıp kapatana kadar Ayarlar'daki bilgi yoğunluğunu
   // canlı izler. Böylece Basit/Detaylı değişikliği sayfa yenilemeden uygulanır.
   const [plannerOverride, setPlannerOverride] = useState(null);
+  const [recommendationOverride, setRecommendationOverride] = useState(null);
+  const [progressionOverride, setProgressionOverride] = useState(null);
+  const [programOptionsOverride, setProgramOptionsOverride] = useState(null);
   const [openTemplateMenu, setOpenTemplateMenu] = useState(null);
   const plannerOpen = plannerOverride ?? interfaceMode === 'detailed';
+  const recommendationOpen = recommendationOverride ?? interfaceMode === 'detailed';
+  const progressionOpen = progressionOverride ?? interfaceMode === 'detailed';
+  const programOptionsOpen = programOptionsOverride ?? interfaceMode === 'detailed';
 
   const favoriteCount = templates.filter(template => template.favorite).length;
   const visibleTemplates = useMemo(
@@ -99,17 +105,26 @@ const TrainingView = memo(({
             </div>
           </div>
           <div className="space-y-1.5">
-            {recommendation.reasons.slice(0, 2).map(reason => (
+            {recommendation.reasons.slice(0, recommendationOpen ? 2 : 1).map(reason => (
               <p key={reason} className="text-[9px] font-mono text-zinc-300 leading-relaxed flex gap-1.5"><span className="text-emerald-400">•</span>{reason}</p>
             ))}
-            {recommendation.risks.slice(0, 1).map(risk => (
+            {recommendationOpen && recommendation.risks.slice(0, 1).map(risk => (
               <p key={risk} className="text-[9px] font-mono text-amber-300/90 leading-relaxed flex gap-1.5"><AlertTriangle size={10} className="shrink-0 mt-0.5" />{risk}</p>
             ))}
           </div>
+          <button
+            type="button"
+            onClick={() => setRecommendationOverride(!recommendationOpen)}
+            aria-expanded={recommendationOpen}
+            className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/55 px-3 flex items-center justify-between text-left text-[10px] font-bold text-zinc-300 active:bg-zinc-900"
+          >
+            <span>{recommendationOpen ? 'Öneri ayrıntılarını gizle' : 'Neden bu seans? Kas haritasını göster'}</span>
+            <ChevronDown size={14} className={`text-zinc-400 transition-transform ${recommendationOpen ? 'rotate-180' : ''}`} />
+          </button>
           {/* Seçili antrenmanın vücutta nereye denk geldiği. Buradaki karar
               "bugün ne çalışayım" — o kararı metinle anlatmak yerine haritada
               göstermek, listedeki gerekçelerden daha hızlı okunuyor. */}
-          {recommendation.preview?.byMuscle && (
+          {recommendationOpen && recommendation.preview?.byMuscle && (
             <Suspense fallback={<div className="h-[430px] rounded-2xl border border-zinc-800 bg-zinc-950/40" />}>
               <MuscleHeatmap
                 muscleVolume={recommendation.preview.byMuscle}
@@ -125,7 +140,7 @@ const TrainingView = memo(({
             <button onClick={() => onPreview?.(recommendation.template)} className="rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 active:bg-zinc-800">Planı İncele</button>
             <button onClick={() => onStart?.(recommendation.template)} className="rounded-xl bg-emerald-700 py-2.5 text-[9px] font-black uppercase text-white active:bg-emerald-800 flex items-center justify-center gap-1.5"><Play size={12} /> Başlat</button>
           </div>
-          <p className="text-[8px] font-mono text-zinc-400">Puan; haftalık hacim açığı, tavan riski ve son 48 saat yüklenmesini birlikte tartar.</p>
+          {recommendationOpen && <p className="text-[8px] font-mono text-zinc-400">Puan; haftalık hacim açığı, tavan riski ve son 48 saat yüklenmesini birlikte tartar.</p>}
         </section>
       )}
 
@@ -159,18 +174,26 @@ const TrainingView = memo(({
 
       {progressionBlocks.length > 0 && (
         <section className="overflow-hidden rounded-2xl border border-cyan-900/55 bg-cyan-950/15">
-          <div className="flex items-center justify-between border-b border-cyan-900/35 bg-zinc-950/55 px-3.5 py-3">
+          <button
+            type="button"
+            onClick={() => setProgressionOverride(!progressionOpen)}
+            aria-expanded={progressionOpen}
+            className={`w-full flex items-center justify-between bg-zinc-950/55 px-3.5 py-3 text-left active:bg-zinc-900 ${progressionOpen ? 'border-b border-cyan-900/35' : ''}`}
+          >
             <span>
               <strong className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-cyan-300">
                 <TrendingUp size={12} /> Etkin İlerleme Blokları
               </strong>
               <span className="mt-0.5 block text-[8px] font-mono text-zinc-400">{progressionBlocks.length} hareket · hedef ve uyum tek yerde</span>
             </span>
-            <span className="rounded-lg border border-cyan-900/50 bg-cyan-950/30 px-2 py-1 text-[9px] font-mono text-cyan-300">
-              {progressionBlocks.filter(block => !block.complete).length} sürüyor
+            <span className="flex items-center gap-2 shrink-0">
+              <span className="rounded-lg border border-cyan-900/50 bg-cyan-950/30 px-2 py-1 text-[9px] font-mono text-cyan-300">
+                {progressionBlocks.filter(block => !block.complete).length} sürüyor
+              </span>
+              <ChevronDown size={14} className={`text-cyan-400 transition-transform ${progressionOpen ? 'rotate-180' : ''}`} />
             </span>
-          </div>
-          <div className="divide-y divide-cyan-900/25">
+          </button>
+          {progressionOpen && <div className="divide-y divide-cyan-900/25">
             {progressionBlocks.slice(0, 6).map(block => {
               const next = block.nextPrescription;
               const first = next?.sets?.[0];
@@ -201,8 +224,8 @@ const TrainingView = memo(({
                 </button>
               );
             })}
-          </div>
-          {progressionBlocks.length > 6 && (
+          </div>}
+          {progressionOpen && progressionBlocks.length > 6 && (
             <p className="border-t border-cyan-900/25 px-3.5 py-2 text-center text-[8px] font-mono text-zinc-400">
               İlk 6 blok gösteriliyor; diğerleri hareket profillerinde duruyor.
             </p>
@@ -222,14 +245,14 @@ const TrainingView = memo(({
           </span>
         </div>
 
-        <div className="grid grid-cols-4 gap-1" aria-label="Program oluşturma adımları">
+        {programOptionsOpen && <div className="grid grid-cols-4 gap-1" aria-label="Program oluşturma adımları">
           {['Tercihler', 'Taslak', 'Hareketler', 'Haftalık'].map((label, index) => (
             <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-950/55 px-1 py-2 text-center">
               <span className="w-4 h-4 rounded-full bg-violet-950 border border-violet-800 text-[8px] font-mono text-violet-300 inline-flex items-center justify-center">{index + 1}</span>
               <span className="text-[7px] font-bold text-zinc-500 block mt-1 truncate">{label}</span>
             </div>
           ))}
-        </div>
+        </div>}
 
         {programDraft?.hasAny ? (
           <div className="space-y-2">
@@ -240,9 +263,9 @@ const TrainingView = memo(({
               </span>
               <ChevronRight size={17} />
             </button>
-            <button onClick={onFreshProgram} className="w-full rounded-xl border border-zinc-800 bg-zinc-950/60 py-2 text-[9px] font-bold text-zinc-500 active:text-violet-300 transition-colors">
+            {programOptionsOpen && <button onClick={onFreshProgram} className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/60 px-3 text-[9px] font-bold text-zinc-400 active:text-violet-300 transition-colors">
               Taslağı bırakıp sıfırdan başla
-            </button>
+            </button>}
           </div>
         ) : (
           <button onClick={onWizard} className="w-full rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 active:scale-[0.98] transition-all p-3.5 text-[11px] font-black uppercase tracking-wider text-white flex items-center justify-center gap-2 shadow-lg shadow-violet-950/40">
@@ -250,7 +273,17 @@ const TrainingView = memo(({
           </button>
         )}
 
-        <div className="grid grid-cols-2 gap-2">
+        <button
+          type="button"
+          onClick={() => setProgramOptionsOverride(!programOptionsOpen)}
+          aria-expanded={programOptionsOpen}
+          className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/55 px-3 flex items-center justify-between text-left text-[10px] font-bold text-zinc-300 active:bg-zinc-900"
+        >
+          <span>{programOptionsOpen ? 'Kurulum seçeneklerini gizle' : 'Hazır program ve elle kurma seçenekleri'}</span>
+          <ChevronDown size={14} className={`text-zinc-400 transition-transform ${programOptionsOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {programOptionsOpen && <div className="grid grid-cols-2 gap-2">
           <button onClick={onStarter} className="rounded-xl border border-amber-900/50 bg-gradient-to-b from-amber-950/25 to-zinc-950 p-3 text-left active:scale-[0.98] transition-all shadow-sm">
             <Sparkles size={14} className="mb-1.5 text-amber-400" />
             <strong className="block text-[10px] font-bold text-zinc-200">Hazır Program</strong>
@@ -261,7 +294,7 @@ const TrainingView = memo(({
             <strong className="block text-[10px] font-bold text-zinc-200">Elle Kur</strong>
             <span className="text-[8px] font-mono text-zinc-500">Tam kontrol</span>
           </button>
-        </div>
+        </div>}
       </section>
 
       <section className="luxury-feature-card rounded-2xl border border-zinc-800 bg-zinc-900 overflow-hidden">
@@ -314,7 +347,7 @@ const TrainingView = memo(({
           </div>
           <button
             onClick={onWizard}
-            className="text-[9px] font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-900/60 rounded-xl px-3 py-1.5 active:scale-[0.95] transition-all"
+            className="min-h-11 text-[10px] font-bold text-cyan-300 bg-cyan-950/60 border border-cyan-900/60 rounded-xl px-3 active:scale-[0.95] transition-all"
           >
             + Yeni
           </button>
@@ -336,14 +369,14 @@ const TrainingView = memo(({
               <button
                 type="button"
                 onClick={() => { setFavoritesOnly(false); setTemplateLimit(TEMPLATE_BATCH); }}
-                className={`rounded-lg py-1.5 text-[9px] font-bold transition-all ${!favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-400'}`}
+                className={`min-h-11 rounded-lg px-2 text-[10px] font-bold transition-all ${!favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-400'}`}
               >
                 Tümü ({templates.length})
               </button>
               <button
                 type="button"
                 onClick={() => { setFavoritesOnly(true); setTemplateLimit(TEMPLATE_BATCH); }}
-                className={`rounded-lg py-1.5 text-[9px] font-bold transition-all ${favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-400'}`}
+                className={`min-h-11 rounded-lg px-2 text-[10px] font-bold transition-all ${favoritesOnly ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-400'}`}
               >
                 Favoriler ({favoriteCount})
               </button>
@@ -374,7 +407,7 @@ const TrainingView = memo(({
                       onClick={() => onToggleFavorite?.(template)}
                       aria-label={`${template.name} ${template.favorite ? 'favorilerden çıkar' : 'favorilere ekle'}`}
                       title={template.favorite ? 'Favorilerden çıkar' : 'Favorilere ekle'}
-                      className={`w-8 h-8 rounded-xl border flex items-center justify-center shrink-0 active:scale-[0.92] transition-all ${template.favorite ? 'border-amber-700/60 bg-amber-950/30 text-amber-400 shadow-sm' : 'border-zinc-800 text-zinc-500'}`}
+                      className={`w-11 h-11 rounded-xl border flex items-center justify-center shrink-0 active:scale-[0.92] transition-all ${template.favorite ? 'border-amber-700/60 bg-amber-950/30 text-amber-400 shadow-sm' : 'border-zinc-800 text-zinc-500'}`}
                     >
                       <Star size={14} fill={template.favorite ? 'currentColor' : 'none'} />
                     </button>
@@ -393,7 +426,7 @@ const TrainingView = memo(({
                       type="button"
                       onClick={() => onStart?.(template)}
                       aria-label={`${template.name} başlat`}
-                      className="w-9 h-9 rounded-xl bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 flex items-center justify-center shrink-0 active:scale-[0.92] transition-all shadow-sm"
+                      className="w-11 h-11 rounded-xl bg-cyan-950/80 text-cyan-400 border border-cyan-800/60 flex items-center justify-center shrink-0 active:scale-[0.92] transition-all shadow-sm"
                     >
                       <Play size={14} />
                     </button>

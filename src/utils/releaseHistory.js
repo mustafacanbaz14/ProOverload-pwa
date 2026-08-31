@@ -328,7 +328,7 @@ const RELEASE_10_11 = release('10.11', '2026-08-31', 'Günlük Eylem Hiyerarşis
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.11 yalnız arayüz hiyerarşisini değiştiriyor; localStorage kayıtları, yedek biçimi ve çevrimdışı çalışma aynı kalıyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Ana Sekmelerde Okunabilirlik ve Yönlendirme', [
+const RELEASE_10_12 = release('10.12', '2026-09-01', 'Ana Sekmelerde Okunabilirlik ve Yönlendirme', [
   item('Ortak Sayfa Başlığı', 'Antrenman, Beslenme, Gelişim ve Geçmiş ekranları aynı başlık, kısa açıklama ve bağlamsal eylem hiyerarşisini kullanıyor; bölüm değiştirince ekranın amacı yeniden öğrenilmiyor.'),
   item('Gelişim Ekranı Artık Kendini Açıklıyor', 'Vücut, hedef, analiz ve kadın döngüsü alt sekmelerinin üstüne belirgin bir Gelişim başlığı ve kısa kapsam açıklaması eklendi.'),
   item('Okunabilir Arşiv Filtreleri', 'Beş sıkışık ve sekiz piksellik arşiv sekmesi, yatay kaydırılabilen 44 piksellik filtre düğmelerine dönüştürüldü; kayıt sayıları ayrı rozetlerde gösteriliyor.'),
@@ -337,6 +337,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Ana Sekm
   item('Kalori Denklemi Daha Okunabilir', 'Baz hedef, gün farkı, alınan ve kalan değerlerinin etiketleri büyütüldü; makro başlıkları ile hedef metinlerinin kontrastı güçlendirildi.'),
   item('Küçük Dokunma Alanları Büyütüldü', 'Beslenme tarihi, ayar, öğün/toplam modu, su ekleme ve su girişi kontrolleri mobilde en az 44 piksellik hedef kullanıyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.12 yalnız arayüz ve erişilebilirlik katmanını değiştiriyor; localStorage şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma aynı kalıyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı Görev Ekranları', [
+  item('Basit Görünüm Gerçekten Sade', 'Basit görünüm artık yalnız birkaç analiz kartını değil; antrenman önerisinin kanıtını, ilerleme bloklarını, alternatif program kurma yollarını ve ileri vücut hesaplarını da kapalı başlatıyor.'),
+  item('Antrenman Önerisi Tek Kararla Başlıyor', 'Önerilen seansın adı, kısa gerekçesi ve Başlat eylemi görünür kalıyor; büyük kas haritası, risk açıklaması ve puan yöntemi Neden bu seans düğmesiyle açılıyor.'),
+  item('İlerleme Blokları Özetlendi', 'Etkin bloklar ekranda uzun liste oluşturmuyor; kaç hareketin sürdüğü tek satırda görülüyor ve ayrıntılı reçeteler isteğe bağlı açılıyor.'),
+  item('Program Kurma Yolları Katmanlandı', 'Yönlendirmeli program veya yarım kalan taslak birincil eylem olarak kalıyor; hazır program, elle kurma, adım şeması ve sıfırdan başlama ikinci katmana alındı.'),
+  item('Şablon Kontrolleri Büyütüldü', 'Yeni şablon, tümü/favoriler, favori ve başlat kontrolleri mobilde en az 44 piksellik dokunma hedefi kullanıyor.'),
+  item('Vücut Kaydında Ana İş Önde', 'Basit görünümde hızlı kaydetme eylemi ekranın üstüne taşındı. Kayıt tarihi, mevcut profil, hesaplanan kompozisyon ve vücut oranları kısa özetlerle kapalı başlıyor.'),
+  item('Vücut Ayrıntıları Kaybolmadı', 'Kaliper, mezura, BMI, FFMI, BMR, oran ve hedef hesapları kaldırılmadı; başlığa dokunulduğunda aynı biçimde kullanılmaya devam ediyor.'),
+  item('Geçmiş Ekranı Daha Hızlı Açılıyor', 'Her açılışta yer kaplayan Geçmişe kayıt ekle kartı kaldırıldı; aynı işlem başlıktaki belirgin Ekle düğmesinden açılan tarihli panele dönüştürüldü.'),
+  item('Ana Sayfa Su Kontrolleri Erişilebilir', 'Su ekleme ve Beslenmeye geçiş kontrolleri 44 piksellik hedeflere çıkarıldı; yalnız simge kullanan geçişe ekran okuyucu etiketi eklendi.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.13 görünür bilgi miktarını azaltıyor fakat özellik, hesaplama veya kayıt silmiyor; localStorage, yedek ve çevrimdışı çalışma değişmedi.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -413,6 +426,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_12,
   RELEASE_10_11,
   RELEASE_10_10,
   RELEASE_10_9,
