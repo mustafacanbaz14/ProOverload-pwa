@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, startTransition, useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useTransition } from 'react';
 import {
-  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff, ChevronDown
+  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff, ChevronDown, Menu
 } from 'lucide-react';
 import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
@@ -205,6 +205,7 @@ const NutritionView = lazy(loadNutritionView);
 const ProgressHubView = lazy(loadProgressHubView);
 const HistoryView = lazy(loadHistoryView);
 const QuickCaptureModal = lazy(() => import('./components/QuickCaptureModal'));
+const AppMenuModal = lazy(() => import('./components/AppMenuModal'));
 const StarterProgramModal = lazy(() => import('./components/StarterProgramModal'));
 
 // Kaçan dinlenme uyarısı en fazla bu kadar gecikmeyle telafi edilir. Ötesinde
@@ -397,6 +398,7 @@ export default function App() {
   const [substituteFor, setSubstituteFor] = useState(null);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
+  const [isAppMenuOpen, setIsAppMenuOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(() =>
     !initial.settings.onboardingComplete
     && initial.workouts.length === 0
@@ -4169,7 +4171,7 @@ export default function App() {
                 o yuzden dar ekranda cekiliyor. */}
             <span className="luxury-version text-[8px] font-mono self-center whitespace-nowrap hidden min-[520px]:inline-flex">v{pkg.version}</span>
           </div>
-          <div className="flex items-center gap-0.5 pr-2 shrink-0">
+          <div className="flex items-center gap-1.5 pr-2 shrink-0">
             {!isOnline && (
               <span aria-label="Çevrimdışı; kayıtlar cihazda tutuluyor" title="Çevrimdışı · kayıtlar cihazda tutuluyor" className="w-7 h-7 rounded-full border border-amber-900/60 bg-amber-950/40 text-amber-400 flex items-center justify-center">
                 <WifiOff size={12} />
@@ -4178,15 +4180,14 @@ export default function App() {
             <button
               onClick={() => setIsQuickCaptureOpen(true)}
               aria-label="Hızlı kayıt aç"
-              className="luxury-icon-button luxury-icon-button--primary"
+              className="luxury-header-action luxury-header-action--primary"
             >
-              <Plus size={18} />
+              <Plus size={16} />
+              <span>Ekle</span>
             </button>
-            <button onClick={() => setIsGlobalSearchOpen(true)} aria-label="Uygulamada ara" className="luxury-icon-button">
-              <Search size={18} />
-            </button>
-            <button onClick={() => openSettings('home')} aria-label="Ayarları aç" className="luxury-icon-button">
-              <Settings size={18} />
+            <button onClick={() => setIsAppMenuOpen(true)} aria-label="Uygulama menüsünü aç" className="luxury-header-action">
+              <Menu size={16} />
+              <span>Menü</span>
             </button>
           </div>
         </header>
@@ -4588,6 +4589,17 @@ export default function App() {
         )}
 
         <Suspense fallback={<ModalLoadingFallback />}>
+        {isAppMenuOpen && <AppMenuModal
+          isOpen={isAppMenuOpen}
+          onClose={() => setIsAppMenuOpen(false)}
+          currentView={view}
+          onNavigate={handleGlobalNavigate}
+          onQuickCapture={() => setIsQuickCaptureOpen(true)}
+          onSearch={() => setIsGlobalSearchOpen(true)}
+          onTools={() => setIsToolsOpen(true)}
+          onSettings={() => openSettings('home')}
+        />}
+
         {isQuickCaptureOpen && <QuickCaptureModal
           isOpen={isQuickCaptureOpen}
           onClose={() => setIsQuickCaptureOpen(false)}

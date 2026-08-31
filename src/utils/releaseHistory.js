@@ -260,7 +260,7 @@ const RELEASE_10_5 = release('10.5', '2026-08-31', 'Salonda Kullanılabilirlik: 
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Vücut Haritası Sabit, Arayüz Sadeleşti', [
+const RELEASE_10_6 = release('10.6', '2026-08-31', 'Vücut Haritası Sabit, Arayüz Sadeleşti', [
   item('Vücut Haritası Ana Ekranda Sabit', 'Uygulamanın tek bakışta okunan görseli katlanan bir bölümün içindeydi ve varsayılan kapalıydı. Artık ana ekranda her zaman açık; sayısal ayrıntılar katlı kalmaya devam ediyor.'),
   item('Seçili Antrenmanın Haritası', 'Antrenman sekmesindeki akıllı seçim artık hangi bölgeleri çalıştıracağını haritada gösteriyor. "Bugün ne çalışayım" kararı, gerekçe listesinden çok daha hızlı okunuyor.'),
   item('Tek Gövde Yazı Tipi', 'Arayüzün neredeyse tüm düz metni daktilo yazısıyla diziliyordu — 1557 kullanım. Cümleler terminal çıktısına benziyordu. Aynı sınıf artık gövde yazı tipini tabular rakamlarla veriyor: sayılar sütun halinde hizalanmaya devam ediyor, cümleler normal okunuyor.'),
@@ -271,6 +271,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Vücut H
   item('Ekran Geçişi Hızlandı', 'Her sekme değişiminde tüm ekran yüzde 30 opaklıktan yükseliyordu. Süre 0,32 saniyeden 0,18 saniyeye indi; uygulama artık her dokunuşta yeniden yükleniyormuş gibi durmuyor.'),
   item('Sade Ekran Başlıkları', 'Sekme adını birebir tekrarlayan "Antrenman Merkezi" ve "Gelişim Merkezi" üst satırları kaldırıldı; "Güncelleme Merkezi" artık Sürüm Notları.'),
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Birleşik Menü ve Açık Gezinme', [
+  item('Yazılı Üst Çubuk Eylemleri', 'Üç metinsiz simge yerine ne yaptığı açıkça görülen Ekle ve Menü düğmeleri geldi. Hızlı kayıt hâlâ tek dokunuş uzakta.'),
+  item('Tek Uygulama Menüsü', 'Arama, ayarlar, tüm araçlar ve beş ana bölüm tek bir yazılı menüde toplandı; seyrek kullanılan küresel eylemler artık dağınık değil.'),
+  item('Bulunduğun Bölüm Görünür', 'Menü açıldığında mevcut bölüm Buradasın etiketiyle işaretleniyor; kullanıcı hangi ekranın aktif olduğunu tahmin etmek zorunda kalmıyor.'),
+  item('Görev Odaklı Açıklamalar', 'Bugün, Antrenman, Beslenme, Gelişim ve Geçmiş satırları yalnız isim değil, o bölümde yapılabilecek işi de kısa biçimde anlatıyor.'),
+  item('Bütün Kısayollar Korundu', 'Alt gezinme, Hızlı Kayıt, Ana Sayfa ve ekran içi bağlamsal kısayollar aynen çalışıyor; sadeleştirme hiçbir özelliği veya erişim yolunu kaldırmadı.'),
+  item('Beş Sürümlük UX Yol Haritası', 'Günlük kayıt çalışma alanı, yönlendirilmiş antrenman akışı, koç/analiz karar katmanları ve mağaza öncesi erişilebilirlik v10.8–v11.1 için planlandı.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.7 yeni localStorage anahtarı, veri şeması veya göç eklemiyor; mevcut kayıtlar, yedekler ve çevrimdışı çalışma değişmiyor.'),
+  item('Otomatik Yayın Kalite Kapısı', 'Birleşik menü, yazılı üst çubuk eylemleri ve yeni yol haritası mevcut regresyon, mağaza ve performans kontrollerine eklendi.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -347,6 +358,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_6,
   RELEASE_10_5,
   RELEASE_10_4,
   RELEASE_10_3,

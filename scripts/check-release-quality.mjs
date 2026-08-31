@@ -17,13 +17,17 @@ const roadmap = read('docs/UX_ROADMAP.md');
 const settingsModal = read('src/components/SettingsModal.jsx');
 const energyModal = read('src/components/EnergyDetailModal.jsx');
 const historyView = read('src/components/HistoryView.jsx');
+const appMenu = read('src/components/AppMenuModal.jsx');
 
 // Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
 // package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
 // olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 9.6') && roadmap.includes('## 10.0'), 'UX yol haritası 9.6–10.0 kapsamını taşıyor');
+check(roadmap.includes('## 10.7') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
+check(app.includes('isAppMenuOpen') && app.includes('<span>Ekle</span>') && app.includes('<span>Menü</span>'), 'Üst çubukta yazılı Ekle ve Menü eylemleri var');
+check(appMenu.includes('Uygulamada ara') && appMenu.includes('Tüm Araçlar') && appMenu.includes('Ayarlar'), 'Birleşik menü arama, araçlar ve ayarları kapsıyor');
+check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => appMenu.includes(`key: '${key}'`)), 'Birleşik menü beş ana bölümü kapsıyor');
 check(settingsModal.includes("activeSection === 'home'") && settingsModal.includes("key: 'method'"), 'Ayarlar kategori ana ekranı ve Koç & Yöntem ayrımı korunuyor');
 check(app.includes('energyDetailEntry') && app.includes("openEnergyDetail('days'"), 'Kalori detayı tarih ve sekme bağlamıyla açılıyor');
 check(historyView.includes('onOpenEnergyDay') && energyModal.includes('days: 365'), 'Arşivden Gün Gün enerji erişimi ve bir yıllık görünüm korunuyor');

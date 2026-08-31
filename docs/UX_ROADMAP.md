@@ -1,113 +1,72 @@
 # ProOverload kullanıcı deneyimi yol haritası
 
-Bu planın amacı özellik azaltmak değil, sık kullanılan işleri öne çıkarıp ileri
-seviye ayrıntıları ihtiyaç anında göstermektir. PWA, localStorage ve mevcut veri
-şemaları sürümler boyunca korunur.
+Amaç özellik azaltmak değil, aynı özellikleri daha az karar ve daha az gezinme
+ile kullanılabilir hale getirmektir. PWA, localStorage, yedek biçimi ve mevcut
+kayıtlar bütün sürümlerde korunur.
 
-## Tasarım ilkeleri
+## Tamamlanan temel
 
-- Basit mod varsayılandır; ayrıntılı mod bütün ileri kontrolleri açık tutar.
-- Her ekranda tek bir baskın eylem ve en fazla üç hızlı eylem bulunur.
-- Uzun analizler kaybolmaz; anlamlı bir özetin arkasında açılır.
-- Aynı iş farklı sekmelerden erişilebilir, fakat aynı ekranda gereksiz tekrar edilmez.
-- Boş durumlar kullanıcıya bir sonraki işi söyler; teknik terimler kısa açıklama taşır.
-- Dokunma hedefi, yazı boyutu, kontrast ve iPhone güvenli alanları her sürümde test edilir.
+v9.1–v10.6 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
+düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
+mimarisi ve görev akışı sorunlarına odaklanır.
 
-## 9.1 — Bugün odaklı ana ekran
+## Ortak tasarım kuralları
 
-Durum: Uygulandı.
+- Sık kullanılan eylem görünür ve yazılıdır; anlamı yalnız simgeden çıkarılmaz.
+- Her görev için bir ana yol vardır, bağlamsal kısayollar erişim kolaylığı için korunur.
+- Özet önce, karar gerekçesi sonra, ham veri en son gösterilir.
+- İleri özellikler silinmez; ilgili görev içinde ikinci katmana alınır.
+- Boş durumlar yalnız eksikliği değil, atılacak sonraki adımı söyler.
+- Büyük yazı, 44 punto dokunma hedefi, açık/koyu tema ve iPhone güvenli alanı her yayında sınanır.
+- Kalıcı veri şeması yalnız zorunluysa değişir; her değişiklik göç ve geri dönüş testi ister.
 
-- Koç kartının karar, plan ve ana eylemi ilk bakışta kalır.
-- Kapasite, uzun öneriler ve koç defteri basit modda “Koç ayrıntıları” altında açılır.
-- Antrenman, hızlı kayıt ve araçlar görev odaklı üç kısayolda toplanır.
-- Hazır oluşluk, deload, kas haritası, ACWR, itme/çekme ve kas hacmi tek “Haftalık Durum” bölümünde korunur.
-- Haftalık bölüm basit modda kapalı, ayrıntılı modda açık başlar.
-- Ağır SVG kas haritası yalnız ayrıntı açıldığında yüklenir.
-
-## 9.2 — Antrenman ve program oluşturma akışı
+## 10.7 — Birleşik uygulama menüsü
 
 Durum: Uygulandı.
 
-- Şablon, sihirbaz ve hareket kütüphanesini tek yönlendirilmiş akışta birleştir.
-- Program amacı → günler → hareketler → setler → haftalık kontrol adımlarını kullan.
-- Taslağı otomatik koru; çıkıp dönünce kayıp yaşanmasın.
-- Hareket ekleme, değiştirme ve sıralamayı aynı satırda erişilebilir yap.
-- Mevcut programı sihirbazla düzenlemeyi, sıfırdan kurmakla aynı kolaylığa getir.
+- Üst çubuktaki üç metinsiz simgeyi yazılı “Ekle” ve “Menü” eylemlerine indir.
+- Arama, ayarlar, araçlar ve beş ana bölümü tek uygulama menüsünde topla.
+- Kullanıcının bulunduğu bölümü menüde açıkça işaretle.
+- Hızlı kayıt, alt gezinme ve ekran içi kısayolları koru; hiçbir erişim yolunu kaldırma.
+- Menü ve hızlı kayıt pencerelerini ilk açılış paketinden ayrı yüklemeye devam et.
 
-## 9.3 — Beslenme ve enerji sadeleştirmesi
-
-Durum: Uygulandı.
-
-- Günlük hedef, alınan, yakılan ve kalan enerjiyi tek denklemde göster.
-- Besin, öğün toplamı, barkod ve manuel günlük toplamı tek hızlı ekleme kapısından aç.
-- Makro ayrıntıları, TEF, NEAT ve enerji kaynaklarını kademeli göster.
-- Geçmiş gün düzenlemelerini gün özetinden doğrudan erişilebilir yap.
-- Belirsiz tahminleri kesin veri gibi göstermeyip kaynak ve güven düzeyiyle işaretle.
-
-## 9.4 — Gelişim, hedefler ve arşiv
-
-Durum: Uygulandı (v9.5 birleşik yayını).
-
-- Kilo, yağ oranı, FFMI, çevre, kaliper ve güç hedeflerini tek hedef merkezinde topla.
-- İlişkili hedeflerin otomatik hesaplanan ve kullanıcı tarafından sabitlenen alanlarını ayır.
-- Arşivi ay → hafta → gün düzeninde, ortak arama ve filtrelerle sadeleştir.
-- Vücut, antrenman, kardiyo, beslenme ve enerji geçmişini aynı tarih dilinde göster.
-- Düzenleme ve karşılaştırma eylemlerini kayıt kartından tek dokunuşla aç.
-
-## 9.5 — İlk kullanım, ayarlar ve mağaza kalitesi
-
-Durum: Uygulandı.
-
-- İlk açılışta kısa kurulum, örnek veri ve tamamlanabilir başlangıç kontrol listesi sun.
-- Ayarları ara, kategoriye göre filtrele ve ilgili ekrandan bağlamsal ayara git.
-- Yardım metinlerini kısa açıklama + isteğe bağlı ayrıntılı rehber olarak iki katmanlı yap.
-- Erişilebilirlik, çevrimdışı kullanım, güncelleme, yedek/geri yükleme ve veri kaybı senaryolarını mağaza sürümü öncesi uçtan uca test et.
-- Her yayın için sürüm notu, performans bütçesi ve mobil görsel regresyon kontrolü uygula.
-
-## 9.6 — Ayarlar ve enerjiye kısa erişim
-
-Durum: Uygulandı.
-
-- Ayarlar açıldığında bütün kontrolleri tek uzun sayfaya yığmak yerine sekiz konu kartı göster.
-- Veri aktarımı ile koç/hesap yöntemlerini ayrı başlıklara ayır; kategori içinden tek dokunuşla geri dön.
-- Aramayı kategori adları, açıklamalar ve günlük kullanılan terimler üzerinden çalıştır.
-- Kalori ayrıntısını ana ekran, Beslenme ve Geçmiş içinden görünür metinli kısayollarla aç.
-- Geçmişteki bir beslenme kaydından doğrudan seçilen günün harcama dökümüne geç.
-- Gün Gün enerji tablosunun erişimini son 60 günden son 365 güne çıkar; mevcut güne özel NEAT düzenleme işlevini koru.
-
-## 9.7 — Aktif antrenman sadeliği
+## 10.8 — Günlük kayıt çalışma alanı
 
 Durum: Planlandı.
 
-- Aktif antrenmanda sıradaki set, kilo, tekrar ve RIR girişini tek baskın çalışma alanında topla.
-- Isınma, not, plaka, süperset ve hareket değiştirme işlevlerini bağlamsal ikinci katmana al.
-- Dinlenme sayacını seans akışına sabitle; ses ve bildirim sorunlarını aynı yerde tanılanabilir yap.
-- Tek elle kullanım, büyük yazı ve iPhone güvenli alanlarını gerçek seans akışıyla doğrula.
+- Bugünün antrenman, kardiyo, beslenme, su, enerji, uyku ve ölçüm durumunu tek günlük özet altında birleştir.
+- Aynı tarih bağlamını kayıt türleri arasında koru; geçmiş gün düzenlerken tarih sıçramasını kaldır.
+- “Eksik kayıt” listesini suçlayıcı alarm yerine tamamlanabilir günlük kontrol listesi olarak göster.
+- Hızlı kayıt sonrası kullanıcıyı geldiği ekrana veya ilgili gün özetine geri götür.
+- Mevcut Beslenme, Gelişim ve Geçmiş ekranlarını ayrıntılı kullanım için koru.
 
-## 9.8 — Koç ve analiz karar hiyerarşisi
-
-Durum: Planlandı.
-
-- Koç ekranında önce karar, sonra gerekçe, en sonda ham veri düzenini kullan.
-- Aynı sinyali farklı kartlarda tekrarlamak yerine tek kaynak ve bağlamsal kısayollar oluştur.
-- Analizleri “şimdi ne yapmalıyım?” sorusuna göre gruplandır; bilimsel ayrıntıları açılır kanıt katmanında koru.
-- Eksik veriyi risk veya başarısızlık gibi göstermeyen ortak güven dili kullan.
-
-## 9.9 — Günlük kayıt ve arşiv akışı
+## 10.9 — Yönlendirilmiş antrenman yaşam döngüsü
 
 Durum: Planlandı.
 
-- Antrenman, kardiyo, beslenme, enerji, vücut ve uyku için ortak günlük merkez oluştur.
-- Kayıt ekleme ve düzenlemeyi aynı tarih bağlamında tut; sekmeler arası gidip gelmeyi azalt.
-- Arşiv araması, kayıt türü ve tarih filtrelerini kalıcı olmayan tek kontrol satırında birleştir.
-- Ay → hafta → gün katmanlarını küçük ekran ve büyük yazıda yeniden doğrula.
+- Antrenman öncesi seçim, canlı seans ve seans sonu değerlendirmeyi kesintisiz tek akış yap.
+- Canlı seansta yalnız sıradaki çalışma eylemini baskın tut; araçları hareket bağlamındaki menüde koru.
+- Akıllı progresyon önerisini “öneri, dayanak, kabul/elle değiştir” biçiminde sun.
+- Seans bitişinde rekor, hacim, süre, plan uyumu ve sonraki seans notunu tek kısa raporda birleştir.
+- Bildirim/ses izinlerini antrenmandan önce denetlenebilir hale getir; seans ortasında sürpriz sessizliği azalt.
 
-## 10.0 — Mağaza öncesi ürün bütünlüğü
+## 11.0 — Koç ve analiz karar katmanları
 
 Durum: Planlandı.
 
-- Alt gezinme, başlık, modal ve boş durumlar için ortak tasarım bileşenleri ve metin dili uygula.
-- İlk kullanım turunu gerçek görevlerle ölç; kurulumdan ilk kayda kadar gereksiz adımları kaldır.
-- Erişilebilirlik, çevrimdışı açılış, PWA güncelleme, yedek kurtarma ve performans bütçesini yayın kapısına bağla.
-- App Store ve Play Store ekran görüntülerinden önce karanlık/açık tema ve kadın/erkek görsel varyantlarını uçtan uca denetle.
-- Hiçbir mevcut kayıt türünü veya ileri özelliği kaldırmadan v10 ürün yüzeyini sabitle.
+- Koçta önce bugünün kararı, sonra en fazla üç gerekçe, ardından isteğe bağlı kanıt göster.
+- Aynı ACWR, hacim veya toparlanma sinyalini farklı kartlarda tekrarlamayı kaldır.
+- Analizleri “ne yapmalıyım, neden, hangi veriye dayanıyor” düzeninde grupla.
+- Yetersiz veriyi olumsuz sonuç gibi göstermeyen ortak güven dili ve veri tamamlama önerisi kullan.
+- Koç önerisinden ilgili ayar, program veya kayıt ekranına doğrudan geçiş ekle.
+
+## 11.1 — Mağaza öncesi ilk kullanım ve erişilebilirlik
+
+Durum: Planlandı.
+
+- İlk açılışı hedef seçimi → ilk kayıt → ilk anlamlı özet görevleriyle ölç ve gereksiz adımları kaldır.
+- VoiceOver/TalkBack sırası, klavye odağı, büyük yazı ve renk körlüğü senaryolarını yayın kapısına ekle.
+- Çevrimdışı ilk açılış, PWA güncellemesi, yarım kalan antrenman ve yedek kurtarma akışlarını uçtan uca doğrula.
+- Mağaza ekran görüntüleri için açık/koyu tema ile kadın/erkek görsel varyantlarını aynı bilgi hiyerarşisinde sabitle.
+- Destek e-postası, gizlilik metni, hata raporu ve sürüm notlarını mağaza başvurusu öncesi tamamla.
