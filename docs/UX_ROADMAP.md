@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.13 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.14 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -95,6 +95,18 @@ Durum: Uygulandı.
 - Geçmişe kayıt eklemeyi sürekli kart yerine başlık eylemiyle açılan panele çevir.
 - Şablon ve su kontrollerindeki küçük dokunma hedeflerini büyüt.
 - PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
+
+## 10.14 — Sade şablon düzenleme
+
+Durum: Uygulandı.
+
+- Mobil hareket seçicide listeyi modal kartının içinde tut; ekran dışına taşma ve görünmez liste hatasını kapat.
+- Şablon kartlarında Düzenle eylemini doğrudan göster; seyrek bakım işlemlerini tek Diğer İşlemler katmanında topla.
+- Editörde temel hareket, set, sıra ve kaydetme işini öne al; hacim ve uzman araçlarını isteğe bağlı başlıkta koru.
+- Hareket başına küçük simge sırasını büyük, anlamı açık kontroller ve tek işlem paneliyle değiştir.
+- Elle hazırlanan taslağı geri açarken kullanıcıyı istemeden sihirbaz kipine geçirme.
+- Ana sayfanın basit görünümünde şablon bakım düğmelerini azalt; tam yönetimi Antrenman bölümünde açık tut.
+- PWA, localStorage, mevcut şablonlar ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

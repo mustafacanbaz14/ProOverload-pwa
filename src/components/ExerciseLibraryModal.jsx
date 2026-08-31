@@ -113,6 +113,7 @@ const ExerciseLibraryModal = memo(({
           </div>
         </div>
 
+        <div className="px-4 py-3 space-y-3 border-b border-zinc-800/80 bg-zinc-950 shrink-0">
         {suggestionModes.length > 0 && (
           <div className="space-y-1.5">
             <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest block">
@@ -182,9 +183,12 @@ const ExerciseLibraryModal = memo(({
             Sıra: %100 izolasyon → %100 bileşik → yardımcı katkılar.
           </p>
         )}
-      </div>
+        </div>
 
-      <div className={`flex-1 overflow-y-auto bg-zinc-950 hide-scrollbar ${multiSelect ? 'pb-24' : 'pb-safe'}`}>
+        {/* Liste panel kabuğunun içinde kalmalı. Önceki kapanış etiketi bu
+            alanı modalın dışına taşıyor, telefonda hareketler ekranın sağına
+            yerleştiği için görünmüyor ve şablon düzenleme fiilen kilitleniyordu. */}
+        <div className="min-h-0 flex-1 overflow-y-auto bg-zinc-950 hide-scrollbar pb-safe">
         {!selectMode && (
           <button
             onClick={onAddNew}
@@ -308,10 +312,10 @@ const ExerciseLibraryModal = memo(({
             Sonraki {Math.min(LIST_BATCH, list.length - visibleList.length)} hareketi göster
           </button>
         )}
-      </div>
+        </div>
 
-      {selectMode && multiSelect && (
-        <div className="absolute bottom-0 left-0 right-0 border-t border-zinc-800 bg-zinc-950/95 p-3 pb-safe backdrop-blur-xl">
+        {selectMode && multiSelect && (
+          <div className="shrink-0 border-t border-zinc-800 bg-zinc-950/95 p-3 pb-safe backdrop-blur-xl">
           <button
             type="button"
             disabled={selectedNames.size === 0}
@@ -320,8 +324,9 @@ const ExerciseLibraryModal = memo(({
           >
             {selectedNames.size > 0 ? `${selectedNames.size} hareketi ekle` : 'Eklemek için hareket seç'}
           </button>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   );
 });

@@ -421,7 +421,10 @@ export default function App() {
     setEditingTemplate(null);
     setBuilderDraft(null);
     if (status.latest?.kind === 'builder') {
-      setBuilderWizardMode(true);
+      // Elle kurulan taslağı geri açmak onu sihirbaz kipine çevirmemeli.
+      // Aksi halde kullanıcı sade editöre dönerken bütün analiz kartları
+      // yeniden açılıyor ve kaldığı ekran bambaşka görünüyordu.
+      setBuilderWizardMode(false);
       setIsBuilderOpen(true);
       return;
     }

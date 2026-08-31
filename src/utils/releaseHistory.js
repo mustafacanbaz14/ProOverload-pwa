@@ -339,7 +339,7 @@ const RELEASE_10_12 = release('10.12', '2026-09-01', 'Ana Sekmelerde Okunabilirl
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.12 yalnız arayüz ve erişilebilirlik katmanını değiştiriyor; localStorage şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma aynı kalıyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı Görev Ekranları', [
+const RELEASE_10_13 = release('10.13', '2026-09-01', 'Odaklı Görev Ekranları', [
   item('Basit Görünüm Gerçekten Sade', 'Basit görünüm artık yalnız birkaç analiz kartını değil; antrenman önerisinin kanıtını, ilerleme bloklarını, alternatif program kurma yollarını ve ileri vücut hesaplarını da kapalı başlatıyor.'),
   item('Antrenman Önerisi Tek Kararla Başlıyor', 'Önerilen seansın adı, kısa gerekçesi ve Başlat eylemi görünür kalıyor; büyük kas haritası, risk açıklaması ve puan yöntemi Neden bu seans düğmesiyle açılıyor.'),
   item('İlerleme Blokları Özetlendi', 'Etkin bloklar ekranda uzun liste oluşturmuyor; kaç hareketin sürdüğü tek satırda görülüyor ve ayrıntılı reçeteler isteğe bağlı açılıyor.'),
@@ -350,6 +350,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı 
   item('Geçmiş Ekranı Daha Hızlı Açılıyor', 'Her açılışta yer kaplayan Geçmişe kayıt ekle kartı kaldırıldı; aynı işlem başlıktaki belirgin Ekle düğmesinden açılan tarihli panele dönüştürüldü.'),
   item('Ana Sayfa Su Kontrolleri Erişilebilir', 'Su ekleme ve Beslenmeye geçiş kontrolleri 44 piksellik hedeflere çıkarıldı; yalnız simge kullanan geçişe ekran okuyucu etiketi eklendi.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.13 görünür bilgi miktarını azaltıyor fakat özellik, hesaplama veya kayıt silmiyor; localStorage, yedek ve çevrimdışı çalışma değişmedi.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Sade Şablon Düzenleme', [
+  item('Hareket Seçici Yeniden Çalışıyor', 'Modalın dışına taşan hareket listesi doğru panel içine alındı. Şablona hareket ekleme ve mevcut hareketi değiştirme telefonda yeniden görünür ve kaydırılabilir.'),
+  item('Düzenle Artık Gizli Değil', 'Şablon kartlarında en sık bakım eylemi olan Düzenle doğrudan görünür; sihirbaz, kopyalama ve silme daha seyrek kullanılan Diğer İşlemler katmanında durur.'),
+  item('Temel Editör Önce Geliyor', 'Şablon düzenleyici açıldığında ad, süre, set, kalori, hareket sırası ve kaydetme görünür; hacim, seans sihirbazı, vurgu ve öneriler İleri planlama ve analiz başlığından açılır.'),
+  item('Hareket Satırları Sadeleşti', 'Sekiz küçük simge yerine büyük set azalt/artır, değiştir ve sıra düğmeleri kullanılıyor. Süperset, en üste/alta taşıma, plan ayarı ve çıkarma tek hareket işlemleri panelinde korundu.'),
+  item('Taslak Aynı Kipte Açılıyor', 'Elle hazırlanmış yarım taslak geri açıldığında artık kendiliğinden sihirbaz kipine geçmiyor; kullanıcı kaldığı sade çalışma düzenine dönüyor.'),
+  item('Ana Sayfada Daha Az Gürültü', 'Basit görünümde şablon kartları Başlat ve favori eylemlerine odaklanıyor; düzenleme ve silme Antrenman bölümündeki belirgin yönetim akışında kalıyor.'),
+  item('Mobil Dokunma Alanları Büyüdü', 'Şablon düzenleme, set sayısı, sıra ve varsayılan set kontrolleri tek elle kullanılabilecek daha büyük hedeflere çıkarıldı.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.14 localStorage şemasını, yedek biçimini, mevcut şablonları ve çevrimdışı çalışma davranışını değiştirmiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -426,6 +437,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_13,
   RELEASE_10_12,
   RELEASE_10_11,
   RELEASE_10_10,

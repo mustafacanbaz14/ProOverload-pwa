@@ -96,6 +96,10 @@ const TemplateBuilderModal = memo(({
   const [moveTarget, setMoveTarget] = useState(null);
   // Hareket başına plan paneli (yedek hareket, teknik, tekrar aralığı).
   const [planTarget, setPlanTarget] = useState(null);
+  // Program analizi ve uzman seçenekleri kaybolmuyor; temel düzenleme sırasında
+  // uzun ekranı kaplamamak için tek bir açıklama altında açılıyor.
+  const [advancedOpen, setAdvancedOpen] = useState(() => Boolean(wizardMode));
+  const [actionTarget, setActionTarget] = useState(null);
   const [replaceGoal, setReplaceGoal] = useState('closest');
 
   useEffect(() => {
@@ -233,7 +237,7 @@ const TemplateBuilderModal = memo(({
 
       <div className="px-4 py-3 border-b border-zinc-800 flex justify-between items-center bg-zinc-900 shrink-0 pt-safe">
         <h3 className="text-[12px] font-bold text-zinc-100 uppercase tracking-wider flex items-center">
-          <Calendar size={15} className="mr-2 text-cyan-400" /> {wizardMode ? 'Şablon Sihirbazı' : editing ? 'Şablonu Düzenle' : 'Program Oluştur'}
+          <Calendar size={15} className="mr-2 text-cyan-400" /> {editing ? (wizardMode ? 'Sihirbazla Düzenle' : 'Şablonu Düzenle') : wizardMode ? 'Şablon Sihirbazı' : 'Program Oluştur'}
         </h3>
         <button onClick={onClose} className="text-zinc-400 active:text-zinc-100 p-2 -mr-1" aria-label="Kapat">
           <X size={20} />
@@ -315,23 +319,6 @@ const TemplateBuilderModal = memo(({
       </div>
 
       <div className="flex-1 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-safe">
-
-        <PlanningGuide mode="template" />
-
-        {/* 7.8 program zekâsı: taslağın tamamını amaç, kişisel hacim, süre,
-            sıklık ve gün dağılımıyla birlikte denetler. Düzeltmeler yalnız
-            kullanıcı dokunduğunda uygulanır; program sessizce değişmez. */}
-        {!editing && (
-          <ProgramOptimizerCard
-            days={days}
-            onChange={setDays}
-            customExercises={customExercises}
-            experienceLevel={experienceLevel}
-            restSeconds={restSeconds}
-            optimalProfile={optimalProfile}
-          />
-        )}
-
         {/* Gün özeti */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-zinc-900 border border-zinc-800 rounded-xl py-2.5 text-center">
@@ -352,6 +339,38 @@ const TemplateBuilderModal = memo(({
             </span>
           </div>
         </div>
+
+        <button
+          type="button"
+          onClick={() => setAdvancedOpen(value => !value)}
+          aria-expanded={advancedOpen}
+          className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900 px-3 flex items-center justify-between gap-3 text-left active:bg-zinc-800"
+        >
+          <span className="min-w-0">
+            <strong className="text-[10px] text-zinc-200 block">İleri planlama ve analiz</strong>
+            <span className="text-[8px] font-mono text-zinc-400 block mt-0.5">
+              Hacim, seans sırası, vurgu ve hareket önerileri
+            </span>
+          </span>
+          <ChevronDown size={15} className={`text-zinc-400 shrink-0 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
+        </button>
+
+        {advancedOpen && <>
+          <PlanningGuide mode="template" />
+
+          {/* 7.8 program zekâsı: taslağın tamamını amaç, kişisel hacim, süre,
+              sıklık ve gün dağılımıyla birlikte denetler. Düzeltmeler yalnız
+              kullanıcı dokunduğunda uygulanır; program sessizce değişmez. */}
+          {!editing && (
+            <ProgramOptimizerCard
+              days={days}
+              onChange={setDays}
+              customExercises={customExercises}
+              experienceLevel={experienceLevel}
+              restSeconds={restSeconds}
+              optimalProfile={optimalProfile}
+            />
+          )}
 
         {/* Haftalık hacim. Şablon oluşturucu şimdiye kadar yalnızca AÇIK OLAN
             GÜNÜN hacmini gösteriyordu; oysa MEV/MAV/MRV kararları haftalık.
@@ -467,6 +486,7 @@ const TemplateBuilderModal = memo(({
             {findEmphasis(day.emphasis).detail}
           </p>
         </div>
+        </>}
 
         {/* Hareketler */}
         <div className="space-y-2">
@@ -484,97 +504,53 @@ const TemplateBuilderModal = memo(({
                   )}
                   <span className="truncate">{ex.name}</span>
                 </span>
-                <div className="flex items-center shrink-0">
-                  <button
-                    onClick={() => openReplacePicker(ex.uid)}
-                    title="Hareketi değiştir"
-                    aria-label={`${ex.name} hareketini değiştir`}
-                    className="text-zinc-400 active:text-emerald-400 p-1.5"
-                  >
-                    <RefreshCw size={13} />
+                <button
+                  type="button"
+                  onClick={() => setActionTarget(actionTarget === ex.uid ? null : ex.uid)}
+                  aria-label={`${ex.name} hareket işlemleri`}
+                  aria-expanded={actionTarget === ex.uid}
+                  className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${actionTarget === ex.uid ? 'border-cyan-700 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
+                >
+                  <SlidersHorizontal size={15} />
+                </button>
+              </div>
+
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-[9px] font-mono text-zinc-400 mr-1">Set</span>
+                  <button onClick={() => setExerciseSets(ex.uid, ex.sets - 1)} aria-label={`${ex.name} set azalt`} className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300 flex items-center justify-center active:bg-zinc-800">
+                    <ChevronDown size={15} />
                   </button>
-                  {/* Tek tek taşımak sekiz hareketlik bir günde yedi dokunuş
-                      demekti; uzun basış yerine ayrı düğme, çünkü uzun basış
-                      dokunmatikte keşfedilmiyor. */}
-                  <button
-                    onClick={() => moveToEdge(ex.uid, 'top')}
-                    disabled={exIndex === 0}
-                    title="En üste taşı"
-                    aria-label="Hareketi en üste taşı"
-                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
-                  >
-                    <ChevronsUp size={13} />
+                  <span className="w-7 text-center font-mono text-base font-black text-cyan-400">{ex.sets}</span>
+                  <button onClick={() => setExerciseSets(ex.uid, ex.sets + 1)} aria-label={`${ex.name} set artır`} className="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-800 text-zinc-300 flex items-center justify-center active:bg-zinc-800">
+                    <ChevronUp size={15} />
                   </button>
-                  <button
-                    onClick={() => moveExercise(exIndex, -1)}
-                    disabled={exIndex === 0}
-                    title="Yukarı taşı"
-                    aria-label="Hareketi yukarı taşı"
-                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
-                  >
-                    <ArrowUp size={13} />
+                </div>
+                <div className="flex items-center gap-1">
+                  <button onClick={() => openReplacePicker(ex.uid)} title="Hareketi değiştir" aria-label={`${ex.name} hareketini değiştir`} className="w-10 h-10 rounded-xl border border-zinc-800 bg-zinc-950 text-emerald-400 flex items-center justify-center active:bg-zinc-800">
+                    <RefreshCw size={14} />
                   </button>
-                  <button
-                    onClick={() => moveExercise(exIndex, 1)}
-                    disabled={exIndex === day.exercises.length - 1}
-                    title="Aşağı taşı"
-                    aria-label="Hareketi aşağı taşı"
-                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
-                  >
-                    <ArrowDown size={13} />
+                  <button onClick={() => moveExercise(exIndex, -1)} disabled={exIndex === 0} title="Yukarı taşı" aria-label="Hareketi yukarı taşı" className="w-10 h-10 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-300 flex items-center justify-center active:bg-zinc-800 disabled:opacity-25">
+                    <ArrowUp size={14} />
                   </button>
-                  <button
-                    onClick={() => moveToEdge(ex.uid, 'bottom')}
-                    disabled={exIndex === day.exercises.length - 1}
-                    title="En alta taşı"
-                    aria-label="Hareketi en alta taşı"
-                    className="text-zinc-400 active:text-cyan-400 p-1.5 disabled:opacity-25 disabled:active:text-zinc-600"
-                  >
-                    <ChevronsDown size={13} />
-                  </button>
-                  {/* Güne taşıma yalnızca çok günlü programda anlamlı. */}
-                  {!editing && days.length > 1 && (
-                    <button
-                      onClick={() => setMoveTarget(moveTarget === ex.uid ? null : ex.uid)}
-                      title="Başka güne taşı"
-                      aria-label={`${ex.name} hareketini başka güne taşı`}
-                      aria-expanded={moveTarget === ex.uid}
-                      className={`p-1.5 ${moveTarget === ex.uid ? 'text-amber-400' : 'text-zinc-400 active:text-amber-400'}`}
-                    >
-                      <MoveRight size={13} />
-                    </button>
-                  )}
-                  {/* Süperset şimdiye kadar yalnızca canlı antrenmanda
-                      kurulabiliyordu, yani her seans elle yeniden bağlanıyordu.
-                      Şablonda kurulunca seansa aynen taşınıyor. */}
-                  <button
-                    onClick={() => updateDay(toggleDraftSuperset(day, ex.uid))}
-                    disabled={exIndex === day.exercises.length - 1}
-                    title={ex.superset ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
-                    aria-label={ex.superset ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
-                    aria-pressed={Boolean(ex.superset)}
-                    className={`p-1.5 disabled:opacity-25 ${ex.superset ? 'text-purple-400' : 'text-zinc-400 active:text-purple-400'}`}
-                  >
-                    <Link2 size={13} />
-                  </button>
-                  <button
-                    onClick={() => setPlanTarget(planTarget === ex.uid ? null : ex.uid)}
-                    title="Yedek hareket, teknik ve tekrar aralığı"
-                    aria-label={`${ex.name} için plan ayarları`}
-                    aria-expanded={planTarget === ex.uid}
-                    className={`p-1.5 ${planTarget === ex.uid ? 'text-violet-400' : 'text-zinc-400 active:text-violet-400'}`}
-                  >
-                    <SlidersHorizontal size={13} />
-                  </button>
-                  <button
-                    onClick={() => updateDay({ exercises: day.exercises.filter(e => e.uid !== ex.uid) })}
-                    aria-label={`${ex.name} hareketini çıkar`}
-                    className="text-zinc-400 active:text-red-500 p-1.5"
-                  >
-                    <Trash2 size={13} />
+                  <button onClick={() => moveExercise(exIndex, 1)} disabled={exIndex === day.exercises.length - 1} title="Aşağı taşı" aria-label="Hareketi aşağı taşı" className="w-10 h-10 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-300 flex items-center justify-center active:bg-zinc-800 disabled:opacity-25">
+                    <ArrowDown size={14} />
                   </button>
                 </div>
               </div>
+
+              {actionTarget === ex.uid && (
+                <div className="mb-2 rounded-xl border border-zinc-800 bg-zinc-950/70 p-2 grid grid-cols-2 gap-1.5">
+                  <button onClick={() => moveToEdge(ex.uid, 'top')} disabled={exIndex === 0} className="min-h-10 rounded-lg border border-zinc-800 bg-zinc-900 text-[9px] font-bold text-zinc-300 disabled:opacity-30"><ChevronsUp size={12} className="inline mr-1" />En Üste</button>
+                  <button onClick={() => moveToEdge(ex.uid, 'bottom')} disabled={exIndex === day.exercises.length - 1} className="min-h-10 rounded-lg border border-zinc-800 bg-zinc-900 text-[9px] font-bold text-zinc-300 disabled:opacity-30"><ChevronsDown size={12} className="inline mr-1" />En Alta</button>
+                  {!editing && days.length > 1 && (
+                    <button onClick={() => setMoveTarget(moveTarget === ex.uid ? null : ex.uid)} aria-expanded={moveTarget === ex.uid} className="min-h-10 rounded-lg border border-amber-900/50 bg-amber-950/10 text-[9px] font-bold text-amber-300"><MoveRight size={12} className="inline mr-1" />Başka Güne</button>
+                  )}
+                  <button onClick={() => updateDay(toggleDraftSuperset(day, ex.uid))} disabled={exIndex === day.exercises.length - 1} aria-pressed={Boolean(ex.superset)} className={`min-h-10 rounded-lg border text-[9px] font-bold disabled:opacity-30 ${ex.superset ? 'border-purple-700 bg-purple-950/25 text-purple-300' : 'border-zinc-800 bg-zinc-900 text-zinc-300'}`}><Link2 size={12} className="inline mr-1" />{ex.superset ? 'Süperseti Kaldır' : 'Süperset Yap'}</button>
+                  <button onClick={() => setPlanTarget(planTarget === ex.uid ? null : ex.uid)} aria-expanded={planTarget === ex.uid} className="min-h-10 rounded-lg border border-violet-900/50 bg-violet-950/10 text-[9px] font-bold text-violet-300"><SlidersHorizontal size={12} className="inline mr-1" />Plan Ayarları</button>
+                  <button onClick={() => { updateDay({ exercises: day.exercises.filter(e => e.uid !== ex.uid) }); setActionTarget(null); setPlanTarget(null); }} className="min-h-10 rounded-lg border border-red-950/70 bg-red-950/10 text-[9px] font-bold text-red-400"><Trash2 size={12} className="inline mr-1" />Hareketi Çıkar</button>
+                </div>
+              )}
               {planTarget === ex.uid && (
                 <div className="mb-2 rounded-lg border border-violet-900/50 bg-violet-950/10 p-2.5 space-y-2.5">
                   {/* Yedek hareket. "Makine dolu" ya da "bugün omzum ağrıyor"
@@ -723,18 +699,6 @@ const TemplateBuilderModal = memo(({
                 </div>
               )}
 
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono text-zinc-500">Set sayısı</span>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => setExerciseSets(ex.uid, ex.sets - 1)} className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-400 flex items-center justify-center active:bg-zinc-800">
-                    <ChevronDown size={13} />
-                  </button>
-                  <span className="w-6 text-center font-mono text-sm font-bold text-cyan-400">{ex.sets}</span>
-                  <button onClick={() => setExerciseSets(ex.uid, ex.sets + 1)} className="w-7 h-7 rounded-lg bg-zinc-950 border border-zinc-800 text-zinc-400 flex items-center justify-center active:bg-zinc-800">
-                    <ChevronUp size={13} />
-                  </button>
-                </div>
-              </div>
             </div>
           ))}
         </div>
@@ -744,7 +708,7 @@ const TemplateBuilderModal = memo(({
             <span className="text-[9px] font-mono text-zinc-500">Yeni hareketler</span>
             <div className="flex gap-1">
               {[2, 3, 4, 5].map(value => (
-                <button key={value} type="button" onClick={() => setDefaultSets(value)} className={`w-7 h-6 rounded-md border text-[9px] font-bold ${defaultSets === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 text-zinc-400'}`}>
+                <button key={value} type="button" onClick={() => setDefaultSets(value)} className={`w-10 h-9 rounded-lg border text-[9px] font-bold ${defaultSets === value ? 'border-cyan-600 bg-cyan-950/30 text-cyan-300' : 'border-zinc-800 text-zinc-400'}`}>
                   {value}s
                 </button>
               ))}
@@ -754,12 +718,12 @@ const TemplateBuilderModal = memo(({
             onClick={openAddPicker}
             className="w-full bg-cyan-950/25 border border-cyan-900/50 text-cyan-400 font-bold py-3 rounded-xl flex justify-center items-center uppercase tracking-wide text-[11px] active:bg-cyan-900/30 transition-colors"
           >
-            <Plus size={15} className="mr-2" /> Birden Fazla Hareket Seç
+            <Plus size={15} className="mr-2" /> Hareket Ekle
           </button>
         </div>
 
         {/* Kas dağılımı */}
-        {ranked.length > 0 && (
+        {advancedOpen && ranked.length > 0 && (
           <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
             <div className="flex justify-between items-baseline">
               <h4 className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Bu Gün Ne Çalışacak</h4>
@@ -833,7 +797,7 @@ const TemplateBuilderModal = memo(({
         multiSelect={pickerMode?.type === 'add'}
         suggestions={replaceSuggestions}
         suggestionsLabel={SUBSTITUTION_GOALS[replaceGoal]?.detail || 'Aynı kası çalıştıran alternatifler'}
-        suggestionModes={Object.values(SUBSTITUTION_GOALS)}
+        suggestionModes={pickerMode?.type === 'replace' ? Object.values(SUBSTITUTION_GOALS) : []}
         suggestionMode={replaceGoal}
         onSuggestionModeChange={setReplaceGoal}
         selectedNames={selectedExercises}

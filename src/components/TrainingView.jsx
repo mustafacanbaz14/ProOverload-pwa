@@ -432,28 +432,22 @@ const TrainingView = memo(({
                     </button>
                   </div>
 
-                  {interfaceMode === 'detailed' ? (
-                    <div className="grid grid-cols-4 gap-1.5 pl-10">
-                      <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-1.5 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:scale-[0.96] transition-all"><Wand2 size={10} /> Sihirbaz</button>
-                      <button onClick={() => onEdit?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all"><Pencil size={10} /> Düzenle</button>
-                      <button onClick={() => onDuplicate?.(template)} className="rounded-lg border border-zinc-800 py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all"><Copy size={10} /> Kopyala</button>
-                      <button onClick={() => onDelete?.(template)} className="rounded-lg border border-red-950/70 py-1.5 text-[8px] font-bold text-red-400 flex items-center justify-center gap-1 active:bg-red-950/30 active:scale-[0.96] transition-all"><Trash2 size={10} /> Sil</button>
+                  {/* Düzenleme en sık kullanılan bakım eylemi; "Diğer" içine
+                      saklandığında kullanıcı kırık sandığı için her görünümde
+                      doğrudan erişilir. Daha seyrek işlemler ikinci katmanda. */}
+                  <div className="pl-10 space-y-1.5">
+                    <div className="grid grid-cols-2 gap-1.5">
+                      <button onClick={() => onEdit?.(template)} className="min-h-11 rounded-xl border border-cyan-900/60 bg-cyan-950/20 text-[9px] font-bold text-cyan-300 flex items-center justify-center gap-1.5 active:bg-cyan-950/40"><Pencil size={12} /> Düzenle</button>
+                      <button onClick={() => setOpenTemplateMenu(menuOpen ? null : template.id)} aria-expanded={menuOpen} className="min-h-11 rounded-xl border border-zinc-800 text-[9px] font-bold text-zinc-300 flex items-center justify-center gap-1.5 active:bg-zinc-800">Diğer İşlemler <ChevronDown size={11} className={`transition-transform ${menuOpen ? 'rotate-180' : ''}`} /></button>
                     </div>
-                  ) : (
-                    <div className="pl-10 space-y-1.5">
-                      <div className="grid grid-cols-2 gap-1.5">
-                        <button onClick={() => onWizardEdit?.(template)} className="rounded-lg border border-violet-900/60 bg-violet-950/15 py-2 text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:scale-[0.96] transition-all"><Wand2 size={10} /> Sihirbazla Düzenle</button>
-                        <button onClick={() => setOpenTemplateMenu(menuOpen ? null : template.id)} aria-expanded={menuOpen} className="rounded-lg border border-zinc-800 py-2 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400 active:scale-[0.96] transition-all">Diğer <ChevronDown size={10} className={menuOpen ? 'rotate-180' : ''} /></button>
+                    {menuOpen && (
+                      <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950/55 p-1.5">
+                        <button onClick={() => { setOpenTemplateMenu(null); onWizardEdit?.(template); }} className="min-h-10 rounded-lg text-[8px] font-bold text-violet-400 flex items-center justify-center gap-1 active:bg-violet-950/20"><Wand2 size={10} /> Sihirbaz</button>
+                        <button onClick={() => { setOpenTemplateMenu(null); onDuplicate?.(template); }} className="min-h-10 rounded-lg text-[8px] font-bold text-zinc-300 flex items-center justify-center gap-1 active:bg-zinc-900"><Copy size={10} /> Kopyala</button>
+                        <button onClick={() => { setOpenTemplateMenu(null); onDelete?.(template); }} className="min-h-10 rounded-lg text-[8px] font-bold text-red-400 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
                       </div>
-                      {menuOpen && (
-                        <div className="grid grid-cols-3 gap-1.5 rounded-xl border border-zinc-800 bg-zinc-950/55 p-1.5">
-                          <button onClick={() => { setOpenTemplateMenu(null); onEdit?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400"><Pencil size={10} /> Elle Düzenle</button>
-                          <button onClick={() => { setOpenTemplateMenu(null); onDuplicate?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-zinc-400 flex items-center justify-center gap-1 active:text-cyan-400"><Copy size={10} /> Kopyala</button>
-                          <button onClick={() => { setOpenTemplateMenu(null); onDelete?.(template); }} className="rounded-lg py-1.5 text-[8px] font-bold text-red-400 flex items-center justify-center gap-1 active:bg-red-950/30"><Trash2 size={10} /> Sil</button>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                    )}
+                  </div>
                 </article>
               );
             })}
