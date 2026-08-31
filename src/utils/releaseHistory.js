@@ -294,7 +294,7 @@ const RELEASE_10_8 = release('10.8', '2026-08-31', 'Günlük Kayıt Çalışma A
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.8 yeni kalıcı veri anahtarı veya şema göçü eklemiyor; mevcut localStorage kayıtları, yedekler ve çevrimdışı çalışma biçimi korunuyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Yönlendirilmiş Antrenman Yaşam Döngüsü', [
+const RELEASE_10_9 = release('10.9', '2026-08-31', 'Yönlendirilmiş Antrenman Yaşam Döngüsü', [
   item('Üç Aşamalı Antrenman Akışı', 'Hazırla, Çalış ve Değerlendir aşamaları antrenman seçimi, aktif seans ve seans raporu boyunca aynı görsel dil ile birbirine bağlandı.'),
   item('Başlamadan Önce Plan Özeti', 'Seçilen şablonun hareket sayısı, çalışma seti ve tahmini süresi hazır oluşluk penceresinde görünür; kullanıcı neye başlayacağını önceden bilir.'),
   item('Ses ve Bildirim Ön Kontrolü', 'Dinlenme uyarısının ses motoru antrenmandan önce kullanıcı dokunuşuyla sınanabiliyor; bildirim izni ve ses hazırlığı açık sonuçla gösteriliyor.'),
@@ -304,6 +304,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Yönlend
   item('Rapordan Analize Geçiş', 'Seans sonu değerlendirmesinden doğrudan 1RM analizine geçilebiliyor; rapor ile uzun dönem inceleme arasındaki kopukluk kaldırıldı.'),
   item('İstem Dışı Yakınlaştırma Kapatıldı', 'iPhone’da küçük giriş alanına dokununca oluşan otomatik zoom ile iki parmak/double-tap sayfa yakınlaştırması kapatıldı; okunabilirlik Ayarlar içindeki punto seçimiyle yönetilmeye devam ediyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.9 mevcut localStorage, PWA güncelleme, aktif antrenman ve yedek yapısını değiştirmeden yalnız görev akışını ve rapor çıktısını geliştiriyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Sade Gezinme ve Odaklı Ayarlar', [
+  item('Tek Gezinme Sistemi', 'Bugün, Antrenman, Beslenme, Gelişim ve Geçmiş geçişleri yalnız alt menüde tutuldu; aynı beş bölümü tekrar eden üst menü kaldırıldı.'),
+  item('Ayarlar Artık Doğrudan Açılıyor', 'Üst çubuktaki dişli simgesi kategori ana ekranını tek dokunuşla açıyor; araya uygulama menüsü girmiyor.'),
+  item('Arama Her Ekranda Bir Dokunuş Uzakta', 'Üst çubuktaki ayrı arama düğmesi sayfa, araç, hareket, şablon ve geçmiş kayıtlara doğrudan erişimi koruyor.'),
+  item('Kayıp Kısayol Yok', 'Günün Kayıtları ve Tüm Araçlar küresel arama komutlarına eklendi; birleşik menü kaldırılırken hiçbir görev yolu kaybolmadı.'),
+  item('Telefon İçin Tam Ekran Ayarlar', 'Ayarlar küçük bir kart yerine telefon ekranını kullanan, güvenli alanlara uyan ve kaydırması daha doğal bir çalışma alanına dönüştürüldü.'),
+  item('Tek Sütunlu Okunabilir Kategoriler', 'Sekiz ayar kategorisi telefonda küçük iki sütunlu kutular yerine ikon, başlık ve açıklaması rahat okunan tek sütunlu satırlar halinde gösteriliyor.'),
+  item('Ayar ve Bölüm Ayrımı Açık', 'Ayar ana ekranı yalnız tercih, yöntem, cihaz, veri ve gizlilik kontrollerini içerdiğini; uygulama bölümlerinin alt menüden açıldığını açıkça belirtiyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.10 yeni localStorage anahtarı veya şema göçü eklemiyor; mevcut kayıtlar, yedek biçimi ve çevrimdışı çalışma korunuyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -380,6 +391,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_9,
   RELEASE_10_8,
   RELEASE_10_7,
   RELEASE_10_6,

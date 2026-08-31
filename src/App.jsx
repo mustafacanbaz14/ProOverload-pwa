@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, startTransition, useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useTransition } from 'react';
 import {
-  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff, ChevronDown, Menu
+  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff, ChevronDown
 } from 'lucide-react';
 import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
@@ -206,7 +206,6 @@ const NutritionView = lazy(loadNutritionView);
 const ProgressHubView = lazy(loadProgressHubView);
 const HistoryView = lazy(loadHistoryView);
 const QuickCaptureModal = lazy(() => import('./components/QuickCaptureModal'));
-const AppMenuModal = lazy(() => import('./components/AppMenuModal'));
 const DailyWorkspaceModal = lazy(() => import('./components/DailyWorkspaceModal'));
 const StarterProgramModal = lazy(() => import('./components/StarterProgramModal'));
 
@@ -401,7 +400,6 @@ export default function App() {
   const [substituteFor, setSubstituteFor] = useState(null);
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
-  const [isAppMenuOpen, setIsAppMenuOpen] = useState(false);
   const [isDailyWorkspaceOpen, setIsDailyWorkspaceOpen] = useState(false);
   const [dailyWorkspaceDate, setDailyWorkspaceDate] = useState(getLocalDateString);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(() =>
@@ -4295,9 +4293,21 @@ export default function App() {
               <Plus size={16} />
               <span>Ekle</span>
             </button>
-            <button onClick={() => setIsAppMenuOpen(true)} aria-label="Uygulama menüsünü aç" className="luxury-header-action">
-              <Menu size={16} />
-              <span>Menü</span>
+            <button
+              onClick={() => setIsGlobalSearchOpen(true)}
+              aria-label="Uygulamada ara"
+              title="Ara"
+              className="luxury-icon-button"
+            >
+              <Search size={17} />
+            </button>
+            <button
+              onClick={() => openSettings('home')}
+              aria-label="Ayarları aç"
+              title="Ayarlar"
+              className="luxury-icon-button"
+            >
+              <Settings size={17} />
             </button>
           </div>
         </header>
@@ -4699,18 +4709,6 @@ export default function App() {
         )}
 
         <Suspense fallback={<ModalLoadingFallback />}>
-        {isAppMenuOpen && <AppMenuModal
-          isOpen={isAppMenuOpen}
-          onClose={() => setIsAppMenuOpen(false)}
-          currentView={view}
-          onNavigate={handleGlobalNavigate}
-          onDailyWorkspace={() => openDailyWorkspace()}
-          onQuickCapture={() => setIsQuickCaptureOpen(true)}
-          onSearch={() => setIsGlobalSearchOpen(true)}
-          onTools={() => setIsToolsOpen(true)}
-          onSettings={() => openSettings('home')}
-        />}
-
         {isDailyWorkspaceOpen && <DailyWorkspaceModal
           isOpen={isDailyWorkspaceOpen}
           onClose={() => setIsDailyWorkspaceOpen(false)}
@@ -4738,6 +4736,8 @@ export default function App() {
           templates={templates}
           workouts={sortedWorkouts}
           onNavigate={handleGlobalNavigate}
+          onDailyWorkspace={() => openDailyWorkspace()}
+          onTools={() => setIsToolsOpen(true)}
           onExercise={setEditorExercise}
           onTemplate={setPreviewTemplate}
           onTool={(key) => {

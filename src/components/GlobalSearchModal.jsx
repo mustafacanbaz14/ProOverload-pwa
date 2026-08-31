@@ -1,5 +1,5 @@
 import React, { memo, useMemo, useState } from 'react';
-import { X, Search, Dumbbell, LayoutGrid, Wrench, Clock } from 'lucide-react';
+import { X, Search, Dumbbell, LayoutGrid, Wrench, Clock, CalendarCheck2 } from 'lucide-react';
 import { foldForSearch } from '../utils/helpers';
 import { formatDay } from '../utils/dates';
 
@@ -10,6 +10,8 @@ const GlobalSearchModal = memo(({
   templates = [],
   workouts = [],
   onNavigate,
+  onDailyWorkspace,
+  onTools,
   onExercise,
   onTemplate,
   onTool,
@@ -17,21 +19,23 @@ const GlobalSearchModal = memo(({
   const [query, setQuery] = useState('');
   const q = foldForSearch(query).trim();
   const commands = useMemo(() => [
+    { label: 'Günün Kayıtları', hint: 'Seçili günün bütün kayıtlarını yönet', action: onDailyWorkspace, icon: CalendarCheck2 },
+    { label: 'Tüm Araçlar', hint: 'Hesaplayıcılar, koç ve analiz araçları', action: onTools, icon: Wrench },
+    { label: 'Koç Merkezi', hint: 'Haftalık karar, veri güveni ve protokol', action: () => onTool('coach'), icon: Wrench },
+    { label: 'Kalori Detayı', hint: 'Enerji girdisi ve çıktısı', action: () => onTool('energy'), icon: Wrench },
+    { label: 'Uyku ve Toparlanma', hint: 'Uyku, meditasyon, esneme', action: () => onTool('sleep'), icon: Wrench },
+    { label: 'Hareket Kütüphanesi', hint: 'Hareketleri düzenle', action: () => onTool('library'), icon: Wrench },
+    { label: 'Haftalık Program', hint: 'Aktif şablon ve plan', action: () => onTool('weekPlan'), icon: Wrench },
     { label: 'Bugün', hint: 'Günlük pano', action: () => onNavigate('home'), icon: LayoutGrid },
     { label: 'Antrenman Merkezi', hint: 'Başlat, şablonlar, programlar', action: () => onNavigate('training'), icon: Dumbbell },
     { label: 'Beslenme', hint: 'Günlük giriş ve enerji', action: () => onNavigate('nutrition'), icon: LayoutGrid },
     { label: 'Vücut Ölçümü', hint: 'Gelişim › Vücut', action: () => onNavigate('progress', 'body'), icon: LayoutGrid },
     { label: 'Gelişim Analizleri', hint: 'Grafikler ve kişisel koç', action: () => onNavigate('progress', 'analysis'), icon: LayoutGrid },
     { label: 'Geçmiş', hint: 'Tüm kayıtlar', action: () => onNavigate('history'), icon: Clock },
-    { label: 'Hareket Kütüphanesi', hint: 'Hareketleri düzenle', action: () => onTool('library'), icon: Wrench },
-    { label: 'Haftalık Program', hint: 'Aktif şablon ve plan', action: () => onTool('weekPlan'), icon: Wrench },
-    { label: 'Koç Merkezi', hint: 'Haftalık karar, veri güveni ve protokol', action: () => onTool('coach'), icon: Wrench },
-    { label: 'Kalori Detayı', hint: 'Enerji girdisi ve çıktısı', action: () => onTool('energy'), icon: Wrench },
-    { label: 'Uyku ve Toparlanma', hint: 'Uyku, meditasyon, esneme', action: () => onTool('sleep'), icon: Wrench },
-  ], [onNavigate, onTool]);
+  ], [onDailyWorkspace, onNavigate, onTool, onTools]);
 
   const results = useMemo(() => {
-    const commandMatches = commands.filter(item => !q || foldForSearch(`${item.label} ${item.hint}`).includes(q)).slice(0, q ? 6 : 5);
+    const commandMatches = commands.filter(item => !q || foldForSearch(`${item.label} ${item.hint}`).includes(q)).slice(0, 6);
     const exerciseMatches = q ? exercises.filter(name => foldForSearch(name).includes(q)).slice(0, 6) : [];
     const templateMatches = q ? templates.filter(item => foldForSearch(item.name).includes(q)).slice(0, 4) : [];
     const workoutMatches = q ? workouts.filter(item => foldForSearch(`${item.name || ''} ${(item.exercises || []).map(e => e.name).join(' ')} ${item.date}`).includes(q)).slice(0, 4) : [];

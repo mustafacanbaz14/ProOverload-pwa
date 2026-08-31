@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.9 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.10 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -50,6 +50,17 @@ Durum: Uygulandı.
 - Akıllı progresyon önerisini “öneri, dayanak, kabul/elle değiştir” biçiminde sun.
 - Seans bitişinde rekor, hacim, süre, plan uyumu ve sonraki seans notunu tek kısa raporda birleştir.
 - Bildirim/ses izinlerini antrenmandan önce denetlenebilir hale getir; seans ortasında sürpriz sessizliği azalt.
+
+## 10.10 — Sade gezinme ve odaklı ayarlar
+
+Durum: Uygulandı.
+
+- Beş ana bölüm için üst menüdeki ikinci gezinme listesini kaldır; alt menüyü tek kaynak yap.
+- Üst çubuktan hızlı kayıt, küresel arama ve ayarlara doğrudan erişim ver.
+- Günlük kayıt merkezi ile araçlar kısayolunu küresel aramada koru.
+- Ayarları telefonda tam ekran, tek sütunlu ve okunabilir kategori listesi olarak sun.
+- Ayar ekranında bölüm geçişi göstermeyip kapsamını tercih, yöntem, cihaz, veri ve gizlilikle sınırla.
+- PWA, localStorage ve mevcut yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 
