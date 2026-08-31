@@ -1,5 +1,6 @@
 import React, { lazy, memo, startTransition, Suspense } from 'react';
 import { Scale, LineChart, CalendarDays } from 'lucide-react';
+import ViewHeader from './ViewHeader';
 
 const loadMetricsView = () => import('./MetricsView');
 const loadAnalyticsView = () => import('./AnalyticsView');
@@ -29,16 +30,21 @@ const ProgressHubView = memo(({ tab, setTab, metricsProps, analyticsProps, gende
     startTransition(() => setTab(key));
   };
   return <div className="luxury-screen h-full flex flex-col bg-black">
-    <div className="px-4 pt-4 pb-2 shrink-0">
-      <div className={`luxury-segmented grid ${gender === 'female' ? 'grid-cols-3' : 'grid-cols-2'} bg-zinc-900 p-1 rounded-2xl border border-zinc-800 mt-2`}>
-        <button onPointerEnter={() => prepare('body')} onFocus={() => prepare('body')} onClick={() => select('body')} className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'body' ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}>
+    <div className="px-4 pt-4 pb-2.5 shrink-0 space-y-3">
+      <ViewHeader
+        eyebrow="Gelişim Merkezi"
+        title="Vücudun ve ilerlemen"
+        subtitle="Ölçümler, hedefler ve analizler aynı yerde."
+      />
+      <div className={`luxury-segmented grid ${gender === 'female' ? 'grid-cols-3' : 'grid-cols-2'} bg-zinc-900 p-1 rounded-2xl border border-zinc-800`} aria-label="Gelişim görünümü">
+        <button onPointerEnter={() => prepare('body')} onFocus={() => prepare('body')} onClick={() => select('body')} className={`min-h-11 px-2 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'body' ? 'bg-cyan-600 text-white' : 'text-zinc-400'}`}>
           <Scale size={14} /> Vücut & Hedefler
         </button>
-        <button onPointerEnter={() => prepare('analysis')} onFocus={() => prepare('analysis')} onClick={() => select('analysis')} className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'analysis' ? 'bg-emerald-700 text-white' : 'text-zinc-500'}`}>
+        <button onPointerEnter={() => prepare('analysis')} onFocus={() => prepare('analysis')} onClick={() => select('analysis')} className={`min-h-11 px-2 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'analysis' ? 'bg-emerald-700 text-white' : 'text-zinc-400'}`}>
           <LineChart size={14} /> Analizler
         </button>
         {gender === 'female' && (
-          <button onPointerEnter={() => prepare('cycle')} onFocus={() => prepare('cycle')} onClick={() => select('cycle')} className={`py-2.5 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'cycle' ? 'bg-rose-600 text-white' : 'text-zinc-500'}`}>
+          <button onPointerEnter={() => prepare('cycle')} onFocus={() => prepare('cycle')} onClick={() => select('cycle')} className={`min-h-11 px-2 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 ${visibleTab === 'cycle' ? 'bg-rose-600 text-white' : 'text-zinc-400'}`}>
             <CalendarDays size={14} /> Döngü
           </button>
         )}

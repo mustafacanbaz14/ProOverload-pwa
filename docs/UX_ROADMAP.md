@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.11 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.12 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -72,6 +72,17 @@ Durum: Uygulandı.
 - Araç merkezini mobilde tam ekran yap; aramaya ek olarak kategori filtreleri sun.
 - Ana bölüm, ayar, hızlı kayıt ve araç merkezi rollerini görsel olarak birbirinden ayır.
 - PWA, localStorage ve yedek biçimini değiştirme.
+
+## 10.12 — Ana sekmelerde okunabilirlik ve yönlendirme
+
+Durum: Uygulandı.
+
+- Antrenman, Beslenme, Gelişim ve Geçmiş ekranlarında ortak başlık hiyerarşisi kullan.
+- Geçmiş kayıt türlerini sıkışık beş sütun yerine okunabilir, yatay filtreler olarak sun.
+- Boş arşiv durumlarında ilgili kayıt eylemini; sonuçsuz aramada filtre temizlemeyi göster.
+- Beslenmede veri giriş yolları ile kaydetme eylemini görsel olarak ayır.
+- Kalori denklemi, makro etiketleri ve sık kullanılan beslenme kontrollerini büyüt.
+- PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

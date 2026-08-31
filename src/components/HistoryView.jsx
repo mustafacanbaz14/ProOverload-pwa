@@ -10,6 +10,7 @@ import { parseNumber, clampNumber } from '../utils/helpers';
 import { formatDay, weekdayName, groupIntoWeeks, groupWeeksIntoMonths } from '../utils/dates';
 import { dayMindCalories } from '../utils/wellness';
 import { buildArchiveDays, filterArchiveDays } from '../utils/archiveTimeline';
+import ViewHeader from './ViewHeader';
 
 /**
  * Listeyi haftalara bölüp araya başlık koyar.
@@ -88,6 +89,21 @@ const WeekGroups = ({ items, getDate, children, expandAll = false }) => {
   );
 };
 
+const ArchiveEmptyState = ({ icon: Icon, title, detail, actionLabel, onAction }) => (
+  <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/65 px-5 py-9 text-center">
+    <span className="w-12 h-12 mx-auto rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-400 flex items-center justify-center">
+      <Icon size={20} />
+    </span>
+    <strong className="text-sm text-zinc-200 block mt-3">{title}</strong>
+    <p className="text-[10px] font-mono text-zinc-400 leading-relaxed mt-1.5 max-w-xs mx-auto">{detail}</p>
+    {onAction && (
+      <button type="button" onClick={onAction} className="min-h-11 mt-4 rounded-xl border border-cyan-900/60 bg-cyan-950/25 px-4 text-[10px] font-bold text-cyan-400 active:bg-cyan-950/50">
+        {actionLabel}
+      </button>
+    )}
+  </div>
+);
+
 // Listeler App tarafından tarihe göre azalan sırada verilir (en yeni en üstte).
 // Burada tekrar sıralama veya ters çevirme yapılmaz.
 const HistoryView = memo(({
@@ -152,10 +168,11 @@ const HistoryView = memo(({
 
   return (
     <div data-view-scroll="history" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
-      <div>
-        <span className="luxury-eyebrow text-[10px] uppercase">Kayıt Arşivi</span>
-        <h2 className="luxury-title text-xl font-black mt-0.5">Geçmiş</h2>
-      </div>
+      <ViewHeader
+        eyebrow="Kayıt Arşivi"
+        title="Geçmiş"
+        subtitle="Günlerini ara, incele veya geçmiş bir kaydı düzenle."
+      />
 
       <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
         <button
@@ -197,21 +214,23 @@ const HistoryView = memo(({
           </div>
         )}
       </section>
-      <div className="luxury-segmented grid grid-cols-5 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md">
+      <div className="luxury-segmented flex gap-1.5 overflow-x-auto hide-scrollbar bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md" aria-label="Arşiv kayıt türü">
         {[
-          { key: 'all', label: `Tümü (${archiveDays.length})`, activeBg: 'bg-cyan-600' },
-          { key: 'workouts', label: `Ağırlık (${strengthWorkouts.length})`, activeBg: 'bg-cyan-600' },
-          { key: 'cardio', label: `Aktivite (${cardioRecords.length})`, activeBg: 'bg-red-600' },
-          { key: 'metrics', label: `Ölçüm (${metricsHistory.length})`, activeBg: 'bg-cyan-600' },
-          { key: 'nutrition', label: `Besin (${nutritionHistory.length})`, activeBg: 'bg-cyan-600' },
+          { key: 'all', label: 'Tümü', count: archiveDays.length, activeBg: 'bg-cyan-600' },
+          { key: 'workouts', label: 'Ağırlık', count: strengthWorkouts.length, activeBg: 'bg-cyan-600' },
+          { key: 'cardio', label: 'Aktivite', count: cardioRecords.length, activeBg: 'bg-red-600' },
+          { key: 'metrics', label: 'Ölçüm', count: metricsHistory.length, activeBg: 'bg-cyan-600' },
+          { key: 'nutrition', label: 'Besin', count: nutritionHistory.length, activeBg: 'bg-cyan-600' },
         ].map(tab => (
           <button
             key={tab.key}
             type="button"
             onClick={() => setHistoryTab(tab.key)}
-            className={`py-2 rounded-xl text-[8px] font-bold uppercase tracking-wide transition-all active:scale-[0.96] ${historyTab === tab.key ? `${tab.activeBg} text-white shadow-sm font-black` : 'text-zinc-500 hover:text-zinc-300'}`}
+            aria-pressed={historyTab === tab.key}
+            className={`min-h-11 shrink-0 px-3 rounded-xl text-[10px] font-bold transition-all active:scale-[0.96] flex items-center gap-1.5 ${historyTab === tab.key ? `${tab.activeBg} text-white shadow-sm font-black` : 'text-zinc-400 hover:text-zinc-200'}`}
           >
-            {tab.label}
+            <span>{tab.label}</span>
+            <span className={`min-w-5 h-5 px-1 rounded-md flex items-center justify-center text-[9px] font-mono ${historyTab === tab.key ? 'bg-black/20 text-white' : 'bg-zinc-900 text-zinc-400'}`}>{tab.count}</span>
           </button>
         ))}
       </div>
@@ -249,7 +268,13 @@ const HistoryView = memo(({
             <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">Aynı güne ait antrenman, aktivite, ölçüm, beslenme ve enerji kaydı tek kartta. Ay ve hafta başlıklarına dokunarak arşivi aç.</p>
           </div>
           {filteredArchiveDays.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Eşleşen günlük kayıt yok</div>
+            <ArchiveEmptyState
+              icon={Layers3}
+              title={q ? 'Aramana uyan kayıt yok' : 'Arşiv henüz boş'}
+              detail={q ? 'Başka bir tarih, hareket veya öğün adı dene.' : 'İlk kaydını eklediğinde günler burada ay ve hafta halinde düzenlenecek.'}
+              actionLabel={q ? 'Aramayı temizle' : 'Kayıt seçeneklerini aç'}
+              onAction={q ? () => setQuery('') : () => setAddOpen(true)}
+            />
           ) : (
             <WeekGroups key="all" items={filteredArchiveDays} expandAll={Boolean(q)}>{day => (
               <article key={day.date} className="defer-card-render bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
@@ -314,7 +339,13 @@ const HistoryView = memo(({
       {historyTab === 'workouts' && (
         <div className="space-y-3">
           {filteredWorkouts.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz antrenman kaydı yok</div>
+            <ArchiveEmptyState
+              icon={Dumbbell}
+              title={q ? 'Eşleşen antrenman yok' : 'Henüz ağırlık antrenmanı yok'}
+              detail={q ? 'Hareket adını veya tarihi değiştirerek tekrar ara.' : 'Bugün için boş bir antrenman açıp hareketlerini ekleyebilirsin.'}
+              actionLabel={q ? 'Aramayı temizle' : 'Antrenman ekle'}
+              onAction={q ? () => setQuery('') : () => onAddWorkout?.(getLocalDateString())}
+            />
           ) : (
             <WeekGroups key="workouts" items={filteredWorkouts} expandAll={Boolean(q)}>{w => {
               const tonnage = calcTonnage(w.exercises, loadOptsFor?.(w.date) || null);
@@ -476,7 +507,13 @@ const HistoryView = memo(({
             </section>
           )}
           {filteredCardio.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz kardiyo veya aktivite kaydı yok</div>
+            <ArchiveEmptyState
+              icon={HeartPulse}
+              title={q ? 'Eşleşen aktivite yok' : 'Henüz kardiyo veya aktivite yok'}
+              detail={q ? 'Aktivite adını veya tarihi değiştirerek tekrar ara.' : 'Yürüyüşten interval koşuya kadar bir aktiviteyi bugüne kaydedebilirsin.'}
+              actionLabel={q ? 'Aramayı temizle' : 'Aktivite ekle'}
+              onAction={q ? () => setQuery('') : () => onAddCardio?.(getLocalDateString())}
+            />
           ) : <WeekGroups key="cardio" items={filteredCardio} expandAll={Boolean(q)}>{record => {
             const activity = findActivity(record.cardio.type);
             const effort = findEffort(record.cardio);
@@ -534,7 +571,13 @@ const HistoryView = memo(({
       {historyTab === 'metrics' && (
         <div className="space-y-3">
           {filteredMetrics.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz ölçüm kaydı yok</div>
+            <ArchiveEmptyState
+              icon={Scale}
+              title={q ? 'Eşleşen ölçüm yok' : 'Henüz vücut ölçümü yok'}
+              detail={q ? 'Tarihi, kiloyu veya yağ oranını değiştirerek tekrar ara.' : 'İlk ölçüm; hedef, kalori ve gelişim hesaplarının tarihsel temelini oluşturur.'}
+              actionLabel={q ? 'Aramayı temizle' : 'Ölçüm ekle'}
+              onAction={q ? () => setQuery('') : () => onAddMetric?.(getLocalDateString())}
+            />
           ) : (
             <WeekGroups key="metrics" items={filteredMetrics} expandAll={Boolean(q)}>{m => (
               <div key={m.id} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2">
@@ -569,7 +612,13 @@ const HistoryView = memo(({
       {historyTab === 'nutrition' && (
         <div className="space-y-3">
           {filteredNutrition.length === 0 ? (
-            <div className="text-center py-12 text-zinc-400 text-xs font-mono">Henüz beslenme kaydı yok</div>
+            <ArchiveEmptyState
+              icon={Beef}
+              title={q ? 'Eşleşen beslenme kaydı yok' : 'Henüz beslenme kaydı yok'}
+              detail={q ? 'Öğün adını veya tarihi değiştirerek tekrar ara.' : 'Öğünlerini tek tek ya da yalnız günlük makro toplamını kaydedebilirsin.'}
+              actionLabel={q ? 'Aramayı temizle' : 'Beslenme ekle'}
+              onAction={q ? () => setQuery('') : () => onAddNutrition?.(getLocalDateString())}
+            />
           ) : (
             <WeekGroups key="nutrition" items={filteredNutrition} expandAll={Boolean(q)}>{n => {
               // Toplamlar öğünlerden hesaplanır. Eskiden kayıttaki üst düzey

@@ -28,13 +28,17 @@ const homeView = read('src/components/HomeView.jsx');
 const todayCoach = read('src/components/TodayCoachCard.jsx');
 const quickCapture = read('src/components/QuickCaptureModal.jsx');
 const toolsModal = read('src/components/ToolsModal.jsx');
+const viewHeader = read('src/components/ViewHeader.jsx');
+const trainingView = read('src/components/TrainingView.jsx');
+const nutritionView = read('src/components/NutritionView.jsx');
+const progressHub = read('src/components/ProgressHubView.jsx');
 
 // Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
 // package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
 // olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 10.7') && roadmap.includes('## 10.10') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
+check(roadmap.includes('## 10.7') && roadmap.includes('## 10.12') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
 check(app.includes('<span>Ekle</span>') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
 check(!app.includes('isAppMenuOpen') && !existsSync(resolve(root, 'src/components/AppMenuModal.jsx')), 'Tekrarlanan uygulama menüsü kaldırıldı');
 check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => navbar.includes(`key: '${key}'`)), 'Beş ana bölüm yalnız alt gezinmede korunuyor');
@@ -52,6 +56,10 @@ check(homeView.includes('Sıradaki eylem') && homeView.includes('Antrenmanı Ba�
 check(todayCoach.includes('grid-cols-[1fr_58px_58px]') && todayCoach.includes('min-h-14'), 'Koç yardımcı eylemleri okunabilir dokunma alanında');
 check(quickCapture.includes('completedCount') && quickCapture.includes('Kayıtlı') && quickCapture.includes('divide-y'), 'Hızlı kayıt tek sütunlu ve durum etiketli');
 check(toolsModal.includes("activeGroup") && toolsModal.includes('h-[100dvh]') && toolsModal.includes('Araç kategorileri'), 'Araç merkezi tam ekran ve kategori filtreli');
+check(viewHeader.includes('luxury-title') && [trainingView, nutritionView, historyView, progressHub].every(source => source.includes('<ViewHeader')), 'Dört ana görev ekranı ortak başlık hiyerarşisini kullanıyor');
+check(historyView.includes('overflow-x-auto') && historyView.includes('aria-pressed') && historyView.includes('ArchiveEmptyState'), 'Arşiv filtreleri okunabilir ve boş durumlar eylem odaklı');
+check(nutritionView.includes('Hızlı beslenme işlemleri') && nutritionView.includes('Değişiklikleri sakla') && nutritionView.includes('min-h-11'), 'Beslenme giriş ve kaydetme hiyerarşisi ile dokunma hedefleri korunuyor');
+check(progressHub.includes('Gelişim Merkezi') && progressHub.includes('Gelişim görünümü'), 'Gelişim ekranı başlık ve alt görünüm bağlamı taşıyor');
 check(app.includes('energyDetailEntry') && app.includes("openEnergyDetail('days'"), 'Kalori detayı tarih ve sekme bağlamıyla açılıyor');
 check(historyView.includes('onOpenEnergyDay') && energyModal.includes('days: 365'), 'Arşivden Gün Gün enerji erişimi ve bir yıllık görünüm korunuyor');
 check(vite.includes("registerType: 'autoUpdate'"), 'PWA otomatik güncelleme açık');

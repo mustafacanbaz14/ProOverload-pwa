@@ -17,19 +17,20 @@ import { dayEnergyBreakdown, hasDayNeatOverride, neatOptsForDay } from '../utils
 import NutritionTemplatesModal from './NutritionTemplatesModal';
 import { isCoachProtocolActive } from '../utils/coachProtocol';
 import HydrationCard from './HydrationCard';
+import ViewHeader from './ViewHeader';
 
 const MacroTile = ({ label, value, numericValue, target, color, bar }) => {
   const ratio = target > 0 ? Math.min(100, Math.round((parseNumber(numericValue) / target) * 100)) : null;
   return (
     <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-3 min-w-0 shadow-sm">
-      <span className="text-[9px] font-bold text-zinc-500 uppercase tracking-widest block">{label}</span>
+      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">{label}</span>
       <span className={`text-sm font-mono font-black block mt-0.5 tracking-tight ${color}`}>{value}</span>
       {ratio !== null && (
         <>
           <div className="h-1.5 bg-zinc-900 rounded-full overflow-hidden mt-2 shadow-inner">
             <div className={`h-full rounded-full transition-all duration-300 ${bar}`} style={{ width: `${ratio}%` }} />
           </div>
-          <span className="text-[8px] font-mono text-zinc-500 block mt-1">hedef {target}g</span>
+          <span className="text-[9px] font-mono text-zinc-500 block mt-1">hedef {target}g</span>
         </>
       )}
     </div>
@@ -262,26 +263,26 @@ const NutritionView = memo(({
 
   return (
     <div data-view-scroll="nutrition" className="luxury-screen p-4 space-y-3.5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
-      <header className="flex items-start justify-between gap-3">
-        <div>
-          <span className="luxury-eyebrow text-[10px] uppercase">Günlük Takip</span>
-          <h2 className="luxury-title text-xl font-black mt-0.5">Beslenme</h2>
-          <p className="luxury-subtitle text-[10px] mt-1">Önce {isToday ? 'bugünün' : 'seçili günün'} özeti, ayrıntılar aşağıda.</p>
-        </div>
-        <div className="flex items-end gap-1.5">
-        <label className="text-right">
-          <span className="text-[9px] font-bold uppercase text-zinc-400 block mb-1">{weekdayName(currentNutritionForm.date)}</span>
-          <input
-            type="date"
-            value={currentNutritionForm.date}
-            onChange={(event) => handleNutritionDateChange(event.target.value)}
-            aria-label="Beslenme tarihi"
-            className="bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-zinc-300 font-mono text-[10px] outline-none focus:border-orange-500"
-          />
-        </label>
-        {onOpenSettings && <button onClick={onOpenSettings} aria-label="Beslenme ayarlarını aç" className="w-9 h-9 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center"><Settings2 size={14} /></button>}
-        </div>
-      </header>
+      <ViewHeader
+        eyebrow="Günlük Takip"
+        title="Beslenme"
+        subtitle={`Önce ${isToday ? 'bugünün' : 'seçili günün'} özeti, ayrıntılar aşağıda.`}
+        action={(
+          <div className="flex items-end gap-1.5">
+            <label className="text-right">
+              <span className="text-[9px] font-bold uppercase text-zinc-400 block mb-1">{weekdayName(currentNutritionForm.date)}</span>
+              <input
+                type="date"
+                value={currentNutritionForm.date}
+                onChange={(event) => handleNutritionDateChange(event.target.value)}
+                aria-label="Beslenme tarihi"
+                className="min-h-11 bg-zinc-900 border border-zinc-800 rounded-xl px-2.5 py-2 text-zinc-300 font-mono text-[10px] outline-none focus:border-orange-500"
+              />
+            </label>
+            {onOpenSettings && <button onClick={onOpenSettings} aria-label="Beslenme ayarlarını aç" className="w-11 h-11 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 flex items-center justify-center active:bg-zinc-800"><Settings2 size={17} /></button>}
+          </div>
+        )}
+      />
 
       <section className="luxury-feature-card bg-gradient-to-br from-orange-950/40 via-zinc-900 to-zinc-900 rounded-3xl border border-orange-900/30 p-4 shadow-lg shadow-black/20">
         <div className="flex items-start justify-between gap-3">
@@ -322,8 +323,8 @@ const NutritionView = memo(({
             { label: '= Kalan', value: remaining === null ? '—' : Math.round(remaining), color: remaining !== null && remaining < 0 ? 'text-amber-400' : 'text-orange-400' },
           ].map(item => (
             <div key={item.label} className="rounded-xl border border-zinc-800 bg-zinc-950/65 px-1 py-2 text-center min-w-0">
-              <strong className={`text-[11px] font-mono block truncate ${item.color}`}>{item.value}</strong>
-              <span className="text-[7px] font-bold uppercase text-zinc-400 block mt-0.5">{item.label}</span>
+              <strong className={`text-xs font-mono block truncate ${item.color}`}>{item.value}</strong>
+              <span className="text-[9px] font-bold uppercase text-zinc-400 block mt-0.5 leading-tight">{item.label}</span>
             </div>
           ))}
         </div>
@@ -393,26 +394,21 @@ const NutritionView = memo(({
         </button>
       </section>
 
-      <section className="grid grid-cols-3 gap-2" aria-label="Hızlı işlemler">
-        {[
-          { label: 'Besin Ekle', note: 'Ara veya barkod', icon: Search, action: () => { setEntryMode('meals'); setIsFoodSearchOpen(true); }, color: 'text-orange-400' },
-          { label: 'Günlük Toplam', note: 'Makroları yaz', icon: Beef, action: () => setEntryMode('daily'), color: 'text-emerald-400' },
-          { label: 'Kaydet', note: isToday ? 'Bugünü kaydet' : 'Bu günü kaydet', icon: Save, action: handleSaveNutrition, color: 'text-cyan-400' },
-        ].map(item => {
-          const Icon = item.icon;
-          return (
-            <button
-              key={item.label}
-              type="button"
-              onClick={item.action}
-              className="bg-zinc-900/90 border border-zinc-800/80 rounded-2xl py-3.5 px-2 flex flex-col items-center gap-1.5 active:scale-[0.96] transition-all shadow-md shadow-black/20 hover:border-zinc-700/80"
-            >
-              <Icon size={17} className={item.color} />
-              <span className="text-[10px] font-bold text-zinc-200 leading-tight text-center">{item.label}</span>
-              <span className="text-[8px] font-mono text-zinc-500 leading-tight text-center">{item.note}</span>
-            </button>
-          );
-        })}
+      <section className="space-y-2" aria-label="Hızlı beslenme işlemleri">
+        <div className="grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => { setEntryMode('meals'); setIsFoodSearchOpen(true); }} className="min-h-14 bg-gradient-to-r from-orange-950/50 to-zinc-900 border border-orange-900/45 rounded-2xl px-3 flex items-center gap-2.5 text-left active:scale-[0.98] transition-all shadow-md">
+            <Search size={18} className="text-orange-400 shrink-0" />
+            <span><strong className="text-[11px] text-zinc-100 block">Besin Ekle</strong><span className="text-[9px] font-mono text-zinc-400">Ara veya barkod</span></span>
+          </button>
+          <button type="button" onClick={() => setEntryMode('daily')} className="min-h-14 bg-zinc-900/90 border border-zinc-800 rounded-2xl px-3 flex items-center gap-2.5 text-left active:scale-[0.98] transition-all shadow-md">
+            <Beef size={18} className="text-emerald-400 shrink-0" />
+            <span><strong className="text-[11px] text-zinc-100 block">Günlük Toplam</strong><span className="text-[9px] font-mono text-zinc-400">Makroları yaz</span></span>
+          </button>
+        </div>
+        <button type="button" onClick={handleSaveNutrition} className="min-h-12 w-full bg-cyan-700 active:bg-cyan-800 text-white rounded-2xl px-3.5 flex items-center justify-between gap-3 shadow-lg shadow-cyan-950/25">
+          <span className="flex items-center gap-2.5"><Save size={17} /><strong className="text-[11px]">{isToday ? 'Bugünün Kaydını Kaydet' : 'Geçmiş Kaydı Kaydet'}</strong></span>
+          <span className="text-[9px] font-mono text-cyan-100/75">Değişiklikleri sakla</span>
+        </button>
       </section>
 
       <DisclosureCard
@@ -455,7 +451,7 @@ const NutritionView = memo(({
                 key={mode.key}
                 type="button"
                 onClick={() => setEntryMode(mode.key)}
-                className={`px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase transition-colors ${
+                className={`min-h-11 px-3 rounded-lg text-[10px] font-bold uppercase transition-colors ${
                   (currentNutritionForm.entryMode || 'meals') === mode.key
                     ? 'bg-orange-700 text-white shadow-sm'
                     : 'text-zinc-500'
@@ -480,7 +476,7 @@ const NutritionView = memo(({
                   ...prev,
                   waterMl: Math.min(10000, (parseNumber(prev.waterMl) || 0) + 250),
                 }))}
-                className="px-2 py-1 bg-zinc-900/90 border border-cyan-900/50 text-cyan-400 rounded-lg text-[9px] font-mono font-bold active:scale-[0.94] transition-all"
+                className="min-h-11 px-3 bg-zinc-900/90 border border-cyan-900/50 text-cyan-400 rounded-xl text-[10px] font-mono font-bold active:scale-[0.94] transition-all"
               >
                 +250
               </button>
@@ -490,7 +486,7 @@ const NutritionView = memo(({
                   ...prev,
                   waterMl: Math.min(10000, (parseNumber(prev.waterMl) || 0) + 500),
                 }))}
-                className="px-2 py-1 bg-zinc-900/90 border border-cyan-900/50 text-cyan-400 rounded-lg text-[9px] font-mono font-bold active:scale-[0.94] transition-all"
+                className="min-h-11 px-3 bg-zinc-900/90 border border-cyan-900/50 text-cyan-400 rounded-xl text-[10px] font-mono font-bold active:scale-[0.94] transition-all"
               >
                 +500
               </button>
@@ -508,7 +504,7 @@ const NutritionView = memo(({
               }))}
               placeholder="0"
               aria-label="İçilen su miktarı"
-              className="w-20 bg-zinc-900 border border-zinc-800 rounded-xl py-1.5 text-center font-mono text-cyan-400 text-[11px] font-bold outline-none focus:border-cyan-500 shadow-inner"
+              className="w-20 min-h-11 bg-zinc-900 border border-zinc-800 rounded-xl py-2 text-center font-mono text-cyan-400 text-[11px] font-bold outline-none focus:border-cyan-500 shadow-inner"
             />
           </div>
         </div>

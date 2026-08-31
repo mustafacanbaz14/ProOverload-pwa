@@ -10,6 +10,7 @@ import { estimateLiftingCalories } from '../utils/cardio';
 import { formatDay } from '../utils/dates';
 import { organizeTemplates } from '../utils/templateLibrary';
 import WorkoutFlowStepper from './WorkoutFlowStepper';
+import ViewHeader from './ViewHeader';
 
 // Ana sayfadaki haritanın aynısı; ayrı parçada kalsın diye tembel yükleniyor.
 const MuscleHeatmap = lazy(() => import('./MuscleHeatmap'));
@@ -71,13 +72,16 @@ const TrainingView = memo(({
 
   return (
     <div data-view-scroll="training" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-        <h2 className="luxury-title text-xl font-black mt-0.5">Bugünkü çalışmanı yönet</h2>
-        <p className="luxury-subtitle text-[10px] mt-1">Başlat, kaldığın yerden devam et veya programını düzenle.</p>
-        </div>
-        {onOpenSettings && <button onClick={onOpenSettings} aria-label="Antrenman ayarlarını aç" className="w-9 h-9 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center shrink-0"><Settings2 size={15} /></button>}
-      </div>
+      <ViewHeader
+        eyebrow="Antrenman Merkezi"
+        title="Bugünkü çalışmanı yönet"
+        subtitle="Başlat, kaldığın yerden devam et veya programını düzenle."
+        action={onOpenSettings ? (
+          <button onClick={onOpenSettings} aria-label="Antrenman ayarlarını aç" className="w-11 h-11 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 flex items-center justify-center active:bg-zinc-800">
+            <Settings2 size={17} />
+          </button>
+        ) : null}
+      />
 
       <WorkoutFlowStepper stage="prepare" />
 

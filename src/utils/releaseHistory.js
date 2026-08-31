@@ -317,7 +317,7 @@ const RELEASE_10_10 = release('10.10', '2026-08-31', 'Sade Gezinme ve Odaklı Ay
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.10 yeni localStorage anahtarı veya şema göçü eklemiyor; mevcut kayıtlar, yedek biçimi ve çevrimdışı çalışma korunuyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Günlük Eylem Hiyerarşisi', [
+const RELEASE_10_11 = release('10.11', '2026-08-31', 'Günlük Eylem Hiyerarşisi', [
   item('Ana Sayfada Tek Baskın Eylem', 'Dört eşit hızlı işlem kartı yerine antrenman başlatma tek ana eylem olarak gösteriliyor; günlük kayıt, program ve araçlar sakin yardımcı kısayollar olarak korunuyor.'),
   item('Daha Az Görsel Gürültü', 'Ana sayfanın hızlı işlem alanı tek bir yüzeyde toplandı; tekrarlanan kart kenarlıkları ve eşit vurgu yarışı azaltıldı.'),
   item('Okunabilir Koç Göstergeleri', 'Uyku, hazır oluş ve kalori değerleri ile seans sonundaki Kalori/Uyku düğmeleri daha büyük yazı ve en az 44 piksellik dokunma alanı kullanıyor.'),
@@ -326,6 +326,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Günlük
   item('Tam Ekran Araç Merkezi', 'Araçlar telefonda küçük bir pencere yerine tam ekran çalışma alanı kullanıyor; arama ve kategori filtreleri kaydırmadan erişilebilir kalıyor.'),
   item('Araç Kategori Filtreleri', 'Antrenman, Enerji & Beslenme, Toparlanma ve Ölçüm & Rapor kategorileri tek dokunuşla süzülebiliyor; 29 araçlık uzun listede arama zorunlu değil.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.11 yalnız arayüz hiyerarşisini değiştiriyor; localStorage kayıtları, yedek biçimi ve çevrimdışı çalışma aynı kalıyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Ana Sekmelerde Okunabilirlik ve Yönlendirme', [
+  item('Ortak Sayfa Başlığı', 'Antrenman, Beslenme, Gelişim ve Geçmiş ekranları aynı başlık, kısa açıklama ve bağlamsal eylem hiyerarşisini kullanıyor; bölüm değiştirince ekranın amacı yeniden öğrenilmiyor.'),
+  item('Gelişim Ekranı Artık Kendini Açıklıyor', 'Vücut, hedef, analiz ve kadın döngüsü alt sekmelerinin üstüne belirgin bir Gelişim başlığı ve kısa kapsam açıklaması eklendi.'),
+  item('Okunabilir Arşiv Filtreleri', 'Beş sıkışık ve sekiz piksellik arşiv sekmesi, yatay kaydırılabilen 44 piksellik filtre düğmelerine dönüştürüldü; kayıt sayıları ayrı rozetlerde gösteriliyor.'),
+  item('Arşivde Yönlendiren Boş Durumlar', 'Boş antrenman, aktivite, ölçüm ve beslenme listeleri yalnız eksikliği bildirmiyor; uygun kayıt ekranını açıyor. Sonuçsuz aramada tek dokunuşla filtre temizleniyor.'),
+  item('Beslenmede İşlem Sırası Net', 'Besin arama ve günlük toplam iki giriş yolu olarak yan yana duruyor; kaydetme eylemi bunlardan ayrılan tam genişlikte birincil düğme oldu.'),
+  item('Kalori Denklemi Daha Okunabilir', 'Baz hedef, gün farkı, alınan ve kalan değerlerinin etiketleri büyütüldü; makro başlıkları ile hedef metinlerinin kontrastı güçlendirildi.'),
+  item('Küçük Dokunma Alanları Büyütüldü', 'Beslenme tarihi, ayar, öğün/toplam modu, su ekleme ve su girişi kontrolleri mobilde en az 44 piksellik hedef kullanıyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.12 yalnız arayüz ve erişilebilirlik katmanını değiştiriyor; localStorage şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma aynı kalıyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -402,6 +413,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_11,
   RELEASE_10_10,
   RELEASE_10_9,
   RELEASE_10_8,
