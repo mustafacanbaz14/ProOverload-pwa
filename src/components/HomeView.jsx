@@ -1,6 +1,6 @@
 import React, { lazy, memo, Suspense } from 'react';
 import {
-  AlertCircle, Calendar, ChevronRight, Droplets, Dumbbell, Flame, Plus,
+  AlertCircle, Calendar, CalendarCheck2, ChevronRight, Droplets, Dumbbell, Flame,
   Sparkles, Wrench, Zap
 } from 'lucide-react';
 import TodayCoachCard from './TodayCoachCard';
@@ -35,7 +35,7 @@ const HomeView = memo(({
   experienceLevel = 'intermediate',
   onOpenTemplateBuilder,
   onOpenTools,
-  onQuickCapture,
+  onOpenDailyWorkspace,
   readiness,
   personalVolume = {},
   weeklyCardioKcal = 0,
@@ -118,11 +118,11 @@ const HomeView = memo(({
             onClick: () => (handleStartRequest ? handleStartRequest() : onOpenTraining?.()),
           },
           {
-            key: 'quick',
-            icon: Plus,
-            title: 'Hızlı Kayıt',
-            alt: 'Set, kilo, besin',
-            onClick: () => onQuickCapture?.(),
+            key: 'daily',
+            icon: CalendarCheck2,
+            title: 'Günün Kayıtları',
+            alt: 'Hepsi tek yerde',
+            onClick: () => onOpenDailyWorkspace?.(),
           },
           {
             key: 'plan',

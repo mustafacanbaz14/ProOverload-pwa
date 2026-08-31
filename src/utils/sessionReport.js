@@ -184,6 +184,7 @@ export const buildSessionReport = (workout, history = [], {
   const gerileyen = satirlar.filter(r => r.delta !== null && r.delta < 0);
   const records = satirlar.filter(r => r.isPR);
   const planAdherence = buildPlanAdherence(workout);
+  const nextFocus = sonrakiOdak({ records, ilerleyen, gerileyen, planAdherence });
 
   // Bu seansın kas hacmi katkısı: haftalık tabloya ne eklendi.
   const byMuscle = {};
@@ -214,6 +215,37 @@ export const buildSessionReport = (workout, history = [], {
     byMuscle,
     topMuscles: Object.entries(byMuscle).sort((a, b) => b[1] - a[1]).slice(0, 3),
     headline: baslik({ records, ilerleyen, gerileyen, satirlar }),
+    nextFocus,
+  };
+};
+
+/** Raporu yalnız geçmişe bakan bir özet olmaktan çıkaran tek sonraki adım. */
+const sonrakiOdak = ({ records, ilerleyen, gerileyen, planAdherence }) => {
+  if (planAdherence && planAdherence.percent < 70) {
+    return {
+      title: 'Plan uyumunu toparla',
+      text: 'Sonraki seansta önce planlı hareketleri ve setleri tamamla; ek çalışmayı bundan sonra değerlendir.',
+      tone: 'amber',
+    };
+  }
+  if (gerileyen.length > ilerleyen.length && gerileyen.length > 0) {
+    return {
+      title: 'Yükü koru, kaliteyi geri getir',
+      text: 'Tek seanstan düşüş kararı çıkarma. Aynı yükü daha temiz tekrar ve hedef RIR ile yeniden dene.',
+      tone: 'amber',
+    };
+  }
+  if (records.length > 0 || ilerleyen.length > 0) {
+    return {
+      title: 'İlerlemeyi kontrollü sürdür',
+      text: 'Hedef tekrar bandı dolduysa küçük bir yük artışı yap; dolmadıysa aynı yükte tekrar ekle.',
+      tone: 'emerald',
+    };
+  }
+  return {
+    title: 'Kaliteli tekrarı koru',
+    text: 'Bir sonraki seansta aynı planı, aynı teknik standardı ve karşılaştırılabilir RIR ile uygula.',
+    tone: 'cyan',
   };
 };
 

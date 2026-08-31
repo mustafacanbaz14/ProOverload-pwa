@@ -61,7 +61,7 @@ import { buildWarmupLadder, applyWarmupLadder, removeWarmupSets } from './utils/
 import { setExerciseNote, notesFor } from './utils/exerciseNotes';
 import { scanSideBalance, sideBalanceCoachItem } from './utils/unilateral';
 import { buildSessionVolume } from './utils/sessionVolume';
-import { dailyWaterTarget, addWater, waterSummary, waterCoachItem } from './utils/hydration';
+import { dailyWaterTarget, addWater, waterFor, waterSummary, waterCoachItem } from './utils/hydration';
 import { buildRecordTimeline } from './utils/recordTimeline';
 import { pickGhost, buildGhostRace, ghostTargetFor } from './utils/ghostSession';
 import { planTimeCrunch, describeTimeCrunch } from './utils/timeCrunch';
@@ -123,7 +123,7 @@ import { buildBodyContextSnapshot } from './utils/historicalContext';
 // Sürüm tek kaynaktan okunur: package.json. Ekranda gösterilen sürüm ile
 // yedek dosyasına yazılan sürümün birbirinden sapması böyle engellenir.
 import pkg from '../package.json';
-import { templateToExercises, workoutToTemplate, suggestTemplateName } from './utils/templates';
+import { estimateDuration, templateToExercises, workoutToTemplate, suggestTemplateName } from './utils/templates';
 import {
   duplicateTemplate, markTemplateUsed, toggleTemplateFavorite,
 } from './utils/templateLibrary';
@@ -141,6 +141,7 @@ import {
 } from './utils/helpers';
 
 import Navbar from './components/Navbar';
+import WorkoutFlowStepper from './components/WorkoutFlowStepper';
 import { formatDay, formatDayRelative } from './utils/dates';
 import { emptyWellnessDay, mergeWellnessDay, computeSleepScore } from './utils/wellness';
 import { buildCycleSummary, emptyCycleDay, mergeCycleDay } from './utils/cycle';
@@ -206,6 +207,7 @@ const ProgressHubView = lazy(loadProgressHubView);
 const HistoryView = lazy(loadHistoryView);
 const QuickCaptureModal = lazy(() => import('./components/QuickCaptureModal'));
 const AppMenuModal = lazy(() => import('./components/AppMenuModal'));
+const DailyWorkspaceModal = lazy(() => import('./components/DailyWorkspaceModal'));
 const StarterProgramModal = lazy(() => import('./components/StarterProgramModal'));
 
 // Kaçan dinlenme uyarısı en fazla bu kadar gecikmeyle telafi edilir. Ötesinde
@@ -308,6 +310,7 @@ export default function App() {
   // puan hem seans başlığında görünüyor hem de reçete edilen ağırlıkları
   // değiştiriyordu. Panel yalnızca açıldığında puan kaydediliyor.
   const [readinessOpen, setReadinessOpen] = useState(false);
+  const [preWorkoutAlertStatus, setPreWorkoutAlertStatus] = useState(null);
 
   const [view, setView] = useState(() => {
     if (typeof window === 'undefined') return 'home';
@@ -399,6 +402,8 @@ export default function App() {
   const [isGlobalSearchOpen, setIsGlobalSearchOpen] = useState(false);
   const [isQuickCaptureOpen, setIsQuickCaptureOpen] = useState(false);
   const [isAppMenuOpen, setIsAppMenuOpen] = useState(false);
+  const [isDailyWorkspaceOpen, setIsDailyWorkspaceOpen] = useState(false);
+  const [dailyWorkspaceDate, setDailyWorkspaceDate] = useState(getLocalDateString);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(() =>
     !initial.settings.onboardingComplete
     && initial.workouts.length === 0
@@ -445,6 +450,17 @@ export default function App() {
     setIsEnergyDetailOpen(true);
   }, []);
 
+  const openDailyWorkspace = useCallback((date = getLocalDateString()) => {
+    setDailyWorkspaceDate(date || getLocalDateString());
+    setIsDailyWorkspaceOpen(true);
+  }, []);
+
+  const openWellness = useCallback((tab = 'sleep', date = getLocalDateString()) => {
+    setWellnessTab(tab);
+    setWellnessDate(date || getLocalDateString());
+    setIsWellnessOpen(true);
+  }, []);
+
   useEffect(() => {
     try {
       const lastSeen = localStorage.getItem('po_last_seen_version');
@@ -461,6 +477,7 @@ export default function App() {
   // Araçlar listesinde uyku ve meditasyon ayrı giriş; hangisinden gelindiyse
   // Toparlanma ekranı o sekmede açılır.
   const [wellnessTab, setWellnessTab] = useState('sleep');
+  const [wellnessDate, setWellnessDate] = useState(getLocalDateString);
   // Kütüphaneden "yeni hareket" ile gelindiğinde kapanışta oraya dönülür.
   const [pickerReturnsToLibrary, setPickerReturnsToLibrary] = useState(false);
 
@@ -1709,6 +1726,7 @@ export default function App() {
     // o durumda açık geliyor. Yoksa kapalı — kullanıcı antrenmana girmek
     // için bir form doldurmak zorunda değil.
     setReadinessOpen(Boolean(uyku));
+    setPreWorkoutAlertStatus(null);
     setPreWorkoutModal({
       template: templateOrWorkout,
       sleepScore: uyku?.score ?? null,
@@ -2841,13 +2859,13 @@ export default function App() {
       nutrition: () => { handleChangeView('nutrition'); setIsFoodSearchOpen(true); },
       cardio: () => { setCardioContext(null); setIsCardioOpen(true); },
       metrics: () => handleAddHistoricalMetric(today),
-      sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
-      mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
+      sleep: () => openWellness('sleep'),
+      mind: () => openWellness('mind'),
       energy: () => openEnergyDetail('today'),
       plan: () => setIsWeekPlanOpen(true),
     }[key];
     action?.();
-  }, [handleStartRequest, handleChangeView, handleAddHistoricalMetric, openEnergyDetail]);
+  }, [handleStartRequest, handleChangeView, handleAddHistoricalMetric, openEnergyDetail, openWellness]);
 
   // --- KARDİYO ---
   const {
@@ -2898,6 +2916,73 @@ export default function App() {
     return weekPlanDays.find(day => day.key === bugun)?.cardios || [];
   }, [weekPlanDays]);
 
+  const dailyWorkspaceSummary = useMemo(() => {
+    const date = dailyWorkspaceDate || getLocalDateString();
+    const storedForDay = workouts.filter(record => record.date === date);
+    const dayWorkouts = activeWorkout?.date === date && !storedForDay.some(record => record.id === activeWorkout.id)
+      ? [activeWorkout, ...storedForDay]
+      : storedForDay;
+    const strength = dayWorkouts.filter(record => (record.exercises || []).length > 0);
+    const cardios = dayWorkouts.flatMap(record => record.cardio || []);
+    const nutrition = currentNutritionForm?.date === date
+      ? currentNutritionForm
+      : nutritionHistory.find(record => record.date === date) || mergeNutrition({ date });
+    const macros = dailyTotals(nutrition);
+    const metric = metricsHistory.find(record => record.date === date) || null;
+    const recovery = wellness.find(record => record.date === date) || null;
+    const sleep = recovery?.sleep || {};
+    const hasSleep = Boolean(sleep.bedTime || sleep.wakeTime || parseNumber(sleep.quickScore) > 0);
+    const previousSleeps = wellness
+      .filter(record => record.date < date && record.sleep)
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .map(record => record.sleep);
+    const sleepScore = hasSleep ? computeSleepScore(sleep, previousSleeps)?.score || 0 : 0;
+    const body = bodyContextForDate(date);
+    const exercise = dayCaloriesFor(date);
+    const energy = energyForNutritionRecord(nutrition);
+    const waterTargetForDay = dailyWaterTarget(body.weight, {
+      training: strength.length > 0,
+      heat: Boolean(settings.waterHeatBonus),
+    });
+    const effectiveSets = strength.reduce((total, record) => total + calcEffectiveSets(record.exercises), 0);
+    const cardioMinutes = cardios.reduce((total, entry) => total + parseNumber(entry.minutes), 0);
+    const mindCount = recovery?.mind?.length || 0;
+
+    return {
+      date,
+      intake: macros.calories,
+      expenditure: energy?.total || exercise.total || 0,
+      waterMl: waterFor(settings.waterLog, date),
+      waterTarget: waterTargetForDay.ml,
+      workout: {
+        hasData: strength.length > 0,
+        detail: strength.length > 0 ? `${strength.length} seans · ${effectiveSets} etkili set` : 'Seans kaydı yok',
+      },
+      cardio: {
+        hasData: cardios.length > 0,
+        detail: cardios.length > 0 ? `${cardios.length} aktivite · ${cardioMinutes} dk` : 'Aktivite kaydı yok',
+      },
+      nutrition: {
+        hasData: macros.calories > 0 || macros.protein > 0 || macros.carbs > 0 || macros.fats > 0,
+        detail: macros.calories > 0 ? `${Math.round(macros.calories)} kcal · P ${Math.round(macros.protein)} g` : 'Beslenme kaydı yok',
+      },
+      metrics: {
+        hasData: Boolean(metric),
+        detail: metric ? `${parseNumber(metric.weight) || '—'} kg · yağ %${parseNumber(metric.bodyFat) || '—'}` : 'O güne ait ölçüm yok',
+      },
+      sleep: {
+        hasData: hasSleep,
+        detail: hasSleep ? `Uyku puanı ${Math.round(sleepScore)}/100` : 'Uyku kaydı yok',
+      },
+      mind: {
+        hasData: mindCount > 0,
+        detail: mindCount > 0 ? `${mindCount} meditasyon / esneme kaydı` : 'Zihin veya esneme kaydı yok',
+      },
+    };
+  }, [dailyWorkspaceDate, workouts, activeWorkout, currentNutritionForm, nutritionHistory,
+    metricsHistory, wellness, bodyContextForDate, dayCaloriesFor, energyForNutritionRecord,
+    settings.waterHeatBonus, settings.waterLog]);
+
   // Aktif antrenman varsa oraya yazılır; yoksa bugünün kardiyo kaydına eklenir
   // (yoksa oluşturulur), böylece basketbol/koşu için seans başlatmak gerekmez.
   const handleAddCardio = useCallback((entry) => {
@@ -2927,6 +3012,27 @@ export default function App() {
     setCardioContext({ date });
     setIsCardioOpen(true);
   }, []);
+
+  const handleDailyWorkspaceAction = useCallback((key, date) => {
+    const today = getLocalDateString();
+    const strength = workouts.find(record => record.date === date && (record.exercises || []).length > 0);
+    const metric = metricsHistory.find(record => record.date === date);
+    const action = {
+      workout: () => {
+        if (activeWorkout?.date === date) return;
+        if (strength) return handleEditOldWorkout(strength);
+        return date === today ? handleStartRequest() : handleAddHistoricalWorkout(date);
+      },
+      cardio: () => handleOpenHistoricalCardio(date),
+      nutrition: () => handleAddHistoricalNutrition(date),
+      metrics: () => metric ? handleEditMetric(metric) : handleAddHistoricalMetric(date),
+      sleep: () => openWellness('sleep', date),
+      mind: () => openWellness('mind', date),
+    }[key];
+    action?.();
+  }, [workouts, metricsHistory, activeWorkout, handleEditOldWorkout, handleStartRequest,
+    handleAddHistoricalWorkout, handleOpenHistoricalCardio, handleAddHistoricalNutrition,
+    handleEditMetric, handleAddHistoricalMetric, openWellness]);
 
   const handleEditCardio = useCallback((record) => {
     setCardioContext({
@@ -3448,12 +3554,16 @@ export default function App() {
     }),
     [settings.waterLog, waterTarget.ml]);
 
-  const handleAddWater = useCallback((ml) => {
+  const handleAddWaterForDate = useCallback((date, ml) => {
     setSettings(prev => ({
       ...prev,
-      waterLog: addWater(prev.waterLog, getLocalDateString(), ml),
+      waterLog: addWater(prev.waterLog, date || getLocalDateString(), ml),
     }));
   }, [setSettings]);
+
+  const handleAddWater = useCallback((ml) => {
+    handleAddWaterForDate(getLocalDateString(), ml);
+  }, [handleAddWaterForDate]);
 
   /**
    * Haftalık planı takvim dosyasına aktarır.
@@ -4065,7 +4175,7 @@ export default function App() {
       workout: () => handleStartRequest(todayCoach?.workoutTemplate || null),
       cardio: () => setIsCardioOpen(true),
       nutrition: () => handleChangeView('nutrition'),
-      wellness: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
+      wellness: () => openWellness('sleep'),
       metrics: () => { setProgressTab('body'); handleChangeView('progress'); },
       progress: () => { setProgressTab('analysis'); setAnalysisType('1rm'); handleChangeView('progress'); },
       analysis: () => { setProgressTab('analysis'); handleChangeView('progress'); },
@@ -4088,7 +4198,7 @@ export default function App() {
       cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
     })[hedef];
     action?.();
-  }, [handleStartRequest, todayCoach, handleChangeView]);
+  }, [handleStartRequest, todayCoach, handleChangeView, openWellness]);
 
   const handleSnoozeCoach = useCallback((key) => {
     setSettings(prev => ({ ...prev, coachMemory: snoozeCoachItem(prev.coachMemory, key) }));
@@ -4215,7 +4325,7 @@ export default function App() {
               experienceLevel={settings.experienceLevel}
               onOpenTemplateBuilder={() => { setBuilderWizardMode(false); setIsBuilderOpen(true); }}
               onOpenTools={() => setIsToolsOpen(true)}
-              onQuickCapture={() => setIsQuickCaptureOpen(true)}
+              onOpenDailyWorkspace={() => openDailyWorkspace()}
               readiness={readiness}
               personalVolume={personalVolume}
               todayCoach={todayCoach}
@@ -4235,7 +4345,7 @@ export default function App() {
               coachConflictCount={coachView.conflictCount}
               onCoachAction={handleCoachAction}
               onOpenEnergy={() => openEnergyDetail('today')}
-              onOpenWellness={() => { setWellnessTab('sleep'); setIsWellnessOpen(true); }}
+              onOpenWellness={() => openWellness('sleep')}
               onOpenCardio={() => setIsCardioOpen(true)}
               gender={profileGender}
               cycleSummary={todayCycleSummary}
@@ -4594,10 +4704,24 @@ export default function App() {
           onClose={() => setIsAppMenuOpen(false)}
           currentView={view}
           onNavigate={handleGlobalNavigate}
+          onDailyWorkspace={() => openDailyWorkspace()}
           onQuickCapture={() => setIsQuickCaptureOpen(true)}
           onSearch={() => setIsGlobalSearchOpen(true)}
           onTools={() => setIsToolsOpen(true)}
           onSettings={() => openSettings('home')}
+        />}
+
+        {isDailyWorkspaceOpen && <DailyWorkspaceModal
+          isOpen={isDailyWorkspaceOpen}
+          onClose={() => setIsDailyWorkspaceOpen(false)}
+          date={dailyWorkspaceDate}
+          maxDate={getLocalDateString()}
+          onDateChange={setDailyWorkspaceDate}
+          summary={dailyWorkspaceSummary}
+          onAction={handleDailyWorkspaceAction}
+          onEnergy={(date) => openEnergyDetail('days', date)}
+          onArchive={() => { setHistoryTab('all'); handleChangeView('history'); }}
+          onAddWater={(ml) => handleAddWaterForDate(dailyWorkspaceDate, ml)}
         />}
 
         {isQuickCaptureOpen && <QuickCaptureModal
@@ -4621,7 +4745,7 @@ export default function App() {
               library: () => setIsLibraryOpen(true),
               weekPlan: () => setIsWeekPlanOpen(true),
               energy: () => openEnergyDetail('today'),
-              sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
+              sleep: () => openWellness('sleep'),
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
               mesocycle: () => setIsMesocycleOpen(true),
@@ -5064,6 +5188,12 @@ export default function App() {
             return cift ? compareSessions(cift.current, cift.previous, { resolveLoad: resolveSetLoad }) : null;
           })()}
           onClose={() => setSessionReport(null)}
+          onOpenAnalysis={() => {
+            setSessionReport(null);
+            setProgressTab('analysis');
+            setAnalysisType('1rm');
+            handleChangeView('progress');
+          }}
         />}
 
         {/* HAFTALIK GÖZDEN GEÇİRME */}
@@ -5141,8 +5271,9 @@ export default function App() {
 
         {/* UYKU / MEDİTASYON & ESNEME */}
         {isWellnessOpen && <WellnessModal
-          key={wellnessTab}
+          key={`${wellnessTab}-${wellnessDate}`}
           initialTab={wellnessTab}
+          initialDate={wellnessDate}
           isOpen={isWellnessOpen}
           onClose={() => setIsWellnessOpen(false)}
           records={wellness}
@@ -5167,7 +5298,7 @@ export default function App() {
               compare: () => setIsComparisonOpen(true),
               guide: () => setIsMeasurementGuideOpen(true),
               report: () => setIsReportCardOpen(true),
-              sleep: () => { setWellnessTab('sleep'); setIsWellnessOpen(true); },
+              sleep: () => openWellness('sleep'),
               deload: () => setIsDeloadOpen(true),
               starter: () => setIsStarterOpen(true),
               mesocycle: () => setIsMesocycleOpen(true),
@@ -5185,7 +5316,7 @@ export default function App() {
               wizard: () => setIsWizardOpen(true),
               weeklyReview: () => setIsWeeklyReviewOpen(true),
               coach: () => setIsCoachCenterOpen(true),
-              mind: () => { setWellnessTab('mind'); setIsWellnessOpen(true); },
+              mind: () => openWellness('mind'),
               cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
             }[key];
             ac?.();
@@ -5280,6 +5411,59 @@ export default function App() {
                   ? `"${preWorkoutModal.template.name}" hazır. Doğrudan başlayabilir ya da bugünkü durumunu puanlayıp seansı ona göre ayarlatabilirsin.`
                   : 'Serbest seans hazır. Doğrudan başlayabilir ya da bugünkü durumunu puanlayıp seansı ona göre ayarlatabilirsin.'}
               </p>
+
+              <div className="mb-4">
+                <WorkoutFlowStepper stage="prepare" />
+              </div>
+
+              {preWorkoutModal.template && (() => {
+                const exercises = preWorkoutModal.template.exercises || [];
+                const workingSets = exercises.reduce((total, exercise) => total + (exercise.sets || []).filter(isWorkingSet).length, 0);
+                return (
+                  <div className="grid grid-cols-3 gap-2 mb-4" aria-label="Seans planı özeti">
+                    {[
+                      ['Hareket', exercises.length],
+                      ['Çalışma seti', workingSets],
+                      ['Tahmini süre', `${estimateDuration(exercises, settings.restSeconds)} dk`],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-xl border border-zinc-800 bg-zinc-950/60 px-2 py-2.5 text-center">
+                        <strong className="text-[12px] text-zinc-100 block">{value}</strong>
+                        <span className="text-[8px] text-zinc-500 block mt-0.5">{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              <div className="rounded-2xl border border-zinc-800 bg-zinc-950/50 p-3 mb-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <strong className="text-[10px] text-zinc-200 block">Dinlenme uyarısını kontrol et</strong>
+                    <span className="text-[9px] text-zinc-500 block mt-0.5 leading-relaxed">
+                      Ses motorunu hazırlar; bildirim izni verilmemişse bu dokunuşta sorar.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={preWorkoutAlertStatus?.checking}
+                    onClick={async () => {
+                      setPreWorkoutAlertStatus({ checking: true });
+                      const audioReady = await primeRestAlert();
+                      let permission = notificationPermission();
+                      if (permission === 'default') permission = await requestNotificationPermission();
+                      setPreWorkoutAlertStatus({ checking: false, audioReady, permission });
+                    }}
+                    className="min-h-11 shrink-0 rounded-xl border border-cyan-900/60 bg-cyan-950/20 px-3 text-[9px] font-bold text-cyan-300 disabled:opacity-50"
+                  >
+                    {preWorkoutAlertStatus?.checking ? 'Kontrol...' : 'Kontrol Et'}
+                  </button>
+                </div>
+                {preWorkoutAlertStatus && !preWorkoutAlertStatus.checking && (
+                  <p className={`text-[9px] mt-2 font-mono ${preWorkoutAlertStatus.audioReady ? 'text-emerald-300' : 'text-amber-300'}`}>
+                    Ses {preWorkoutAlertStatus.audioReady ? 'hazır' : 'hazırlanamadı'} · Bildirim {preWorkoutAlertStatus.permission === 'granted' ? 'açık' : preWorkoutAlertStatus.permission === 'denied' ? 'kapalı' : preWorkoutAlertStatus.permission === 'unsupported' ? 'desteklenmiyor' : 'bekliyor'}
+                  </p>
+                )}
+              </div>
 
               {preWorkoutModal.sleepScore !== null && preWorkoutModal.sleepScore !== undefined && (
                 <p className="text-[10px] font-mono text-cyan-400 bg-cyan-950/20 border border-cyan-900/40 rounded-xl px-3 py-2 mb-4 leading-relaxed">

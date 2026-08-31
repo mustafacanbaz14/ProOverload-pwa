@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.6 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.9 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -33,7 +33,7 @@ Durum: Uygulandı.
 
 ## 10.8 — Günlük kayıt çalışma alanı
 
-Durum: Planlandı.
+Durum: Uygulandı.
 
 - Bugünün antrenman, kardiyo, beslenme, su, enerji, uyku ve ölçüm durumunu tek günlük özet altında birleştir.
 - Aynı tarih bağlamını kayıt türleri arasında koru; geçmiş gün düzenlerken tarih sıçramasını kaldır.
@@ -43,7 +43,7 @@ Durum: Planlandı.
 
 ## 10.9 — Yönlendirilmiş antrenman yaşam döngüsü
 
-Durum: Planlandı.
+Durum: Uygulandı.
 
 - Antrenman öncesi seçim, canlı seans ve seans sonu değerlendirmeyi kesintisiz tek akış yap.
 - Canlı seansta yalnız sıradaki çalışma eylemini baskın tut; araçları hareket bağlamındaki menüde koru.

@@ -1,6 +1,6 @@
 import React, { memo } from 'react';
 import {
-  Beef, ChevronRight, Dumbbell, History, Home, LineChart,
+  Beef, CalendarCheck2, ChevronRight, Dumbbell, History, Home, LineChart,
   Menu, Plus, Search, Settings, Wrench, X,
 } from 'lucide-react';
 
@@ -25,6 +25,7 @@ const AppMenuModal = memo(({
   onClose,
   currentView = 'home',
   onNavigate,
+  onDailyWorkspace,
   onQuickCapture,
   onSearch,
   onTools,
@@ -85,6 +86,14 @@ const AppMenuModal = memo(({
                 <span className="text-[9px] text-zinc-400 block mt-0.5">Sayfa, araç, hareket veya kayıt bul</span>
               </button>
             </div>
+            <button
+              onClick={() => run(onDailyWorkspace)}
+              className="w-full min-h-14 mt-2.5 rounded-2xl border border-cyan-900/45 bg-cyan-950/15 px-3.5 py-3 flex items-center gap-3 text-left active:bg-cyan-950/30"
+            >
+              <CalendarCheck2 size={17} className="text-cyan-400 shrink-0" />
+              <span className="flex-1 min-w-0"><strong className="text-[10px] text-zinc-100 block">Günün kayıtlarını yönet</strong><span className="text-[9px] text-zinc-400 block mt-0.5">Antrenman, beslenme, uyku, ölçüm ve enerjiyi tek yerde gör</span></span>
+              <ChevronRight size={14} className="text-zinc-600 shrink-0" />
+            </button>
           </section>
 
           <section aria-labelledby="app-menu-pages">

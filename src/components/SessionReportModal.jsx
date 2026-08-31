@@ -1,6 +1,7 @@
 import React, { memo } from 'react';
 import { X, Trophy, TrendingUp, TrendingDown, Minus, Sparkles, Layers, Clock, Dumbbell, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { formatDay } from '../utils/dates';
+import WorkoutFlowStepper from './WorkoutFlowStepper';
 
 /**
  * Seans sonu raporu.
@@ -9,7 +10,7 @@ import { formatDay } from '../utils/dates';
  * miydim" sorusu ancak analiz sekmesine gidilirse cevaplanıyordu. Geri bildirim
  * döngüsünün kapanacağı yer seansın hemen sonrası.
  */
-const SessionReportModal = memo(({ report, onClose, comparison = null }) => {
+const SessionReportModal = memo(({ report, onClose, onOpenAnalysis = null, comparison = null }) => {
   if (!report) return null;
 
   const rozet = (row) => {
@@ -38,6 +39,8 @@ const SessionReportModal = memo(({ report, onClose, comparison = null }) => {
 
         <div className="flex-1 overflow-y-auto hide-scrollbar p-4 space-y-4">
 
+          <WorkoutFlowStepper stage="review" />
+
           <div className={`rounded-2xl border p-4 backdrop-blur-sm shadow-sm ${report.records.length > 0
             ? 'border-yellow-800/60 bg-yellow-950/25'
             : 'border-zinc-800/80 bg-zinc-900/60'}`}>
@@ -50,6 +53,19 @@ const SessionReportModal = memo(({ report, onClose, comparison = null }) => {
               </p>
             </div>
           </div>
+
+          {report.nextFocus && (
+            <section className={`rounded-2xl border p-4 ${report.nextFocus.tone === 'amber'
+              ? 'border-amber-900/55 bg-amber-950/15'
+              : report.nextFocus.tone === 'emerald'
+                ? 'border-emerald-900/55 bg-emerald-950/15'
+                : 'border-cyan-900/50 bg-cyan-950/15'}`}
+            >
+              <span className="text-[9px] font-black uppercase tracking-widest text-zinc-400">Sonraki seans odağı</span>
+              <strong className="text-[12px] text-zinc-100 block mt-1">{report.nextFocus.title}</strong>
+              <p className="text-[9px] text-zinc-400 leading-relaxed mt-1">{report.nextFocus.text}</p>
+            </section>
+          )}
 
           <div className="grid grid-cols-3 gap-2">
             {[
@@ -214,7 +230,15 @@ const SessionReportModal = memo(({ report, onClose, comparison = null }) => {
           )}
         </div>
 
-        <div className="p-4 border-t border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md shrink-0 pb-safe">
+        <div className={`p-4 border-t border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md shrink-0 pb-safe ${onOpenAnalysis ? 'grid grid-cols-2 gap-2' : ''}`}>
+          {onOpenAnalysis && (
+            <button
+              onClick={onOpenAnalysis}
+              className="w-full border border-zinc-700 bg-zinc-900 active:bg-zinc-800 text-zinc-200 font-black py-3.5 rounded-2xl uppercase text-[10px] tracking-wider"
+            >
+              Analizde İncele
+            </button>
+          )}
           <button
             onClick={onClose}
             className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 active:scale-[0.98] text-white font-black py-3.5 rounded-2xl uppercase text-[11px] tracking-wider shadow-lg shadow-emerald-950/50 transition-all"

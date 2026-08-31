@@ -7,6 +7,20 @@ import AppErrorBoundary from './components/AppErrorBoundary.jsx'
 import { STORAGE_VERSION } from './utils/constants.js'
 import { deferAppUpdate } from './pwaUpdate.js'
 
+/*
+ * Kurulu PWA kendi yazı ölçeğine sahip. iOS'un form alanına odaklanınca
+ * yaptığı otomatik yakınlaştırma ve iki parmakla oluşan sayfa zoom'u, alt
+ * gezinmeyi ekran dışına taşıyıp uygulama kabuğunu bozuyordu. Tek parmakla
+ * kaydırma korunur; yalnız çoklu dokunma/gesture yakınlaştırması engellenir.
+ */
+const preventZoomGesture = event => event.preventDefault()
+document.addEventListener('gesturestart', preventZoomGesture, { passive: false })
+document.addEventListener('gesturechange', preventZoomGesture, { passive: false })
+document.addEventListener('gestureend', preventZoomGesture, { passive: false })
+document.addEventListener('touchmove', event => {
+  if (event.touches?.length > 1) event.preventDefault()
+}, { passive: false })
+
 const hasActiveWorkout = () => {
   try {
     const raw = localStorage.getItem(`po_active_workout${STORAGE_VERSION}`)

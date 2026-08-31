@@ -10,6 +10,20 @@
     -webkit-tap-highlight-color: transparent;
     user-select: none;
   }
+  #root {
+    /* Tek parmak kaydırma serbest, tarayıcı seviyesinde pinch zoom kapalı. */
+    touch-action: pan-x pan-y;
+  }
+}
+
+/* iOS, 16px altındaki forma odaklanınca viewport'u otomatik büyütür. Bu
+ * uygulamada boyut Ayarlar'daki --font-scale ile yönetildiği için form alanı
+ * en az 16px tutulur; büyük punto seçimi yine 1rem üzerinden büyümeye devam
+ * eder. Range/checkbox gibi yazı göstermeyen kontroller kapsam dışıdır. */
+input:not([type='range']):not([type='checkbox']):not([type='radio']),
+select,
+textarea {
+  font-size: max(16px, 1rem) !important;
 }
 
 /* PUNTO ÖLÇEĞİ — tek tanım yeri.

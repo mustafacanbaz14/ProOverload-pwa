@@ -22,7 +22,7 @@ export const STORE_READINESS_GROUPS = {
       automatic('dataInventory', 'Veri envanteri', 'Yerel veriler, kamera ve Open Food Facts aktarımı ayrı ayrı bildirildi.'),
       automatic('backupFlow', 'Yedekleme ve geri yükleme', 'JSON yedeği ile kullanıcı verisi cihazlar arasında taşınabiliyor.'),
       automatic('pwaIdentity', 'PWA kimliği', 'Manifest kimliği, kapsamı, yönü, kategori ve kısayollar tanımlı.'),
-      automatic('accessibleViewport', 'Erişilebilir yakınlaştırma', 'Tarayıcı yakınlaştırmasını engelleyen viewport kısıtları kaldırıldı.'),
+      automatic('accessibleViewport', 'Uygulama içi yazı ölçeği', 'İstem dışı tarayıcı zoomu kapalı; okunabilirlik Ayarlar içindeki kalıcı punto seçimiyle yönetiliyor.'),
       automatic('releaseChecks', 'Yayın öncesi otomatik denetim', 'Sürüm, ikon, politika ve manifest hataları build aşamasını durduruyor.'),
       manual('publicContact', 'Kamuya açık destek e-postası', 'App Store destek sayfasında gerçek bir e-posta veya yasal iletişim bilgisi gerekir.'),
     ],

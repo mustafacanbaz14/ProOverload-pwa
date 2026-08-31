@@ -16,13 +16,17 @@ const metadata = JSON.parse(read('store/metadata.tr.json'));
 const constants = read('src/utils/constants.js');
 const vite = read('vite.config.js');
 const index = read('index.html');
+const main = read('src/main.jsx');
+const css = read('src/index.css');
 // Vercel build ortamı yapılandırma dosyasını normalize/minify edebilir.
 // Bu nedenle boşluklara bağlı ham metin araması yerine JSON yapısını denetle.
 const vercel = JSON.parse(read('vercel.json'));
 
 check(constants.includes(`export const APP_VERSION = '${packageJson.version}'`), 'Paket ve uygulama sürümü aynı');
 check(metadata.appVersion === packageJson.version, 'Mağaza metadatası güncel sürümde');
-check(!/user-scalable\s*=\s*0|maximum-scale\s*=\s*1/i.test(index), 'Viewport yakınlaştırmayı engellemiyor');
+check(/user-scalable\s*=\s*no/i.test(index) && /maximum-scale\s*=\s*1(?:\.0)?/i.test(index), 'PWA viewport yakınlaştırması kilitli');
+check(main.includes("'gesturestart'") && main.includes('event.touches?.length > 1'), 'iOS çoklu dokunma yakınlaştırması engelleniyor');
+check(css.includes('font-size: max(16px, 1rem)') && css.includes('--font-scale'), 'iOS odak zoomu kapalı ve uygulama punto ayarı korunuyor');
 check(index.includes('apple-mobile-web-app-capable'), 'Apple PWA metası var');
 check(index.includes('mobile-web-app-capable'), 'Genel mobil uygulama metası var');
 

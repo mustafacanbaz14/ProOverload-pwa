@@ -9,6 +9,7 @@ import { estimateDuration } from '../utils/templates';
 import { estimateLiftingCalories } from '../utils/cardio';
 import { formatDay } from '../utils/dates';
 import { organizeTemplates } from '../utils/templateLibrary';
+import WorkoutFlowStepper from './WorkoutFlowStepper';
 
 // Ana sayfadaki haritanın aynısı; ayrı parçada kalsın diye tembel yükleniyor.
 const MuscleHeatmap = lazy(() => import('./MuscleHeatmap'));
@@ -77,6 +78,8 @@ const TrainingView = memo(({
         </div>
         {onOpenSettings && <button onClick={onOpenSettings} aria-label="Antrenman ayarlarını aç" className="w-9 h-9 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-500 flex items-center justify-center shrink-0"><Settings2 size={15} /></button>}
       </div>
+
+      <WorkoutFlowStepper stage="prepare" />
 
       {recommendation && (
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">

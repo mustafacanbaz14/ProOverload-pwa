@@ -273,7 +273,7 @@ const RELEASE_10_6 = release('10.6', '2026-08-31', 'Vücut Haritası Sabit, Aray
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Birleşik Menü ve Açık Gezinme', [
+const RELEASE_10_7 = release('10.7', '2026-08-31', 'Birleşik Menü ve Açık Gezinme', [
   item('Yazılı Üst Çubuk Eylemleri', 'Üç metinsiz simge yerine ne yaptığı açıkça görülen Ekle ve Menü düğmeleri geldi. Hızlı kayıt hâlâ tek dokunuş uzakta.'),
   item('Tek Uygulama Menüsü', 'Arama, ayarlar, tüm araçlar ve beş ana bölüm tek bir yazılı menüde toplandı; seyrek kullanılan küresel eylemler artık dağınık değil.'),
   item('Bulunduğun Bölüm Görünür', 'Menü açıldığında mevcut bölüm Buradasın etiketiyle işaretleniyor; kullanıcı hangi ekranın aktif olduğunu tahmin etmek zorunda kalmıyor.'),
@@ -282,6 +282,28 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Birleşi
   item('Beş Sürümlük UX Yol Haritası', 'Günlük kayıt çalışma alanı, yönlendirilmiş antrenman akışı, koç/analiz karar katmanları ve mağaza öncesi erişilebilirlik v10.8–v11.1 için planlandı.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.7 yeni localStorage anahtarı, veri şeması veya göç eklemiyor; mevcut kayıtlar, yedekler ve çevrimdışı çalışma değişmiyor.'),
   item('Otomatik Yayın Kalite Kapısı', 'Birleşik menü, yazılı üst çubuk eylemleri ve yeni yol haritası mevcut regresyon, mağaza ve performans kontrollerine eklendi.'),
+]);
+
+const RELEASE_10_8 = release('10.8', '2026-08-31', 'Günlük Kayıt Çalışma Alanı', [
+  item('Tek Günlük Kayıt Merkezi', 'Antrenman, kardiyo, beslenme, vücut ölçümü, uyku, zihin ve esneme kayıtları aynı tarih bağlamında tek görev alanında toplandı.'),
+  item('Tarihi Kaybetmeden Düzenleme', 'Geçmiş bir güne geçildiğinde ilgili kayıt türüne aynı tarihle gidiliyor; kullanıcı her pencerede günü yeniden seçmek zorunda kalmıyor.'),
+  item('Kayıt Durumu Tek Bakışta', 'Her satır o gün veri olup olmadığını ve temel özeti gösteriyor; eksik alanlar zorunlu yapılacaklar gibi değil isteğe bağlı kayıt noktaları gibi sunuluyor.'),
+  item('Günün Enerji Özeti', 'Alınan kalori, hesaplanan harcama ve enerji dengesi günlük merkezin üstünde görünürken ayrıntılı kalori dökümüne doğrudan geçilebiliyor.'),
+  item('Tarihe Özel Su Kaydı', 'Bugün veya geçmişte seçilen gün için 250 ve 500 mililitrelik su ekleme kısayolları aynı çalışma alanında kullanılabiliyor.'),
+  item('İki Doğrudan Erişim', 'Ana sayfadaki Günün Kayıtları kartı ve birleşik uygulama menüsü aynı günlük merkeze bağlandı; ayrıntılı sekmeler korunmaya devam ediyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.8 yeni kalıcı veri anahtarı veya şema göçü eklemiyor; mevcut localStorage kayıtları, yedekler ve çevrimdışı çalışma biçimi korunuyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Yönlendirilmiş Antrenman Yaşam Döngüsü', [
+  item('Üç Aşamalı Antrenman Akışı', 'Hazırla, Çalış ve Değerlendir aşamaları antrenman seçimi, aktif seans ve seans raporu boyunca aynı görsel dil ile birbirine bağlandı.'),
+  item('Başlamadan Önce Plan Özeti', 'Seçilen şablonun hareket sayısı, çalışma seti ve tahmini süresi hazır oluşluk penceresinde görünür; kullanıcı neye başlayacağını önceden bilir.'),
+  item('Ses ve Bildirim Ön Kontrolü', 'Dinlenme uyarısının ses motoru antrenmandan önce kullanıcı dokunuşuyla sınanabiliyor; bildirim izni ve ses hazırlığı açık sonuçla gösteriliyor.'),
+  item('Canlı Seansta Tek Sonraki Eylem', 'Aktif antrenmanın üstünde sıradaki hareket ve set baskın bir kartta gösteriliyor; tek dokunuşla ilgili harekete kaydırılıyor veya seans değerlendirmesine geçiliyor.'),
+  item('Ayrıntılar Varsayılan Kapalı', 'Hazır oluşluk, tempo, hayalet seans, zaman sıkışması, hacim ve ısınma araçları kaldırılmadan Seans Ayrıntıları katmanında toplandı.'),
+  item('Sonraki Seans Odağı', 'Seans raporu rekor, performans değişimi ve plan uyumunu kullanarak tek bir sonraki adım çıkarıyor; rapor yalnız geçmişi anlatmakla kalmıyor.'),
+  item('Rapordan Analize Geçiş', 'Seans sonu değerlendirmesinden doğrudan 1RM analizine geçilebiliyor; rapor ile uzun dönem inceleme arasındaki kopukluk kaldırıldı.'),
+  item('İstem Dışı Yakınlaştırma Kapatıldı', 'iPhone’da küçük giriş alanına dokununca oluşan otomatik zoom ile iki parmak/double-tap sayfa yakınlaştırması kapatıldı; okunabilirlik Ayarlar içindeki punto seçimiyle yönetilmeye devam ediyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.9 mevcut localStorage, PWA güncelleme, aktif antrenman ve yedek yapısını değiştirmeden yalnız görev akışını ve rapor çıktısını geliştiriyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -358,6 +380,8 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_8,
+  RELEASE_10_7,
   RELEASE_10_6,
   RELEASE_10_5,
   RELEASE_10_4,

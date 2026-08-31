@@ -1710,6 +1710,18 @@ test('yüksek tekrarlı harekette 1RM yerine hacim yükü kıyaslanır', () => {
   assert.ok(satir.delta > 0);
 });
 
+test('seans raporu düşük plan uyumunda tek sonraki odak üretir', () => {
+  const bugun = {
+    id: 'w-plan', date: '2026-08-31', duration: 35,
+    plannedTemplate: { name: 'Üst A', exercises: [{ name: 'Barbell Bench Press', sets: 4 }] },
+    exercises: [{ name: 'Barbell Bench Press', sets: setsOf(80, 8, 2) }],
+  };
+  const rapor = buildSessionReport(bugun, []);
+  assert.equal(rapor.planAdherence.percent, 50);
+  assert.equal(rapor.nextFocus.title, 'Plan uyumunu toparla');
+  assert.equal(rapor.nextFocus.tone, 'amber');
+});
+
 /* ------------------------------------------------------------------ *
  *  HAFTALIK GÖZDEN GEÇİRME
  * ------------------------------------------------------------------ */
