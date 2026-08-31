@@ -1,4 +1,4 @@
-import React, { memo, useMemo, useState } from 'react';
+import React, { memo, useMemo, useState, lazy, Suspense } from 'react';
 import {
   Zap, Library, CalendarRange, BookmarkPlus, HeartPulse, Pencil, Play,
   ChevronRight, ChevronDown, Copy, Wand2, Sparkles, Search, Star, Trash2,
@@ -10,6 +10,9 @@ import { estimateLiftingCalories } from '../utils/cardio';
 import { formatDay } from '../utils/dates';
 import { organizeTemplates } from '../utils/templateLibrary';
 
+// Ana sayfadaki haritanın aynısı; ayrı parçada kalsın diye tembel yükleniyor.
+const MuscleHeatmap = lazy(() => import('./MuscleHeatmap'));
+
 const TEMPLATE_BATCH = 12;
 
 const TrainingView = memo(({
@@ -19,6 +22,8 @@ const TrainingView = memo(({
   recentWorkout = null,
   interfaceMode = 'simple',
   recommendation = null,
+  experienceLevel = 'intermediate',
+  gender = 'male',
   progressionBlocks = [],
   programDraft = null,
   onOpenExercise,
@@ -67,7 +72,6 @@ const TrainingView = memo(({
     <div data-view-scroll="training" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <div className="flex items-start justify-between gap-3">
         <div>
-        <span className="luxury-eyebrow text-[10px] uppercase">Antrenman Merkezi</span>
         <h2 className="luxury-title text-xl font-black mt-0.5">Bugünkü çalışmanı yönet</h2>
         <p className="luxury-subtitle text-[10px] mt-1">Başlat, kaldığın yerden devam et veya programını düzenle.</p>
         </div>
@@ -75,16 +79,16 @@ const TrainingView = memo(({
       </div>
 
       {recommendation && (
-        <section className="rounded-3xl border border-emerald-800/60 bg-gradient-to-br from-emerald-950/45 via-zinc-900 to-cyan-950/25 p-4 shadow-lg shadow-emerald-950/20 space-y-3">
+        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <span className="text-[9px] font-mono uppercase tracking-widest text-emerald-400 flex items-center gap-1.5"><Target size={12} /> Bu Hafta İçin Akıllı Seçim</span>
+              <span className="text-[9px] uppercase tracking-widest text-zinc-400 flex items-center gap-1.5"><Target size={12} className="text-emerald-400" /> Bu Hafta İçin Akıllı Seçim</span>
               <h3 className="text-[15px] font-black text-zinc-100 truncate mt-1">{recommendation.template.name}</h3>
-              <span className="text-[9px] font-mono text-zinc-500">~{recommendation.minutes} dk · {recommendation.preview.totalSets} set</span>
+              <span className="text-[9px] text-zinc-400">~{recommendation.minutes} dk · {recommendation.preview.totalSets} set</span>
             </div>
-            <div className="rounded-2xl border border-emerald-700/60 bg-emerald-950/50 px-3 py-2 text-center shrink-0">
-              <strong className="text-lg font-mono text-emerald-300 block leading-none">{recommendation.score}</strong>
-              <span className="text-[7px] font-bold uppercase tracking-wider text-emerald-500">{recommendation.label}</span>
+            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-center shrink-0">
+              <strong className="text-lg text-emerald-400 block leading-none">{recommendation.score}</strong>
+              <span className="text-[7px] font-bold uppercase tracking-wider text-zinc-400">{recommendation.label}</span>
             </div>
           </div>
           <div className="space-y-1.5">
@@ -95,6 +99,21 @@ const TrainingView = memo(({
               <p key={risk} className="text-[9px] font-mono text-amber-300/90 leading-relaxed flex gap-1.5"><AlertTriangle size={10} className="shrink-0 mt-0.5" />{risk}</p>
             ))}
           </div>
+          {/* Seçili antrenmanın vücutta nereye denk geldiği. Buradaki karar
+              "bugün ne çalışayım" — o kararı metinle anlatmak yerine haritada
+              göstermek, listedeki gerekçelerden daha hızlı okunuyor. */}
+          {recommendation.preview?.byMuscle && (
+            <Suspense fallback={<div className="h-[430px] rounded-2xl border border-zinc-800 bg-zinc-950/40" />}>
+              <MuscleHeatmap
+                muscleVolume={recommendation.preview.byMuscle}
+                experienceLevel={experienceLevel}
+                gender={gender}
+                title="Bu Seans Neyi Çalıştırır"
+                subtitle="Teorik"
+              />
+            </Suspense>
+          )}
+
           <div className="grid grid-cols-2 gap-2">
             <button onClick={() => onPreview?.(recommendation.template)} className="rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 active:bg-zinc-800">Planı İncele</button>
             <button onClick={() => onStart?.(recommendation.template)} className="rounded-xl bg-emerald-700 py-2.5 text-[9px] font-black uppercase text-white active:bg-emerald-800 flex items-center justify-center gap-1.5"><Play size={12} /> Başlat</button>

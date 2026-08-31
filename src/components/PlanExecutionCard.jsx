@@ -37,7 +37,7 @@ const PlanExecutionCard = memo(({ report, onOpenPlan }) => {
       <div className="rounded-2xl border border-violet-900/40 bg-gradient-to-br from-violet-950/25 to-zinc-900 p-4 space-y-3">
         <div className="flex items-center gap-2">
           <CalendarCheck2 size={15} className="text-violet-400" />
-          <h4 className="text-[11px] font-bold uppercase tracking-wider text-zinc-200">Plan Gerçekleşme Merkezi</h4>
+          <h4 className="text-[11px] font-bold uppercase tracking-wider text-zinc-200">Plan Gerçekleşmesi</h4>
         </div>
         <p className="text-[10px] font-mono leading-relaxed text-zinc-500">
           Planlanan ile yapılanı karşılaştırmak için aktif haftalık program gerekiyor.
@@ -59,7 +59,7 @@ const PlanExecutionCard = memo(({ report, onOpenPlan }) => {
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <span className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase tracking-[0.16em] text-violet-400">
-              <Gauge size={12} /> Plan Gerçekleşme Merkezi
+              <Gauge size={12} /> Plan Gerçekleşmesi
             </span>
             <h4 className="mt-1 text-sm font-black text-zinc-100">
               {report.hasData ? report.zone.label : 'Ölçüm birikiyor'}

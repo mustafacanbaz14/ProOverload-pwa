@@ -277,11 +277,28 @@
   --color-cyan-200: #531d32;
 }
 
+/* Tek bir gövde yazı tipi.
+ *
+ * `font-mono` bu uygulamada bir yazı tipi tercihi değil, "burası veri"
+ * işareti olarak kullanılmış: 1557 kullanımın büyük çoğunluğu düz cümle.
+ * Gerçek daktilo yazısı bu cümleleri terminal çıktısına benzetiyordu — ürünün
+ * amatör görünmesinin birinci sebebi buydu.
+ *
+ * Sınıf kaldırılmıyor (1557 yeri elle ayıklamak yeni hatalar üretirdi);
+ * karşılığı değişiyor: aynı gövde yazı tipi, ama TABULAR rakamlarla. Sayılar
+ * sütun halinde hizalanmaya devam ediyor — daktilo yazısından istenen tek şey
+ * zaten buydu — cümleler ise normal okunuyor. Hiyerarşi artık yazı tipi
+ * değiştirerek değil, ağırlık ve renkle kuruluyor. */
+:root {
+  --font-mono: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+}
+
 body {
   background:
     radial-gradient(circle at 18% -5%, color-mix(in srgb, var(--luxury-gold) 11%, transparent), transparent 34rem),
     linear-gradient(145deg, #050504, var(--color-black) 58%, #0d0b07);
   font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+  font-variant-numeric: tabular-nums;
 }
 
 :root[data-theme='light'] body {
@@ -419,7 +436,7 @@ body {
 
 .luxury-screen {
   background: transparent !important;
-  animation: luxury-rise .32s ease-out both;
+  animation: luxury-rise .18s ease-out both;
 }
 
 .luxury-screen > :first-child:not(.luxury-no-intro) {
@@ -558,23 +575,14 @@ body {
   box-shadow: 0 15px 34px rgba(79,58,25,.1), inset 0 1px rgba(255,255,255,.74) !important;
 }
 
+/* Birincil kartın üstünden 5,5 saniyede bir geçen parlama döngüsü
+ * kaldırıldı. Sürekli tekrar eden dekoratif hareket, dikkati içerikten
+ * çekiyor ve üründen çok vitrin efekti gibi duruyordu. Altın kimlik
+ * gradyanda, kenarlıkta ve gölgede zaten var — hareket etmesi gerekmiyor. */
 .luxury-primary-card {
   position: relative;
   isolation: isolate;
   overflow: hidden;
-}
-
-.luxury-primary-card::after {
-  content: "";
-  position: absolute;
-  inset: -80% auto -80% -28%;
-  width: 28%;
-  transform: rotate(18deg);
-  pointer-events: none;
-  background: rgba(255,255,255,.18);
-  filter: blur(10px);
-  animation: luxury-sheen 5.5s ease-in-out infinite;
-  z-index: -1;
 }
 
 .luxury-segmented {
@@ -765,14 +773,8 @@ body {
 }
 
 @keyframes luxury-rise {
-  from { opacity: .3; transform: translateY(5px); }
+  from { opacity: .72; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes luxury-sheen {
-  0%, 58% { left: -32%; opacity: 0; }
-  68% { opacity: .7; }
-  84%, 100% { left: 118%; opacity: 0; }
 }
 
 @media (prefers-reduced-motion: reduce) {

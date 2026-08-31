@@ -64,6 +64,30 @@ const HomeWeeklyOverview = memo(({
   const recoveryWarning = Boolean(dashboardStats.isDeloadNeeded || readiness?.deloadOnerisi);
 
   return (
+    <>
+    {/* Vücut haritası katlanan bölümün içindeydi ve varsayılan kapalıydı:
+        uygulamanın tek bakışta okunan görseli, açmak için bir dokunuş
+        arkasında duruyordu. Sayısal ayrıntılar katlı kalmaya devam ediyor —
+        katlanması gereken onlardı. */}
+    <DeferredSection
+            minHeight={430}
+            fallback={<DeferredCardFallback height={430} label="Kas haritası hazırlanıyor" />}
+          >
+      <Suspense fallback={<DeferredCardFallback height={430} label="Kas haritası yükleniyor" />}>
+        <MuscleHeatmap
+          muscleVolume={dashboardStats.muscleVolume}
+          onSelectMuscle={onSelectMuscle}
+          experienceLevel={experienceLevel}
+          gender={gender}
+              />
+              {gender === 'female' && (
+          <p className="mt-2 px-1 text-[9px] font-mono text-zinc-400 leading-relaxed">
+            Kadınlara yalnız cinsiyet nedeniyle farklı set çarpanı uygulanmaz. Hacim, belirtiler ve kişisel toparlanma trendine göre ayarlanır.
+          </p>
+              )}
+      </Suspense>
+    </DeferredSection>
+
     <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
       <button
         type="button"
@@ -107,7 +131,7 @@ const HomeWeeklyOverview = memo(({
 
       {!isOpen && (
         <div className="border-t border-zinc-800/70 px-4 py-2 flex items-center justify-between gap-3 text-[8px] font-mono">
-          <span className="text-zinc-400">Harita, hacim ve denge ayrıntıları</span>
+          <span className="text-zinc-400">Hacim, denge ve yüklenme ayrıntıları</span>
           <span className={acwrStatus.text}>{acwrStatus.label}</span>
         </div>
       )}
@@ -172,24 +196,6 @@ const HomeWeeklyOverview = memo(({
             </div>
           </div>
 
-          <DeferredSection
-            minHeight={430}
-            fallback={<DeferredCardFallback height={430} label="Kas haritası hazırlanıyor" />}
-          >
-            <Suspense fallback={<DeferredCardFallback height={430} label="Kas haritası yükleniyor" />}>
-              <MuscleHeatmap
-                muscleVolume={dashboardStats.muscleVolume}
-                onSelectMuscle={onSelectMuscle}
-                experienceLevel={experienceLevel}
-                gender={gender}
-              />
-              {gender === 'female' && (
-                <p className="mt-2 px-1 text-[9px] font-mono text-zinc-400 leading-relaxed">
-                  Kadınlara yalnız cinsiyet nedeniyle farklı set çarpanı uygulanmaz. Hacim, belirtiler ve kişisel toparlanma trendine göre ayarlanır.
-                </p>
-              )}
-            </Suspense>
-          </DeferredSection>
 
           <div className="grid grid-cols-2 gap-2.5">
             <div className="bg-zinc-950/85 p-3.5 rounded-2xl border border-zinc-800/80 shadow-inner">
@@ -299,6 +305,7 @@ const HomeWeeklyOverview = memo(({
         </div>
       )}
     </section>
+    </>
   );
 });
 

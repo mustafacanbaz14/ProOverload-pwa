@@ -246,7 +246,7 @@ const RELEASE_10_4 = release('10.4', '2026-08-31', 'Okunabilir Tipografi, Sıfı
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Salonda Kullanılabilirlik: 44 Punto Dokunma Tabanı ve İsteğe Bağlı Hazır Oluşluk', [
+const RELEASE_10_5 = release('10.5', '2026-08-31', 'Salonda Kullanılabilirlik: 44 Punto Dokunma Tabanı ve İsteğe Bağlı Hazır Oluşluk', [
   item('Her Dokunma Hedefi En Az 44 Punto', 'Beş ekran ve altı analiz sekmesinde ölçülen 208 dokunma hedefi 44 puntonun altındaydı; en küçüğü 23×17 puntoydu — gereken alanın beşte biri. Taban tek yerden verildi, artık hiçbiri altında değil.'),
   item('Set Giriş Alanları Büyüdü', 'Kilo, tekrar ve RIR alanları 40 punto yüksekliğindeydi ve tekrar alanı yalnızca 49 punto genişti. Uygulamanın en çok dokunulan yeri burası; 66 girdinin tamamı tabana çekildi.'),
   item('Hazır Oluşluk Artık Bir Kapı Değil', 'Antrenmana başlamak beş kaydırıcılı bir formun arkasındaydı. Puanlama isteğe bağlı hale geldi: doğrudan başlayabilir ya da paneli açıp bugünü puanlayabilirsin.'),
@@ -257,6 +257,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Salonda 
   item('Sayısal Alanlarda Sayı Klavyesi', 'Dört alan mobilde tam klavye açıyordu; hepsi ondalık tuş takımına geçti.'),
   item('Analiz Sekmesi ve Özet Satırları', 'Altı analiz sekmesi satıra sığmıyor, "BESLENME" kırpılıyordu. Kart özetleri de ortalarından kesiliyordu; artık iki satıra iniyorlar.'),
   item('Başlık ve Kalan Kontrast Hataları', 'Aktif seanstaki hedef ve rekor satırlarının kontrastı eşiğin altındaydı, giderildi. Uygulama başlığı üç satıra bölünmüyor; üst çubuk 110 puntodan 76 puntoya indi.'),
+  item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Vücut Haritası Sabit, Arayüz Sadeleşti', [
+  item('Vücut Haritası Ana Ekranda Sabit', 'Uygulamanın tek bakışta okunan görseli katlanan bir bölümün içindeydi ve varsayılan kapalıydı. Artık ana ekranda her zaman açık; sayısal ayrıntılar katlı kalmaya devam ediyor.'),
+  item('Seçili Antrenmanın Haritası', 'Antrenman sekmesindeki akıllı seçim artık hangi bölgeleri çalıştıracağını haritada gösteriyor. "Bugün ne çalışayım" kararı, gerekçe listesinden çok daha hızlı okunuyor.'),
+  item('Tek Gövde Yazı Tipi', 'Arayüzün neredeyse tüm düz metni daktilo yazısıyla diziliyordu — 1557 kullanım. Cümleler terminal çıktısına benziyordu. Aynı sınıf artık gövde yazı tipini tabular rakamlarla veriyor: sayılar sütun halinde hizalanmaya devam ediyor, cümleler normal okunuyor.'),
+  item('Renk Artık Anlam Taşıyor', 'Ana ekrandaki dört hızlı işlem kartı dört ayrı vurgu rengi taşıyordu; her birinde gradyan, renkli ikon kutusu, renkli gölge ve bir rozet vardı. Hiçbiri öne çıkmıyordu. Tek yüzey kaldı ve vurgu yalnızca birincil eylemde.'),
+  item('Boş Durum Artık Yeşil Değil', 'Hiç besin girilmemişken günlük hedef parlak yeşille yazılıyordu — iyi bir durum gibi. Uyku puanlanmamışken de mor. İkisi de nötre alındı; renk yalnızca hedefin aşılması gibi gerçek bir duruma ayrıldı.'),
+  item('Anlamsız Rozetler Kaldırıldı', 'Kart başlıklarının yanındaki "Merkez", "Hızlı" ve "Haftalık" etiketleri, başlığın söylediğinden fazlasını söylemiyordu.'),
+  item('Parlama Döngüsü Kapatıldı', 'Birincil kartın üstünden 5,5 saniyede bir geçen parlama efekti kaldırıldı. Sürekli tekrar eden dekoratif hareket dikkati içerikten çekiyordu.'),
+  item('Ekran Geçişi Hızlandı', 'Her sekme değişiminde tüm ekran yüzde 30 opaklıktan yükseliyordu. Süre 0,32 saniyeden 0,18 saniyeye indi; uygulama artık her dokunuşta yeniden yükleniyormuş gibi durmuyor.'),
+  item('Sade Ekran Başlıkları', 'Sekme adını birebir tekrarlayan "Antrenman Merkezi" ve "Gelişim Merkezi" üst satırları kaldırıldı; "Güncelleme Merkezi" artık Sürüm Notları.'),
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
 ]);
 
@@ -334,6 +347,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_5,
   RELEASE_10_4,
   RELEASE_10_3,
   RELEASE_10_2,

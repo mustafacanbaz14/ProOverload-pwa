@@ -37,7 +37,7 @@ const QuickCaptureModal = memo(({ isOpen, onClose, onSelect, status = {} }) => {
       >
         <div className="sticky top-0 z-10 flex items-center justify-between gap-3 px-4 py-3.5 border-b border-zinc-800/80 bg-zinc-950/95 backdrop-blur-xl">
           <div>
-            <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-[0.2em] font-bold">Hızlı Kayıt Merkezi</span>
+            <span className="text-[9px] font-mono text-cyan-400 uppercase tracking-[0.2em] font-bold">Hızlı Kayıt</span>
             <h2 id="quick-capture-title" className="text-sm font-black text-zinc-100 mt-0.5">Ne eklemek istiyorsun?</h2>
           </div>
           <button onClick={onClose} aria-label="Hızlı kaydı kapat" className="luxury-icon-button">

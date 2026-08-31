@@ -3107,7 +3107,7 @@ export default function App() {
       headline,
       detail,
       sleepLabel: sleep ? `${sleep.score}/100` : 'Puan gir',
-      sleepTone: sleep ? sleep.zone.text : 'text-purple-400',
+      sleepTone: sleep ? sleep.zone.text : 'text-zinc-500',
       readinessLabel: readiness ? `${readiness.ortalama}/100` : 'Veri yok',
       readinessTone: readiness?.zone?.text || 'text-zinc-500',
       calorieLabel: adjustedTarget > 0
@@ -3115,7 +3115,7 @@ export default function App() {
           ? `${Math.abs(remaining)} ${remaining >= 0 ? 'kaldı' : 'fazla'}`
           : `hedef ${Math.round(adjustedTarget)}`
         : 'Veri yok',
-      calorieTone: remaining < 0 ? 'text-amber-400' : 'text-emerald-400',
+      calorieTone: remaining < 0 ? 'text-amber-400' : 'text-zinc-200',
       planLabel: workoutTemplate?.name || (activeRest ? 'Aktif dinlenme' : planDay?.cardios?.length ? 'Kardiyo günü' : 'Off / serbest gün'),
       planTime,
       cardioLabel: planDay?.cardios?.map(cardio => `${cardio.activity.label} ${cardio.minutes} dk${cardio.minuteSource === 'history' ? ' (arşiv ort.)' : ''}`).join(' · ') || '',
@@ -4310,6 +4310,8 @@ export default function App() {
               recentWorkout={recentStrengthWorkout}
               interfaceMode={settings.interfaceMode}
               recommendation={templateRecommendation}
+              experienceLevel={settings.experienceLevel}
+              gender={profileGender}
               progressionBlocks={progressionBlocks}
               programDraft={programDraft}
               onOpenExercise={setProfileExercise}

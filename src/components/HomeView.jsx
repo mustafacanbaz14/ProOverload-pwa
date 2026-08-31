@@ -70,8 +70,6 @@ const HomeView = memo(({
   onAddWater,
   onToggleTemplateFavorite,
 }) => {
-  const isTemplateReady = Boolean(todayCoach?.workoutTemplate || todayCoach?.cardioLabel);
-
   return (
     <div data-view-scroll="home" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
 
@@ -98,101 +96,79 @@ const HomeView = memo(({
         compact={interfaceMode === 'simple'}
       />
 
-      {/* Hızlı Aksiyon & Görev Komuta Merkezi */}
-      <div className="space-y-2">
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" aria-label="Hızlı işlemler">
-          <button
-            type="button"
-            onClick={() => handleStartRequest ? handleStartRequest() : onOpenTraining?.()}
-            className="group relative overflow-hidden rounded-2xl border border-cyan-800/50 bg-gradient-to-br from-cyan-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-cyan-950/20 hover:border-cyan-600/70"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-cyan-500/20 border border-cyan-500/30 flex items-center justify-center text-cyan-400 group-hover:scale-105 transition-transform">
-                <Zap size={16} className="text-cyan-300" />
-              </div>
-              <span className="text-[8px] font-mono uppercase tracking-wider text-cyan-400 font-bold bg-cyan-950/60 px-1.5 py-0.5 rounded-md border border-cyan-800/40">
-                {isTemplateReady ? 'Planlı' : 'Serbest'}
-              </span>
-            </div>
-            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
-              Antrenman
-            </strong>
-            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
-              {todayCoach?.workoutTemplate ? todayCoach.workoutTemplate.name : 'Seansı Başlat'}
-            </span>
-          </button>
+      {/* Hızlı işlemler.
+          Dört kart daha önce dört ayrı vurgu rengi taşıyordu (cyan, emerald,
+          indigo, violet); her birinde gradyan, renkli ikon kutusu, renkli
+          glow ve bir rozet vardı. Renk kategoriyi anlatmaya çalışıyordu ama
+          kategoriyi başlık zaten söylüyor — sonuç, hiçbirinin öne çıkmadığı
+          bir renk kalabalığıydı.
 
-          <button
-            type="button"
-            onClick={() => onQuickCapture?.()}
-            className="group relative overflow-hidden rounded-2xl border border-emerald-800/50 bg-gradient-to-br from-emerald-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-emerald-950/20 hover:border-emerald-600/70"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 group-hover:scale-105 transition-transform">
-                <Plus size={16} className="text-emerald-300" />
-              </div>
-              <span className="text-[8px] font-mono uppercase tracking-wider text-emerald-400 font-bold bg-emerald-950/60 px-1.5 py-0.5 rounded-md border border-emerald-800/40">
-                Hızlı
+          Artık tek yüzey var ve vurgu yalnızca BİRİNCİL eylemde: antrenman
+          başlatmak. Renk burada süs değil, "önce buraya bak" demenin yolu.
+          Rozetler kaldırıldı; "Merkez" ya da "Hızlı" yazmak başlığın yanında
+          bilgi eklemiyordu. */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" aria-label="Hızlı işlemler">
+        {[
+          {
+            key: 'train',
+            icon: Zap,
+            title: 'Antrenman',
+            alt: todayCoach?.workoutTemplate ? todayCoach.workoutTemplate.name : 'Seansı başlat',
+            birincil: true,
+            onClick: () => (handleStartRequest ? handleStartRequest() : onOpenTraining?.()),
+          },
+          {
+            key: 'quick',
+            icon: Plus,
+            title: 'Hızlı Kayıt',
+            alt: 'Set, kilo, besin',
+            onClick: () => onQuickCapture?.(),
+          },
+          {
+            key: 'plan',
+            icon: Calendar,
+            title: 'Program Planı',
+            alt: 'Düzen ve günler',
+            onClick: () => (onOpenWeeklyPlan ? onOpenWeeklyPlan() : onOpenTraining?.()),
+          },
+          {
+            key: 'tools',
+            icon: Wrench,
+            title: 'Araçlar',
+            alt: 'Plaka ve 1RM',
+            onClick: () => onOpenTools?.(),
+          },
+        ].map(kart => {
+          const Icon = kart.icon;
+          return (
+            <button
+              key={kart.key}
+              type="button"
+              onClick={kart.onClick}
+              className={`rounded-2xl border p-3 text-left active:scale-[0.97] transition-transform ${
+                kart.birincil
+                  ? 'border-zinc-700 bg-zinc-900'
+                  : 'border-zinc-800/80 bg-zinc-950/60'
+              }`}
+            >
+              <Icon size={17} className={kart.birincil ? 'text-cyan-400' : 'text-zinc-400'} />
+              <strong className="text-[12px] font-bold text-zinc-100 block mt-2.5">
+                {kart.title}
+              </strong>
+              <span className="text-[10px] text-zinc-400 block mt-0.5 truncate">
+                {kart.alt}
               </span>
-            </div>
-            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
-              Hızlı Kayıt
-            </strong>
-            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
-              Set, Kilo & Besin
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onOpenWeeklyPlan ? onOpenWeeklyPlan() : onOpenTraining?.()}
-            className="group relative overflow-hidden rounded-2xl border border-indigo-800/50 bg-gradient-to-br from-indigo-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-indigo-950/20 hover:border-indigo-600/70"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 group-hover:scale-105 transition-transform">
-                <Calendar size={16} className="text-indigo-300" />
-              </div>
-              <span className="text-[8px] font-mono uppercase tracking-wider text-indigo-400 font-bold bg-indigo-950/60 px-1.5 py-0.5 rounded-md border border-indigo-800/40">
-                Haftalık
-              </span>
-            </div>
-            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
-              Program Planı
-            </strong>
-            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
-              Düzen & Günler
-            </span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => onOpenTools?.()}
-            className="group relative overflow-hidden rounded-2xl border border-violet-800/50 bg-gradient-to-br from-violet-950/60 via-zinc-900/90 to-zinc-950 p-3 text-left active:scale-[0.97] transition-all shadow-lg shadow-violet-950/20 hover:border-violet-600/70"
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="w-8 h-8 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center text-violet-400 group-hover:scale-105 transition-transform">
-                <Wrench size={16} className="text-violet-300" />
-              </div>
-              <span className="text-[8px] font-mono uppercase tracking-wider text-violet-400 font-bold bg-violet-950/60 px-1.5 py-0.5 rounded-md border border-violet-800/40">
-                Merkez
-              </span>
-            </div>
-            <strong className="text-xs font-black uppercase tracking-wider text-zinc-100 block">
-              Araçlar
-            </strong>
-            <span className="text-[9px] font-mono text-zinc-400 block mt-0.5 truncate">
-              Plaka & 1RM
-            </span>
-          </button>
-        </div>
+            </button>
+          );
+        })}
       </div>
 
       {/* Günlük Hızlı Hidrasyon Paneli */}
       {waterSummary && waterTarget && (
-        <div className="luxury-feature-card bg-gradient-to-br from-sky-950/30 via-zinc-900/95 to-zinc-950 rounded-2xl border border-sky-900/40 p-3.5 shadow-lg shadow-black/30">
+        <div className="rounded-2xl border border-zinc-800/80 bg-zinc-950/60 p-3.5">
           <div className="flex items-center justify-between gap-3 mb-2.5">
             <div className="flex items-center gap-2 min-w-0">
-              <div className="w-7 h-7 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center text-sky-400 shrink-0">
+              <div className="shrink-0 text-sky-400">
                 <Droplets size={14} className="text-sky-300" />
               </div>
               <div className="min-w-0">
@@ -210,7 +186,7 @@ const HomeView = memo(({
               <button
                 type="button"
                 onClick={() => onAddWater?.(250)}
-                className="px-2.5 py-1 rounded-lg border border-sky-800/60 bg-sky-950/50 text-sky-200 text-[9px] font-mono font-bold active:scale-[0.95] transition-all hover:bg-sky-900/60 shadow-sm"
+                className="px-3 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200 text-[10px] font-bold active:scale-[0.95] transition-transform"
                 title="+250 ml su ekle"
               >
                 +250ml
@@ -218,7 +194,7 @@ const HomeView = memo(({
               <button
                 type="button"
                 onClick={() => onAddWater?.(500)}
-                className="px-2.5 py-1 rounded-lg border border-sky-800/60 bg-sky-950/50 text-sky-200 text-[9px] font-mono font-bold active:scale-[0.95] transition-all hover:bg-sky-900/60 shadow-sm"
+                className="px-3 rounded-lg border border-zinc-800 bg-zinc-900 text-zinc-200 text-[10px] font-bold active:scale-[0.95] transition-transform"
                 title="+500 ml su ekle"
               >
                 +500ml

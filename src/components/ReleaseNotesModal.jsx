@@ -20,7 +20,7 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
             </div>
             <div>
               <span className="text-[9px] font-mono font-bold uppercase text-cyan-400 tracking-widest block">
-                Güncelleme Merkezi
+                Sürüm Notları
               </span>
               <h3 className="text-base font-black text-zinc-100 mt-0.5 tracking-tight">
                 ProOverload v{LATEST_RELEASE_NOTES.version}
