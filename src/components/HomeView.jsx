@@ -96,72 +96,44 @@ const HomeView = memo(({
         compact={interfaceMode === 'simple'}
       />
 
-      {/* Hızlı işlemler.
-          Dört kart daha önce dört ayrı vurgu rengi taşıyordu (cyan, emerald,
-          indigo, violet); her birinde gradyan, renkli ikon kutusu, renkli
-          glow ve bir rozet vardı. Renk kategoriyi anlatmaya çalışıyordu ama
-          kategoriyi başlık zaten söylüyor — sonuç, hiçbirinin öne çıkmadığı
-          bir renk kalabalığıydı.
+      {/* Tek baskın eylem + üç yardımcı kısayol. Dört eşit kart, kullanıcının
+          "şimdi ne yapmalıyım" kararını kendisinin vermesine yol açıyordu. */}
+      <section className="rounded-3xl border border-zinc-800/80 bg-zinc-950/70 overflow-hidden shadow-lg" aria-label="Hızlı işlemler">
+        <button
+          type="button"
+          onClick={() => (handleStartRequest ? handleStartRequest() : onOpenTraining?.())}
+          className="w-full min-h-[72px] px-4 py-3.5 flex items-center gap-3.5 text-left bg-gradient-to-r from-cyan-950/45 to-zinc-900 active:bg-cyan-950/60 transition-colors"
+        >
+          <span className="w-11 h-11 rounded-2xl bg-cyan-500 text-zinc-950 flex items-center justify-center shrink-0 shadow-lg shadow-cyan-950/40">
+            <Zap size={20} strokeWidth={2.4} />
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="text-[9px] text-cyan-400 uppercase tracking-[0.16em] font-bold block">Sıradaki eylem</span>
+            <strong className="text-[13px] font-black text-zinc-100 block mt-0.5">Antrenmanı Başlat</strong>
+            <span className="text-[10px] text-zinc-400 block mt-0.5 truncate">
+              {todayCoach?.workoutTemplate ? todayCoach.workoutTemplate.name : 'Şablon seç veya serbest seans aç'}
+            </span>
+          </span>
+          <ChevronRight size={18} className="text-cyan-400 shrink-0" />
+        </button>
 
-          Artık tek yüzey var ve vurgu yalnızca BİRİNCİL eylemde: antrenman
-          başlatmak. Renk burada süs değil, "önce buraya bak" demenin yolu.
-          Rozetler kaldırıldı; "Merkez" ya da "Hızlı" yazmak başlığın yanında
-          bilgi eklemiyordu. */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5" aria-label="Hızlı işlemler">
-        {[
-          {
-            key: 'train',
-            icon: Zap,
-            title: 'Antrenman',
-            alt: todayCoach?.workoutTemplate ? todayCoach.workoutTemplate.name : 'Seansı başlat',
-            birincil: true,
-            onClick: () => (handleStartRequest ? handleStartRequest() : onOpenTraining?.()),
-          },
-          {
-            key: 'daily',
-            icon: CalendarCheck2,
-            title: 'Günün Kayıtları',
-            alt: 'Hepsi tek yerde',
-            onClick: () => onOpenDailyWorkspace?.(),
-          },
-          {
-            key: 'plan',
-            icon: Calendar,
-            title: 'Program Planı',
-            alt: 'Düzen ve günler',
-            onClick: () => (onOpenWeeklyPlan ? onOpenWeeklyPlan() : onOpenTraining?.()),
-          },
-          {
-            key: 'tools',
-            icon: Wrench,
-            title: 'Araçlar',
-            alt: 'Plaka ve 1RM',
-            onClick: () => onOpenTools?.(),
-          },
-        ].map(kart => {
-          const Icon = kart.icon;
-          return (
-            <button
-              key={kart.key}
-              type="button"
-              onClick={kart.onClick}
-              className={`rounded-2xl border p-3 text-left active:scale-[0.97] transition-transform ${
-                kart.birincil
-                  ? 'border-zinc-700 bg-zinc-900'
-                  : 'border-zinc-800/80 bg-zinc-950/60'
-              }`}
-            >
-              <Icon size={17} className={kart.birincil ? 'text-cyan-400' : 'text-zinc-400'} />
-              <strong className="text-[12px] font-bold text-zinc-100 block mt-2.5">
-                {kart.title}
-              </strong>
-              <span className="text-[10px] text-zinc-400 block mt-0.5 truncate">
-                {kart.alt}
-              </span>
-            </button>
-          );
-        })}
-      </div>
+        <div className="grid grid-cols-3 border-t border-zinc-800/80 divide-x divide-zinc-800/80">
+          {[
+            { key: 'daily', icon: CalendarCheck2, title: 'Günlük', alt: 'Tüm kayıtlar', onClick: () => onOpenDailyWorkspace?.() },
+            { key: 'plan', icon: Calendar, title: 'Program', alt: 'Haftalık plan', onClick: () => (onOpenWeeklyPlan ? onOpenWeeklyPlan() : onOpenTraining?.()) },
+            { key: 'tools', icon: Wrench, title: 'Araçlar', alt: 'Hesaplayıcılar', onClick: () => onOpenTools?.() },
+          ].map(item => {
+            const Icon = item.icon;
+            return (
+              <button key={item.key} type="button" onClick={item.onClick} className="min-h-[70px] px-2 py-3 flex flex-col items-center justify-center text-center active:bg-zinc-900 transition-colors">
+                <Icon size={16} className="text-zinc-300" />
+                <strong className="text-[10px] text-zinc-100 block mt-1.5">{item.title}</strong>
+                <span className="text-[9px] text-zinc-500 block mt-0.5 truncate max-w-full">{item.alt}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Günlük Hızlı Hidrasyon Paneli */}
       {waterSummary && waterTarget && (

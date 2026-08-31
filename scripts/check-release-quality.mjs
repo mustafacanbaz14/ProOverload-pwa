@@ -24,6 +24,10 @@ const dailyWorkspace = read('src/components/DailyWorkspaceModal.jsx');
 const workoutStepper = read('src/components/WorkoutFlowStepper.jsx');
 const activeWorkout = read('src/components/ActiveWorkoutView.jsx');
 const sessionReport = read('src/components/SessionReportModal.jsx');
+const homeView = read('src/components/HomeView.jsx');
+const todayCoach = read('src/components/TodayCoachCard.jsx');
+const quickCapture = read('src/components/QuickCaptureModal.jsx');
+const toolsModal = read('src/components/ToolsModal.jsx');
 
 // Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
 // package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
@@ -44,6 +48,10 @@ check(index.includes('user-scalable=no') && main.includes("'gesturestart'") && c
 check(settingsModal.includes("activeSection === 'home'") && settingsModal.includes("key: 'method'"), 'Ayarlar kategori ana ekranı ve Koç & Yöntem ayrımı korunuyor');
 check(settingsModal.includes('h-[100dvh]') && settingsModal.includes('grid-cols-1 sm:grid-cols-2'), 'Ayarlar mobilde tam ekran ve tek sütunlu');
 check(settingsModal.includes('Burada yalnız ayarlar bulunur') && settingsModal.includes('alttaki menüyü kullan'), 'Ayarlar ile ana bölüm gezinmesi açıkça ayrılıyor');
+check(homeView.includes('Sıradaki eylem') && homeView.includes('Antrenmanı Başlat') && homeView.includes('grid grid-cols-3'), 'Ana sayfa tek baskın eylem ve üç yardımcı kısayol kullanıyor');
+check(todayCoach.includes('grid-cols-[1fr_58px_58px]') && todayCoach.includes('min-h-14'), 'Koç yardımcı eylemleri okunabilir dokunma alanında');
+check(quickCapture.includes('completedCount') && quickCapture.includes('Kayıtlı') && quickCapture.includes('divide-y'), 'Hızlı kayıt tek sütunlu ve durum etiketli');
+check(toolsModal.includes("activeGroup") && toolsModal.includes('h-[100dvh]') && toolsModal.includes('Araç kategorileri'), 'Araç merkezi tam ekran ve kategori filtreli');
 check(app.includes('energyDetailEntry') && app.includes("openEnergyDetail('days'"), 'Kalori detayı tarih ve sekme bağlamıyla açılıyor');
 check(historyView.includes('onOpenEnergyDay') && energyModal.includes('days: 365'), 'Arşivden Gün Gün enerji erişimi ve bir yıllık görünüm korunuyor');
 check(vite.includes("registerType: 'autoUpdate'"), 'PWA otomatik güncelleme açık');

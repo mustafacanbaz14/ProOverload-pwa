@@ -75,6 +75,7 @@ const ToolsModal = memo(({ isOpen, onClose, onSelect, showCycle = false }) => {
   // de okumak zorlaşmıştı. Arama ikisini birden çözüyor — yazınca liste
   // daralıyor, yazmayınca gruplar olduğu gibi duruyor.
   const [query, setQuery] = useState('');
+  const [activeGroup, setActiveGroup] = useState('all');
 
   const gruplar = useMemo(() => {
     const tumu = GROUPS.map(group => ({
@@ -84,8 +85,9 @@ const ToolsModal = memo(({ isOpen, onClose, onSelect, showCycle = false }) => {
         : group.items,
     }));
     const q = foldForSearch(query).trim();
-    if (!q) return tumu;
-    return tumu
+    const grouped = activeGroup === 'all' ? tumu : tumu.filter(group => group.title === activeGroup);
+    if (!q) return grouped;
+    return grouped
       .map(group => ({
         ...group,
         // Başlık, açıklama ve grup adı birlikte aranıyor: kullanıcı "kardiyo"
@@ -94,34 +96,57 @@ const ToolsModal = memo(({ isOpen, onClose, onSelect, showCycle = false }) => {
           foldForSearch(`${item.label} ${item.hint} ${group.title}`).includes(q)),
       }))
       .filter(group => group.items.length > 0);
-  }, [query, showCycle]);
+  }, [activeGroup, query, showCycle]);
 
   if (!isOpen) return null;
 
   const sonucSayisi = gruplar.reduce((t, g) => t + g.items.length, 0);
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="tools-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[94] flex items-center justify-center p-4">
-      <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl w-full max-w-md max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
-        <div className="px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/80 backdrop-blur-md shrink-0">
-          <h3 id="tools-title" className="text-[12px] font-black text-zinc-100 uppercase tracking-widest flex items-center">
-            <Wrench size={16} className="mr-2 text-cyan-400" /> Araçlar & Yardımcılar
-          </h3>
+    <div role="dialog" aria-modal="true" aria-labelledby="tools-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[94] flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="bg-zinc-950 border-0 sm:border sm:border-zinc-800/90 rounded-none sm:rounded-3xl w-full max-w-md h-[100dvh] sm:h-auto sm:max-h-[90dvh] flex flex-col shadow-2xl shadow-black/80 overflow-hidden">
+        <div className="pt-safe px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center bg-zinc-950/90 backdrop-blur-md shrink-0">
+          <div className="min-w-0">
+            <h3 id="tools-title" className="text-[13px] font-black text-zinc-100 tracking-tight flex items-center">
+              <Wrench size={17} className="mr-2.5 text-cyan-400" /> Araçlar
+            </h3>
+            <span className="text-[9px] text-zinc-500 block mt-0.5">{sonucSayisi} yardımcı · kategori seç veya ara</span>
+          </div>
           <button onClick={onClose} className="luxury-icon-button" aria-label="Kapat">
             <X size={18} />
           </button>
         </div>
 
-        <div className="px-4 pt-3.5 shrink-0">
+        <div className="px-4 py-3 border-b border-zinc-800/70 shrink-0 space-y-2.5 bg-zinc-950/95">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" size={14} />
             <input
               type="text"
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                if (e.target.value.trim()) setActiveGroup('all');
+              }}
               placeholder="Araç ara (örn. mezosiklik, kalori, deload)..."
+              aria-label="Araçlarda ara"
               className="w-full bg-zinc-900/90 border border-zinc-800 rounded-2xl pl-9 pr-3 py-2.5 text-xs text-zinc-100 font-mono outline-none focus:border-cyan-500 transition-colors shadow-inner"
             />
+          </div>
+          <div className="flex gap-1.5 overflow-x-auto hide-scrollbar" aria-label="Araç kategorileri">
+            {['all', ...GROUPS.map(group => group.title)].map(key => {
+              const active = activeGroup === key;
+              return (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => { setActiveGroup(key); setQuery(''); }}
+                  aria-pressed={active}
+                  className={`shrink-0 min-h-11 rounded-xl border px-3 text-[9px] font-bold transition-colors ${active ? 'border-cyan-700 bg-cyan-950/45 text-cyan-300' : 'border-zinc-800 bg-zinc-900 text-zinc-400'}`}
+                >
+                  {key === 'all' ? 'Tümü' : key}
+                </button>
+              );
+            })}
           </div>
         </div>
 

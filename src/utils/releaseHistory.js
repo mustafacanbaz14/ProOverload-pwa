@@ -306,7 +306,7 @@ const RELEASE_10_9 = release('10.9', '2026-08-31', 'Yönlendirilmiş Antrenman Y
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.9 mevcut localStorage, PWA güncelleme, aktif antrenman ve yedek yapısını değiştirmeden yalnız görev akışını ve rapor çıktısını geliştiriyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Sade Gezinme ve Odaklı Ayarlar', [
+const RELEASE_10_10 = release('10.10', '2026-08-31', 'Sade Gezinme ve Odaklı Ayarlar', [
   item('Tek Gezinme Sistemi', 'Bugün, Antrenman, Beslenme, Gelişim ve Geçmiş geçişleri yalnız alt menüde tutuldu; aynı beş bölümü tekrar eden üst menü kaldırıldı.'),
   item('Ayarlar Artık Doğrudan Açılıyor', 'Üst çubuktaki dişli simgesi kategori ana ekranını tek dokunuşla açıyor; araya uygulama menüsü girmiyor.'),
   item('Arama Her Ekranda Bir Dokunuş Uzakta', 'Üst çubuktaki ayrı arama düğmesi sayfa, araç, hareket, şablon ve geçmiş kayıtlara doğrudan erişimi koruyor.'),
@@ -315,6 +315,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Sade Gez
   item('Tek Sütunlu Okunabilir Kategoriler', 'Sekiz ayar kategorisi telefonda küçük iki sütunlu kutular yerine ikon, başlık ve açıklaması rahat okunan tek sütunlu satırlar halinde gösteriliyor.'),
   item('Ayar ve Bölüm Ayrımı Açık', 'Ayar ana ekranı yalnız tercih, yöntem, cihaz, veri ve gizlilik kontrollerini içerdiğini; uygulama bölümlerinin alt menüden açıldığını açıkça belirtiyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.10 yeni localStorage anahtarı veya şema göçü eklemiyor; mevcut kayıtlar, yedek biçimi ve çevrimdışı çalışma korunuyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Günlük Eylem Hiyerarşisi', [
+  item('Ana Sayfada Tek Baskın Eylem', 'Dört eşit hızlı işlem kartı yerine antrenman başlatma tek ana eylem olarak gösteriliyor; günlük kayıt, program ve araçlar sakin yardımcı kısayollar olarak korunuyor.'),
+  item('Daha Az Görsel Gürültü', 'Ana sayfanın hızlı işlem alanı tek bir yüzeyde toplandı; tekrarlanan kart kenarlıkları ve eşit vurgu yarışı azaltıldı.'),
+  item('Okunabilir Koç Göstergeleri', 'Uyku, hazır oluş ve kalori değerleri ile seans sonundaki Kalori/Uyku düğmeleri daha büyük yazı ve en az 44 piksellik dokunma alanı kullanıyor.'),
+  item('Hızlı Kayıtta Tarama Kolaylığı', 'Altı renkli kutu, ikon–başlık–açıklama düzenindeki tek sütunlu satırlara dönüştürüldü; kayıtlı alanlar açık bir Kayıtlı etiketiyle işaretleniyor.'),
+  item('Günlük Kayıt İlerlemesi', 'Hızlı kayıt başlığı o gün kaç kayıt alanının dolu olduğunu gösteriyor; kullanıcı eksikliği kart kart açmadan anlayabiliyor.'),
+  item('Tam Ekran Araç Merkezi', 'Araçlar telefonda küçük bir pencere yerine tam ekran çalışma alanı kullanıyor; arama ve kategori filtreleri kaydırmadan erişilebilir kalıyor.'),
+  item('Araç Kategori Filtreleri', 'Antrenman, Enerji & Beslenme, Toparlanma ve Ölçüm & Rapor kategorileri tek dokunuşla süzülebiliyor; 29 araçlık uzun listede arama zorunlu değil.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.11 yalnız arayüz hiyerarşisini değiştiriyor; localStorage kayıtları, yedek biçimi ve çevrimdışı çalışma aynı kalıyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -391,6 +402,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_10,
   RELEASE_10_9,
   RELEASE_10_8,
   RELEASE_10_7,

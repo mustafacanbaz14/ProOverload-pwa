@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.10 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.11 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -61,6 +61,17 @@ Durum: Uygulandı.
 - Ayarları telefonda tam ekran, tek sütunlu ve okunabilir kategori listesi olarak sun.
 - Ayar ekranında bölüm geçişi göstermeyip kapsamını tercih, yöntem, cihaz, veri ve gizlilikle sınırla.
 - PWA, localStorage ve mevcut yedek biçimini değiştirme.
+
+## 10.11 — Günlük eylem hiyerarşisi
+
+Durum: Uygulandı.
+
+- Ana sayfada antrenman başlatmayı tek baskın eylem yap; diğer kısayolları ikincil katmana al.
+- Koç metrikleri ve küçük yardımcı düğmelerde okunabilirliği ve dokunma alanını büyüt.
+- Hızlı kayıt seçeneklerini renkli kart ızgarası yerine tek sütunlu, durum etiketli listeye çevir.
+- Araç merkezini mobilde tam ekran yap; aramaya ek olarak kategori filtreleri sun.
+- Ana bölüm, ayar, hızlı kayıt ve araç merkezi rollerini görsel olarak birbirinden ayır.
+- PWA, localStorage ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

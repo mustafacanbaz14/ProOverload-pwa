@@ -2,11 +2,11 @@ import React, { memo, useState } from 'react';
 import { CalendarCheck, Moon, BrainCircuit, Flame, Dumbbell, HeartPulse, ChevronRight, ChevronDown, Clock3, BellOff, CheckCheck, BookCheck } from 'lucide-react';
 
 const Metric = ({ icon, label, value, tone = 'text-zinc-200' }) => (
-  <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-2.5 min-w-0 shadow-sm transition-colors">
-    <span className="flex items-center text-[9px] font-mono text-zinc-500 uppercase tracking-wider mb-1">
+  <div className="bg-zinc-950/90 border border-zinc-800/80 rounded-2xl p-3 min-w-0 shadow-sm transition-colors">
+    <span className="flex items-center text-[10px] text-zinc-500 uppercase tracking-wide mb-1">
       {icon}{label}
     </span>
-    <span className={`text-[12px] font-mono font-black block truncate tracking-tight ${tone}`}>{value}</span>
+    <span className={`text-[13px] font-mono font-black block truncate tracking-tight ${tone}`}>{value}</span>
   </div>
 );
 
@@ -86,7 +86,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
             aria-expanded={showDetails}
             className="w-full rounded-xl border border-zinc-800 bg-zinc-950/55 px-3 py-2 text-left flex items-center justify-between gap-3 active:bg-zinc-900"
           >
-            <span className="text-[9px] font-mono text-zinc-300">
+            <span className="text-[10px] text-zinc-300">
               Koç ayrıntıları
               {actions.length > 0 && <span className="text-cyan-400 font-bold"> · {actions.length} öneri</span>}
             </span>
@@ -223,13 +223,13 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           </button>
         )}
 
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2 pt-1">
+        <div className="grid grid-cols-[1fr_58px_58px] gap-2 pt-1">
           <button
             type="button"
             onClick={() => data.cardioLabel && !planned
               ? onOpenCardio?.()
               : onStart?.(data.workoutTemplate || null)}
-            className="bg-cyan-600 active:scale-[0.98] text-white rounded-2xl px-4 py-3 text-[10px] font-bold uppercase tracking-wider flex items-center justify-center shadow-lg shadow-black/30 transition-all"
+            className="min-h-14 bg-cyan-600 active:scale-[0.98] text-white rounded-2xl px-4 py-3 text-[11px] font-bold flex items-center justify-center shadow-lg shadow-black/30 transition-all"
           >
             {planned ? 'Planlananı Başlat' : data.cardioLabel ? 'Kardiyoyu Aç' : 'Serbest Başlat'} <ChevronRight size={13} className="ml-1" />
           </button>
@@ -237,19 +237,19 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
             type="button"
             onClick={onOpenEnergy}
             aria-label="Enerji detayını aç"
-            className="bg-zinc-950/90 border border-zinc-800/80 text-red-400 active:scale-[0.95] rounded-2xl px-3 py-2 flex flex-col items-center justify-center gap-0.5 shadow-sm transition-all hover:border-red-900/40"
+            className="min-h-14 bg-zinc-950/90 border border-zinc-800/80 text-red-400 active:scale-[0.95] rounded-2xl px-2 py-2 flex flex-col items-center justify-center gap-1 shadow-sm transition-all hover:border-red-900/40"
           >
             <Flame size={15} />
-            <span className="text-[7px] font-bold uppercase tracking-wider">Kalori</span>
+            <span className="text-[9px] font-bold">Kalori</span>
           </button>
           <button
             type="button"
             onClick={onOpenWellness}
             aria-label="Uyku ve toparlanmayı aç"
-            className="bg-zinc-950/90 border border-zinc-800/80 text-indigo-400 active:scale-[0.95] rounded-2xl px-3.5 py-2 flex flex-col items-center justify-center gap-0.5 shadow-sm transition-all hover:border-indigo-900/40"
+            className="min-h-14 bg-zinc-950/90 border border-zinc-800/80 text-indigo-400 active:scale-[0.95] rounded-2xl px-2 py-2 flex flex-col items-center justify-center gap-1 shadow-sm transition-all hover:border-indigo-900/40"
           >
             <Moon size={15} />
-            <span className="text-[7px] font-bold uppercase tracking-wider">Uyku</span>
+            <span className="text-[9px] font-bold">Uyku</span>
           </button>
         </div>
       </div>
