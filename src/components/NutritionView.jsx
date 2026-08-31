@@ -579,7 +579,7 @@ const NutritionView = memo(({
             <div className="flex items-center justify-between pt-1 border-t border-zinc-900">
               <span className="text-[9px] font-bold text-zinc-500">Sabit Harcama (kcal)</span>
               <input
-                type="number"
+                type="number" inputMode="decimal"
                 min={0}
                 max={5000}
                 value={currentNutritionForm.neatManualOverride || ''}
@@ -709,7 +709,7 @@ const NutritionView = memo(({
                           <label key={field.key}>
                             <span className="text-[9px] font-bold text-zinc-400 uppercase block mb-1">{field.label}</span>
                             <input
-                              type="number"
+                              type="number" inputMode="decimal"
                               min={INPUT_LIMITS.macro.min}
                               max={INPUT_LIMITS.macro.max}
                               value={meal[field.key] ?? ''}

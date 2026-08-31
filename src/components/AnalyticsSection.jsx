@@ -50,7 +50,7 @@ const AnalyticsSection = memo(({
         )}
         <span className="min-w-0 flex-1">
           <span className="text-[11px] font-black text-zinc-100 block uppercase tracking-widest">{title}</span>
-          <span className="text-[9px] font-mono text-zinc-500 block mt-0.5 truncate">
+          <span className="text-[9px] font-mono text-zinc-500 block mt-0.5 line-clamp-2">
             {summary || `${count} kart`}
           </span>
         </span>

@@ -310,7 +310,7 @@ const AnalyticsView = memo(({
           { key: '1rm', label: '1RM' },
           { key: 'muscle', label: 'Hacim' },
           { key: 'plan', label: 'Plan' },
-          { key: 'nutrition', label: 'Beslenme' },
+          { key: 'nutrition', label: 'Besin' },
           { key: 'coach', label: 'Koç' },
         ].map(t => (
           <button

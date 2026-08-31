@@ -106,7 +106,7 @@ const TrainingView = memo(({
       <button onClick={() => onStart?.()} className="luxury-primary-card w-full bg-cyan-600 active:bg-cyan-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-cyan-950/30">
         <span className="flex items-center gap-3">
           <span className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center"><Zap size={19} /></span>
-          <span className="text-left"><strong className="text-sm block">Serbest Antrenman Başlat</strong><span className="text-[10px] opacity-75">Hazır oluşluk kontrolüyle</span></span>
+          <span className="text-left"><strong className="text-sm block">Serbest Antrenman Başlat</strong><span className="text-[10px] opacity-75">Doğrudan başla, istersen bugünü puanla</span></span>
         </span>
         <ChevronRight size={18} />
       </button>

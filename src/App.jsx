@@ -1,6 +1,6 @@
 import React, { lazy, Suspense, startTransition, useState, useEffect, useLayoutEffect, useRef, useMemo, useCallback, useTransition } from 'react';
 import {
-  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff
+  Plus, Save, Activity, X, Search, Trash2, AlertCircle, Settings, BrainCircuit, Star, Database, WifiOff, ChevronDown
 } from 'lucide-react';
 import {
   startLockScreenActivity, updateLockScreenActivity, stopLockScreenActivity,
@@ -301,6 +301,12 @@ export default function App() {
   const [preWorkoutModal, setPreWorkoutModal] = useState(null);
   const [isEndWorkoutModalOpen, setIsEndWorkoutModalOpen] = useState(false);
   const [readinessForm, setReadinessForm] = useState(DEFAULT_READINESS);
+  // Hazır oluşluk artık antrenmana girmenin önündeki bir kapı değil.
+  // Kaydırıcılar 5/10'da başlıyor; panel kapalıyken "Seansa Başla" bu
+  // varsayılanları gerçek veri gibi kaydediyordu ve 60/100'lük uydurma bir
+  // puan hem seans başlığında görünüyor hem de reçete edilen ağırlıkları
+  // değiştiriyordu. Panel yalnızca açıldığında puan kaydediliyor.
+  const [readinessOpen, setReadinessOpen] = useState(false);
 
   const [view, setView] = useState(() => {
     if (typeof window === 'undefined') return 'home';
@@ -1697,6 +1703,10 @@ export default function App() {
         sleep: Math.min(10, Math.max(1, Math.round(uyku.score / 10))),
       }));
     }
+    // Gerçek bir uyku kaydı varsa panelde zaten ölçülmüş veri duruyor:
+    // o durumda açık geliyor. Yoksa kapalı — kullanıcı antrenmana girmek
+    // için bir form doldurmak zorunda değil.
+    setReadinessOpen(Boolean(uyku));
     setPreWorkoutModal({
       template: templateOrWorkout,
       sleepScore: uyku?.score ?? null,
@@ -1707,13 +1717,22 @@ export default function App() {
   const confirmStartWorkout = () => {
     const template = preWorkoutModal?.template;
     const todayStr = getLocalDateString();
-    const hazir = computeReadiness(readinessForm);
-    const readinessSnapshot = { ...readinessForm, score: hazir.score, zone: hazir.zone.key };
-    const adaptation = buildSessionAdaptation(template, readinessSnapshot, {
-      coachProtocol: activeCoachProtocol,
-      date: todayStr,
-    });
-    const useAdaptedPlan = preWorkoutModal?.adaptationChoice ?? adaptation.recommended;
+    // Puanlanmadıysa readiness null kalıyor. Veri katmanı bu şekli zaten
+    // bekliyor (`filter(w => w.readiness)`, `readiness?.score`); eksik olan,
+    // uygulamanın bu durumu hiç üretmemesiydi.
+    const hazir = readinessOpen ? computeReadiness(readinessForm) : null;
+    const readinessSnapshot = hazir
+      ? { ...readinessForm, score: hazir.score, zone: hazir.zone.key }
+      : null;
+    const adaptation = readinessSnapshot
+      ? buildSessionAdaptation(template, readinessSnapshot, {
+        coachProtocol: activeCoachProtocol,
+        date: todayStr,
+      })
+      : null;
+    const useAdaptedPlan = adaptation
+      ? (preWorkoutModal?.adaptationChoice ?? adaptation.recommended)
+      : false;
     const sessionTemplate = useAdaptedPlan ? adaptation.template : template;
 
     // Süperset bağları ve set yapısı şablondan aynen taşınır.
@@ -5240,9 +5259,13 @@ export default function App() {
           <div className="absolute inset-0 bg-black/90 z-[60] flex justify-center items-center px-4 backdrop-blur-sm">
             <div className="bg-zinc-900 w-full max-h-[88dvh] overflow-y-auto hide-scrollbar rounded-2xl shadow-2xl border border-zinc-800 p-6 flex flex-col">
               <h3 className="text-sm font-bold text-zinc-100 mb-2 uppercase tracking-wide border-b border-zinc-800 pb-3 flex items-center">
-                <BrainCircuit size={16} className="mr-2 text-cyan-500" /> Hazırbulunuşluk
+                <BrainCircuit size={16} className="mr-2 text-cyan-500" /> Antrenmana Başla
               </h3>
-              <p className="text-[11px] text-zinc-400 mb-4 mt-2 leading-tight">Bugünkü yüklenme kararını toparlanma verilerinle desteklemek için mental ve fiziksel durumunu puanla.</p>
+              <p className="text-[11px] text-zinc-400 mb-4 mt-2 leading-tight">
+                {preWorkoutModal.template
+                  ? `"${preWorkoutModal.template.name}" hazır. Doğrudan başlayabilir ya da bugünkü durumunu puanlayıp seansı ona göre ayarlatabilirsin.`
+                  : 'Serbest seans hazır. Doğrudan başlayabilir ya da bugünkü durumunu puanlayıp seansı ona göre ayarlatabilirsin.'}
+              </p>
 
               {preWorkoutModal.sleepScore !== null && preWorkoutModal.sleepScore !== undefined && (
                 <p className="text-[10px] font-mono text-cyan-400 bg-cyan-950/20 border border-cyan-900/40 rounded-xl px-3 py-2 mb-4 leading-relaxed">
@@ -5250,6 +5273,24 @@ export default function App() {
                 </p>
               )}
 
+              <button
+                type="button"
+                onClick={() => setReadinessOpen(o => !o)}
+                aria-expanded={readinessOpen}
+                className={`w-full rounded-2xl border px-3.5 py-3 mb-4 flex items-center justify-between gap-3 text-left transition-colors ${readinessOpen ? 'border-cyan-800/60 bg-cyan-950/20' : 'border-zinc-800 bg-zinc-950/50 active:bg-zinc-900'}`}
+              >
+                <span className="min-w-0">
+                  <strong className={`text-[12px] block ${readinessOpen ? 'text-cyan-300' : 'text-zinc-200'}`}>Bugünü puanla</strong>
+                  <span className="text-[10px] font-mono text-zinc-400 block mt-0.5 leading-snug">
+                    {readinessOpen
+                      ? 'Puan kaydedilecek ve seans buna göre ayarlanacak.'
+                      : 'İsteğe bağlı. Puanlamazsan plan olduğu gibi uygulanır, kayda hazır oluşluk yazılmaz.'}
+                  </span>
+                </span>
+                <ChevronDown size={18} className={`text-zinc-500 shrink-0 transition-transform ${readinessOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {readinessOpen && (<>
               <div className="space-y-4 mb-5">
                 {READINESS_FIELDS.map(f => (
                   <div key={f.key}>
@@ -5338,10 +5379,11 @@ export default function App() {
                   </>
                 );
               })()}
+              </>)}
 
               <div className="flex space-x-3">
                 <button onClick={() => setPreWorkoutModal(null)} className="flex-1 bg-zinc-800 active:bg-zinc-700 text-zinc-300 font-bold py-3.5 rounded-xl uppercase text-xs transition-colors">İptal</button>
-                <button onClick={confirmStartWorkout} className="flex-1 bg-cyan-600 active:bg-cyan-700 text-white font-bold py-3.5 rounded-xl uppercase text-xs transition-colors shadow-lg shadow-cyan-900/20">Seansa Başla</button>
+                <button onClick={confirmStartWorkout} className="flex-1 bg-cyan-700 active:bg-cyan-800 text-white font-bold py-3.5 rounded-xl uppercase text-xs transition-colors shadow-lg shadow-cyan-900/20">{readinessOpen ? 'Puanla ve Başla' : 'Seansa Başla'}</button>
               </div>
             </div>
           </div>

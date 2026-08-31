@@ -233,7 +233,7 @@ const RELEASE_10_3 = release('10.3', '2026-08-30', 'Kapsamlı Kullanıcı Deneyi
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları ve performans bütçeleri tam uyumla doğrulandı.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Okunabilir Tipografi, Sıfır Kontrast Hatası ve Alt Sayfa Modalleri', [
+const RELEASE_10_4 = release('10.4', '2026-08-31', 'Okunabilir Tipografi, Sıfır Kontrast Hatası ve Alt Sayfa Modalleri', [
   item('Tüm Metin Ölçeği İki Punto Büyüdü', 'Arayüzdeki en küçük yazı boyutları 7–13 punto aralığından 9–15 punto aralığına taşındı. Salonda telefonu uzaktan okumak, küçük etiketleri zorlanmadan seçmek mümkün.'),
   item('En Küçük Yazı Artık Ayarı Dinliyor', 'En küçük punto kademesi yazı boyutu ayarının dışında kalmıştı; 51 kullanım noktası ayarı görmezden geliyordu. Artık ölçeğin tamamı ayarla birlikte büyüyor.'),
   item('Sıfır Kontrast Hatası', 'Beş ana ekranda ölçülen 31 WCAG AA kontrast ihlalinin tamamı giderildi. Soluk gri metinler bir kademe açıldı, beyaz yazı taşıyan renkli zeminler bir kademe koyulaştı.'),
@@ -243,6 +243,20 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Okunabil
   item('Çentik ve Home Indicator Koruması', 'Kenardan kenara açılan sayfalarda içerik artık çentiğin ve alt çubuğun altına girmiyor; güvenli alan payları hesaba katılıyor.'),
   item('Kilitlenen Haftalık Plan Düğmesi', 'Ana ekrandan haftalık planı açan düğme tanımsız bir işlevi çağırıyor ve uygulamayı çökertiyordu. Düğme doğru pencereyi açıyor.'),
   item('Devre Dışı Durumlar Korundu', '83 dosyada yapılan renk düzeltmesi sırasında devre dışı buton ve alanların soluk görünümü bilinçli olarak dokunulmadan bırakıldı; pasif olan pasif görünmeye devam ediyor.'),
+  item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-08-31', 'Salonda Kullanılabilirlik: 44 Punto Dokunma Tabanı ve İsteğe Bağlı Hazır Oluşluk', [
+  item('Her Dokunma Hedefi En Az 44 Punto', 'Beş ekran ve altı analiz sekmesinde ölçülen 208 dokunma hedefi 44 puntonun altındaydı; en küçüğü 23×17 puntoydu — gereken alanın beşte biri. Taban tek yerden verildi, artık hiçbiri altında değil.'),
+  item('Set Giriş Alanları Büyüdü', 'Kilo, tekrar ve RIR alanları 40 punto yüksekliğindeydi ve tekrar alanı yalnızca 49 punto genişti. Uygulamanın en çok dokunulan yeri burası; 66 girdinin tamamı tabana çekildi.'),
+  item('Hazır Oluşluk Artık Bir Kapı Değil', 'Antrenmana başlamak beş kaydırıcılı bir formun arkasındaydı. Puanlama isteğe bağlı hale geldi: doğrudan başlayabilir ya da paneli açıp bugünü puanlayabilirsin.'),
+  item('Uydurma Hazır Oluşluk Puanı Kaldırıldı', 'Kaydırıcılara hiç dokunmasan bile varsayılanlar gerçek veri gibi kaydediliyor, 60/100 puan üretiyor ve reçete edilen ağırlıkları değiştiriyordu. Puanlamazsan artık kayda hazır oluşluk yazılmıyor ve seans uyarlanmıyor.'),
+  item('Hareket Adı Yeniden Okunabilir', 'Aktif seansta hareket başlığı satırındaki altı ikon 264 puntoyu yiyor, geriye hareket adına 26 punto kalıyordu. Ad artık satırı alıyor.'),
+  item('Etiketli Hareket Menüsü', 'Yukarı/aşağı taşı, süperset, alternatifler, kas eşlemesi ve çıkar eylemleri tek menüde ve artık yazıyla. Altı çıplak ikonun ne yaptığı tahmin edilmek zorunda değil.'),
+  item('Geçen Seans Satırı Gizlenmiyor', 'Bir önceki seansın setleri gizli kaydırma çubuğu ardında ekran dışında kalıyordu. Setler arasında bakılan referans veri artık satıra sığmıyorsa alta iniyor.'),
+  item('Sayısal Alanlarda Sayı Klavyesi', 'Dört alan mobilde tam klavye açıyordu; hepsi ondalık tuş takımına geçti.'),
+  item('Analiz Sekmesi ve Özet Satırları', 'Altı analiz sekmesi satıra sığmıyor, "BESLENME" kırpılıyordu. Kart özetleri de ortalarından kesiliyordu; artık iki satıra iniyorlar.'),
+  item('Başlık ve Kalan Kontrast Hataları', 'Aktif seanstaki hedef ve rekor satırlarının kontrastı eşiğin altındaydı, giderildi. Uygulama başlığı üç satıra bölünmüyor; üst çubuk 110 puntodan 76 puntoya indi.'),
   item('492/492 Test ve Bütünlük', 'Tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
 ]);
 
@@ -320,6 +334,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_4,
   RELEASE_10_3,
   RELEASE_10_2,
   RELEASE_10_1,

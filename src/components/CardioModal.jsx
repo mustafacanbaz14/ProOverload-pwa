@@ -340,7 +340,7 @@ const CardioModal = memo(({
               <div className="flex items-center gap-1.5">
                 <span className="text-[11px] font-mono text-zinc-500">×</span>
                 <input
-                  type="number"
+                  type="number" inputMode="decimal"
                   step="0.05"
                   min="0.1"
                   max="3.0"

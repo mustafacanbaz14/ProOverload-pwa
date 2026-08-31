@@ -52,7 +52,7 @@ const MuscleScorecardCard = memo(({ report }) => {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="text-[11px] font-bold text-zinc-200 block truncate">{r.muscle}</span>
-                    <span className="text-[9px] font-mono text-zinc-400 block truncate">
+                    <span className="text-[9px] font-mono text-zinc-400 block line-clamp-2">
                       sınırlayan: {r.limiting.label.toLowerCase()} · {r.weeklyVolume} set/hafta
                       {r.strengthChange !== null && ` · 1RM %${r.strengthChange > 0 ? '+' : ''}${r.strengthChange}`}
                     </span>

@@ -458,7 +458,7 @@ const EnergyDetailModal = memo(({
                                         <div>
                                           <label className="text-[8px] font-mono text-zinc-500 block mb-0.5">Sabit Harcama (kcal)</label>
                                           <input
-                                            type="number"
+                                            type="number" inputMode="decimal"
                                             value={cur.neatManualOverride || ''}
                                             onChange={(e) => {
                                               const val = e.target.value;

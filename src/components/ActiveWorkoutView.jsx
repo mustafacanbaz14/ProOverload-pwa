@@ -1,5 +1,5 @@
-import React, { memo } from 'react';
-import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame, Volume2, VolumeX, RotateCcw, CheckCircle2, SlidersHorizontal, Minus, LifeBuoy, Ghost, Hourglass } from 'lucide-react';
+import React, { memo, useState } from 'react';
+import { Activity, Pause, Play, Plus, X, Trash2, Trophy, TrendingUp, AlertCircle, Save, Timer, Layers, Link2, Unlink, BookmarkPlus, Settings, HeartPulse, ArrowUp, ArrowDown, Repeat, BatteryLow, TrendingDown, Flame, Volume2, VolumeX, RotateCcw, CheckCircle2, SlidersHorizontal, Minus, LifeBuoy, Ghost, Hourglass, MoreHorizontal } from 'lucide-react';
 import WorkoutTimer from './WorkoutTimer';
 import { FORM_RATINGS, SET_TYPES, SMALL_MUSCLE_GROUPS } from '../utils/constants';
 import {
@@ -74,6 +74,13 @@ const ActiveWorkoutView = memo(({
   resolveLoad,
   bodyweightInfoFor,
 }) => {
+  // Hareket başlığındaki altı ikon satırın 264px'ini yiyordu ve geriye
+  // hareket adına 26px kalıyordu — ekranın en önemli bilgisi okunamıyordu.
+  // Eylemler tek bir menüye toplandı; menüde ETİKETLİ duruyorlar, çünkü
+  // altı çıplak ikonun ne yaptığı zaten tahmin edilmek zorundaydı.
+  // Kanca erken dönüşten önce: koşullu çağrılamaz.
+  const [acikMenu, setAcikMenu] = useState(null);
+
   if (!activeWorkout) return null;
   const restCue = nextSetCue(activeWorkout);
 
@@ -478,59 +485,58 @@ const ActiveWorkoutView = memo(({
           return (
             <div key={ex.id} className="luxury-feature-card bg-zinc-900/95 rounded-3xl border border-zinc-800/90 overflow-hidden shadow-xl">
               <div className="bg-zinc-950/80 px-3.5 py-2.5 border-b border-zinc-800/80 flex justify-between items-center gap-2">
-                <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wide truncate min-w-0 flex items-center">
+                <h3 className="text-xs font-bold text-zinc-100 uppercase tracking-wide truncate min-w-0 flex items-center flex-1">
                   {ex.supersetId && <Link2 size={12} className="mr-1.5 text-purple-400 shrink-0" />}
                   <span className="text-cyan-400 mr-1">{exIndex + 1}.</span>
                   <span className="truncate">{ex.name}</span>
                 </h3>
-                <div className="flex items-center shrink-0">
-                  {/* Sıralama: hareketi listede yukarı/aşağı taşır. Uçtaki
-                      hareket için buton pasif kalır ki sıra sessizce bozulmasın. */}
-                  <button
-                    onClick={() => onMoveExercise?.(ex.id, -1)}
-                    disabled={exIndex === 0}
-                    title="Yukarı taşı"
-                    aria-label="Hareketi yukarı taşı"
-                    className="p-1.5 text-zinc-400 active:text-cyan-400 disabled:opacity-25 disabled:active:text-zinc-600"
-                  >
-                    <ArrowUp size={13} />
-                  </button>
-                  <button
-                    onClick={() => onMoveExercise?.(ex.id, 1)}
-                    disabled={exIndex === (activeWorkout.exercises || []).length - 1}
-                    title="Aşağı taşı"
-                    aria-label="Hareketi aşağı taşı"
-                    className="p-1.5 text-zinc-400 active:text-cyan-400 disabled:opacity-25 disabled:active:text-zinc-600"
-                  >
-                    <ArrowDown size={13} />
-                  </button>
-                  <button
-                    onClick={() => onToggleSuperset?.(ex.id)}
-                    title={ex.supersetId ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
-                    aria-label={ex.supersetId ? 'Süperset bağını kaldır' : 'Sonraki hareketle süperset yap'}
-                    className={`p-1.5 transition-colors ${ex.supersetId ? 'text-purple-400' : 'text-zinc-400 active:text-purple-400'}`}
-                  >
-                    {ex.supersetId ? <Unlink size={13} /> : <Link2 size={13} />}
-                  </button>
-                  <button
-                    onClick={() => onSubstitute?.(ex.name, ex.id)}
-                    title="Bu hareketin yerine ne yapılabilir"
-                    aria-label="Yerine geçebilecek hareketleri gör"
-                    className="text-zinc-400 active:text-cyan-400 p-1.5"
-                  >
-                    <Repeat size={13} />
-                  </button>
-                  <button
-                    onClick={() => onEditExercise?.(ex.name)}
-                    title="Kas eşlemesini düzenle"
-                    aria-label="Kas eşlemesini düzenle"
-                    className="text-zinc-400 active:text-cyan-400 p-1.5"
-                  >
-                    <Settings size={13} />
-                  </button>
-                  <button aria-label="Hareketi antrenmandan çıkar" onClick={() => setActiveWorkout(prev => ({ ...prev, exercises: prev.exercises.filter(e => e.id !== ex.id) }))} className="text-zinc-400 active:text-red-500 p-1.5"><X size={14} /></button>
-                </div>
+                <button
+                  onClick={() => setAcikMenu(acikMenu === ex.id ? null : ex.id)}
+                  aria-expanded={acikMenu === ex.id}
+                  aria-label={`${ex.name} hareket eylemleri`}
+                  className={`shrink-0 rounded-xl transition-colors ${acikMenu === ex.id ? 'bg-zinc-800 text-cyan-400' : 'text-zinc-400 active:text-cyan-400'}`}
+                >
+                  <MoreHorizontal size={18} />
+                </button>
               </div>
+
+              {acikMenu === ex.id && (
+                <div className="bg-zinc-950/60 border-b border-zinc-800/80 p-2 grid grid-cols-2 gap-1.5">
+                  {[
+                    { key: 'up', icon: ArrowUp, label: 'Yukarı taşı', disabled: exIndex === 0,
+                      onClick: () => onMoveExercise?.(ex.id, -1) },
+                    { key: 'down', icon: ArrowDown, label: 'Aşağı taşı',
+                      disabled: exIndex === (activeWorkout.exercises || []).length - 1,
+                      onClick: () => onMoveExercise?.(ex.id, 1) },
+                    { key: 'superset', icon: ex.supersetId ? Unlink : Link2,
+                      label: ex.supersetId ? 'Süperset bağını kaldır' : 'Süperset yap',
+                      tone: ex.supersetId ? 'text-purple-300' : '',
+                      onClick: () => { onToggleSuperset?.(ex.id); setAcikMenu(null); } },
+                    { key: 'sub', icon: Repeat, label: 'Alternatifleri gör',
+                      onClick: () => { onSubstitute?.(ex.name, ex.id); setAcikMenu(null); } },
+                    { key: 'map', icon: Settings, label: 'Kas eşlemesi',
+                      onClick: () => { onEditExercise?.(ex.name); setAcikMenu(null); } },
+                    { key: 'remove', icon: X, label: 'Antrenmandan çıkar', tone: 'text-red-300',
+                      onClick: () => {
+                        setActiveWorkout(prev => ({ ...prev, exercises: prev.exercises.filter(e => e.id !== ex.id) }));
+                        setAcikMenu(null);
+                      } },
+                  ].map(eylem => {
+                    const Icon = eylem.icon;
+                    return (
+                      <button
+                        key={eylem.key}
+                        onClick={eylem.onClick}
+                        disabled={eylem.disabled}
+                        className={`rounded-xl border border-zinc-800 bg-zinc-900/70 px-2.5 py-2 flex items-center gap-2 text-left active:bg-zinc-800 disabled:opacity-30 ${eylem.tone || 'text-zinc-300'}`}
+                      >
+                        <Icon size={14} className="shrink-0" />
+                        <span className="text-[10px] font-bold leading-tight">{eylem.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
 
               {ex.supersetId && (
                 <div className="bg-purple-950/25 px-3 py-1.5 border-b border-purple-900/40 flex items-center gap-1.5">
@@ -770,14 +776,18 @@ const ActiveWorkoutView = memo(({
                     </span>
                     <span className="font-mono text-sm font-bold text-emerald-400">{target.weight} kg × {target.reps}</span>
                   </div>
-                    <div className="text-[10px] text-emerald-700 font-mono mt-1">
+                    <div className="text-[10px] text-emerald-400 font-mono mt-1">
                       {target.note} · {target.confidence === 'high' ? 'yüksek güven' : 'orta güven'}
                     </div>
                 </div>
               )}
 
+              {/* Yatay kaydırıcıydı ve kaydırma çubuğu gizliydi: son setler
+                  ekran dışında kalıyor, kullanıcı da kaydırabileceğini
+                  göremiyordu. Setler arasında bakılan referans veri bu —
+                  saklanacak yer değil, satıra sığmıyorsa alta insin. */}
               {recentData && (
-                <div className="bg-cyan-950/20 px-3 py-1.5 border-b border-zinc-800 text-[10px] text-cyan-500/70 font-mono flex gap-3 overflow-x-auto hide-scrollbar items-center">
+                <div className="bg-cyan-950/20 px-3 py-1.5 border-b border-zinc-800 text-[10px] text-cyan-500/70 font-mono flex flex-wrap gap-x-3 gap-y-1 items-center">
                   <span className="text-cyan-600 font-bold shrink-0">Geçen ({formatDay(recentData.date)}):</span>
                   {recentData.sets.map((s, i) => (
                     <span key={i} className="shrink-0">{s.weight}x{s.reps} {s.rir !== '' && s.rir !== undefined && `(RIR:${s.rir})`}</span>
@@ -788,7 +798,7 @@ const ActiveWorkoutView = memo(({
               {record && (
                 <div className="bg-yellow-950/15 px-3 py-1.5 border-b border-zinc-800 text-[10px] font-mono flex items-center gap-2">
                   <Trophy size={10} className="text-yellow-500 shrink-0" />
-                  <span className="text-yellow-600/80">Rekor: <span className="text-yellow-500 font-bold">{record.e1rm} kg</span> (1RM tahmini · {record.weight}×{record.reps})</span>
+                  <span className="text-yellow-500/90">Rekor: <span className="text-yellow-500 font-bold">{record.e1rm} kg</span> (1RM tahmini · {record.weight}×{record.reps})</span>
                 </div>
               )}
 
