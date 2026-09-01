@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.20 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.21 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -184,6 +184,21 @@ Durum: Uygulandı.
 - Dokunma hedeflerini, erişilebilir basılı durumlarını ve açıklayıcı alt metinleri koru.
 - Detaylı görünümde bütün beslenme, ölçüm, analiz ve döngü işlevlerini birlikte göstermeye devam et.
 - PWA, localStorage, hesaplamalar ve yedek biçimini değiştirme.
+
+## 10.21 — Güvenli antrenman önerileri ve katmanlı arşiv
+
+Durum: Uygulandı.
+
+- Şablon sıralamasını öneri zorunluluğundan ayır; yeterli veri ve belirgin fark yoksa öneri gösterme.
+- Aktif programdaki bugünkü seansı algoritmik seçim gibi değil, kullanıcının planı olarak etiketle.
+- Tamamlanmış seans, toparlanma engeli ve güncel ağrı yüklenmesinde öneri kartını bastır.
+- Basit Antrenman ekranından yinelenen hazırlık şemasını kaldır ve seçilen amaca göre başlığı değiştir.
+- Serbest başlatma ile son seansı tekrarlamayı güveni sınırlı hacim önerisinin önünde tut.
+- Geçmiş aramasını ikincil enerji aracından önce göster.
+- Basit antrenman ve beslenme arşiv kartlarında yoğun ayrıntıları tek dokunuşla açılır hale getir.
+- Ay değiştiren haftayı bölmeden, en yeni gerçek kayıt tarihinin ayı altında göster.
+- Öneri yokluğu, yakın puan, plan ayrımı ve tarih klasörlemesini regresyon testine bağla.
+- PWA, localStorage, hesaplamalar, detaylı görünüm ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

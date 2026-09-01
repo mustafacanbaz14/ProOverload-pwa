@@ -426,7 +426,7 @@ const RELEASE_10_19 = release('10.19', '2026-09-01', 'Odaklı Antrenman ve Sade 
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.19 yalnız görünür arayüz hiyerarşisini ve renk tercihini genişletiyor; localStorage, veri şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı Beslenme ve Anlaşılır Gelişim', [
+const RELEASE_10_20 = release('10.20', '2026-09-01', 'Odaklı Beslenme ve Anlaşılır Gelişim', [
   item('Beslenme Üç Net Amaca Ayrıldı', 'Basit görünümde Kayıt, Özet ve Analiz aynı uzun sayfada üst üste durmuyor; kullanıcı yapmak istediği işi tek dokunuşla seçiyor.'),
   item('Günlük Kayıt Yaklaşık Tek Ekrana İndi', '393×852 mobil ölçümünde varsayılan kayıt içeriği 1120 pikselden 790 piksele indi; besin, toplam makro, su, öğün ve kaydetme işlevleri korunuyor.'),
   item('Özet Ayrı ve Okunabilir', 'Kalori hedefi, alınan, yakılan, kalan, protein ve diğer makrolar ayrı Özet alanında tek mobil ekrana sığıyor.'),
@@ -437,6 +437,22 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı 
   item('Gelişim Dili Kısaldı', 'Basit görünümde Vücut & Hedefler ve Analizler yerine Ölçüm ve Analiz kullanılıyor; kadın profillerinde Döngü seçeneği korunuyor.'),
   item('Başlık Seçilen Görevi Açıklıyor', 'Gelişim merkezi seçime göre Ölçüm ve hedefler, İlerlemeni incele veya Döngü takibi başlığını ve ilgili sonraki adımı gösteriyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.20 yalnız arayüz hiyerarşisini değiştiriyor; localStorage, veri şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Güvenli Antrenman Önerileri ve Katmanlı Arşiv', [
+  item('Öneri Vermemek Geçerli Bir Sonuç', 'Şablon motoru artık seçenekler arasından zorunlu olarak birinciyi göstermiyor; yeterli kanıt veya belirgin üstünlük yoksa antrenman önerisi üretmiyor.'),
+  item('Plan ile Algoritma Ayrıldı', 'Aktif haftalık programdaki bugünkü seans Akıllı Seçim diye sunulmuyor; Programdan etiketiyle kullanıcının kendi planı olduğu açıkça belirtiliyor.'),
+  item('Dört Aşamalı Güven Kapısı', 'Plansız öneri için en az iki tamamlanmış ağırlık seansı, bu haftadan gerçek hacim sinyali, daha önce kullanılmış şablon ve en yakın seçeneğe karşı en az altı puan fark gerekiyor.'),
+  item('Riskte Öneri Susturuluyor', 'Bugünkü antrenman tamamlandıysa, toparlanma günü aktifse, düşük toparlanma uyarısı varsa veya şablondaki hareketler güncel ağrı bölgelerini yüklüyorsa öneri kartı gösterilmiyor.'),
+  item('Serbest Başlangıç Yeniden Birincil', 'Veri-temelli şablon önerisi günlük başlatma ve son seansı tekrarlama seçeneklerinin önüne geçmiyor; planlı seans varsa yalnız o seans üstte kalıyor.'),
+  item('Antrenman Başlığı Niyete Uyumlu', 'Bugün, Program ve Şablonlar alanları Antrenmana başla, Programını düzenle ve Şablonlarını yönet başlıklarıyla seçilen işi doğrudan anlatıyor.'),
+  item('Hazırlık Şeması Basit Moddan Çıktı', 'Hazırla–Çalış–Değerlendir adımları ayrıntılı kullanımda korunurken günlük basit ekranda yinelenen süreç açıklaması kaldırıldı; 393×852 ekranda Bugün alanı kaydırmasız sığıyor.'),
+  item('Arşivde Arama Önce Geliyor', 'Tarih, hareket ve öğün araması kayıt türü seçiminin hemen altına taşındı; gün gün enerji tablosu aramayı aşağı iten ilk eylem olmaktan çıktı.'),
+  item('Antrenman Kartları Katmanlandı', 'Basit arşiv kartı önce tarih, hacim, etkili set, Setleri Düzenle ve Bugün Tekrarla eylemlerini gösteriyor; hareket setleri, şablona çevirme ve silme istenince açılıyor.'),
+  item('Beslenme Enerjisi Katmanlandı', 'Beslenme geçmişinde günlük makrolar ile Düzenle ve Kalori Detayı önde; tarihsel enerji denklemi, manuel yakım ve silme işlemi tek açılır ayrıntıda korunuyor.'),
+  item('Ay Başlığı Gerçek Kayıtla Uyumlu', 'Ay değiştiren hafta bölünmeden korunuyor fakat klasörü haftanın başlangıcına değil içindeki en yeni kayıt tarihine göre seçiliyor; 1 Eylül kaydı artık Ağustos altında görünmüyor.'),
+  item('496 Çekirdek Regresyon Kontrolü', 'Önerinin veri yokluğunda susması, yakın puanlı şablon seçmemesi, yalnız tanıdık ve güvenli adayı göstermesi ile planlı seans ayrımı otomatik testlere bağlandı.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.21 localStorage anahtarlarını, kullanıcı kayıtlarını, yedek biçimini veya çevrimdışı PWA davranışını değiştirmiyor; yalnız karar ve görünürlük katmanını düzeltiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -513,6 +529,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_20,
   RELEASE_10_19,
   RELEASE_10_18,
   RELEASE_10_17,

@@ -86,13 +86,89 @@ const TrainingView = memo(({
     : latestDraft?.kind === 'wizard'
       ? `Sihirbaz · ${latestDraft.step || 1}. adım`
       : '';
+  const headerCopy = interfaceMode === 'detailed'
+    ? { title: 'Antrenman merkezini yönet', subtitle: 'Bugünün seansı, programın ve şablonların tek yerde.' }
+    : {
+      today: { title: 'Antrenmana başla', subtitle: 'Planlı seansı aç, serbest başla veya son seansı tekrarla.' },
+      program: { title: 'Programını düzenle', subtitle: 'Yeni program kur veya haftalık planını değiştir.' },
+      templates: { title: 'Şablonlarını yönet', subtitle: 'Kayıtlı seansını bul, düzenle veya başlat.' },
+    }[simpleFocus];
+  const recommendationCard = recommendation ? (
+    <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <span className="text-[9px] uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
+            {recommendation.source === 'plan'
+              ? <CalendarRange size={12} className="text-emerald-400" />
+              : <Target size={12} className="text-cyan-400" />}
+            {recommendation.source === 'plan' ? 'Bugünün Planı' : 'Haftalık Açığa Uyan Seans'}
+          </span>
+          <h3 className="text-[15px] font-black text-zinc-100 truncate mt-1">{recommendation.template.name}</h3>
+          <span className="text-[9px] text-zinc-400">~{recommendation.minutes} dk · {recommendation.preview.totalSets} set</span>
+        </div>
+        <div className={`rounded-2xl border px-3 py-2 text-center shrink-0 ${recommendation.source === 'plan' ? 'border-emerald-900/60 bg-emerald-950/25' : 'border-cyan-900/60 bg-cyan-950/25'}`}>
+          <ShieldCheck size={16} className={`mx-auto ${recommendation.source === 'plan' ? 'text-emerald-400' : 'text-cyan-400'}`} />
+          <span className="mt-1 text-[7px] font-bold uppercase tracking-wider text-zinc-300 block">
+            {recommendation.source === 'plan' ? 'Programdan' : 'Yüksek güven'}
+          </span>
+        </div>
+      </div>
+      <div className="space-y-1.5">
+        <p className="text-[9px] font-mono text-zinc-300 leading-relaxed flex gap-1.5">
+          <span className={recommendation.source === 'plan' ? 'text-emerald-400' : 'text-cyan-400'}>•</span>
+          {recommendation.source === 'plan'
+            ? 'Aktif haftalık programında bugün için atanmış seans.'
+            : recommendation.reasons[0]}
+        </p>
+        {recommendationOpen && recommendation.reasons
+          .slice(recommendation.source === 'plan' ? 0 : 1, 2)
+          .map(reason => (
+            <p key={reason} className="text-[9px] font-mono text-zinc-300 leading-relaxed flex gap-1.5"><span className="text-cyan-400">•</span>{reason}</p>
+          ))}
+        {recommendationOpen && recommendation.risks.slice(0, 1).map(risk => (
+          <p key={risk} className="text-[9px] font-mono text-amber-300/90 leading-relaxed flex gap-1.5"><AlertTriangle size={10} className="shrink-0 mt-0.5" />{risk}</p>
+        ))}
+      </div>
+      <button
+        type="button"
+        onClick={() => setRecommendationOverride(!recommendationOpen)}
+        aria-expanded={recommendationOpen}
+        className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/55 px-3 flex items-center justify-between text-left text-[10px] font-bold text-zinc-300 active:bg-zinc-900"
+      >
+        <span>{recommendationOpen ? 'Öneri ayrıntılarını gizle' : 'Neden bu seans? Kas haritasını göster'}</span>
+        <ChevronDown size={14} className={`text-zinc-400 transition-transform ${recommendationOpen ? 'rotate-180' : ''}`} />
+      </button>
+      {recommendationOpen && recommendation.preview?.byMuscle && (
+        <Suspense fallback={<div className="h-[430px] rounded-2xl border border-zinc-800 bg-zinc-950/40" />}>
+          <MuscleHeatmap
+            muscleVolume={recommendation.preview.byMuscle}
+            experienceLevel={experienceLevel}
+            gender={gender}
+            title="Bu Seans Neyi Çalıştırır"
+            subtitle="Teorik"
+          />
+        </Suspense>
+      )}
+      <div className="grid grid-cols-2 gap-2">
+        <button onClick={() => onPreview?.(recommendation.template)} className="min-h-11 rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 active:bg-zinc-800">İncele</button>
+        <button onClick={() => onStart?.(recommendation.template)} className={`min-h-11 rounded-xl py-2.5 text-[9px] font-black uppercase text-white flex items-center justify-center gap-1.5 ${recommendation.source === 'plan' ? 'bg-emerald-700 active:bg-emerald-800' : 'bg-cyan-700 active:bg-cyan-800'}`}><Play size={12} /> Başlat</button>
+      </div>
+      {recommendationOpen && (
+        <p className="text-[8px] font-mono text-zinc-400">
+          {recommendation.source === 'plan'
+            ? 'Bu seçim öneri motorundan değil, aktif haftalık programından gelir.'
+            : 'Yalnız tamamladığın şablonlar değerlendirilir; belirgin ve risksiz bir seçenek yoksa öneri gösterilmez.'}
+        </p>
+      )}
+    </section>
+  ) : null;
 
   return (
     <div data-view-scroll="training" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <ViewHeader
         eyebrow="Antrenman Merkezi"
-        title="Bugünkü çalışmanı yönet"
-        subtitle="Başlat, kaldığın yerden devam et veya programını düzenle."
+        title={headerCopy.title}
+        subtitle={headerCopy.subtitle}
         action={onOpenSettings ? (
           <button onClick={onOpenSettings} aria-label="Antrenman ayarlarını aç" className="w-11 h-11 rounded-xl border border-zinc-800 bg-zinc-900 text-zinc-400 flex items-center justify-center active:bg-zinc-800">
             <Settings2 size={17} />
@@ -100,7 +176,7 @@ const TrainingView = memo(({
         ) : null}
       />
 
-      <WorkoutFlowStepper stage="prepare" compact={interfaceMode === 'simple'} />
+      {interfaceMode === 'detailed' && <WorkoutFlowStepper stage="prepare" />}
 
       {interfaceMode === 'simple' && (
         <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-1.5 shadow-inner" aria-label="Antrenman alanı seç">
@@ -128,58 +204,7 @@ const TrainingView = memo(({
       )}
 
       {showToday && <>
-      {recommendation && (
-        <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0">
-              <span className="text-[9px] uppercase tracking-widest text-zinc-400 flex items-center gap-1.5"><Target size={12} className="text-emerald-400" /> Bu Hafta İçin Akıllı Seçim</span>
-              <h3 className="text-[15px] font-black text-zinc-100 truncate mt-1">{recommendation.template.name}</h3>
-              <span className="text-[9px] text-zinc-400">~{recommendation.minutes} dk · {recommendation.preview.totalSets} set</span>
-            </div>
-            <div className="rounded-2xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-center shrink-0">
-              <strong className="text-lg text-emerald-400 block leading-none">{recommendation.score}</strong>
-              <span className="text-[7px] font-bold uppercase tracking-wider text-zinc-400">{recommendation.label}</span>
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            {recommendation.reasons.slice(0, recommendationOpen ? 2 : 1).map(reason => (
-              <p key={reason} className="text-[9px] font-mono text-zinc-300 leading-relaxed flex gap-1.5"><span className="text-emerald-400">•</span>{reason}</p>
-            ))}
-            {recommendationOpen && recommendation.risks.slice(0, 1).map(risk => (
-              <p key={risk} className="text-[9px] font-mono text-amber-300/90 leading-relaxed flex gap-1.5"><AlertTriangle size={10} className="shrink-0 mt-0.5" />{risk}</p>
-            ))}
-          </div>
-          <button
-            type="button"
-            onClick={() => setRecommendationOverride(!recommendationOpen)}
-            aria-expanded={recommendationOpen}
-            className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/55 px-3 flex items-center justify-between text-left text-[10px] font-bold text-zinc-300 active:bg-zinc-900"
-          >
-            <span>{recommendationOpen ? 'Öneri ayrıntılarını gizle' : 'Neden bu seans? Kas haritasını göster'}</span>
-            <ChevronDown size={14} className={`text-zinc-400 transition-transform ${recommendationOpen ? 'rotate-180' : ''}`} />
-          </button>
-          {/* Seçili antrenmanın vücutta nereye denk geldiği. Buradaki karar
-              "bugün ne çalışayım" — o kararı metinle anlatmak yerine haritada
-              göstermek, listedeki gerekçelerden daha hızlı okunuyor. */}
-          {recommendationOpen && recommendation.preview?.byMuscle && (
-            <Suspense fallback={<div className="h-[430px] rounded-2xl border border-zinc-800 bg-zinc-950/40" />}>
-              <MuscleHeatmap
-                muscleVolume={recommendation.preview.byMuscle}
-                experienceLevel={experienceLevel}
-                gender={gender}
-                title="Bu Seans Neyi Çalıştırır"
-                subtitle="Teorik"
-              />
-            </Suspense>
-          )}
-
-          <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => onPreview?.(recommendation.template)} className="rounded-xl border border-zinc-700 py-2.5 text-[9px] font-bold text-zinc-300 active:bg-zinc-800">Planı İncele</button>
-            <button onClick={() => onStart?.(recommendation.template)} className="rounded-xl bg-emerald-700 py-2.5 text-[9px] font-black uppercase text-white active:bg-emerald-800 flex items-center justify-center gap-1.5"><Play size={12} /> Başlat</button>
-          </div>
-          {recommendationOpen && <p className="text-[8px] font-mono text-zinc-400">Puan; haftalık hacim açığı, tavan riski ve son 48 saat yüklenmesini birlikte tartar.</p>}
-        </section>
-      )}
+      {recommendation?.source === 'plan' && recommendationCard}
 
       <button onClick={() => onStart?.()} className="luxury-primary-card w-full bg-cyan-600 active:bg-cyan-700 text-white rounded-2xl p-4 flex items-center justify-between shadow-lg shadow-cyan-950/30">
         <span className="flex items-center gap-3">
@@ -208,6 +233,8 @@ const TrainingView = memo(({
           <Play size={15} className="text-emerald-400 shrink-0" />
         </button>
       )}
+
+      {recommendation?.source === 'volume' && recommendationCard}
 
       {progressionBlocks.length > 0 && (
         <section className="overflow-hidden rounded-2xl border border-cyan-900/55 bg-cyan-950/15">

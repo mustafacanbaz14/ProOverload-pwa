@@ -201,22 +201,23 @@ export const groupIntoWeeks = (items = [], getDate = (x) => x?.date) => {
 /**
  * Hafta gruplarını ay başlıkları altında toplar.
  *
- * Ay değiştiren bir hafta (örn. 27 Tem–2 Ağu), başladığı aya yazılır. Böylece
- * aynı hafta iki ayın altında kopyalanmaz ve pazartesi–pazar bütünlüğü korunur.
+ * Ay değiştiren bir hafta (örn. 31 Ağu–6 Eyl), hafta içindeki en yeni kaydın
+ * ayına yazılır. Böylece 1 Eylül kaydı "Ağustos" klasöründe görünmez; hafta iki
+ * aya kopyalanmadan pazartesi–pazar bütünlüğü yine korunur.
  */
 export const groupWeeksIntoMonths = (weekGroups = []) => {
   const months = [];
   const index = new Map();
 
   weekGroups.forEach(week => {
-    const start = toLocalDate(week.weekStart);
-    if (!gecerli(start)) return;
-    const key = `${start.getFullYear()}-${String(start.getMonth() + 1).padStart(2, '0')}`;
+    const anchor = toLocalDate(week.lastDate || week.weekStart);
+    if (!gecerli(anchor)) return;
+    const key = `${anchor.getFullYear()}-${String(anchor.getMonth() + 1).padStart(2, '0')}`;
     let month = index.get(key);
     if (!month) {
       month = {
         key,
-        label: `${MONTH_LONG[start.getMonth()]} ${start.getFullYear()}`,
+        label: `${MONTH_LONG[anchor.getMonth()]} ${anchor.getFullYear()}`,
         weeks: [],
         itemCount: 0,
       };

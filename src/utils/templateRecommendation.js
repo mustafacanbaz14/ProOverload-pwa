@@ -96,6 +96,7 @@ export const rankTemplateRecommendations = (templates = [], {
     const durationPenalty = Math.max(0, minutes - 100) * 0.12;
     const score = clamp(Math.round(45 + benefit - overloadPenalty - freshnessPenalty - durationPenalty), 0, 100);
     const reasons = [];
+    const hasGap = needs.length > 0;
 
     needs
       .sort((a, b) => (b.target - b.current) - (a.target - a.current) || b.added - a.added)
@@ -126,9 +127,80 @@ export const rankTemplateRecommendations = (templates = [], {
       risks: [...new Set(risks)].slice(0, 3),
       minutes,
       preview,
+      hasGap,
     };
   }).sort((a, b) => b.score - a.score || Number(Boolean(b.template?.favorite)) - Number(Boolean(a.template?.favorite)));
 };
 
-export const bestTemplateRecommendation = (templates, options) =>
-  rankTemplateRecommendations(templates, options)[0] || null;
+/**
+ * Günlük ekranda gösterilebilecek güvenilir tek öneriyi seçer.
+ *
+ * Sıralama motoru karşılaştırma için her şablona puan verir; bu, listenin
+ * birincisinin mutlaka iyi bir öneri olduğu anlamına gelmez. Plan yokken öneri
+ * ancak kullanıcının daha önce tamamladığı, haftalık gerçek bir açığı kapatan,
+ * risk taşımayan ve en yakın rakibinden açıkça ayrılan bir şablonsa gösterilir.
+ * Bu koşullar yoksa `null` dönmek, rastgele bir antrenmanı otoriter biçimde
+ * önermekten daha doğrudur.
+ */
+export const bestTemplateRecommendation = (templates = [], options = {}) => {
+  const {
+    scheduledTemplate = null,
+    allowUnplanned = true,
+    doneToday = false,
+    recoveryBlocked = false,
+    minimumScore = 75,
+    minimumMargin = 6,
+    currentVolume = {},
+    workouts = [],
+  } = options;
+
+  if (doneToday || recoveryBlocked) return null;
+
+  const ranked = rankTemplateRecommendations(templates, options)
+    .filter(item => item.template?.id && item.preview?.totalSets > 0);
+
+  if (scheduledTemplate?.id) {
+    const planned = ranked.find(item => item.template.id === scheduledTemplate.id)
+      || rankTemplateRecommendations([scheduledTemplate], options)
+        .find(item => item.preview?.totalSets > 0);
+    return planned ? {
+      ...planned,
+      source: 'plan',
+      confidence: 'plan',
+      label: 'Bugünkü plan',
+    } : null;
+  }
+
+  if (!allowUnplanned) return null;
+
+  // Haftanın başında veya geçmişsiz profilde bütün kaslar sıfırdır. Bu durumda
+  // puan çoğunlukla şablon büyüklüğünü ödüllendirir ve seçim kişisel değildir.
+  const hasWeeklySignal = MUSCLE_GROUPS.some(muscle => parseNumber(currentVolume[muscle]) > 0);
+  const completedStrengthSessions = (workouts || []).filter(workout =>
+    (workout.exercises || []).some(exercise => completedSetCount(exercise) > 0)
+  ).length;
+  if (!hasWeeklySignal || completedStrengthSessions < 2) return null;
+
+  const usedTemplateIds = new Set((workouts || [])
+    .map(workout => workout?.sourceTemplateId)
+    .filter(Boolean));
+  const eligible = ranked.filter(item => {
+    const familiar = parseNumber(item.template?.useCount) > 0 || usedTemplateIds.has(item.template.id);
+    return familiar
+      && item.hasGap
+      && item.score >= minimumScore
+      && item.risks.length === 0;
+  });
+
+  const first = eligible[0];
+  if (!first) return null;
+  const second = eligible[1];
+  if (second && first.score - second.score < minimumMargin) return null;
+
+  return {
+    ...first,
+    source: 'volume',
+    confidence: 'high',
+    label: 'Veriye dayalı',
+  };
+};

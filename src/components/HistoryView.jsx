@@ -139,6 +139,15 @@ const HistoryView = memo(({
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
   const [addDate, setAddDate] = useState(getLocalDateString);
+  const [openRecordDetails, setOpenRecordDetails] = useState(() => new Set());
+  const toggleRecordDetails = useCallback((key) => {
+    setOpenRecordDetails(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
   const openAddPanel = () => {
     setAddOpen(true);
     requestAnimationFrame(() => document.querySelector('[data-view-scroll="history"]')?.scrollTo({ top: 0, behavior: 'smooth' }));
@@ -252,6 +261,17 @@ const HistoryView = memo(({
         </div>
       )}
 
+      <div className="relative">
+        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Tarih, hareket, öğün veya kayıt ara…"
+          aria-label="Geçmişte ara"
+          className="w-full bg-zinc-950/90 border border-zinc-800/80 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs text-zinc-200 outline-none focus:border-cyan-500 shadow-inner"
+        />
+      </div>
+
       <button
         type="button"
         onClick={() => onOpenEnergyDay?.('')}
@@ -266,17 +286,6 @@ const HistoryView = memo(({
         </span>
         <span className="text-[9px] font-bold text-red-400 bg-red-950/50 border border-red-900/50 rounded-lg px-2 py-1">Aç</span>
       </button>
-
-      <div className="relative">
-        <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-zinc-500" />
-        <input
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          placeholder="Tarih, hareket, öğün veya kayıt ara…"
-          aria-label="Geçmişte ara"
-          className="w-full bg-zinc-950/90 border border-zinc-800/80 rounded-2xl pl-9 pr-3.5 py-2.5 text-xs text-zinc-200 outline-none focus:border-cyan-500 shadow-inner"
-        />
-      </div>
 
       {historyTab === 'all' && (
         <div className="space-y-3">
@@ -369,6 +378,8 @@ const HistoryView = memo(({
               const effectiveSets = calcEffectiveSets(w.exercises);
               const cardio = w.cardio || [];
               const cardioKcal = totalCardioCalories(cardio, weightForDate(w.date));
+              const detailKey = `workout:${w.id}`;
+              const detailsOpen = interfaceMode === 'detailed' || openRecordDetails.has(detailKey);
               return (
                 <div key={w.id} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-3">
                   <div className="flex justify-between items-start border-b border-zinc-800 pb-2">
@@ -387,10 +398,11 @@ const HistoryView = memo(({
                         <span className="text-cyan-500/80 font-bold">{weekdayName(w.date)}</span>
                       </div>
                     </div>
-                    <div className="flex items-center shrink-0">
+                    {interfaceMode === 'detailed' && <div className="flex items-center shrink-0">
                       <button
                         onClick={() => handleSaveAsTemplate?.(w)}
                         title="Şablon olarak kaydet"
+                        aria-label="Şablon olarak kaydet"
                         className="text-zinc-500 active:text-cyan-400 p-2"
                       >
                         <BookmarkPlus size={14} />
@@ -398,6 +410,7 @@ const HistoryView = memo(({
                       <button
                         onClick={() => handleRepeatWorkout?.(w)}
                         title="Bu antrenmanı bugün tekrarla"
+                        aria-label="Bu antrenmanı bugün tekrarla"
                         className="text-zinc-500 active:text-cyan-400 p-2"
                       >
                         <Copy size={14} />
@@ -405,6 +418,7 @@ const HistoryView = memo(({
                       <button
                         onClick={() => handleEditOldWorkout?.(w)}
                         title="Setleri düzenle"
+                        aria-label="Setleri düzenle"
                         className="text-zinc-500 active:text-cyan-400 p-2"
                       >
                         <Pencil size={14} />
@@ -412,11 +426,12 @@ const HistoryView = memo(({
                       <button
                         onClick={() => setDeleteConfirm({ isOpen: true, type: 'workout', id: w.id })}
                         title="Sil"
+                        aria-label="Antrenmanı sil"
                         className="text-zinc-400 active:text-red-500 p-2"
                       >
                         <Trash2 size={14} />
                       </button>
-                    </div>
+                    </div>}
                   </div>
 
                   <div className="grid grid-cols-2 gap-2 text-[10px] font-mono">
@@ -430,6 +445,30 @@ const HistoryView = memo(({
                     </div>
                   </div>
 
+                  {interfaceMode === 'simple' && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <button onClick={() => handleEditOldWorkout?.(w)} className="min-h-11 rounded-xl bg-cyan-700 px-3 text-[10px] font-bold text-white flex items-center justify-center gap-1.5 active:bg-cyan-800">
+                        <Pencil size={12} /> Setleri Düzenle
+                      </button>
+                      <button onClick={() => handleRepeatWorkout?.(w)} className="min-h-11 rounded-xl border border-zinc-700 bg-zinc-950 px-3 text-[10px] font-bold text-zinc-200 flex items-center justify-center gap-1.5 active:bg-zinc-800">
+                        <Copy size={12} /> Bugün Tekrarla
+                      </button>
+                    </div>
+                  )}
+
+                  {interfaceMode === 'simple' && (
+                    <button
+                      type="button"
+                      onClick={() => toggleRecordDetails(detailKey)}
+                      aria-expanded={detailsOpen}
+                      className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/65 px-3 flex items-center justify-between text-left text-[10px] font-bold text-zinc-300 active:bg-zinc-800"
+                    >
+                      <span>{detailsOpen ? 'Hareket ve diğer işlemleri gizle' : `${(w.exercises || []).length} hareketin setlerini göster`}</span>
+                      <ChevronDown size={14} className={`text-zinc-400 transition-transform ${detailsOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  )}
+
+                  {detailsOpen && <>
                   {cardio.length > 0 && (
                     <div className="space-y-1.5 pt-1">
                       <div className="flex items-center justify-between px-0.5">
@@ -482,6 +521,17 @@ const HistoryView = memo(({
                       </div>
                     ))}
                   </div>
+                  {interfaceMode === 'simple' && (
+                    <div className="grid grid-cols-2 gap-2 border-t border-zinc-800 pt-3">
+                      <button onClick={() => handleSaveAsTemplate?.(w)} className="min-h-11 rounded-xl border border-zinc-800 bg-zinc-950 text-[9px] font-bold text-zinc-300 flex items-center justify-center gap-1.5 active:bg-zinc-800">
+                        <BookmarkPlus size={12} /> Şablon Yap
+                      </button>
+                      <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'workout', id: w.id })} className="min-h-11 rounded-xl border border-red-900/45 bg-red-950/15 text-[9px] font-bold text-red-400 flex items-center justify-center gap-1.5 active:bg-red-950/35">
+                        <Trash2 size={12} /> Kaydı Sil
+                      </button>
+                    </div>
+                  )}
+                  </>}
                 </div>
               );
             }}</WeekGroups>
@@ -643,6 +693,8 @@ const HistoryView = memo(({
               // hiçbir zaman doldurulmuyordu; veri girilmiş günler bile 0 görünüyordu.
               const t = dailyTotals(n);
               const isDaily = n.entryMode === 'daily';
+              const detailKey = `nutrition:${n.id || n.date}`;
+              const detailsOpen = interfaceMode === 'detailed' || openRecordDetails.has(detailKey);
               return (
                 <div key={n.id} className="defer-card-render bg-zinc-900 rounded-2xl border border-zinc-800 p-4 space-y-2">
                   <div className="flex justify-between items-center border-b border-zinc-800 pb-2">
@@ -653,7 +705,7 @@ const HistoryView = memo(({
                         {isDaily ? 'günlük toplam' : `${(n.meals || []).length} öğün`}
                       </span>
                     </div>
-                    <div className="flex items-center shrink-0">
+                    {interfaceMode === 'detailed' && <div className="flex items-center shrink-0">
                       <button onClick={() => onOpenEnergyDay?.(n.date)} title="Bu günün enerji detayını aç" aria-label="Bu günün enerji detayını aç" className="text-red-400 active:text-red-300 p-2">
                         <Flame size={14} />
                       </button>
@@ -663,7 +715,7 @@ const HistoryView = memo(({
                       <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'nutrition', id: n.id })} title="Sil" aria-label="Sil" className="text-zinc-400 active:text-red-500 p-2">
                         <Trash2 size={14} />
                       </button>
-                    </div>
+                    </div>}
                   </div>
                   <div className="grid grid-cols-4 gap-2 text-[10px] font-mono text-zinc-300 pt-1">
                     <div>Kalori: <strong className="text-cyan-400">{Math.round(t.calories)}</strong></div>
@@ -672,9 +724,32 @@ const HistoryView = memo(({
                     <div>Yağ: <strong className="text-purple-400">{Math.round(t.fats)}g</strong></div>
                   </div>
 
+                  {interfaceMode === 'simple' && (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button onClick={() => handleEditNutrition?.(n)} className="min-h-11 rounded-xl bg-cyan-700 px-3 text-[10px] font-bold text-white flex items-center justify-center gap-1.5 active:bg-cyan-800">
+                        <Pencil size={12} /> Kaydı Düzenle
+                      </button>
+                      <button onClick={() => onOpenEnergyDay?.(n.date)} className="min-h-11 rounded-xl border border-red-900/45 bg-red-950/15 px-3 text-[10px] font-bold text-red-400 flex items-center justify-center gap-1.5 active:bg-red-950/35">
+                        <Flame size={12} /> Kalori Detayı
+                      </button>
+                    </div>
+                  )}
+
+                  {interfaceMode === 'simple' && (
+                    <button
+                      type="button"
+                      onClick={() => toggleRecordDetails(detailKey)}
+                      aria-expanded={detailsOpen}
+                      className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/65 px-3 flex items-center justify-between text-left text-[10px] font-bold text-zinc-300 active:bg-zinc-800"
+                    >
+                      <span>{detailsOpen ? 'Enerji dengesi ve diğer işlemleri gizle' : 'Enerji dengesi ve manuel yakımı göster'}</span>
+                      <ChevronDown size={14} className={`text-zinc-400 transition-transform ${detailsOpen ? 'rotate-180' : ''}`} />
+                    </button>
+                  )}
+
                   {/* O günün enerji dengesi. Yakım antrenman kayıtlarından
                       otomatik gelir; elle eklenen kısım burada düzenlenebilir. */}
-                  {(() => {
+                  {detailsOpen && <>{(() => {
                     const bodyAtDate = bodyContextForDate?.(n.date) || {};
                     const historicalWeight = bodyAtDate.weight || weightForDate(n.date);
                     const auto = dayWorkoutCalories(workouts, n.date, historicalWeight);
@@ -763,6 +838,12 @@ const HistoryView = memo(({
                       </div>
                     );
                   })()}
+                  {interfaceMode === 'simple' && (
+                    <button onClick={() => setDeleteConfirm({ isOpen: true, type: 'nutrition', id: n.id })} className="min-h-11 w-full rounded-xl border border-red-900/45 bg-red-950/15 text-[9px] font-bold text-red-400 flex items-center justify-center gap-1.5 active:bg-red-950/35">
+                      <Trash2 size={12} /> Beslenme Kaydını Sil
+                    </button>
+                  )}
+                  </>}
                 </div>
               );
             }}</WeekGroups>

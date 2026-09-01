@@ -1399,19 +1399,6 @@ export default function App() {
     };
   }, [workouts, customExercises, settings.experienceLevel, settings.volumeTargets]);
 
-  const templateRecommendation = useMemo(
-    () => bestTemplateRecommendation(templates, {
-      currentVolume: dashboardStats.muscleVolume,
-      customExercises,
-      experienceLevel: settings.experienceLevel,
-      workouts: sortedWorkouts,
-      restSeconds: settings.restSeconds,
-      today: getLocalDateString(),
-    }),
-    [templates, dashboardStats.muscleVolume, customExercises, settings.experienceLevel, settings.volumeTargets,
-      settings.restSeconds, sortedWorkouts],
-  );
-
   // Kas başına haftalık hacmin hangi hareketlerden geldiği.
   // Hacim hesabıyla aynı kuralları izler: yalnızca çalışma setleri, katkı ağırlığıyla.
   const muscleBreakdown = useMemo(() => {
@@ -3500,6 +3487,34 @@ export default function App() {
   const painRegions = useMemo(
     () => activePainRegions(settings.painLog, { workouts: sortedWorkouts }),
     [settings.painLog, sortedWorkouts]);
+
+  // Günlük ekranda planlı seans ile algoritmik öneri aynı şey değildir.
+  // Aktif program varsa yalnız bugünün gerçek planı gösterilir. Plansız seçim
+  // ise ancak motor yeterli geçmiş, belirgin hacim açığı ve güvenli ayrım bulursa
+  // görünür; toparlanma/ağrı uyarısında veya seans tamamlandıysa hiç önerilmez.
+  const templateRecommendation = useMemo(() => {
+    const doneToday = parseNumber(todayCoach?._signals?.doneToday) > 0;
+    const recoveryBlocked = todayCoach?.status === 'Toparlan' || todayCoach?.activeRest;
+    const scheduledTemplate = !doneToday && !recoveryBlocked
+      ? todayCoach?.workoutTemplate || null
+      : null;
+    const selected = bestTemplateRecommendation(templates, {
+      currentVolume: dashboardStats.muscleVolume,
+      customExercises,
+      experienceLevel: settings.experienceLevel,
+      workouts: sortedWorkouts,
+      restSeconds: settings.restSeconds,
+      today: getLocalDateString(),
+      scheduledTemplate,
+      allowUnplanned: !activePlan,
+      doneToday,
+      recoveryBlocked,
+    });
+    if (!selected) return null;
+    const pain = scanSessionForPain(selected.template?.exercises || [], painRegions, { customExercises });
+    return pain.hasWarnings ? null : selected;
+  }, [templates, dashboardStats.muscleVolume, customExercises, settings.experienceLevel,
+    settings.restSeconds, sortedWorkouts, activePlan, todayCoach, painRegions]);
 
   const painScan = useMemo(() => {
     const hareketler = activeWorkout?.exercises

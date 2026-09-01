@@ -102,7 +102,7 @@ import { auditBodyweightEntries, normalizeBodyweightEntries } from '../src/utils
 import { calculatePlates, generateWarmup, normalizePlates, AVAILABLE_PLATES } from '../src/utils/plates.js';
 import { buildSessionReport, buildPlanAdherence, snapshotTemplatePlan } from '../src/utils/sessionReport.js';
 import { buildPlanExecution, planExecutionCoachItem } from '../src/utils/planExecution.js';
-import { rankTemplateRecommendations } from '../src/utils/templateRecommendation.js';
+import { bestTemplateRecommendation, rankTemplateRecommendations } from '../src/utils/templateRecommendation.js';
 import { buildExerciseProfile } from '../src/utils/exerciseProfile.js';
 import { buildWeeklyReview, lastCompletedWeekStart } from '../src/utils/weeklyReview.js';
 import { computeReadiness } from '../src/utils/readiness.js';
@@ -359,6 +359,56 @@ test('akıllı şablon sıralaması tavanı dolu kas yerine hacim açığını s
   assert.equal(ranked[0].template.id, 'pull');
   assert.ok(ranked[0].reasons.some(reason => reason.includes('Kanat')));
   assert.ok(ranked.find(item => item.template.id === 'push').risks.some(reason => reason.includes('Göğüs')));
+});
+
+test('günlük şablon önerisi yetersiz veride veya yakın puanda seçim yapmaz', () => {
+  const sets = count => Array.from({ length: count }, () => ({ setType: 'normal' }));
+  const completed = [{ setType: 'normal', weight: 60, reps: 8 }];
+  const workouts = [
+    { date: '2026-07-20', sourceTemplateId: 'pull-a', exercises: [{ name: 'Lat Pulldown', sets: completed }] },
+    { date: '2026-07-10', sourceTemplateId: 'pull-b', exercises: [{ name: 'Seated Cable Row', sets: completed }] },
+  ];
+  const templates = [
+    { id: 'pull-a', name: 'Çekiş A', useCount: 2, exercises: [{ name: 'Lat Pulldown', sets: sets(8) }] },
+    { id: 'pull-b', name: 'Çekiş B', useCount: 2, exercises: [{ name: 'Lat Pulldown', sets: sets(8) }] },
+  ];
+
+  assert.equal(bestTemplateRecommendation(templates, { workouts, today: '2026-08-15' }), null);
+  assert.equal(bestTemplateRecommendation(templates, {
+    workouts, currentVolume: { Göğüs: 3 }, today: '2026-08-15',
+  }), null);
+});
+
+test('günlük şablon önerisi yalnız geçmişte kullanılan belirgin ve risksiz adayı döndürür', () => {
+  const emptySets = count => Array.from({ length: count }, () => ({ setType: 'normal' }));
+  const completed = [{ setType: 'normal', weight: 60, reps: 8 }];
+  const workouts = [
+    { date: '2026-07-20', sourceTemplateId: 'pull', exercises: [{ name: 'Lat Pulldown', sets: completed }] },
+    { date: '2026-07-10', exercises: [{ name: 'Bench Press', sets: completed }] },
+  ];
+  const result = bestTemplateRecommendation([
+    { id: 'pull', name: 'Çekiş', useCount: 2, exercises: [{ name: 'Lat Pulldown', sets: emptySets(8) }] },
+    { id: 'unused', name: 'Kullanılmamış', exercises: [{ name: 'Barbell Back Squat', sets: emptySets(10) }] },
+  ], {
+    workouts,
+    currentVolume: { Göğüs: 3 },
+    today: '2026-08-15',
+  });
+  assert.equal(result?.template.id, 'pull');
+  assert.equal(result?.source, 'volume');
+  assert.equal(result?.confidence, 'high');
+});
+
+test('aktif programdaki bugünkü şablon algoritmik öneriden ayrılır ve engelde gizlenir', () => {
+  const planned = {
+    id: 'planned', name: 'Bugünün Seansı',
+    exercises: [{ name: 'Bench Press', sets: [{ setType: 'normal' }, { setType: 'normal' }] }],
+  };
+  const result = bestTemplateRecommendation([planned], { scheduledTemplate: planned });
+  assert.equal(result?.template.id, 'planned');
+  assert.equal(result?.source, 'plan');
+  assert.equal(bestTemplateRecommendation([planned], { scheduledTemplate: planned, doneToday: true }), null);
+  assert.equal(bestTemplateRecommendation([planned], { scheduledTemplate: planned, recoveryBlocked: true }), null);
 });
 
 test('şablon anlık görüntüsü sonradan düzenlenen şablondan etkilenmez', () => {
@@ -1194,17 +1244,20 @@ test('ilk kısmi hafta ilk kayıttan pazar gününe kadar etiketlenir', () => {
   assert.ok(energyWeeks[0].rangeLabel.includes('26'));
 });
 
-test('arşiv haftaları başlangıç ayına tek kez yerleşir', () => {
+test('arşiv haftaları en yeni kayıt ayına tek kez yerleşir', () => {
   const weeks = groupIntoWeeks([
     { date: '2026-08-02' },
     { date: '2026-07-27' },
     { date: '2026-07-20' },
   ]);
   const months = groupWeeksIntoMonths(weeks);
-  assert.equal(months.length, 1);
-  assert.equal(months[0].key, '2026-07');
-  assert.equal(months[0].weeks.length, 2);
-  assert.equal(months[0].itemCount, 3);
+  assert.equal(months.length, 2);
+  assert.equal(months[0].key, '2026-08');
+  assert.equal(months[0].weeks.length, 1);
+  assert.equal(months[0].itemCount, 2);
+  assert.equal(months[1].key, '2026-07');
+  assert.equal(months[1].weeks.length, 1);
+  assert.equal(months[1].itemCount, 1);
 });
 
 test('döngü tavsiyesi takvim fazından değil günlük belirti yükünden değişir', () => {

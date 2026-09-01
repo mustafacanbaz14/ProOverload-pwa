@@ -31,6 +31,7 @@ const quickCapture = read('src/components/QuickCaptureModal.jsx');
 const toolsModal = read('src/components/ToolsModal.jsx');
 const viewHeader = read('src/components/ViewHeader.jsx');
 const trainingView = read('src/components/TrainingView.jsx');
+const templateRecommendation = read('src/utils/templateRecommendation.js');
 const cardioView = read('src/components/CardioView.jsx');
 const cardioCoach = read('src/components/CardioCoachCard.jsx');
 const nutritionView = read('src/components/NutritionView.jsx');
@@ -47,7 +48,7 @@ const compactChoiceNav = read('src/components/CompactChoiceNav.jsx');
 // olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 10.7') && roadmap.includes('## 10.20') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
+check(roadmap.includes('## 10.7') && roadmap.includes('## 10.21') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
 check(app.includes('<span>Ekle</span>') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
 check(!app.includes('isAppMenuOpen') && !existsSync(resolve(root, 'src/components/AppMenuModal.jsx')), 'Tekrarlanan uygulama menüsü kaldırıldı');
 check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => navbar.includes(`key: '${key}'`)), 'Beş ana bölüm yalnız alt gezinmede korunuyor');
@@ -86,8 +87,10 @@ check(analyticsView.includes('<CompactChoiceNav') && analyticsView.includes('{de
 check(historyView.includes('ariaLabel="Arşiv kayıt türü seç"') && historyView.includes("interfaceMode === 'simple'"), 'Basit arşiv kayıt türlerini tek mobil seçicide topluyor');
 check(analyticsView.includes('defaultOpen={detailed}') && analyticsView.includes('rm-picker-'), 'Basit analiz görünümü teknik kartları ve seçili 1RM listesini kapatıyor');
 check(trainingView.includes('recommendationOverride') && trainingView.includes('progressionOverride') && trainingView.includes('programOptionsOverride'), 'Basit antrenman görünümü öneri, blok ve kurulum ayrıntılarını katmanlıyor');
-check(trainingView.includes('compact={interfaceMode === \'simple\'}') && todayCoach.includes('showPrimaryAction'), 'Basit antrenman ve koç akışı yinelenen açıklama ve eylemleri azaltıyor');
+check(trainingView.includes("interfaceMode === 'detailed' && <WorkoutFlowStepper") && trainingView.includes('headerCopy') && todayCoach.includes('showPrimaryAction'), 'Basit antrenman ve koç akışı yinelenen açıklama ve eylemleri azaltıyor');
 check(trainingView.includes('Neden bu seans? Kas haritasını göster') && trainingView.includes('Hazır program ve elle kurma seçenekleri'), 'Antrenman ayrıntıları açık ve anlaşılır eylemlerle erişilebilir');
+check(templateRecommendation.includes('minimumMargin = 6') && templateRecommendation.includes('completedStrengthSessions < 2') && templateRecommendation.includes('if (!first) return null'), 'Şablon önerisi yetersiz veri, yakın puan ve uygun aday yokluğunda susuyor');
+check(app.includes('allowUnplanned: !activePlan') && app.includes('pain.hasWarnings ? null : selected') && trainingView.includes("recommendation.source === 'plan'"), 'Planlı seans ile veri önerisi ayrılıyor; toparlanma ve ağrı engeli uygulanıyor');
 check(trainingView.includes('Diğer İşlemler') && trainingView.includes('> Düzenle</button>'), 'Şablon düzenleme doğrudan, seyrek işlemler ikinci katmanda');
 check(trainingView.includes('TRAINING_FOCUS_OPTIONS') && ['Bugün', 'Program', 'Şablonlar'].every(label => trainingView.includes(`label: '${label}'`)), 'Basit antrenman günlük seans, program ve şablon amaçlarını ayırıyor');
 check(cardioView.includes("interfaceMode = 'simple'") && ['Bugün', 'Plan', 'Geçmiş'].every(label => cardioView.includes(`'${label}'`)), 'Basit kardiyo günlük kayıt, plan ve geçmiş amaçlarını açıkça ayırıyor');
@@ -101,6 +104,7 @@ check(metricsView.includes('Hedefler ve ölçüm araçları') && metricsView.inc
 check(app.includes('luxury-brand-title text-[11px]') && css.includes('letter-spacing: .09em'), 'Dar mobil üst çubukta uygulama adı kesilmeden sığıyor');
 check(metricsView.includes('{detailed && (') && historyView.includes("interfaceMode === 'detailed'"), 'Basit Vücut ve Arşiv ekranları yinelenen ikincil içeriği gizliyor');
 check(historyView.includes("addOpen ? 'Kapat' : 'Geçmişe Ekle'") && historyView.includes('openAddPanel'), 'Geçmiş kayıt ekleme başlık eyleminden açılıyor');
+check(historyView.includes('openRecordDetails') && historyView.includes('Hareket ve diğer işlemleri gizle') && historyView.includes('Enerji dengesi ve manuel yakımı göster'), 'Basit arşiv yoğun antrenman ve enerji ayrıntılarını isteğe bağlı açıyor');
 check(homeView.includes('min-h-11') && homeView.includes('aria-label="Beslenme ekranına git"'), 'Ana sayfa su kontrolleri erişilebilir dokunma hedefi taşıyor');
 check(app.includes('energyDetailEntry') && app.includes("openEnergyDetail('days'"), 'Kalori detayı tarih ve sekme bağlamıyla açılıyor');
 check(historyView.includes('onOpenEnergyDay') && energyModal.includes('days: 365'), 'Arşivden Gün Gün enerji erişimi ve bir yıllık görünüm korunuyor');
