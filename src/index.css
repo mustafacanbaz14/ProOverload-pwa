@@ -291,6 +291,40 @@ textarea {
   --color-cyan-200: #531d32;
 }
 
+/* Safir, semantik başarı/uyarı/tehlike renklerine dokunmadan yalnız marka
+   vurgusunu maviye taşır. Açık tema için koyu tonlar ayrıca tanımlanır. */
+:root[data-accent='sapphire'] {
+  --luxury-gold: #6d9fe8;
+  --luxury-gold-bright: #a8c8ff;
+  --luxury-gold-deep: #315f9e;
+  --luxury-line: rgba(109, 159, 232, .18);
+  --color-cyan-950: #0b1628;
+  --color-cyan-900: #112443;
+  --color-cyan-800: #193763;
+  --color-cyan-700: #25518a;
+  --color-cyan-600: #376fb3;
+  --color-cyan-500: #548dd4;
+  --color-cyan-400: #7eabe9;
+  --color-cyan-300: #aecbf4;
+  --color-cyan-200: #d3e3fa;
+}
+
+:root[data-theme='light'][data-accent='sapphire'] {
+  --luxury-gold: #315f9e;
+  --luxury-gold-bright: #4376ba;
+  --luxury-gold-deep: #214474;
+  --luxury-line: rgba(33, 68, 116, .17);
+  --color-cyan-950: #e7f0fc;
+  --color-cyan-900: #cfdef4;
+  --color-cyan-800: #a8c3e8;
+  --color-cyan-700: #729cd2;
+  --color-cyan-600: #476fa8;
+  --color-cyan-500: #365f98;
+  --color-cyan-400: #294f83;
+  --color-cyan-300: #213f6c;
+  --color-cyan-200: #193155;
+}
+
 /* Tek bir gövde yazı tipi.
  *
  * `font-mono` bu uygulamada bir yazı tipi tercihi değil, "burası veri"

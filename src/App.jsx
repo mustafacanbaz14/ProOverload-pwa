@@ -4402,6 +4402,7 @@ export default function App() {
                   <Suspense fallback={null}>
                     <CardioView
                       embedded
+                      interfaceMode={settings.interfaceMode}
                       report={cardioReport}
                       suggestion={cardioSuggestion}
                       cardioGoal={settings.cardioGoal}
@@ -4821,7 +4822,6 @@ export default function App() {
           onImportProgramCode={handleImportTemplateCode}
           notificationState={notificationPermission()}
           onExportCsv={handleExportCsv}
-          profileGender={profileGender}
           initialSection={settingsSection}
         />}
 

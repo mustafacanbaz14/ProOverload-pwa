@@ -178,8 +178,8 @@ export const DEFAULT_SETTINGS = {
   coachHistory: [],
   // Görünüm teması: 'dark' | 'light'
   theme: 'dark',
-  // Marka vurgu rengi temadan bağımsızdır. Kadın profili pembe paleti
-  // kullanabilir; varsayılan mevcut cyan görünümü korur.
+  // Marka vurgu rengi temadan ve profilden bağımsızdır: cyan (şampanya),
+  // rose (gül) veya sapphire (safir). Varsayılan mevcut görünümü korur.
   accentTheme: 'cyan',
   // Yazı büyüklüğü çarpanı (kök font-size). 1 = varsayılan.
   fontScale: 1,
@@ -788,7 +788,7 @@ export const VOLUME_STATUS = {
  * `scripts/verify-core.mjs` iki değerin eşitliğini test ediyor — ayrışırsa
  * build kırılır.
  */
-export const APP_VERSION = '10.18';
+export const APP_VERSION = '10.19';
 
 /*
  * 7.9 ve öncesindeki tek parça sürüm notu arşivi. Artık çalıştırılabilir

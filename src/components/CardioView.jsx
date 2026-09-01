@@ -52,12 +52,16 @@ const CardioView = memo(({
   onChangeZoneSettings,
   activityTargets = {},
   onChangeActivityTargets,
+  interfaceMode = 'simple',
   embedded = false,
 }) => {
   const [tab, setTab] = useState('coach');
   const [openTarget, setOpenTarget] = useState(null);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [restingDraft, setRestingDraft] = useState('');
+  const [coachToolsOpen, setCoachToolsOpen] = useState(false);
+  const [logInsightsOpen, setLogInsightsOpen] = useState(false);
+  const simple = interfaceMode === 'simple';
 
   const zoneOpts = { age, restingHr, method: zoneMethod, maxHrManual };
   const gecerliYontem = effectiveZoneMethod(zoneOpts);
@@ -105,22 +109,26 @@ const CardioView = memo(({
     onChangeActivityTargets?.(setActivityTarget(activityTargets, key, target));
   };
 
+  const tabOptions = [
+    { key: 'coach', label: simple ? 'Bugün' : 'Koç', hint: 'Öneri ve hızlı kayıt', icon: HeartPulse },
+    { key: 'targets', label: simple ? 'Plan' : 'Hedefler', hint: 'Süre ve mesafe hedefleri', icon: Target },
+    { key: 'log', label: simple ? 'Geçmiş' : 'Kayıtlar', hint: 'Kayıt, tempo ve rekorlar', icon: Timer },
+  ];
+  const activeTab = tabOptions.find(option => option.key === tab) || tabOptions[0];
+
   return (
     <div className={`${embedded ? '' : 'luxury-screen'} h-full flex flex-col bg-black`}>
       <div className="px-4 pt-4 pb-2 shrink-0">
         <span className="luxury-eyebrow text-[10px] uppercase">Kardiyo & Aktivite</span>
         <div className="luxury-segmented grid grid-cols-3 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800 shadow-inner mt-2">
-          {[
-            { key: 'coach', label: 'Koç', icon: HeartPulse },
-            { key: 'targets', label: 'Hedefler', icon: Target },
-            { key: 'log', label: 'Kayıtlar', icon: Timer },
-          ].map(t => {
+          {tabOptions.map(t => {
             const Icon = t.icon;
             return (
               <button
                 key={t.key}
                 onClick={() => setTab(t.key)}
-                className={`py-2.5 rounded-xl text-[11px] font-black uppercase tracking-wider flex justify-center items-center gap-1.5 transition-all ${
+                aria-pressed={tab === t.key}
+                className={`min-h-12 rounded-xl text-[11px] font-bold flex justify-center items-center gap-1.5 transition-all ${
                   tab === t.key
                     ? 'bg-red-600 text-white shadow-md shadow-red-950/50'
                     : 'text-zinc-500 hover:text-zinc-300'
@@ -131,6 +139,7 @@ const CardioView = memo(({
             );
           })}
         </div>
+        <p className="mt-2 px-1 text-[9px] font-mono text-zinc-400">{activeTab.hint}</p>
       </div>
 
       <div data-view-scroll="training" className="flex-1 min-h-0 overflow-y-auto hide-scrollbar p-3 space-y-3 pb-nav">
@@ -139,7 +148,7 @@ const CardioView = memo(({
           onClick={() => onOpenCardio?.()}
           className="w-full bg-gradient-to-r from-red-600 to-rose-600 active:scale-[0.98] text-white rounded-2xl p-3.5 flex items-center justify-center gap-2 font-black text-[12px] uppercase tracking-widest shadow-lg shadow-red-950/40 transition-all"
         >
-          <Plus size={16} /> Kardiyo / Aktivite Ekle
+          <Plus size={16} /> {simple ? 'Bugüne Aktivite Ekle' : 'Kardiyo / Aktivite Ekle'}
         </button>
 
         {tab === 'coach' && (
@@ -148,6 +157,8 @@ const CardioView = memo(({
               report={report}
               suggestion={suggestion}
               goal={cardioGoal}
+              compact={simple}
+              showZones={!simple || coachToolsOpen}
               onChangeGoal={onChangeCardioGoal}
               age={age}
               restingHr={restingHr}
@@ -156,6 +167,25 @@ const CardioView = memo(({
               onOpenCardio={onOpenCardio}
             />
 
+            {simple && (
+              <button
+                type="button"
+                onClick={() => setCoachToolsOpen(open => !open)}
+                aria-expanded={coachToolsOpen}
+                className="w-full min-h-14 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 flex items-center justify-between gap-3 text-left active:bg-zinc-800"
+              >
+                <span className="min-w-0">
+                  <strong className="text-[11px] text-zinc-200 block">Nabız ve bölge ayarları</strong>
+                  <span className="text-[9px] font-mono text-zinc-400 block truncate">
+                    {zoneMethodOptions.find(method => method.key === gecerliYontem)?.label || 'Nabız yöntemi'}
+                    {restingHrReport?.latest?.bpm ? ` · son ölçüm ${restingHrReport.latest.bpm} bpm` : ' · isteğe bağlı'}
+                  </span>
+                </span>
+                <ChevronDown size={15} className={`text-zinc-400 shrink-0 transition-transform ${coachToolsOpen ? 'rotate-180' : ''}`} />
+              </button>
+            )}
+
+            {(!simple || coachToolsOpen) && <>
             {/* Bölge yöntemi. Hedef koymadan da kullanılabilmesi için koç
                 kartından bağımsız duruyor: kalori ve bölge bilgisi hedefe
                 bağlı değil. */}
@@ -278,17 +308,24 @@ const CardioView = memo(({
                 </div>
               </div>
             </div>
+            </>}
           </>
         )}
 
         {tab === 'targets' && (
           <>
-            <p className="text-[10px] font-mono text-zinc-500 leading-relaxed px-1">
-              Aktivite başına seans hedefi. Haftalık hedef &quot;ne kadar&quot; sorusunu
-              yanıtlıyor ama seansın içini boş bırakıyor: havuza giderken akılda
-              &quot;8 × 100 m&quot; gibi somut bir plan oluyor ve unutuluyor. Hepsi isteğe
-              bağlı; boş bıraktığın alan hedef sayılmaz.
-            </p>
+            {simple ? (
+              <p className="text-[10px] font-mono text-zinc-400 leading-relaxed px-1">
+                Sık yaptığın aktiviteler için süre, mesafe veya set hedefi belirle.
+              </p>
+            ) : (
+              <p className="text-[10px] font-mono text-zinc-500 leading-relaxed px-1">
+                Aktivite başına seans hedefi. Haftalık hedef &quot;ne kadar&quot; sorusunu
+                yanıtlıyor ama seansın içini boş bırakıyor: havuza giderken akılda
+                &quot;8 × 100 m&quot; gibi somut bir plan oluyor ve unutuluyor. Hepsi isteğe
+                bağlı; boş bıraktığın alan hedef sayılmaz.
+              </p>
+            )}
 
             {hedefli.map(h => {
               const acik = openTarget === h.key;
@@ -354,6 +391,24 @@ const CardioView = memo(({
 
         {tab === 'log' && (
           <>
+            {simple && (
+              <button
+                type="button"
+                onClick={() => setLogInsightsOpen(open => !open)}
+                aria-expanded={logInsightsOpen}
+                className="w-full min-h-14 rounded-2xl border border-zinc-800 bg-zinc-900 px-4 py-3 flex items-center justify-between gap-3 text-left active:bg-zinc-800"
+              >
+                <span className="min-w-0">
+                  <strong className="text-[11px] text-zinc-200 block">Tempo, şablon ve rekorlar</strong>
+                  <span className="text-[9px] font-mono text-zinc-400 block truncate">
+                    {tempoEgilimleri.length} eğilim · {siraliSablonlar.length} şablon · {cardioRecords?.records?.length || 0} rekor
+                  </span>
+                </span>
+                <ChevronDown size={15} className={`text-zinc-400 shrink-0 transition-transform ${logInsightsOpen ? 'rotate-180' : ''}`} />
+              </button>
+            )}
+
+            {(!simple || logInsightsOpen) && <>
             {tempoEgilimleri.length > 0 && (
               <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
                 <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60">
@@ -465,6 +520,7 @@ const CardioView = memo(({
                 </div>
               </div>
             )}
+            </>}
 
             <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
               <div className="px-4 py-2.5 border-b border-zinc-800 bg-zinc-950/60 flex justify-between items-baseline">

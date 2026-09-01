@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.18 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.19 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -156,6 +156,19 @@ Durum: Uygulandı.
 - Hedef, geçmiş kıyaslama ve hesaplama ayarlarını tek Ölçüm Araçları başlığında topla.
 - Üst çubukta uygulama adının 393 piksel telefonda kesilmesini gider; Ekle, Ara ve Ayarlar dokunma hedeflerini koru.
 - PWA, localStorage, hesaplama, detaylı görünüm ve yedek biçimini değiştirme.
+
+## 10.19 — Odaklı antrenman ve sade kardiyo
+
+Durum: Uygulandı.
+
+- Basit Antrenman ekranını Bugün, Program ve Şablonlar amaçlarına ayır; detaylı görünümde bütün alanları birlikte koru.
+- Günlük başlatma ve son seansı tekrarlamayı program oluşturma ile şablon bakımından ayır.
+- Kardiyo alt gezinmesini Bugün, Plan ve Geçmiş diliyle günlük göreve göre adlandır.
+- Kardiyo amacını taşan yatay düğmeler yerine bütün seçenekleri gösteren yerel seçiciye dönüştür.
+- Nabız bölgeleri, hesap yöntemi ve sabah ölçümünü basit görünümde tek isteğe bağlı teknik alana taşı.
+- Geçmiş kardiyoda son kayıtları önde; tempo, şablon ve rekorları tek analiz katmanında tut.
+- Şampanya ve Gül vurgu renklerine koyu/açık temalı Safir paletini ekle ve bütün profillere aç.
+- PWA, localStorage, hesaplamalar, detaylı görünüm ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

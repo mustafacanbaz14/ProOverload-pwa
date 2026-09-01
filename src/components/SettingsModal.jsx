@@ -41,7 +41,7 @@ const Group = ({ icon, title, children, visible = true }) => !visible ? null : (
 const SETTINGS_SECTIONS = [
   { key: 'data', label: 'Veri & Aktarım', title: 'Veri ve aktarım', summary: 'Yedek, cihaz aktarımı, program kodu ve CSV.', detail: 'JSON yedeği geri yükleme içindir; CSV analiz içindir. Program kodu yalnız program yapısını taşır.', icon: Database, tone: 'text-cyan-400', keywords: 'yedek yükle indir aktar csv kod' },
   { key: 'method', label: 'Koç & Yöntem', title: 'Koç ve hesap yöntemi', summary: 'Antrenman hedefi, hacim yaklaşımı ve koç önceliği.', detail: 'Bu seçimler verini silmez; önerilerin nasıl sıralandığını ve varsayılanların nasıl üretildiğini değiştirir.', icon: SlidersHorizontal, tone: 'text-violet-400', keywords: 'koç hacim felsefesi etkili set hedef yöntem' },
-  { key: 'appearance', label: 'Görünüm', title: 'Görünüm', summary: 'Tema, yazı boyutu ve basit/detaylı arayüz.', detail: 'Basit mod özellik silmez; ileri kartları ihtiyaç anına kadar kapalı tutar.', icon: Sun, tone: 'text-amber-400', keywords: 'tema koyu açık pembe yazı punto arayüz' },
+  { key: 'appearance', label: 'Görünüm', title: 'Görünüm', summary: 'Tema, vurgu rengi, yazı boyutu ve basit/detaylı arayüz.', detail: 'Basit mod özellik silmez; ileri kartları ihtiyaç anına kadar kapalı tutar.', icon: Sun, tone: 'text-amber-400', keywords: 'tema koyu açık şampanya gül safir mavi renk yazı punto arayüz' },
   { key: 'body', label: 'Vücut & Enerji', title: 'Vücut ve hesaplama', summary: 'BMI, NEAT ve enerji hesabı varsayımları.', detail: 'Bu ayarlar tahmin yöntemini değiştirir. Geçmiş kayıtlardaki dondurulmuş vücut verileri korunur.', icon: Footprints, tone: 'text-emerald-400', keywords: 'bmi neat adım aktivite kalori çarpan' },
   { key: 'training', label: 'Antrenman', title: 'Antrenman', summary: 'Set, dinlenme, ses, yük ve ilerleme davranışı.', detail: 'Hareket bazında yazılan özel ayarlar genel varsayılanlardan önceliklidir.', icon: Dumbbell, tone: 'text-cyan-400', keywords: 'set tekrar rir dinlenme ses plaka yük ilerleme' },
   { key: 'nutrition', label: 'Beslenme', title: 'Beslenme hedefleri', summary: 'Dönem hedefi, hız ve protein çarpanları.', detail: 'Hız seçimi vücut ağırlığının haftalık yüzdesidir; güvenli sınır analizde ayrıca denetlenir.', icon: Beef, tone: 'text-orange-400', keywords: 'protein kalori kilo alma verme koruma' },
@@ -63,7 +63,6 @@ const SettingsModal = memo(({
   onOpenOnboarding,
   onOpenReleaseNotes,
   onOpenStoreReadiness,
-  profileGender = 'male',
   // Vücut ağırlıklı kayıtların yazım biçimi denetimi; null = hesaplanmadı.
   bodyweightAudit = null,
   onNormalizeBodyweight,
@@ -528,28 +527,27 @@ const SettingsModal = memo(({
               </p>
             </div>
 
-            {profileGender === 'female' && (
-              <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
-                <span className="text-zinc-200 text-[11px] font-bold block mb-2">Vurgu Rengi</span>
-                <div className="grid grid-cols-2 gap-2">
-                  {[
-                    // Sabit hex kullanılır: rose tema seçiliyken global cyan değişkeni
-                    // pembeye döner; sınıf kullanılsa iki önizleme noktası da pembe görünürdü.
-                    { key: 'cyan', label: 'Şampanya', color: '#d8b66b' },
-                    { key: 'rose', label: 'Gül', color: '#de7fa2' },
-                  ].map(option => {
-                    const active = (settings.accentTheme || 'cyan') === option.key;
-                    return (
-                      <button key={option.key} onClick={() => set({ accentTheme: option.key })}
-                        className={`py-2.5 rounded-lg text-[10px] font-bold uppercase border flex items-center justify-center gap-2 ${active ? 'border-cyan-600 text-cyan-400 bg-cyan-950/25' : 'border-zinc-800 text-zinc-500 bg-zinc-900'}`}>
-                        <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: option.color }} /> {option.label}
-                      </button>
-                    );
-                  })}
-                </div>
-                <p className="text-[9px] font-mono text-zinc-400 mt-2">İsteğe bağlıdır; sağlık ve uyarı renklerini değiştirmez.</p>
+            <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
+              <span className="text-zinc-200 text-[11px] font-bold block mb-2">Vurgu Rengi</span>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  // Sabit hex kullanılır: seçilen vurgu global cyan değişkenini
+                  // değiştirir; sınıf kullanılsa bütün önizleme noktaları aynı görünürdü.
+                  { key: 'cyan', label: 'Şampanya', color: '#d8b66b' },
+                  { key: 'rose', label: 'Gül', color: '#de7fa2' },
+                  { key: 'sapphire', label: 'Safir', color: '#6d9fe8' },
+                ].map(option => {
+                  const active = (settings.accentTheme || 'cyan') === option.key;
+                  return (
+                    <button key={option.key} onClick={() => set({ accentTheme: option.key })}
+                      className={`min-h-11 rounded-lg px-1 text-[9px] font-bold uppercase border flex items-center justify-center gap-1.5 ${active ? 'border-cyan-600 text-cyan-400 bg-cyan-950/25' : 'border-zinc-800 text-zinc-500 bg-zinc-900'}`}>
+                      <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: option.color }} /> {option.label}
+                    </button>
+                  );
+                })}
               </div>
-            )}
+              <p className="text-[9px] font-mono text-zinc-400 mt-2">Tüm profillerde kullanılabilir; sağlık ve uyarı renklerini değiştirmez.</p>
+            </div>
 
             <div className="p-3 bg-zinc-950 rounded-xl border border-zinc-800">
               <span className="text-zinc-200 text-[11px] font-bold flex items-center gap-1.5 mb-1">

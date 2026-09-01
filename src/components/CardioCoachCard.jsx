@@ -20,7 +20,8 @@ const SEVERITY = {
 const BAR = { low: 'bg-emerald-500', middle: 'bg-amber-500', high: 'bg-red-500' };
 
 const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = null,
-  restingHr = '', zoneMethod = 'max', maxHrManual = '', onOpenCardio }) => {
+  restingHr = '', zoneMethod = 'max', maxHrManual = '', onOpenCardio,
+  compact = false, showZones = true }) => {
   if (!report) return null;
 
   const zoneOpts = { age, restingHr, method: zoneMethod, maxHrManual };
@@ -28,6 +29,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
   const maxHr = maxBilgi.bpm;
   const gecerliYontem = findZoneMethod(effectiveZoneMethod(zoneOpts));
   const toplam = report.totalMinutes;
+  const selectedPreset = CARDIO_GOAL_PRESETS.find(preset => preset.key === (goal?.preset || 'off')) || CARDIO_GOAL_PRESETS[0];
 
   return (
     <div className="bg-zinc-900 rounded-2xl border border-zinc-800 overflow-hidden">
@@ -41,24 +43,41 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
       {/* Hedef seçimi */}
       {onChangeGoal && (
         <div className="px-3 py-2.5 border-b border-zinc-800 bg-zinc-950/40">
-          <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
-            {CARDIO_GOAL_PRESETS.map(p => {
-              const secili = (goal?.preset || 'off') === p.key;
-              return (
-                <button
-                  key={p.key}
-                  onClick={() => onChangeGoal({ preset: p.key, lowMinutes: '', highSessions: '' })}
-                  title={p.detail}
-                  aria-pressed={secili}
-                  className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${secili ? 'border-red-600 bg-red-950/25 text-red-300' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
-                >
-                  {p.label}
-                </button>
-              );
-            })}
-          </div>
+          {compact ? (
+            <label className="block">
+              <span className="text-[9px] font-bold text-zinc-400 block mb-1">Kardiyo amacım</span>
+              <select
+                value={goal?.preset || 'off'}
+                onChange={event => onChangeGoal({ preset: event.target.value, lowMinutes: '', highSessions: '' })}
+                aria-label="Kardiyo amacı seç"
+                className="w-full min-h-11 rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-[11px] font-bold text-zinc-200 outline-none focus:border-red-500"
+              >
+                {CARDIO_GOAL_PRESETS.map(preset => <option key={preset.key} value={preset.key}>{preset.label}</option>)}
+              </select>
+            </label>
+          ) : (
+            <div className="flex gap-1.5 overflow-x-auto hide-scrollbar">
+              {CARDIO_GOAL_PRESETS.map(p => {
+                const secili = (goal?.preset || 'off') === p.key;
+                return (
+                  <button
+                    key={p.key}
+                    onClick={() => onChangeGoal({ preset: p.key, lowMinutes: '', highSessions: '' })}
+                    title={p.detail}
+                    aria-pressed={secili}
+                    className={`shrink-0 px-2.5 py-1.5 rounded-lg text-[10px] font-bold border transition-colors ${secili ? 'border-red-600 bg-red-950/25 text-red-300' : 'border-zinc-800 bg-zinc-950 text-zinc-400'}`}
+                  >
+                    {p.label}
+                  </button>
+                );
+              })}
+            </div>
+          )}
           {report.active && (
             <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">{report.goal.detail}</p>
+          )}
+          {compact && !report.active && (
+            <p className="text-[9px] font-mono text-zinc-400 leading-relaxed mt-1.5">{selectedPreset.detail}</p>
           )}
         </div>
       )}
@@ -66,10 +85,9 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
       {!report.active ? (
         <div className="p-3.5">
           <p className="text-[10px] font-mono text-zinc-400 leading-relaxed">
-            Kardiyo hedefi konmadı. Kayıtların kalori hesabına girmeye devam
-            ediyor ama koç kardiyo tarafında bir şey söylemiyor. Yukarıdan bir
-            amaç seçersen haftalık düşük şiddet dakikası ve yüksek şiddet seans
-            sayısı takip edilir.
+            {compact
+              ? 'Bir amaç seçersen haftalık süre ve yoğunluk takibi açılır. Hedef seçmesen de bütün kayıtlar kalori hesabına girer.'
+              : 'Kardiyo hedefi konmadı. Kayıtların kalori hesabına girmeye devam ediyor ama koç kardiyo tarafında bir şey söylemiyor. Yukarıdan bir amaç seçersen haftalık düşük şiddet dakikası ve yüksek şiddet seans sayısı takip edilir.'}
           </p>
         </div>
       ) : (
@@ -188,7 +206,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
       )}
 
       {/* Nabız bölgeleri */}
-      <div className="px-4 py-2.5 bg-zinc-950/60">
+      {showZones && <div className="px-4 py-2.5 bg-zinc-950/60">
         {maxHr ? (
           <>
             <p className="text-[9px] font-mono text-zinc-400 mb-1.5">
@@ -218,7 +236,7 @@ const CardioCoachCard = memo(({ report, suggestion, goal, onChangeGoal, age = nu
             tahmin ediliyor.
           </p>
         )}
-      </div>
+      </div>}
     </div>
   );
 });

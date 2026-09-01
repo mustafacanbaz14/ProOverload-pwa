@@ -400,7 +400,7 @@ const RELEASE_10_17 = release('10.17', '2026-09-01', 'Daha Kısa Günlük Akış
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.17 veri şemasını, localStorage kayıtlarını, yedek biçimini, hesaplamaları veya çevrimdışı çalışma davranışını değiştirmiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Tek Seçimli Sade Ekranlar', [
+const RELEASE_10_18 = release('10.18', '2026-09-01', 'Tek Seçimli Sade Ekranlar', [
   item('Analiz Duvarı Tek Seçime İndi', 'Basit görünümde Vücut, 1RM, Hacim, Plan, Besin ve Koç seçenekleri aynı anda altı düğme olarak yarışmıyor; mevcut alanı ve amacını anlatan tek mobil seçici kullanılıyor.'),
   item('Telefonun Kendi Seçicisi Kullanılıyor', 'Analiz ve arşiv alanı değiştirilirken iOS/Android’in alışıldık native seçim arayüzü açılıyor; seçeneklerin tamamı erişilebilir kalıyor.'),
   item('Arşiv Filtreleri Tek Kontrolde', 'Tümü, Ağırlık, Aktivite, Ölçüm ve Besin filtreleri basit modda tek açıklamalı seçicide toplandı; seçili türün kayıt sayısı ve kapsamı doğrudan görülüyor.'),
@@ -411,6 +411,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Tek Seç
   item('Tekrar Eden Açıklama Kaldırıldı', 'Basit analiz seçicisi hem aktif alanı hem amacını anlattığı için aynı bilgiyi ikinci kartta tekrar göstermiyor.'),
   item('İşlev Kaybı Yok', 'Yeni seçiciler yalnız görünür kontrol sayısını azaltıyor; bütün analiz, arşiv, hedef, kıyaslama ve ayar yolları çalışmaya devam ediyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.18 localStorage anahtarlarını, veri şemasını, yedek biçimini, hesaplamaları ve çevrimdışı çalışma davranışını değiştirmiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı Antrenman ve Sade Kardiyo', [
+  item('Antrenman Üç Net Amaca Ayrıldı', 'Basit görünümde Bugün, Program ve Şablonlar aynı uzun sayfada yarışmıyor; kullanıcı yapmak istediği işi tek dokunuşla seçiyor.'),
+  item('Bugünün Seansı İlk Ekranda', 'Serbest başlatma, son seansı tekrarlama, akıllı öneri ve ilerleme blokları Bugün alanında kalıyor; program bakımı günlük eylemi aşağı itmiyor.'),
+  item('Program Yönetimi Tek Çatıda', 'Yönlendirmeli program kurma, taslağa dönme, hazır program, elle kurma, haftalık plan ve hareket araçları Program alanında toplandı.'),
+  item('Şablon Arşivi Ayrı Çalışıyor', 'Şablon arama, favori, başlatma, düzenleme, sihirbazla değiştirme, kopyalama ve silme işlevleri ayrı Şablonlar alanında eksiksiz korunuyor.'),
+  item('Kardiyo Dili Sadeleşti', 'Koç, Hedefler ve Kayıtlar yerine günlük niyeti anlatan Bugün, Plan ve Geçmiş adları kullanılıyor; seçili alanın amacı tek satırda açıklanıyor.'),
+  item('Kardiyo Amacı Tek Seçicide', 'Telefonda ekran dışına taşan yatay hedef düğmeleri yerel seçim kontrolüne dönüştü; bütün amaçlar görünür ve erişilebilir kaldı.'),
+  item('Teknik Nabız Araçları Katlandı', 'Nabız bölgeleri, hesap yöntemi, maksimum nabız ve sabah ölçümü basit görünümde tek isteğe bağlı başlık altında; detaylı görünümde önceki gibi açık.'),
+  item('Geçmiş Önce Kayıtları Gösteriyor', 'Tempo eğilimleri, seans şablonları ve rekorlar tek analiz başlığında toplanırken son kardiyo kayıtları doğrudan görünür kaldı.'),
+  item('Safir Renk Seçeneği Eklendi', 'Şampanya ve Gül paletlerine koyu ve açık temada çalışan Safir eklendi; vurgu rengi artık profil cinsiyetinden bağımsız seçilebiliyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.19 yalnız görünür arayüz hiyerarşisini ve renk tercihini genişletiyor; localStorage, veri şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -487,6 +500,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_18,
   RELEASE_10_17,
   RELEASE_10_16,
   RELEASE_10_15,

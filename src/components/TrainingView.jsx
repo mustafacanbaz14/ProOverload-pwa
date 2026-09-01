@@ -17,6 +17,12 @@ const MuscleHeatmap = lazy(() => import('./MuscleHeatmap'));
 
 const TEMPLATE_BATCH = 12;
 
+const TRAINING_FOCUS_OPTIONS = [
+  { key: 'today', label: 'Bugün', hint: 'Seans başlat veya son seansı tekrarla', icon: Zap },
+  { key: 'program', label: 'Program', hint: 'Program oluştur ve haftanı düzenle', icon: Wand2 },
+  { key: 'templates', label: 'Şablonlar', hint: 'Kayıtlı seansları bul, düzenle veya başlat', icon: BookmarkPlus },
+];
+
 const TrainingView = memo(({
   templates = [],
   restSeconds = 120,
@@ -51,6 +57,7 @@ const TrainingView = memo(({
   const [query, setQuery] = useState('');
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [templateLimit, setTemplateLimit] = useState(TEMPLATE_BATCH);
+  const [simpleFocus, setSimpleFocus] = useState('today');
   // Kullanıcı bu ekranda elle açıp kapatana kadar Ayarlar'daki bilgi yoğunluğunu
   // canlı izler. Böylece Basit/Detaylı değişikliği sayfa yenilemeden uygulanır.
   const [plannerOverride, setPlannerOverride] = useState(null);
@@ -62,6 +69,10 @@ const TrainingView = memo(({
   const recommendationOpen = recommendationOverride ?? interfaceMode === 'detailed';
   const progressionOpen = progressionOverride ?? interfaceMode === 'detailed';
   const programOptionsOpen = programOptionsOverride ?? interfaceMode === 'detailed';
+  const showToday = interfaceMode === 'detailed' || simpleFocus === 'today';
+  const showProgram = interfaceMode === 'detailed' || simpleFocus === 'program';
+  const showTemplates = interfaceMode === 'detailed' || simpleFocus === 'templates';
+  const activeFocus = TRAINING_FOCUS_OPTIONS.find(option => option.key === simpleFocus) || TRAINING_FOCUS_OPTIONS[0];
 
   const favoriteCount = templates.filter(template => template.favorite).length;
   const visibleTemplates = useMemo(
@@ -91,6 +102,32 @@ const TrainingView = memo(({
 
       <WorkoutFlowStepper stage="prepare" compact={interfaceMode === 'simple'} />
 
+      {interfaceMode === 'simple' && (
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-950/70 p-1.5 shadow-inner" aria-label="Antrenman alanı seç">
+          <div className="grid grid-cols-3 gap-1" role="tablist">
+            {TRAINING_FOCUS_OPTIONS.map(option => {
+              const Icon = option.icon;
+              const active = simpleFocus === option.key;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setSimpleFocus(option.key)}
+                  className={`min-h-12 rounded-xl px-1.5 py-2 text-[9px] font-bold flex flex-col items-center justify-center gap-1 transition-colors ${active ? 'bg-cyan-600 text-white shadow-sm' : 'text-zinc-400 active:bg-zinc-900'}`}
+                >
+                  <Icon size={14} />
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="px-2 pb-1 pt-2 text-center text-[9px] font-mono text-zinc-400">{activeFocus.hint}</p>
+        </section>
+      )}
+
+      {showToday && <>
       {recommendation && (
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">
           <div className="flex items-start justify-between gap-3">
@@ -232,7 +269,9 @@ const TrainingView = memo(({
           )}
         </section>
       )}
+      </>}
 
+      {showProgram && <>
       <section className="luxury-feature-card rounded-3xl border border-violet-800/50 bg-gradient-to-br from-violet-950/45 via-zinc-900 to-cyan-950/20 p-4 space-y-3 shadow-lg shadow-violet-950/15">
         <div className="flex items-start gap-3">
           <span className="w-11 h-11 rounded-2xl border border-violet-700/60 bg-violet-500/15 text-violet-300 flex items-center justify-center shrink-0">
@@ -338,7 +377,9 @@ const TrainingView = memo(({
           </div>
         )}
       </section>
+      </>}
 
+      {showTemplates && (
       <section className="luxury-feature-card bg-zinc-900 border border-zinc-800 rounded-3xl overflow-hidden shadow-xl">
         <div className="px-4 py-3.5 border-b border-zinc-800 bg-zinc-950/70 flex justify-between items-center gap-2">
           <div>
@@ -463,6 +504,7 @@ const TrainingView = memo(({
           </div>
         )}
       </section>
+      )}
     </div>
   );
 });
