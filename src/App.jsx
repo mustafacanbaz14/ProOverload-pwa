@@ -4516,6 +4516,7 @@ export default function App() {
               tab={progressTab}
               setTab={setProgressTab}
               gender={profileGender}
+              interfaceMode={settings.interfaceMode}
               cycleProps={{
                 records: cycleHistory,
                 settings,

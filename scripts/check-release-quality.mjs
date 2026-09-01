@@ -47,7 +47,7 @@ const compactChoiceNav = read('src/components/CompactChoiceNav.jsx');
 // olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 10.7') && roadmap.includes('## 10.19') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
+check(roadmap.includes('## 10.7') && roadmap.includes('## 10.20') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
 check(app.includes('<span>Ekle</span>') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
 check(!app.includes('isAppMenuOpen') && !existsSync(resolve(root, 'src/components/AppMenuModal.jsx')), 'Tekrarlanan uygulama menüsü kaldırıldı');
 check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => navbar.includes(`key: '${key}'`)), 'Beş ana bölüm yalnız alt gezinmede korunuyor');
@@ -74,7 +74,12 @@ check(nutritionView.includes('Hızlı beslenme işlemleri') && nutritionView.inc
 check(nutritionView.includes('Takip ve analiz ayrıntıları') && nutritionView.includes('data-nutrition-editor') && nutritionView.includes('(detailed && safeMeals.length === 1)'), 'Basit beslenme akışı editörü ve analizleri kademeli gösteriyor');
 check(nutritionView.includes('Giriş şeklini değiştir') && nutritionView.includes('Güne Özel Hareket') && nutritionView.includes('openDayMovement'), 'Basit beslenme giriş modu ve güne özel hareket ayarı tek akıştan erişiliyor');
 check(nutritionView.includes('{detailed && <div className="grid grid-cols-2 gap-2 pt-1">'), 'Yinelenen alt öğün araçları yalnız detaylı görünümde açık');
+check(nutritionView.includes('NUTRITION_FOCUS_OPTIONS') && ['Kayıt', 'Özet', 'Analiz'].every(label => nutritionView.includes(`label: '${label}'`)), 'Basit beslenme kayıt, özet ve analiz amaçlarını ayırıyor');
+check(nutritionView.includes('data-nutrition-focus') && nutritionView.includes("nutritionFocus === 'summary'") && nutritionView.includes("nutritionFocus === 'insights'"), 'Beslenme yalnız seçilen günlük görevi görünür tutuyor');
+check(nutritionView.indexOf('data-nutrition-editor') < nutritionView.lastIndexOf('Diğer kayıt yolları') && nutritionView.includes('{!detailed && <button'), 'Basit beslenmede giriş ve tek kaydetme eylemi seyrek araçlardan önce');
 check(progressHub.includes('Gelişim Merkezi') && progressHub.includes('Gelişim görünümü'), 'Gelişim ekranı başlık ve alt görünüm bağlamı taşıyor');
+check(progressHub.includes('HUB_COPY') && progressHub.includes("simple ? 'Ölçüm'") && progressHub.includes("simple ? 'Analiz'"), 'Gelişim merkezi kısa görev dili ve bağlamsal başlık kullanıyor');
+check(app.includes('interfaceMode={settings.interfaceMode}') && progressHub.includes('interfaceMode = \'simple\''), 'Gelişim sade ve detaylı arayüz tercihini uyguluyor');
 check(analyticsView.includes('ANALYSIS_TABS') && analyticsView.includes('grid-cols-3') && analyticsView.includes('Grafik ve Günlük Ayrıntı'), 'Analiz gezinmesi okunabilir ve ileri beslenme verisi katmanlı');
 check(compactChoiceNav.includes('<select') && compactChoiceNav.includes('Değiştir') && compactChoiceNav.includes('active.hint'), 'Ortak mobil seçici mevcut alanı ve amacını açıklıyor');
 check(analyticsView.includes('<CompactChoiceNav') && analyticsView.includes('{detailed ? (') && analyticsView.includes('ariaLabel="Analiz alanı seç"'), 'Basit analiz tek seçici, detaylı analiz doğrudan sekmeler kullanıyor');

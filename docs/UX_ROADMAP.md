@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.19 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.20 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -169,6 +169,21 @@ Durum: Uygulandı.
 - Geçmiş kardiyoda son kayıtları önde; tempo, şablon ve rekorları tek analiz katmanında tut.
 - Şampanya ve Gül vurgu renklerine koyu/açık temalı Safir paletini ekle ve bütün profillere aç.
 - PWA, localStorage, hesaplamalar, detaylı görünüm ve yedek biçimini değiştirme.
+
+## 10.20 — Odaklı beslenme ve anlaşılır gelişim
+
+Durum: Uygulandı.
+
+- Basit Beslenme ekranını Kayıt, Özet ve Analiz amaçlarına ayır; aynı anda yalnız seçilen işi göster.
+- Varsayılan Kayıt alanında besin arama, günlük toplam, su, öğün ve tek kaydetme eylemini koru.
+- Kaydetme düğmesini giriş alanının sonuna taşı; seyrek şablon, kopyalama ve güne özel hareket yollarını günlük işten sonra göster.
+- Kalori hedefi ve makro özetini ayrı Özet görünümünde tek mobil ekrana sığdır.
+- Enerji dengesi, 7 günlük tablo ve gerçek harcamayı yalnız Analiz istendiğinde aç.
+- Gelişim merkezinde Vücut & Hedefler / Analizler dilini basit modda Ölçüm / Analiz olarak kısalt.
+- Gelişim başlığını seçilen göreve göre Ölçüm ve hedefler, İlerlemeni incele veya Döngü takibi olarak değiştir.
+- Dokunma hedeflerini, erişilebilir basılı durumlarını ve açıklayıcı alt metinleri koru.
+- Detaylı görünümde bütün beslenme, ölçüm, analiz ve döngü işlevlerini birlikte göstermeye devam et.
+- PWA, localStorage, hesaplamalar ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

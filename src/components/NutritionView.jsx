@@ -37,6 +37,12 @@ const MacroTile = ({ label, value, numericValue, target, color, bar }) => {
   );
 };
 
+const NUTRITION_FOCUS_OPTIONS = [
+  { key: 'log', label: 'Kayıt', hint: 'Besin, günlük toplam ve su kaydı', icon: Plus },
+  { key: 'summary', label: 'Özet', hint: 'Hedef, kalan kalori ve makro özeti', icon: Flame },
+  { key: 'insights', label: 'Analiz', hint: 'Enerji dengesi ve 7 günlük eğilimler', icon: TrendingUp },
+];
+
 const NutritionView = memo(({
   currentNutritionForm,
   setCurrentNutritionForm,
@@ -74,6 +80,7 @@ const NutritionView = memo(({
   const [expandedMeals, setExpandedMeals] = useState(() => new Set());
   const [advancedOpen, setAdvancedOpen] = useState(false);
   const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [nutritionFocus, setNutritionFocus] = useState('log');
 
   const dailyMeal = safeMeals[0] || {};
   const totals = dailyTotals(currentNutritionForm);
@@ -196,6 +203,7 @@ const NutritionView = memo(({
   };
 
   const openDailyTotals = () => {
+    setNutritionFocus('log');
     setEntryMode('daily');
     requestAnimationFrame(() => {
       document.querySelector('[data-nutrition-editor]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -203,6 +211,7 @@ const NutritionView = memo(({
   };
 
   const openDayMovement = () => {
+    setNutritionFocus('log');
     setAdvancedOpen(true);
     requestAnimationFrame(() => {
       document.querySelector('[data-nutrition-editor]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -221,6 +230,7 @@ const NutritionView = memo(({
   };
 
   const addMealAndOpen = () => {
+    setNutritionFocus('log');
     const id = `meal-${Date.now()}`;
     setCurrentNutritionForm(prev => ({
       ...prev,
@@ -278,13 +288,17 @@ const NutritionView = memo(({
   const targetSource = adaptiveTDEE && !adaptiveTDEE.insufficient
     ? `Kilo eğilimiyle kalibre edildi · ${adaptiveTDEE.confidence || 'orta'} güven`
     : 'Vücut ölçümü, hedef ve aktiviteden tahmin';
+  const activeFocus = NUTRITION_FOCUS_OPTIONS.find(option => option.key === nutritionFocus)
+    || NUTRITION_FOCUS_OPTIONS[0];
 
   return (
     <div data-view-scroll="nutrition" className="luxury-screen p-4 space-y-3.5 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
       <ViewHeader
         eyebrow="Günlük Takip"
         title="Beslenme"
-        subtitle={`Önce ${isToday ? 'bugünün' : 'seçili günün'} özeti, ayrıntılar aşağıda.`}
+        subtitle={detailed
+          ? `${isToday ? 'Bugünün' : 'Seçili günün'} kaydı, özeti ve analizi.`
+          : 'Kayıt, günlük özet ve analiz tek yerde.'}
         action={(
           <div className="flex items-end gap-1.5">
             <label className="text-right">
@@ -302,6 +316,31 @@ const NutritionView = memo(({
         )}
       />
 
+      {!detailed && (
+        <section data-nutrition-focus={nutritionFocus} className="rounded-2xl border border-zinc-800 bg-zinc-900/75 p-1.5 shadow-sm">
+          <div className="grid grid-cols-3 gap-1" aria-label="Beslenme amacı">
+            {NUTRITION_FOCUS_OPTIONS.map(option => {
+              const Icon = option.icon;
+              const active = nutritionFocus === option.key;
+              return (
+                <button
+                  key={option.key}
+                  type="button"
+                  onClick={() => setNutritionFocus(option.key)}
+                  aria-pressed={active}
+                  className={`min-h-12 rounded-xl px-2 flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors ${active ? 'bg-orange-700 text-white shadow-md' : 'text-zinc-400 active:bg-zinc-800'}`}
+                >
+                  <Icon size={14} />
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="px-2 pb-1 pt-2 text-center text-[9px] font-mono text-zinc-400">{activeFocus.hint}</p>
+        </section>
+      )}
+
+      {(detailed || nutritionFocus === 'summary') && (
       <section className="luxury-feature-card bg-gradient-to-br from-orange-950/40 via-zinc-900 to-zinc-900 rounded-3xl border border-orange-900/30 p-4 shadow-lg shadow-black/20">
         <div className="flex items-start justify-between gap-3">
           <div>
@@ -421,7 +460,10 @@ const NutritionView = memo(({
           <span className="text-[9px] font-bold text-red-400">Aç</span>
         </button>
       </section>
+      )}
 
+      {(detailed || nutritionFocus === 'log') && (
+      <>
       <section className="space-y-2" aria-label="Hızlı beslenme işlemleri">
         <div className="grid grid-cols-2 gap-2">
           <button type="button" onClick={() => { setEntryMode('meals'); setIsFoodSearchOpen(true); }} className="min-h-14 bg-gradient-to-r from-orange-950/50 to-zinc-900 border border-orange-900/45 rounded-2xl px-3 flex items-center gap-2.5 text-left active:scale-[0.98] transition-all shadow-md">
@@ -433,38 +475,11 @@ const NutritionView = memo(({
             <span><strong className="text-[11px] text-zinc-100 block">Günlük Toplam</strong><span className="text-[9px] font-mono text-zinc-400">Makroları yaz</span></span>
           </button>
         </div>
-        <button type="button" onClick={handleSaveNutrition} className="min-h-12 w-full bg-cyan-700 active:bg-cyan-800 text-white rounded-2xl px-3.5 flex items-center justify-between gap-3 shadow-lg shadow-cyan-950/25">
+        {detailed && <button type="button" onClick={handleSaveNutrition} className="min-h-12 w-full bg-cyan-700 active:bg-cyan-800 text-white rounded-2xl px-3.5 flex items-center justify-between gap-3 shadow-lg shadow-cyan-950/25">
           <span className="flex items-center gap-2.5"><Save size={17} /><strong className="text-[11px]">{isToday ? 'Bugünün Kaydını Kaydet' : 'Geçmiş Kaydı Kaydet'}</strong></span>
           <span className="text-[9px] font-mono text-cyan-100/75">Değişiklikleri sakla</span>
-        </button>
+        </button>}
       </section>
-
-      <DisclosureCard
-        icon={BookOpen}
-        title="Diğer kayıt yolları"
-        summary="Şablon, kopyalama ve özel gün ayarları"
-        defaultOpen={false}
-        accentClass="text-purple-400"
-      >
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { label: 'Şablon & Tarif', icon: BookOpen, action: () => setTemplatesOpen(true), enabled: true, color: 'text-purple-400' },
-            { label: 'Dünü Kopyala', icon: Copy, action: copyYesterday, enabled: Boolean(yesterdayRecord), color: 'text-cyan-400' },
-            { label: 'Geçen Haftayı Kopyala', icon: Copy, action: () => copyRecord(previousWeekRecord), enabled: Boolean(previousWeekRecord), color: 'text-blue-400' },
-            { label: 'Boş Öğün Ekle', icon: Plus, action: addMealAndOpen, enabled: true, color: 'text-orange-400' },
-            { label: 'Güne Özel Hareket', icon: Footprints, action: openDayMovement, enabled: true, color: 'text-emerald-400' },
-            { label: 'Kalori Detayı', icon: BarChart3, action: () => onOpenEnergyDetail?.('days', currentNutritionForm.date), enabled: true, color: 'text-red-400' },
-          ].map(item => {
-            const Icon = item.icon;
-            return (
-              <button key={item.label} type="button" onClick={item.action} disabled={!item.enabled} className="rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-left disabled:opacity-35 active:scale-[0.97] transition-all">
-                <Icon size={13} className={`${item.color} mb-1`} />
-                <span className="text-[9px] font-bold text-zinc-300">{item.label}</span>
-              </button>
-            );
-          })}
-        </div>
-      </DisclosureCard>
 
       <section data-nutrition-editor className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4 space-y-3.5 shadow-xl scroll-mt-3">
         <div className="flex items-center justify-between gap-3">
@@ -783,24 +798,55 @@ const NutritionView = memo(({
         )}
       </section>
 
-      {detailed && <button
+      {!detailed && <button
         type="button"
         onClick={handleSaveNutrition}
-        className="w-full bg-orange-700 active:bg-orange-800 text-white font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center text-xs shadow-lg shadow-orange-950/30"
+        className="min-h-12 w-full bg-cyan-700 active:bg-cyan-800 text-white rounded-2xl px-3.5 flex items-center justify-between gap-3 shadow-lg shadow-cyan-950/25"
       >
-        <Save size={15} className="mr-2" /> {isToday ? 'Bugünün Kaydını Kaydet' : 'Geçmiş Kaydı Kaydet'}
+        <span className="flex items-center gap-2.5"><Save size={17} /><strong className="text-[11px]">{isToday ? 'Bugünün Kaydını Kaydet' : 'Geçmiş Kaydı Kaydet'}</strong></span>
+        <span className="text-[9px] font-mono text-cyan-100/75">Değişiklikleri sakla</span>
       </button>}
 
       <DisclosureCard
-        key={`tracking-${detailed}`}
+        icon={BookOpen}
+        title="Diğer kayıt yolları"
+        summary="Şablon, kopyalama ve özel gün ayarları"
+        defaultOpen={false}
+        accentClass="text-purple-400"
+      >
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { label: 'Şablon & Tarif', icon: BookOpen, action: () => setTemplatesOpen(true), enabled: true, color: 'text-purple-400' },
+            { label: 'Dünü Kopyala', icon: Copy, action: copyYesterday, enabled: Boolean(yesterdayRecord), color: 'text-cyan-400' },
+            { label: 'Geçen Haftayı Kopyala', icon: Copy, action: () => copyRecord(previousWeekRecord), enabled: Boolean(previousWeekRecord), color: 'text-blue-400' },
+            { label: 'Boş Öğün Ekle', icon: Plus, action: addMealAndOpen, enabled: true, color: 'text-orange-400' },
+            { label: 'Güne Özel Hareket', icon: Footprints, action: openDayMovement, enabled: true, color: 'text-emerald-400' },
+            { label: 'Kalori Detayı', icon: BarChart3, action: () => onOpenEnergyDetail?.('days', currentNutritionForm.date), enabled: true, color: 'text-red-400' },
+          ].map(item => {
+            const Icon = item.icon;
+            return (
+              <button key={item.label} type="button" onClick={item.action} disabled={!item.enabled} className="rounded-xl border border-zinc-800 bg-zinc-950 p-2.5 text-left disabled:opacity-35 active:scale-[0.97] transition-all">
+                <Icon size={13} className={`${item.color} mb-1`} />
+                <span className="text-[9px] font-bold text-zinc-300">{item.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </DisclosureCard>
+      </>
+      )}
+
+      {(detailed || nutritionFocus === 'insights') && (
+      <DisclosureCard
+        key={`tracking-${detailed}-${nutritionFocus}`}
         icon={Activity}
         title="Takip ve analiz ayrıntıları"
         summary="Su hedefi, enerji dengesi, 7 günlük tablo ve gerçek harcama"
-        defaultOpen={detailed}
+        defaultOpen={detailed || nutritionFocus === 'insights'}
         accentClass="text-cyan-400"
       >
         <div className="space-y-2.5">
-          {isToday && waterSummary && waterTarget && (
+          {detailed && isToday && waterSummary && waterTarget && (
             <HydrationCard
               summary={waterSummary}
               target={waterTarget}
@@ -811,11 +857,11 @@ const NutritionView = memo(({
           )}
 
       <DisclosureCard
-        key={`energy-${detailed}`}
+        key={`energy-${detailed}-${nutritionFocus}`}
         icon={Flame}
         title="Enerji dengesi"
         summary={calorieData?.ready ? `${Math.abs(calorieData.balance)} kcal ${calorieData.balance < 0 ? 'açık' : calorieData.balance > 0 ? 'fazla' : 'korunum'}` : 'Vücut verisiyle hesaplanır'}
-        defaultOpen={detailed}
+        defaultOpen={detailed || nutritionFocus === 'insights'}
         accentClass="text-red-400"
       >
         <CalorieBalanceCard
@@ -914,6 +960,7 @@ const NutritionView = memo(({
       )}
         </div>
       </DisclosureCard>
+      )}
 
       <NutritionTemplatesModal
         isOpen={templatesOpen}

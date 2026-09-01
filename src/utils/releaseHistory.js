@@ -413,7 +413,7 @@ const RELEASE_10_18 = release('10.18', '2026-09-01', 'Tek Seçimli Sade Ekranlar
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.18 localStorage anahtarlarını, veri şemasını, yedek biçimini, hesaplamaları ve çevrimdışı çalışma davranışını değiştirmiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı Antrenman ve Sade Kardiyo', [
+const RELEASE_10_19 = release('10.19', '2026-09-01', 'Odaklı Antrenman ve Sade Kardiyo', [
   item('Antrenman Üç Net Amaca Ayrıldı', 'Basit görünümde Bugün, Program ve Şablonlar aynı uzun sayfada yarışmıyor; kullanıcı yapmak istediği işi tek dokunuşla seçiyor.'),
   item('Bugünün Seansı İlk Ekranda', 'Serbest başlatma, son seansı tekrarlama, akıllı öneri ve ilerleme blokları Bugün alanında kalıyor; program bakımı günlük eylemi aşağı itmiyor.'),
   item('Program Yönetimi Tek Çatıda', 'Yönlendirmeli program kurma, taslağa dönme, hazır program, elle kurma, haftalık plan ve hareket araçları Program alanında toplandı.'),
@@ -424,6 +424,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı 
   item('Geçmiş Önce Kayıtları Gösteriyor', 'Tempo eğilimleri, seans şablonları ve rekorlar tek analiz başlığında toplanırken son kardiyo kayıtları doğrudan görünür kaldı.'),
   item('Safir Renk Seçeneği Eklendi', 'Şampanya ve Gül paletlerine koyu ve açık temada çalışan Safir eklendi; vurgu rengi artık profil cinsiyetinden bağımsız seçilebiliyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.19 yalnız görünür arayüz hiyerarşisini ve renk tercihini genişletiyor; localStorage, veri şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Odaklı Beslenme ve Anlaşılır Gelişim', [
+  item('Beslenme Üç Net Amaca Ayrıldı', 'Basit görünümde Kayıt, Özet ve Analiz aynı uzun sayfada üst üste durmuyor; kullanıcı yapmak istediği işi tek dokunuşla seçiyor.'),
+  item('Günlük Kayıt Yaklaşık Tek Ekrana İndi', '393×852 mobil ölçümünde varsayılan kayıt içeriği 1120 pikselden 790 piksele indi; besin, toplam makro, su, öğün ve kaydetme işlevleri korunuyor.'),
+  item('Özet Ayrı ve Okunabilir', 'Kalori hedefi, alınan, yakılan, kalan, protein ve diğer makrolar ayrı Özet alanında tek mobil ekrana sığıyor.'),
+  item('Analiz Yalnız İstendiğinde Açılıyor', 'Enerji dengesi, 7 günlük tablo ve gerçek günlük harcama günlük girişin önüne çıkmıyor; Analiz seçildiğinde eksiksiz açılıyor.'),
+  item('Tek Mantıklı Kaydetme Noktası', 'Basit görünümde kaydetme eylemi veri alanının sonuna taşındı; kullanıcı önce girişi yapıp sonra değişikliği saklıyor.'),
+  item('Seyrek Araçlar Günlük İşi Bölmüyor', 'Şablon, geçmişten kopyalama, boş öğün, güne özel hareket ve kalori detayı giriş ile kaydetmeden sonra tek başlıkta korunuyor.'),
+  item('Su Girişi Yinelenmiyor', 'Aynı ekranda iki ayrı su kartı göstermeden mevcut +250, +500 ve elle miktar girişi günlük kaydın içinde kalıyor.'),
+  item('Gelişim Dili Kısaldı', 'Basit görünümde Vücut & Hedefler ve Analizler yerine Ölçüm ve Analiz kullanılıyor; kadın profillerinde Döngü seçeneği korunuyor.'),
+  item('Başlık Seçilen Görevi Açıklıyor', 'Gelişim merkezi seçime göre Ölçüm ve hedefler, İlerlemeni incele veya Döngü takibi başlığını ve ilgili sonraki adımı gösteriyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.20 yalnız arayüz hiyerarşisini değiştiriyor; localStorage, veri şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -500,6 +513,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_19,
   RELEASE_10_18,
   RELEASE_10_17,
   RELEASE_10_16,
