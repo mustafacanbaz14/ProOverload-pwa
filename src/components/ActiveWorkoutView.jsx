@@ -82,6 +82,7 @@ const ActiveWorkoutView = memo(({
   // Kanca erken dönüşten önce: koşullu çağrılamaz.
   const [acikMenu, setAcikMenu] = useState(null);
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const detailed = settings?.interfaceMode === 'detailed';
 
   if (!activeWorkout) return null;
   const restCue = nextSetCue(activeWorkout);
@@ -532,6 +533,11 @@ const ActiveWorkoutView = memo(({
           const restOverrideOptions = [0, 60, 90, 120, 150, 180, 240, 300];
           // Katkılar büyükten küçüğe: birincil kas en solda.
           const muscleParts = Object.entries(contributions || {}).sort((a, b) => b[1] - a[1]);
+          const secondaryInfoCount = [
+            onAddWarmup || onSetExerciseNote,
+            ex.backup || ex.plannedTechnique || vurguSonucu || tabanAralik.source === 'template',
+            muscleParts.length > 0,
+          ].filter(Boolean).length;
 
           return (
             <div id={`exercise-${ex.id}`} key={ex.id} className="luxury-feature-card scroll-mt-4 bg-zinc-900/95 rounded-3xl border border-zinc-800/90 overflow-hidden shadow-xl">
@@ -619,6 +625,21 @@ const ActiveWorkoutView = memo(({
                   </div>
                 );
               })()}
+
+              {secondaryInfoCount > 0 && (
+                <details
+                  key={`exercise-details-${ex.id}-${detailed}`}
+                  open={detailed ? true : undefined}
+                  className="border-b border-zinc-800"
+                >
+                  <summary className={`list-none [&::-webkit-details-marker]:hidden ${detailed ? 'hidden' : 'min-h-11 px-3 py-2 flex items-center gap-2 bg-zinc-950/40 active:bg-zinc-800/70 cursor-pointer'}`}>
+                    <SlidersHorizontal size={13} className="text-zinc-400 shrink-0" />
+                    <span className="min-w-0 flex-1">
+                      <strong className="text-[10px] text-zinc-200 block">Hareket ayrıntıları</strong>
+                      <span className="text-[9px] font-mono text-zinc-500 block truncate">Isınma, not, plan ve kas katkısı</span>
+                    </span>
+                    <span className="text-[9px] font-bold text-cyan-400 shrink-0">{secondaryInfoCount} bölüm</span>
+                  </summary>
 
               {/* Isınma merdiveni, seans notu ve tek taraflı takip.
                   Üçü de hareketin kendi bandında: seansın genel not alanına
@@ -726,6 +747,25 @@ const ActiveWorkoutView = memo(({
                 </div>
               )}
 
+              {muscleParts.length > 0 && (
+                <div className="px-3 py-2 border-b border-zinc-800 bg-zinc-950/40 flex flex-wrap gap-1">
+                  {muscleParts.map(([m, w]) => (
+                    <span
+                      key={m}
+                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
+                        w === 1 ? 'text-emerald-400 border-emerald-900/50 bg-emerald-950/30'
+                          : w === 0.5 ? 'text-cyan-400 border-cyan-900/50 bg-cyan-950/30'
+                            : 'text-zinc-500 border-zinc-800 bg-zinc-900'
+                      }`}
+                    >
+                      {m}{w === 0.5 ? ' ½' : w === 0.25 ? ' ¼' : ''}
+                    </span>
+                  ))}
+                </div>
+              )}
+                </details>
+              )}
+
               {/* Vücut ağırlığı bandı. Eskiden yalnızca "şu kadar ekleniyor"
                   diyordu; sayının hangi kilodan çıktığı ve alana ne yazılması
                   gerektiği görünmüyordu. Artık taban, kaynağı ve canlı toplam
@@ -761,23 +801,6 @@ const ActiveWorkoutView = memo(({
                 <div className="px-3 py-2 border-b border-zinc-800 bg-cyan-950/15 flex items-start gap-2">
                   <Settings size={11} className="text-cyan-500 shrink-0 mt-0.5" />
                   <span className="text-[10px] font-mono text-cyan-200/90 leading-relaxed">{setupNote}</span>
-                </div>
-              )}
-
-              {muscleParts.length > 0 && (
-                <div className="px-3 py-2 border-b border-zinc-800 bg-zinc-950/40 flex flex-wrap gap-1">
-                  {muscleParts.map(([m, w]) => (
-                    <span
-                      key={m}
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${
-                        w === 1 ? 'text-emerald-400 border-emerald-900/50 bg-emerald-950/30'
-                          : w === 0.5 ? 'text-cyan-400 border-cyan-900/50 bg-cyan-950/30'
-                            : 'text-zinc-500 border-zinc-800 bg-zinc-900'
-                      }`}
-                    >
-                      {m}{w === 0.5 ? ' ½' : w === 0.25 ? ' ¼' : ''}
-                    </span>
-                  ))}
                 </div>
               )}
 

@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.15 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.16 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -121,6 +121,18 @@ Durum: Uygulandı.
 - Koçta plan veya kardiyo yokken yinelenen Serbest Başlat eylemini kaldır; ana sayfanın tek baskın başlatma düğmesini kullan.
 - Basit Arşivde işlev öğretmeyen açıklama kartını gizle; arama, tür filtreleri, kalori detayı ve geçmişe ekleme görünür kalsın.
 - PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
+
+## 10.16 — Okunur analiz ve sade aktif seans
+
+Durum: Uygulandı.
+
+- Altı analiz türünü tek dar satır yerine ikonlu, 3×2 ve 44 piksellik dokunma hedefli düzende göster.
+- Seçili analizin hangi soruyu cevapladığını kısa bağlam satırıyla açıkla.
+- Basit görünümde hacim, derin koç ve ileri beslenme analizlerini kapalı başlat; bütün kartları tek dokunuşla koru.
+- 1RM hareketi seçildikten sonra uzun seçim listesini kapat; grafik ve değiştirme erişimini görünür tut.
+- Aktif seansta ısınma, not, şablon planı ve kas katkısını hareket başına tek ayrıntı alanında topla.
+- Ağrı, vücut ağırlığı hesabı, kurulum ve progresyon gibi set güvenliğini etkileyen bilgileri görünür bırak.
+- Detaylı görünüm, PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

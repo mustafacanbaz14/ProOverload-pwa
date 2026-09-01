@@ -47,6 +47,18 @@ const NUTRITION_METRICS = [
   { key: 'fats', label: 'Yağ', unit: ' g', color: '#a78bfa' },
 ];
 
+// Altı analizi tek satıra sıkıştırmak mobilde hem yazıyı küçültüyor hem de
+// "hangi ekran ne işe yarıyor" sorusunu cevapsız bırakıyordu. İkon ve kısa
+// amaç metni aynı kaynaktan gelir; gezinme ile açıklama zamanla ayrışmaz.
+const ANALYSIS_TABS = [
+  { key: 'body', label: 'Vücut', hint: 'Kilo ve çevre ölçümü eğilimleri', icon: Target },
+  { key: '1rm', label: '1RM', hint: 'Hareket bazında kuvvet eğilimi', icon: Gauge },
+  { key: 'muscle', label: 'Hacim', hint: 'Kas hacmi, denge ve doz analizi', icon: Waves },
+  { key: 'plan', label: 'Plan', hint: 'Planlanan ile yapılanın karşılaştırması', icon: CalendarRange },
+  { key: 'nutrition', label: 'Besin', hint: 'Kalori, makro ve tutarlılık eğilimi', icon: Utensils },
+  { key: 'coach', label: 'Koç', hint: 'Verilerden uygulanabilir kararlar', icon: BrainCircuit },
+];
+
 // Sıklık yargısının rengi. "incidental" uyarı değil bilgi: kas hedeflenmiyor.
 const FREQ_TONE = {
   ok: 'text-emerald-400',
@@ -119,6 +131,9 @@ const AnalyticsView = memo(({
   const [exerciseQuery, setExerciseQuery] = useState('');
   const [nutritionMetric, setNutritionMetric] = useState('calories');
   const [coachPanel, setCoachPanel] = useState('decision');
+  const detailed = settings.interfaceMode === 'detailed';
+  const activeAnalysis = ANALYSIS_TABS.find(tab => tab.key === analysisType) || ANALYSIS_TABS[0];
+  const ActiveAnalysisIcon = activeAnalysis.icon;
 
   const hidden1RMSet = useMemo(() => new Set(hidden1RMExercises), [hidden1RMExercises]);
 
@@ -304,24 +319,37 @@ const AnalyticsView = memo(({
 
   return (
     <div data-view-scroll="progress" className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black`}>
-      <div className="luxury-segmented grid grid-cols-6 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md">
-        {[
-          { key: 'body', label: 'Vücut' },
-          { key: '1rm', label: '1RM' },
-          { key: 'muscle', label: 'Hacim' },
-          { key: 'plan', label: 'Plan' },
-          { key: 'nutrition', label: 'Besin' },
-          { key: 'coach', label: 'Koç' },
-        ].map(t => (
+      <div
+        role="tablist"
+        aria-label="Analiz türü"
+        className="luxury-segmented grid grid-cols-3 gap-1.5 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md"
+      >
+        {ANALYSIS_TABS.map(t => {
+          const Icon = t.icon;
+          return (
           <button
             key={t.key}
             type="button"
+            role="tab"
+            aria-selected={analysisType === t.key}
             onClick={() => setAnalysisType(t.key)}
-            className={`py-2 rounded-xl text-[10px] font-bold uppercase tracking-wide transition-all active:scale-[0.96] ${analysisType === t.key ? 'bg-cyan-600 text-white shadow-sm font-black' : 'text-zinc-500 hover:text-zinc-300'}`}
+            className={`min-h-11 px-2 py-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-wide transition-all active:scale-[0.96] ${analysisType === t.key ? 'bg-cyan-600 text-white shadow-sm font-black' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
+            <Icon size={13} className="shrink-0" />
             {t.label}
           </button>
-        ))}
+          );
+        })}
+      </div>
+
+      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/70 px-3 py-2.5 flex items-center gap-2.5">
+        <span className="w-8 h-8 rounded-xl border border-zinc-800 bg-zinc-950 flex items-center justify-center shrink-0">
+          <ActiveAnalysisIcon size={14} className="text-cyan-400" />
+        </span>
+        <span className="min-w-0">
+          <strong className="text-[10px] text-zinc-200 block">{activeAnalysis.label} analizi</strong>
+          <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">{activeAnalysis.hint}</span>
+        </span>
       </div>
 
       {analysisType === 'body' && (
@@ -400,10 +428,11 @@ const AnalyticsView = memo(({
               açıktı ve en çok işe yarayan kart on kartın altında kalıyordu.
               Yalnızca ilk bölüm açık geliyor. */}
           <AnalyticsSection
+            key={`muscle-dose-${detailed}`}
             title="Hacim ve Doz"
             summary="Doz-yanıt eğrisi, set sayımı, kas karnesi"
             icon={Waves}
-            defaultOpen
+            defaultOpen={detailed}
           >
             <DoseResponseCard
               muscle={muscleKey}
@@ -584,7 +613,14 @@ const AnalyticsView = memo(({
 
       {analysisType === '1rm' && (
         <div className="space-y-3">
-          <div className="bg-zinc-900 p-3 rounded-2xl border border-zinc-800 space-y-2.5">
+          <AnalyticsSection
+            key={`rm-picker-${detailed}-${Boolean(analysisExercise)}`}
+            title="Hareket Seç"
+            summary={analysisExercise ? `${analysisExercise} seçili · değiştirmek için aç` : 'Grafik için bir hareket seç'}
+            icon={Gauge}
+            defaultOpen={detailed || !analysisExercise}
+          >
+          <div className="space-y-2.5">
             <div className="flex justify-between items-baseline">
               <label className="text-[10px] font-mono text-zinc-400 uppercase">Hareket Seçin</label>
               <span className="text-[9px] font-mono text-zinc-400">
@@ -642,6 +678,7 @@ const AnalyticsView = memo(({
               })}
             </div>
           </div>
+          </AnalyticsSection>
 
           {analysisExercise ? (
             <TrendChart data={chartData} color="#34d399" unit="kg" />
@@ -726,11 +763,12 @@ const AnalyticsView = memo(({
                   ekran ve 17 uzun paragraftı. Kartların hiçbiri gereksiz değil
                   ama hepsini birden okumak kimsenin yaptığı bir şey değil. */}
               <AnalyticsSection
+                key={`coach-progress-${detailed}`}
                 title="İlerleme ve Durgunluk"
                 summary="Plato taraması, yetmezliğe yakınlık"
                 icon={TrendingDown}
                 accentClass="text-amber-400"
-                defaultOpen
+                defaultOpen={detailed}
               >
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
                   <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-2">
@@ -957,6 +995,14 @@ const AnalyticsView = memo(({
                 );
               })()}
 
+              <AnalyticsSection
+                key={`nutrition-detail-${detailed}`}
+                title="Grafik ve Günlük Ayrıntı"
+                summary="Makro dağılımı, tutarlılık, trend ve son kayıtlar"
+                icon={Utensils}
+                accentClass="text-emerald-400"
+                defaultOpen={detailed}
+              >
               {/* Makro dağılımı */}
               {nutritionAnalysis.split && (
                 <div className="bg-zinc-900 border border-zinc-800 rounded-2xl p-3.5 space-y-2">
@@ -1097,6 +1143,7 @@ const AnalyticsView = memo(({
                   </p>
                 )}
               </div>
+              </AnalyticsSection>
             </>
           )}
         </div>

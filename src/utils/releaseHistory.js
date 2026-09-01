@@ -363,7 +363,7 @@ const RELEASE_10_14 = release('10.14', '2026-09-01', 'Sade Şablon Düzenleme', 
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.14 localStorage şemasını, yedek biçimini, mevcut şablonları ve çevrimdışı çalışma davranışını değiştirmiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Tek Görevli Günlük Ekranlar', [
+const RELEASE_10_15 = release('10.15', '2026-09-01', 'Tek Görevli Günlük Ekranlar', [
   item('Beslenme Özeti Sadeleşti', 'Basit görünümde teknik dört parçalı kalori denklemi yerine hedef, alınan ve yakılan değerleri okunuyor; tam denklem Detaylı görünümde korunuyor.'),
   item('Günlük Toplama Doğrudan Geçiş', 'Günlük Toplam düğmesi makro girişini seçip editöre götürüyor; boş ilk öğün artık basit görünümde kendiliğinden açılmıyor.'),
   item('Tek Kaydetme Eylemi', 'Beslenme ve Vücut ekranlarında basit modda aynı işi yapan ikinci kaydetme düğmeleri kaldırıldı; kayıt işlevi değişmedi.'),
@@ -372,6 +372,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Tek Gör
   item('Daha Kısa Antrenman Rehberi', 'Basit Antrenman ekranı Hazırla, Çalış ve Değerlendir aşamalarını açıklama satırları olmadan gösteriyor; Detaylı görünüm aynı rehberi koruyor.'),
   item('Arşivde Daha Az Gürültü', 'Basit görünümde tekrarlanan öğretici kart kaldırıldı; arama, filtre, geçmişe ekleme ve gün gün kalori erişimi görünür kaldı.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.15 yalnız görünür bilgi hiyerarşisini değiştiriyor; localStorage, yedek biçimi, hesaplamalar ve çevrimdışı çalışma aynı kalıyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Okunur Analiz ve Sade Aktif Seans', [
+  item('Analiz Seçimi Artık Okunuyor', 'Altı dar sekme tek satıra sıkışmıyor; ikonlu 3×2 düzen, her seçeneğe en az 44 piksellik dokunma alanı veriyor.'),
+  item('Her Analiz Amacını Açıklıyor', 'Seçilen Vücut, 1RM, Hacim, Plan, Besin veya Koç ekranının neyi cevapladığı kısa bir bağlam satırında görülüyor.'),
+  item('Basit Hacim Analizi Duvar Değil', 'Hacim-doz, öncelik, program, kalite ve sıklık bölümleri basit görünümde kapalı başlıyor; veri ve hesapların tamamı başlıklardan açılıyor.'),
+  item('1RM Seçimi Yol Üstünden Çekildi', 'Hareket seçildikten sonra uzun arama listesi basit görünümde kapanıyor; grafik görünür kalıyor ve hareket değiştirme tek başlıktan yapılıyor.'),
+  item('Koç Kanıtı İsteğe Bağlı', 'Derin Koç görünümündeki plato ve yetmezlik kartları basit modda otomatik açılmıyor; Karar ekranı ilk durak olmaya devam ediyor.'),
+  item('Beslenme Analizi Katmanlandı', 'Kalori ortalaması, hedef ve enerji dengesi önde; makro dağılımı, tutarlılık, grafik ve günlük tablo tek ayrıntı başlığında korunuyor.'),
+  item('Aktif Seansta Setler Önce', 'Isınma, seans notu, şablon planı ve kas katkısı her harekette ayrı şeritler oluşturmak yerine tek Hareket ayrıntıları alanında toplanıyor.'),
+  item('Kritik Seans Bilgileri Gizlenmedi', 'Ağrı uyarısı, vücut ağırlığı hesabı, kurulum notu ve progresyon reçetesi set girişinin yanında görünür kalıyor.'),
+  item('Detaylı Görünüm Korundu', 'Ayrıntılı arayüzü seçen kullanıcı analiz ve hareket bilgilerini önceki gibi açık görmeye devam ediyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.16 yalnız arayüz hiyerarşisini değiştiriyor; localStorage, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -448,6 +461,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_15,
   RELEASE_10_14,
   RELEASE_10_13,
   RELEASE_10_12,

@@ -36,13 +36,14 @@ const metricsView = read('src/components/MetricsView.jsx');
 const bodyRatios = read('src/components/BodyRatiosCard.jsx');
 const templateBuilder = read('src/components/TemplateBuilderModal.jsx');
 const exerciseLibrary = read('src/components/ExerciseLibraryModal.jsx');
+const analyticsView = read('src/components/AnalyticsView.jsx');
 
 // Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
 // package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
 // olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 10.7') && roadmap.includes('## 10.15') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
+check(roadmap.includes('## 10.7') && roadmap.includes('## 10.16') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
 check(app.includes('<span>Ekle</span>') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
 check(!app.includes('isAppMenuOpen') && !existsSync(resolve(root, 'src/components/AppMenuModal.jsx')), 'Tekrarlanan uygulama menüsü kaldırıldı');
 check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => navbar.includes(`key: '${key}'`)), 'Beş ana bölüm yalnız alt gezinmede korunuyor');
@@ -51,6 +52,7 @@ check(['Antrenman', 'Kardiyo / Aktivite', 'Beslenme', 'Vücut Ölçümü', 'Uyku
 check(dailyWorkspace.includes('Kalori detayı') && dailyWorkspace.includes('Arşivde aç') && dailyWorkspace.includes('onAddWater'), 'Günlük merkez enerji, arşiv ve su eylemlerini koruyor');
 check(['Hazırla', 'Çalış', 'Değerlendir'].every(label => workoutStepper.includes(label)), 'Antrenman yaşam döngüsü üç görünür aşama taşıyor');
 check(activeWorkout.includes('Şimdi bunu yap') && activeWorkout.includes('Seans ayrıntıları') && activeWorkout.includes('WorkoutFlowStepper'), 'Canlı seans sonraki eylemi öne çıkarıp ayrıntıları katlıyor');
+check(activeWorkout.includes('Hareket ayrıntıları') && activeWorkout.includes('secondaryInfoCount') && activeWorkout.includes("interfaceMode === 'detailed'"), 'Aktif seans ikincil hareket bilgisini basit görünümde katmanlıyor');
 check(sessionReport.includes('Sonraki seans odağı') && sessionReport.includes('Analizde İncele') && sessionReport.includes('WorkoutFlowStepper'), 'Seans raporu sonraki odağı ve analiz geçişini gösteriyor');
 check(index.includes('user-scalable=no') && main.includes("'gesturestart'") && css.includes('font-size: max(16px, 1rem)'), 'Mobil zoom kilidi ve uygulama içi punto ölçeği birlikte korunuyor');
 check(settingsModal.includes("activeSection === 'home'") && settingsModal.includes("key: 'method'"), 'Ayarlar kategori ana ekranı ve Koç & Yöntem ayrımı korunuyor');
@@ -65,6 +67,8 @@ check(historyView.includes('overflow-x-auto') && historyView.includes('aria-pres
 check(nutritionView.includes('Hızlı beslenme işlemleri') && nutritionView.includes('Değişiklikleri sakla') && nutritionView.includes('min-h-11'), 'Beslenme giriş ve kaydetme hiyerarşisi ile dokunma hedefleri korunuyor');
 check(nutritionView.includes('Takip ve analiz ayrıntıları') && nutritionView.includes('data-nutrition-editor') && nutritionView.includes('(detailed && safeMeals.length === 1)'), 'Basit beslenme akışı editörü ve analizleri kademeli gösteriyor');
 check(progressHub.includes('Gelişim Merkezi') && progressHub.includes('Gelişim görünümü'), 'Gelişim ekranı başlık ve alt görünüm bağlamı taşıyor');
+check(analyticsView.includes('ANALYSIS_TABS') && analyticsView.includes('grid-cols-3') && analyticsView.includes('Grafik ve Günlük Ayrıntı'), 'Analiz gezinmesi okunabilir ve ileri beslenme verisi katmanlı');
+check(analyticsView.includes('defaultOpen={detailed}') && analyticsView.includes('rm-picker-'), 'Basit analiz görünümü teknik kartları ve seçili 1RM listesini kapatıyor');
 check(trainingView.includes('recommendationOverride') && trainingView.includes('progressionOverride') && trainingView.includes('programOptionsOverride'), 'Basit antrenman görünümü öneri, blok ve kurulum ayrıntılarını katmanlıyor');
 check(trainingView.includes('compact={interfaceMode === \'simple\'}') && todayCoach.includes('showPrimaryAction'), 'Basit antrenman ve koç akışı yinelenen açıklama ve eylemleri azaltıyor');
 check(trainingView.includes('Neden bu seans? Kas haritasını göster') && trainingView.includes('Hazır program ve elle kurma seçenekleri'), 'Antrenman ayrıntıları açık ve anlaşılır eylemlerle erişilebilir');
