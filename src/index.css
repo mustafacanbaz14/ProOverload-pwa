@@ -397,7 +397,7 @@ body {
 
 .luxury-brand-title {
   color: var(--color-zinc-100);
-  letter-spacing: .115em;
+  letter-spacing: .09em;
   text-shadow: 0 1px 18px color-mix(in srgb, var(--luxury-gold) 16%, transparent);
 }
 

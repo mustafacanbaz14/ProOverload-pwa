@@ -7,6 +7,7 @@ import BodyRatiosCard from './BodyRatiosCard';
 import GoalCenterModal from './GoalCenterModal';
 import { computeBMI, BMI_STATUS_COLOR, goalEta } from '../utils/goals';
 import { formatDay } from '../utils/dates';
+import DisclosureCard from './DisclosureCard';
 
 // Kaliper ölçüm noktaları. 3 bölge yöntemi cinsiyete göre farklı noktalar kullanır,
 // 7 bölge yönteminde hepsi girilir.
@@ -172,23 +173,6 @@ const MetricsView = memo(({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          type="button"
-          onClick={() => setGoalCenterOpen(true)}
-          className="bg-cyan-950/40 active:scale-[0.98] border border-cyan-900/60 text-cyan-300 font-bold py-3.5 px-3 rounded-2xl flex justify-center items-center text-[10px] shadow-sm transition-all"
-        >
-          <Target size={14} className="mr-1.5" /> Hedef Merkezi
-        </button>
-        <button
-          type="button"
-          onClick={() => setIsComparisonOpen(true)}
-          className="bg-zinc-900/90 active:scale-[0.98] border border-zinc-800/80 text-zinc-200 font-bold py-3.5 px-3 rounded-2xl flex justify-center items-center text-[10px] shadow-sm transition-all"
-        >
-          <ArrowRightLeft size={14} className="mr-1.5" /> Kıyasla
-        </button>
-      </div>
-
       {!detailed && (
         <button
           type="button"
@@ -199,10 +183,50 @@ const MetricsView = memo(({
         </button>
       )}
 
-      {onOpenSettings && (
-        <button onClick={onOpenSettings} className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/55 text-[10px] font-mono text-zinc-400 flex items-center justify-center gap-1.5 px-3 active:bg-zinc-900">
-          <Settings2 size={13} /> Vücut ve hesaplama ayarları
-        </button>
+      {!detailed ? (
+        <DisclosureCard
+          icon={Target}
+          title="Hedefler ve ölçüm araçları"
+          summary="Hedef belirle, geçmişle kıyasla veya hesaplamayı ayarla"
+        >
+          <div className="grid grid-cols-1 gap-2">
+            <button type="button" onClick={() => setGoalCenterOpen(true)} className="min-h-11 rounded-xl border border-cyan-900/50 bg-cyan-950/20 text-[10px] font-bold text-cyan-300 flex items-center justify-center gap-1.5 active:bg-cyan-950/40">
+              <Target size={13} /> Hedef Merkezini Aç
+            </button>
+            <button type="button" onClick={() => setIsComparisonOpen(true)} className="min-h-11 rounded-xl border border-zinc-800 bg-zinc-950/60 text-[10px] font-bold text-zinc-300 flex items-center justify-center gap-1.5 active:bg-zinc-900">
+              <ArrowRightLeft size={13} /> Geçmiş Ölçümlerle Kıyasla
+            </button>
+            {onOpenSettings && (
+              <button type="button" onClick={onOpenSettings} className="min-h-11 rounded-xl border border-zinc-800 bg-zinc-950/60 text-[10px] font-bold text-zinc-400 flex items-center justify-center gap-1.5 active:bg-zinc-900">
+                <Settings2 size={13} /> Vücut ve Hesaplama Ayarları
+              </button>
+            )}
+          </div>
+        </DisclosureCard>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setGoalCenterOpen(true)}
+              className="bg-cyan-950/40 active:scale-[0.98] border border-cyan-900/60 text-cyan-300 font-bold py-3.5 px-3 rounded-2xl flex justify-center items-center text-[10px] shadow-sm transition-all"
+            >
+              <Target size={14} className="mr-1.5" /> Hedef Merkezi
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsComparisonOpen(true)}
+              className="bg-zinc-900/90 active:scale-[0.98] border border-zinc-800/80 text-zinc-200 font-bold py-3.5 px-3 rounded-2xl flex justify-center items-center text-[10px] shadow-sm transition-all"
+            >
+              <ArrowRightLeft size={14} className="mr-1.5" /> Kıyasla
+            </button>
+          </div>
+          {onOpenSettings && (
+            <button onClick={onOpenSettings} className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-950/55 text-[10px] font-mono text-zinc-400 flex items-center justify-center gap-1.5 px-3 active:bg-zinc-900">
+              <Settings2 size={13} /> Vücut ve hesaplama ayarları
+            </button>
+          )}
+        </>
       )}
 
       {/* --- KAYIT TARİHİ --- */}

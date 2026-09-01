@@ -38,6 +38,7 @@ import {
 import { energyBalanceAdvice, recommendedCalories } from '../utils/goals';
 import { formatDay } from '../utils/dates';
 import { buildPlateauInsights, buildNutritionPerformanceInsight } from '../utils/insights';
+import CompactChoiceNav from './CompactChoiceNav';
 
 // Beslenme grafiğinde izlenebilecek alanlar.
 const NUTRITION_METRICS = [
@@ -319,38 +320,50 @@ const AnalyticsView = memo(({
 
   return (
     <div data-view-scroll="progress" className={`luxury-screen ${embedded ? 'px-4 pt-2' : 'p-4'} space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black`}>
-      <div
-        role="tablist"
-        aria-label="Analiz türü"
-        className="luxury-segmented grid grid-cols-3 gap-1.5 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md"
-      >
-        {ANALYSIS_TABS.map(t => {
-          const Icon = t.icon;
-          return (
-          <button
-            key={t.key}
-            type="button"
-            role="tab"
-            aria-selected={analysisType === t.key}
-            onClick={() => setAnalysisType(t.key)}
-            className={`min-h-11 px-2 py-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-wide transition-all active:scale-[0.96] ${analysisType === t.key ? 'bg-cyan-600 text-white shadow-sm font-black' : 'text-zinc-500 hover:text-zinc-300'}`}
+      {detailed ? (
+        <>
+          <div
+            role="tablist"
+            aria-label="Analiz türü"
+            className="luxury-segmented grid grid-cols-3 gap-1.5 bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md"
           >
-            <Icon size={13} className="shrink-0" />
-            {t.label}
-          </button>
-          );
-        })}
-      </div>
+            {ANALYSIS_TABS.map(t => {
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.key}
+                  type="button"
+                  role="tab"
+                  aria-selected={analysisType === t.key}
+                  onClick={() => setAnalysisType(t.key)}
+                  className={`min-h-11 px-2 py-2 rounded-xl flex items-center justify-center gap-1.5 text-[10px] font-bold tracking-wide transition-all active:scale-[0.96] ${analysisType === t.key ? 'bg-cyan-600 text-white shadow-sm font-black' : 'text-zinc-500 hover:text-zinc-300'}`}
+                >
+                  <Icon size={13} className="shrink-0" />
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
 
-      <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/70 px-3 py-2.5 flex items-center gap-2.5">
-        <span className="w-8 h-8 rounded-xl border border-zinc-800 bg-zinc-950 flex items-center justify-center shrink-0">
-          <ActiveAnalysisIcon size={14} className="text-cyan-400" />
-        </span>
-        <span className="min-w-0">
-          <strong className="text-[10px] text-zinc-200 block">{activeAnalysis.label} analizi</strong>
-          <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">{activeAnalysis.hint}</span>
-        </span>
-      </div>
+          <div className="rounded-2xl border border-zinc-800/80 bg-zinc-900/70 px-3 py-2.5 flex items-center gap-2.5">
+            <span className="w-8 h-8 rounded-xl border border-zinc-800 bg-zinc-950 flex items-center justify-center shrink-0">
+              <ActiveAnalysisIcon size={14} className="text-cyan-400" />
+            </span>
+            <span className="min-w-0">
+              <strong className="text-[10px] text-zinc-200 block">{activeAnalysis.label} analizi</strong>
+              <span className="text-[9px] font-mono text-zinc-500 block leading-relaxed">{activeAnalysis.hint}</span>
+            </span>
+          </div>
+        </>
+      ) : (
+        <CompactChoiceNav
+          value={analysisType}
+          options={ANALYSIS_TABS}
+          onChange={setAnalysisType}
+          eyebrow="Analiz alanı"
+          ariaLabel="Analiz alanı seç"
+        />
+      )}
 
       {analysisType === 'body' && (
         <div className="space-y-3">

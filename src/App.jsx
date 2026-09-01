@@ -4264,15 +4264,15 @@ export default function App() {
 
         {/* HEADER */}
         <header className="luxury-header pt-safe flex justify-between items-center z-10">
-          <div className="pl-4 pr-2 py-3 flex items-center gap-2.5 min-w-0">
+          <div className="pl-3 pr-1.5 py-3 flex items-center gap-2 min-w-0">
             <div className="luxury-brand-mark shrink-0">
               <Activity size={16} strokeWidth={1.8} />
             </div>
             <div className="min-w-0">
-              <h1 className="luxury-brand-title text-[13px] font-black uppercase whitespace-nowrap">
+              <h1 className="luxury-brand-title text-[11px] font-black uppercase whitespace-nowrap leading-tight">
                 Hypertrophy <strong>LAB</strong>
               </h1>
-              <span className="text-[8px] font-medium text-zinc-400 uppercase tracking-[0.1em] block mt-0.5 whitespace-nowrap">
+              <span className="text-[7px] font-medium text-zinc-400 uppercase tracking-[0.08em] block mt-0.5 whitespace-nowrap">
                 Crafted by Afacan Tech
               </span>
             </div>

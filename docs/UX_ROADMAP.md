@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.17 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.18 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -145,6 +145,17 @@ Durum: Uygulandı.
 - Boş öğün ve güne özel NEAT ayarını şablon/kopyalama araçlarıyla aynı Diğer kayıt yolları çatısında topla.
 - Güne özel hareket ayarından editöre otomatik kaydır ve ilgili paneli açık getir.
 - Detaylı görünüm, PWA, localStorage, hesaplamalar ve yedek biçimini değiştirme.
+
+## 10.18 — Tek seçimli sade ekranlar
+
+Durum: Uygulandı.
+
+- Basit analiz görünümünde altı eş zamanlı sekmeyi tek açıklamalı mobil seçiciye indir; Detaylı görünümü koru.
+- Basit arşiv görünümünde beş kayıt filtresini seçili türün sayısını ve amacını gösteren tek kontrole indir.
+- Vücut ekranında günlük kaydetmeyi hedef ve kıyaslama araçlarından önce göster.
+- Hedef, geçmiş kıyaslama ve hesaplama ayarlarını tek Ölçüm Araçları başlığında topla.
+- Üst çubukta uygulama adının 393 piksel telefonda kesilmesini gider; Ekle, Ara ve Ayarlar dokunma hedeflerini koru.
+- PWA, localStorage, hesaplama, detaylı görünüm ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

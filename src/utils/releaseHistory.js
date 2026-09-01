@@ -387,7 +387,7 @@ const RELEASE_10_16 = release('10.16', '2026-09-01', 'Okunur Analiz ve Sade Akti
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.16 yalnız arayüz hiyerarşisini değiştiriyor; localStorage, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Daha Kısa Günlük Akışlar', [
+const RELEASE_10_17 = release('10.17', '2026-09-01', 'Daha Kısa Günlük Akışlar', [
   item('Ana Ekran Günlük Karara Odaklandı', 'Basit görünümde global Ekle ile aynı işi yapan Günlük kısayolu tekrar gösterilmiyor; Antrenmanı Başlat, Program ve Araçlar kalıyor.'),
   item('Kas Haritası Kaybolmadan Katlandı', '430 piksellik interaktif ısı haritası basit görünümde Haftalık Durum açıldığında hazırlanıyor; detaylı görünümde önceki gibi açık başlıyor.'),
   item('Ana Sayfa Yaklaşık Yüzde 27 Kısaldı', '393×852 ölçümünde basit ana ekran 2,2 ekran kaydırmadan 1,6 ekrana indi; günlük ana eylemler ilk görünümde kalıyor.'),
@@ -398,6 +398,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Daha Kı
   item('Beslenme Ekranı Ölçülebilir Biçimde Sade', 'Görünür eylem sayısı 23’ten 19’a, kaydırma oranı 1,7 ekrandan 1,5 ekrana indi; kayıt ve analiz işlevleri korunuyor.'),
   item('Detaylı Görünüm Değişmedi', 'İki giriş sekmesi, NEAT paneli, alt Besin Bul ve Boş Öğün kontrolleri detaylı modda önceki yerlerinde kalıyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.17 veri şemasını, localStorage kayıtlarını, yedek biçimini, hesaplamaları veya çevrimdışı çalışma davranışını değiştirmiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Tek Seçimli Sade Ekranlar', [
+  item('Analiz Duvarı Tek Seçime İndi', 'Basit görünümde Vücut, 1RM, Hacim, Plan, Besin ve Koç seçenekleri aynı anda altı düğme olarak yarışmıyor; mevcut alanı ve amacını anlatan tek mobil seçici kullanılıyor.'),
+  item('Telefonun Kendi Seçicisi Kullanılıyor', 'Analiz ve arşiv alanı değiştirilirken iOS/Android’in alışıldık native seçim arayüzü açılıyor; seçeneklerin tamamı erişilebilir kalıyor.'),
+  item('Arşiv Filtreleri Tek Kontrolde', 'Tümü, Ağırlık, Aktivite, Ölçüm ve Besin filtreleri basit modda tek açıklamalı seçicide toplandı; seçili türün kayıt sayısı ve kapsamı doğrudan görülüyor.'),
+  item('Vücut Kaydı Önce Geliyor', 'Basit Vücut ekranında günlük ana iş olan ölçümü kaydetme, hedef ve geçmiş araçlarından önce gösteriliyor.'),
+  item('Ölçüm Araçları Tek Çatıda', 'Hedef Merkezi, geçmiş ölçüm kıyaslama ve vücut hesaplama ayarları tek Hedefler ve Ölçüm Araçları başlığından açılıyor.'),
+  item('Detaylı Mod Aynen Korundu', 'Altı analiz sekmesi, beş arşiv filtresi ve vücut araçlarının doğrudan düğmeleri Detaylı görünümde önceki yerlerinde kalıyor.'),
+  item('Kesilen Uygulama Adı Düzeltildi', '393 piksel genişlikte üst çubuktaki Hypertrophy LAB adı artık Ekle düğmesinin altında kesilmiyor; arama ve ayar dokunma alanları küçültülmedi.'),
+  item('Tekrar Eden Açıklama Kaldırıldı', 'Basit analiz seçicisi hem aktif alanı hem amacını anlattığı için aynı bilgiyi ikinci kartta tekrar göstermiyor.'),
+  item('İşlev Kaybı Yok', 'Yeni seçiciler yalnız görünür kontrol sayısını azaltıyor; bütün analiz, arşiv, hedef, kıyaslama ve ayar yolları çalışmaya devam ediyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.18 localStorage anahtarlarını, veri şemasını, yedek biçimini, hesaplamaları ve çevrimdışı çalışma davranışını değiştirmiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -474,6 +487,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_17,
   RELEASE_10_16,
   RELEASE_10_15,
   RELEASE_10_14,

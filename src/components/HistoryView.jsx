@@ -11,6 +11,7 @@ import { formatDay, weekdayName, groupIntoWeeks, groupWeeksIntoMonths } from '..
 import { dayMindCalories } from '../utils/wellness';
 import { buildArchiveDays, filterArchiveDays } from '../utils/archiveTimeline';
 import ViewHeader from './ViewHeader';
+import CompactChoiceNav from './CompactChoiceNav';
 
 /**
  * Listeyi haftalara bölüp araya başlık koyar.
@@ -170,6 +171,13 @@ const HistoryView = memo(({
   const cardioSummary = useMemo(
     () => cardioArchiveSummary(workouts, latestWeight, weightForDate),
     [workouts, latestWeight, weightForDate]);
+  const archiveTabs = [
+    { key: 'all', label: 'Tüm kayıtlar', optionLabel: 'Tümü', hint: 'Aynı gündeki kayıtları birlikte göster', count: archiveDays.length, icon: Layers3, activeBg: 'bg-cyan-600' },
+    { key: 'workouts', label: 'Ağırlık antrenmanları', optionLabel: 'Ağırlık', hint: 'Set, hareket ve seans geçmişi', count: strengthWorkouts.length, icon: Dumbbell, activeBg: 'bg-cyan-600' },
+    { key: 'cardio', label: 'Kardiyo ve aktiviteler', optionLabel: 'Aktivite', hint: 'Süre, tempo ve yakım kayıtları', count: cardioRecords.length, icon: HeartPulse, activeBg: 'bg-red-600' },
+    { key: 'metrics', label: 'Vücut ölçümleri', optionLabel: 'Ölçüm', hint: 'Kilo, yağ ve çevre geçmişi', count: metricsHistory.length, icon: Scale, activeBg: 'bg-cyan-600' },
+    { key: 'nutrition', label: 'Beslenme kayıtları', optionLabel: 'Besin', hint: 'Günlük toplam ve öğün geçmişi', count: nutritionHistory.length, icon: Beef, activeBg: 'bg-cyan-600' },
+  ];
 
   return (
     <div data-view-scroll="history" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
@@ -219,26 +227,30 @@ const HistoryView = memo(({
           </div>
         </section>
       )}
-      <div className="luxury-segmented flex gap-1.5 overflow-x-auto hide-scrollbar bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md" aria-label="Arşiv kayıt türü">
-        {[
-          { key: 'all', label: 'Tümü', count: archiveDays.length, activeBg: 'bg-cyan-600' },
-          { key: 'workouts', label: 'Ağırlık', count: strengthWorkouts.length, activeBg: 'bg-cyan-600' },
-          { key: 'cardio', label: 'Aktivite', count: cardioRecords.length, activeBg: 'bg-red-600' },
-          { key: 'metrics', label: 'Ölçüm', count: metricsHistory.length, activeBg: 'bg-cyan-600' },
-          { key: 'nutrition', label: 'Besin', count: nutritionHistory.length, activeBg: 'bg-cyan-600' },
-        ].map(tab => (
-          <button
-            key={tab.key}
-            type="button"
-            onClick={() => setHistoryTab(tab.key)}
-            aria-pressed={historyTab === tab.key}
-            className={`min-h-11 shrink-0 px-3 rounded-xl text-[10px] font-bold transition-all active:scale-[0.96] flex items-center gap-1.5 ${historyTab === tab.key ? `${tab.activeBg} text-white shadow-sm font-black` : 'text-zinc-400 hover:text-zinc-200'}`}
-          >
-            <span>{tab.label}</span>
-            <span className={`min-w-5 h-5 px-1 rounded-md flex items-center justify-center text-[9px] font-mono ${historyTab === tab.key ? 'bg-black/20 text-white' : 'bg-zinc-900 text-zinc-400'}`}>{tab.count}</span>
-          </button>
-        ))}
-      </div>
+      {interfaceMode === 'simple' ? (
+        <CompactChoiceNav
+          value={historyTab}
+          options={archiveTabs}
+          onChange={setHistoryTab}
+          eyebrow="Gösterilen kayıtlar"
+          ariaLabel="Arşiv kayıt türü seç"
+        />
+      ) : (
+        <div className="luxury-segmented flex gap-1.5 overflow-x-auto hide-scrollbar bg-zinc-950/80 p-1.5 rounded-2xl border border-zinc-800/80 shadow-md" aria-label="Arşiv kayıt türü">
+          {archiveTabs.map(tab => (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => setHistoryTab(tab.key)}
+              aria-pressed={historyTab === tab.key}
+              className={`min-h-11 shrink-0 px-3 rounded-xl text-[10px] font-bold transition-all active:scale-[0.96] flex items-center gap-1.5 ${historyTab === tab.key ? `${tab.activeBg} text-white shadow-sm font-black` : 'text-zinc-400 hover:text-zinc-200'}`}
+            >
+              <span>{tab.optionLabel}</span>
+              <span className={`min-w-5 h-5 px-1 rounded-md flex items-center justify-center text-[9px] font-mono ${historyTab === tab.key ? 'bg-black/20 text-white' : 'bg-zinc-900 text-zinc-400'}`}>{tab.count}</span>
+            </button>
+          ))}
+        </div>
+      )}
 
       <button
         type="button"
