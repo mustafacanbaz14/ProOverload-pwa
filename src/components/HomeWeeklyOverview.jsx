@@ -65,29 +65,6 @@ const HomeWeeklyOverview = memo(({
 
   return (
     <>
-    {/* Vücut haritası katlanan bölümün içindeydi ve varsayılan kapalıydı:
-        uygulamanın tek bakışta okunan görseli, açmak için bir dokunuş
-        arkasında duruyordu. Sayısal ayrıntılar katlı kalmaya devam ediyor —
-        katlanması gereken onlardı. */}
-    <DeferredSection
-            minHeight={430}
-            fallback={<DeferredCardFallback height={430} label="Kas haritası hazırlanıyor" />}
-          >
-      <Suspense fallback={<DeferredCardFallback height={430} label="Kas haritası yükleniyor" />}>
-        <MuscleHeatmap
-          muscleVolume={dashboardStats.muscleVolume}
-          onSelectMuscle={onSelectMuscle}
-          experienceLevel={experienceLevel}
-          gender={gender}
-              />
-              {gender === 'female' && (
-          <p className="mt-2 px-1 text-[9px] font-mono text-zinc-400 leading-relaxed">
-            Kadınlara yalnız cinsiyet nedeniyle farklı set çarpanı uygulanmaz. Hacim, belirtiler ve kişisel toparlanma trendine göre ayarlanır.
-          </p>
-              )}
-      </Suspense>
-    </DeferredSection>
-
     <section className="luxury-feature-card bg-gradient-to-br from-zinc-900/90 via-zinc-900/95 to-zinc-950 rounded-3xl border border-zinc-800/80 shadow-xl overflow-hidden">
       <button
         type="button"
@@ -138,6 +115,28 @@ const HomeWeeklyOverview = memo(({
 
       {isOpen && (
         <div className="border-t border-zinc-800 p-3 space-y-4 bg-zinc-950/25">
+          {/* Kas haritası günlük kararın önünde 430 px yer kaplamaz. Basit
+              görünümde Haftalık Durum açıldığında hazırlanır; detaylı mod
+              bölümü zaten açık başlattığı için eski erişim korunur. */}
+          <DeferredSection
+            minHeight={430}
+            fallback={<DeferredCardFallback height={430} label="Kas haritası hazırlanıyor" />}
+          >
+            <Suspense fallback={<DeferredCardFallback height={430} label="Kas haritası yükleniyor" />}>
+              <MuscleHeatmap
+                muscleVolume={dashboardStats.muscleVolume}
+                onSelectMuscle={onSelectMuscle}
+                experienceLevel={experienceLevel}
+                gender={gender}
+              />
+              {gender === 'female' && (
+                <p className="mt-2 px-1 text-[9px] font-mono text-zinc-400 leading-relaxed">
+                  Kadınlara yalnız cinsiyet nedeniyle farklı set çarpanı uygulanmaz. Hacim, belirtiler ve kişisel toparlanma trendine göre ayarlanır.
+                </p>
+              )}
+            </Suspense>
+          </DeferredSection>
+
           {readiness && (
             <div className={`rounded-2xl border p-3 ${readiness.zone.bg}`}>
               <div className="flex justify-between items-center gap-2">

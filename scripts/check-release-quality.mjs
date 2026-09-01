@@ -25,6 +25,7 @@ const workoutStepper = read('src/components/WorkoutFlowStepper.jsx');
 const activeWorkout = read('src/components/ActiveWorkoutView.jsx');
 const sessionReport = read('src/components/SessionReportModal.jsx');
 const homeView = read('src/components/HomeView.jsx');
+const homeWeeklyOverview = read('src/components/HomeWeeklyOverview.jsx');
 const todayCoach = read('src/components/TodayCoachCard.jsx');
 const quickCapture = read('src/components/QuickCaptureModal.jsx');
 const toolsModal = read('src/components/ToolsModal.jsx');
@@ -43,7 +44,7 @@ const analyticsView = read('src/components/AnalyticsView.jsx');
 // olmasi kapinin her yeni yayinda yanlis alarm vermesine yol aciyordu.
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
-check(roadmap.includes('## 10.7') && roadmap.includes('## 10.16') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
+check(roadmap.includes('## 10.7') && roadmap.includes('## 10.17') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
 check(app.includes('<span>Ekle</span>') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
 check(!app.includes('isAppMenuOpen') && !existsSync(resolve(root, 'src/components/AppMenuModal.jsx')), 'Tekrarlanan uygulama menüsü kaldırıldı');
 check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => navbar.includes(`key: '${key}'`)), 'Beş ana bölüm yalnız alt gezinmede korunuyor');
@@ -58,7 +59,9 @@ check(index.includes('user-scalable=no') && main.includes("'gesturestart'") && c
 check(settingsModal.includes("activeSection === 'home'") && settingsModal.includes("key: 'method'"), 'Ayarlar kategori ana ekranı ve Koç & Yöntem ayrımı korunuyor');
 check(settingsModal.includes('h-[100dvh]') && settingsModal.includes('grid-cols-1 sm:grid-cols-2'), 'Ayarlar mobilde tam ekran ve tek sütunlu');
 check(settingsModal.includes('Burada yalnız ayarlar bulunur') && settingsModal.includes('alttaki menüyü kullan'), 'Ayarlar ile ana bölüm gezinmesi açıkça ayrılıyor');
-check(homeView.includes('Sıradaki eylem') && homeView.includes('Antrenmanı Başlat') && homeView.includes('grid grid-cols-3'), 'Ana sayfa tek baskın eylem ve üç yardımcı kısayol kullanıyor');
+check(homeView.includes('Sıradaki eylem') && homeView.includes('Antrenmanı Başlat') && homeView.includes('visibleHelperActions'), 'Ana sayfa tek baskın eylem ve bağlamsal yardımcı kısayollar kullanıyor');
+check(homeView.includes('visibleHelperActions') && homeView.includes("item.key !== 'daily'"), 'Basit ana ekran global Ekle ile yinelenen Günlük kısayolunu gizliyor');
+check(homeWeeklyOverview.indexOf('Haftalık Durum') < homeWeeklyOverview.indexOf('Kas haritası günlük kararın önünde'), 'Kas haritası haftalık durum açılımının içinde hazırlanıyor');
 check(todayCoach.includes('grid-cols-[1fr_58px_58px]') && todayCoach.includes('min-h-14'), 'Koç yardımcı eylemleri okunabilir dokunma alanında');
 check(quickCapture.includes('completedCount') && quickCapture.includes('Kayıtlı') && quickCapture.includes('divide-y'), 'Hızlı kayıt tek sütunlu ve durum etiketli');
 check(toolsModal.includes("activeGroup") && toolsModal.includes('h-[100dvh]') && toolsModal.includes('Araç kategorileri'), 'Araç merkezi tam ekran ve kategori filtreli');
@@ -66,6 +69,8 @@ check(viewHeader.includes('luxury-title') && [trainingView, nutritionView, histo
 check(historyView.includes('overflow-x-auto') && historyView.includes('aria-pressed') && historyView.includes('ArchiveEmptyState'), 'Arşiv filtreleri okunabilir ve boş durumlar eylem odaklı');
 check(nutritionView.includes('Hızlı beslenme işlemleri') && nutritionView.includes('Değişiklikleri sakla') && nutritionView.includes('min-h-11'), 'Beslenme giriş ve kaydetme hiyerarşisi ile dokunma hedefleri korunuyor');
 check(nutritionView.includes('Takip ve analiz ayrıntıları') && nutritionView.includes('data-nutrition-editor') && nutritionView.includes('(detailed && safeMeals.length === 1)'), 'Basit beslenme akışı editörü ve analizleri kademeli gösteriyor');
+check(nutritionView.includes('Giriş şeklini değiştir') && nutritionView.includes('Güne Özel Hareket') && nutritionView.includes('openDayMovement'), 'Basit beslenme giriş modu ve güne özel hareket ayarı tek akıştan erişiliyor');
+check(nutritionView.includes('{detailed && <div className="grid grid-cols-2 gap-2 pt-1">'), 'Yinelenen alt öğün araçları yalnız detaylı görünümde açık');
 check(progressHub.includes('Gelişim Merkezi') && progressHub.includes('Gelişim görünümü'), 'Gelişim ekranı başlık ve alt görünüm bağlamı taşıyor');
 check(analyticsView.includes('ANALYSIS_TABS') && analyticsView.includes('grid-cols-3') && analyticsView.includes('Grafik ve Günlük Ayrıntı'), 'Analiz gezinmesi okunabilir ve ileri beslenme verisi katmanlı');
 check(analyticsView.includes('defaultOpen={detailed}') && analyticsView.includes('rm-picker-'), 'Basit analiz görünümü teknik kartları ve seçili 1RM listesini kapatıyor');

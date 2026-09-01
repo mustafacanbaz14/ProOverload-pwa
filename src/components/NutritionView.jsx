@@ -202,6 +202,13 @@ const NutritionView = memo(({
     });
   };
 
+  const openDayMovement = () => {
+    setAdvancedOpen(true);
+    requestAnimationFrame(() => {
+      document.querySelector('[data-nutrition-editor]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
   const updateDailyMacro = (field, value) => {
     setCurrentNutritionForm(prev => {
       const base = (Array.isArray(prev.meals) && prev.meals[0]) || {};
@@ -217,6 +224,7 @@ const NutritionView = memo(({
     const id = `meal-${Date.now()}`;
     setCurrentNutritionForm(prev => ({
       ...prev,
+      entryMode: 'meals',
       meals: [...(prev.meals || []), {
         id,
         name: `${(prev.meals || []).length + 1}. Öğün`,
@@ -224,6 +232,9 @@ const NutritionView = memo(({
       }],
     }));
     setExpandedMeals(prev => new Set([...prev, id]));
+    requestAnimationFrame(() => {
+      document.querySelector('[data-nutrition-editor]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
   };
 
   const copyRecord = (record) => {
@@ -431,7 +442,7 @@ const NutritionView = memo(({
       <DisclosureCard
         icon={BookOpen}
         title="Diğer kayıt yolları"
-        summary="Şablon, geçmişten kopyalama ve kalori ayrıntıları"
+        summary="Şablon, kopyalama ve özel gün ayarları"
         defaultOpen={false}
         accentClass="text-purple-400"
       >
@@ -440,6 +451,8 @@ const NutritionView = memo(({
             { label: 'Şablon & Tarif', icon: BookOpen, action: () => setTemplatesOpen(true), enabled: true, color: 'text-purple-400' },
             { label: 'Dünü Kopyala', icon: Copy, action: copyYesterday, enabled: Boolean(yesterdayRecord), color: 'text-cyan-400' },
             { label: 'Geçen Haftayı Kopyala', icon: Copy, action: () => copyRecord(previousWeekRecord), enabled: Boolean(previousWeekRecord), color: 'text-blue-400' },
+            { label: 'Boş Öğün Ekle', icon: Plus, action: addMealAndOpen, enabled: true, color: 'text-orange-400' },
+            { label: 'Güne Özel Hareket', icon: Footprints, action: openDayMovement, enabled: true, color: 'text-emerald-400' },
             { label: 'Kalori Detayı', icon: BarChart3, action: () => onOpenEnergyDetail?.('days', currentNutritionForm.date), enabled: true, color: 'text-red-400' },
           ].map(item => {
             const Icon = item.icon;
@@ -459,25 +472,36 @@ const NutritionView = memo(({
             <h3 className="text-xs font-bold text-zinc-100">{isToday ? 'Bugünün kaydı' : 'Geçmiş gün kaydı'}</h3>
             <span className="text-[9px] font-mono text-zinc-500">{safeMeals.length} öğün · {totals.calories} kcal</span>
           </div>
-          <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800">
-            {[
-              { key: 'meals', label: 'Öğünler' },
-              { key: 'daily', label: 'Toplam' },
-            ].map(mode => (
-              <button
-                key={mode.key}
-                type="button"
-                onClick={() => setEntryMode(mode.key)}
-                className={`min-h-11 px-3 rounded-lg text-[10px] font-bold uppercase transition-colors ${
-                  (currentNutritionForm.entryMode || 'meals') === mode.key
-                    ? 'bg-orange-700 text-white shadow-sm'
-                    : 'text-zinc-500'
-                }`}
-              >
-                {mode.label}
-              </button>
-            ))}
-          </div>
+          {detailed ? (
+            <div className="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+              {[
+                { key: 'meals', label: 'Öğünler' },
+                { key: 'daily', label: 'Toplam' },
+              ].map(mode => (
+                <button
+                  key={mode.key}
+                  type="button"
+                  onClick={() => setEntryMode(mode.key)}
+                  className={`min-h-11 px-3 rounded-lg text-[10px] font-bold uppercase transition-colors ${
+                    (currentNutritionForm.entryMode || 'meals') === mode.key
+                      ? 'bg-orange-700 text-white shadow-sm'
+                      : 'text-zinc-500'
+                  }`}
+                >
+                  {mode.label}
+                </button>
+              ))}
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => (isDaily ? setEntryMode('meals') : openDailyTotals())}
+              className="min-h-11 rounded-xl border border-zinc-800 bg-zinc-950 px-3 text-right active:bg-zinc-800"
+            >
+              <strong className="text-[10px] text-orange-400 block">{isDaily ? 'Günlük toplam' : 'Öğünlerle giriş'}</strong>
+              <span className="text-[8px] font-mono text-zinc-500 block">Giriş şeklini değiştir</span>
+            </button>
+          )}
         </div>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-zinc-950/85 border border-zinc-800/80 rounded-2xl p-3 shadow-inner">
@@ -526,7 +550,7 @@ const NutritionView = memo(({
           </div>
         </div>
 
-        <button
+        {(detailed || advancedOpen || dayHasNeatOverride) && <button
           type="button"
           onClick={() => setAdvancedOpen(open => !open)}
           aria-expanded={advancedOpen}
@@ -543,7 +567,7 @@ const NutritionView = memo(({
             {dayHasNeatOverride && <span className="text-[7px] font-bold uppercase text-cyan-400">Özel</span>}
             <ChevronDown size={13} className={`text-zinc-400 transition-transform ${advancedOpen ? 'rotate-180' : ''}`} />
           </span>
-        </button>
+        </button>}
 
         {advancedOpen && <div className="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 space-y-2">
           <div className="flex items-center justify-between">
@@ -739,7 +763,7 @@ const NutritionView = memo(({
                 </article>
               );
             })}
-            <div className="grid grid-cols-2 gap-2 pt-1">
+            {detailed && <div className="grid grid-cols-2 gap-2 pt-1">
               <button
                 type="button"
                 onClick={addMealAndOpen}
@@ -754,7 +778,7 @@ const NutritionView = memo(({
               >
                 <Search size={13} className="mr-1.5" /> Besin Bul
               </button>
-            </div>
+            </div>}
           </div>
         )}
       </section>

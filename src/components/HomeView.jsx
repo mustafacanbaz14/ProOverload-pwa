@@ -70,6 +70,18 @@ const HomeView = memo(({
   onAddWater,
   onToggleTemplateFavorite,
 }) => {
+  const helperActions = [
+    { key: 'daily', icon: CalendarCheck2, title: 'Günlük', alt: 'Tüm kayıtlar', onClick: () => onOpenDailyWorkspace?.() },
+    { key: 'plan', icon: Calendar, title: 'Program', alt: 'Haftalık plan', onClick: () => (onOpenWeeklyPlan ? onOpenWeeklyPlan() : onOpenTraining?.()) },
+    { key: 'tools', icon: Wrench, title: 'Araçlar', alt: 'Hesaplayıcılar', onClick: () => onOpenTools?.() },
+  ];
+  // Basit görünümde üst çubuktaki Ekle zaten Günlük çalışma alanını açıyor.
+  // Aynı hedefi ana kartta tekrar göstermek üç farklı başlangıç noktası varmış
+  // hissi yaratıyordu. Detaylı görünüm eski üçlü kısayolu korur.
+  const visibleHelperActions = interfaceMode === 'simple'
+    ? helperActions.filter(item => item.key !== 'daily')
+    : helperActions;
+
   return (
     <div data-view-scroll="home" className="luxury-screen p-4 space-y-4 pb-nav h-full overflow-y-auto hide-scrollbar bg-black">
 
@@ -117,12 +129,8 @@ const HomeView = memo(({
           <ChevronRight size={18} className="text-cyan-400 shrink-0" />
         </button>
 
-        <div className="grid grid-cols-3 border-t border-zinc-800/80 divide-x divide-zinc-800/80">
-          {[
-            { key: 'daily', icon: CalendarCheck2, title: 'Günlük', alt: 'Tüm kayıtlar', onClick: () => onOpenDailyWorkspace?.() },
-            { key: 'plan', icon: Calendar, title: 'Program', alt: 'Haftalık plan', onClick: () => (onOpenWeeklyPlan ? onOpenWeeklyPlan() : onOpenTraining?.()) },
-            { key: 'tools', icon: Wrench, title: 'Araçlar', alt: 'Hesaplayıcılar', onClick: () => onOpenTools?.() },
-          ].map(item => {
+        <div className={`grid ${visibleHelperActions.length === 2 ? 'grid-cols-2' : 'grid-cols-3'} border-t border-zinc-800/80 divide-x divide-zinc-800/80`}>
+          {visibleHelperActions.map(item => {
             const Icon = item.icon;
             return (
               <button key={item.key} type="button" onClick={item.onClick} className="min-h-[70px] px-2 py-3 flex flex-col items-center justify-center text-center active:bg-zinc-900 transition-colors">

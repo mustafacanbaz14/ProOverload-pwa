@@ -374,7 +374,7 @@ const RELEASE_10_15 = release('10.15', '2026-09-01', 'Tek Görevli Günlük Ekra
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.15 yalnız görünür bilgi hiyerarşisini değiştiriyor; localStorage, yedek biçimi, hesaplamalar ve çevrimdışı çalışma aynı kalıyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Okunur Analiz ve Sade Aktif Seans', [
+const RELEASE_10_16 = release('10.16', '2026-09-01', 'Okunur Analiz ve Sade Aktif Seans', [
   item('Analiz Seçimi Artık Okunuyor', 'Altı dar sekme tek satıra sıkışmıyor; ikonlu 3×2 düzen, her seçeneğe en az 44 piksellik dokunma alanı veriyor.'),
   item('Her Analiz Amacını Açıklıyor', 'Seçilen Vücut, 1RM, Hacim, Plan, Besin veya Koç ekranının neyi cevapladığı kısa bir bağlam satırında görülüyor.'),
   item('Basit Hacim Analizi Duvar Değil', 'Hacim-doz, öncelik, program, kalite ve sıklık bölümleri basit görünümde kapalı başlıyor; veri ve hesapların tamamı başlıklardan açılıyor.'),
@@ -385,6 +385,19 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Okunur A
   item('Kritik Seans Bilgileri Gizlenmedi', 'Ağrı uyarısı, vücut ağırlığı hesabı, kurulum notu ve progresyon reçetesi set girişinin yanında görünür kalıyor.'),
   item('Detaylı Görünüm Korundu', 'Ayrıntılı arayüzü seçen kullanıcı analiz ve hareket bilgilerini önceki gibi açık görmeye devam ediyor.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.16 yalnız arayüz hiyerarşisini değiştiriyor; localStorage, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Daha Kısa Günlük Akışlar', [
+  item('Ana Ekran Günlük Karara Odaklandı', 'Basit görünümde global Ekle ile aynı işi yapan Günlük kısayolu tekrar gösterilmiyor; Antrenmanı Başlat, Program ve Araçlar kalıyor.'),
+  item('Kas Haritası Kaybolmadan Katlandı', '430 piksellik interaktif ısı haritası basit görünümde Haftalık Durum açıldığında hazırlanıyor; detaylı görünümde önceki gibi açık başlıyor.'),
+  item('Ana Sayfa Yaklaşık Yüzde 27 Kısaldı', '393×852 ölçümünde basit ana ekran 2,2 ekran kaydırmadan 1,6 ekrana indi; günlük ana eylemler ilk görünümde kalıyor.'),
+  item('Beslenmede Tek Ana Kayıt Yolu', 'Besin Ekle ve Günlük Toplam eylemleri üstte bir kez gösteriliyor; aynı Besin Bul ve Boş Öğün düğmeleri basit editörde tekrarlanmıyor.'),
+  item('Giriş Modu Tek Kontrole İndi', 'Basit görünümde Öğünler ve Toplam için iki sekme yerine mevcut modu açıklayan tek değiştir düğmesi kullanılıyor.'),
+  item('Seyrek Gün Ayarları Tek Çatıda', 'Boş öğün, güne özel NEAT, şablon, geçmişten kopyalama ve kalori detayı Diğer kayıt yolları altında toplandı.'),
+  item('NEAT Ayarına Doğrudan Geçiş', 'Güne Özel Hareket seçildiğinde editör doğru konuma kayıyor ve yalnız o tarihe ait hareket modu ile çarpan paneli açık geliyor.'),
+  item('Beslenme Ekranı Ölçülebilir Biçimde Sade', 'Görünür eylem sayısı 23’ten 19’a, kaydırma oranı 1,7 ekrandan 1,5 ekrana indi; kayıt ve analiz işlevleri korunuyor.'),
+  item('Detaylı Görünüm Değişmedi', 'İki giriş sekmesi, NEAT paneli, alt Besin Bul ve Boş Öğün kontrolleri detaylı modda önceki yerlerinde kalıyor.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.17 veri şemasını, localStorage kayıtlarını, yedek biçimini, hesaplamaları veya çevrimdışı çalışma davranışını değiştirmiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -461,6 +474,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_16,
   RELEASE_10_15,
   RELEASE_10_14,
   RELEASE_10_13,

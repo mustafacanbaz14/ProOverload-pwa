@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.16 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.17 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -133,6 +133,18 @@ Durum: Uygulandı.
 - Aktif seansta ısınma, not, şablon planı ve kas katkısını hareket başına tek ayrıntı alanında topla.
 - Ağrı, vücut ağırlığı hesabı, kurulum ve progresyon gibi set güvenliğini etkileyen bilgileri görünür bırak.
 - Detaylı görünüm, PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
+
+## 10.17 — Daha kısa günlük akışlar
+
+Durum: Uygulandı.
+
+- Basit ana ekranda üst çubuktaki Ekle ile yinelenen Günlük kısayolunu kaldır; Program ve Araçlar erişimini koru.
+- Kas haritasını Haftalık Durum paneline taşı; basit görünümde isteğe bağlı, detaylı görünümde açık başlat.
+- Beslenmede Besin Ekle, Günlük Toplam ve Kaydet eylemlerini tek baskın giriş katmanı olarak bırak.
+- Basit editörde iki mod sekmesini tek giriş şekli değiştirme kontrolüne indir.
+- Boş öğün ve güne özel NEAT ayarını şablon/kopyalama araçlarıyla aynı Diğer kayıt yolları çatısında topla.
+- Güne özel hareket ayarından editöre otomatik kaydır ve ilgili paneli açık getir.
+- Detaylı görünüm, PWA, localStorage, hesaplamalar ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 
