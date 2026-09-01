@@ -26,6 +26,9 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
   const planned = Boolean(data.workoutTemplate);
   const detailsVisible = !compact || showDetails;
   const hasDetails = Boolean(briefing?.capacity || actions.length > 0 || (ledgerOpenCount > 0 && onOpenLedger));
+  // Basit ana ekranda serbest antrenman hemen alttaki tek baskın eylemdir.
+  // Plan veya kardiyo varsa koçun bağlamsal eylemi yine korunur.
+  const showPrimaryAction = !compact || planned || Boolean(data.cardioLabel);
   return (
     <section className="luxury-feature-card bg-gradient-to-br from-cyan-950/40 via-zinc-900/90 to-zinc-950 rounded-3xl border border-cyan-900/35 overflow-hidden shadow-xl shadow-black/40">
       <div className="px-4 py-3.5 border-b border-zinc-800/80 flex justify-between items-center gap-3 bg-zinc-950/40 backdrop-blur-md">
@@ -223,8 +226,8 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           </button>
         )}
 
-        <div className="grid grid-cols-[1fr_58px_58px] gap-2 pt-1">
-          <button
+        <div className={`grid ${showPrimaryAction ? 'grid-cols-[1fr_58px_58px]' : 'grid-cols-2'} gap-2 pt-1`}>
+          {showPrimaryAction && <button
             type="button"
             onClick={() => data.cardioLabel && !planned
               ? onOpenCardio?.()
@@ -232,7 +235,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
             className="min-h-14 bg-cyan-600 active:scale-[0.98] text-white rounded-2xl px-4 py-3 text-[11px] font-bold flex items-center justify-center shadow-lg shadow-black/30 transition-all"
           >
             {planned ? 'Planlananı Başlat' : data.cardioLabel ? 'Kardiyoyu Aç' : 'Serbest Başlat'} <ChevronRight size={13} className="ml-1" />
-          </button>
+          </button>}
           <button
             type="button"
             onClick={onOpenEnergy}

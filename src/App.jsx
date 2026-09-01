@@ -4634,6 +4634,7 @@ export default function App() {
               energyForRecord={energyForNutritionRecord}
               onCompareMetrics={() => setIsComparisonOpen(true)}
               onOpenEnergyDay={(date = '') => openEnergyDetail('days', date)}
+              interfaceMode={settings.interfaceMode}
             />
           )}
           </Suspense>

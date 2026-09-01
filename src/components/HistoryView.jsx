@@ -89,10 +89,10 @@ const WeekGroups = ({ items, getDate, children, expandAll = false }) => {
   );
 };
 
-const ArchiveEmptyState = ({ icon: Icon, title, detail, actionLabel, onAction }) => (
+const ArchiveEmptyState = ({ icon, title, detail, actionLabel, onAction }) => (
   <div className="rounded-2xl border border-dashed border-zinc-800 bg-zinc-950/65 px-5 py-9 text-center">
     <span className="w-12 h-12 mx-auto rounded-2xl border border-zinc-800 bg-zinc-900 text-zinc-400 flex items-center justify-center">
-      <Icon size={20} />
+      {React.createElement(icon, { size: 20 })}
     </span>
     <strong className="text-sm text-zinc-200 block mt-3">{title}</strong>
     <p className="text-[10px] font-mono text-zinc-400 leading-relaxed mt-1.5 max-w-xs mx-auto">{detail}</p>
@@ -133,6 +133,7 @@ const HistoryView = memo(({
   energyForRecord,
   onCompareMetrics,
   onOpenEnergyDay,
+  interfaceMode = 'simple',
 }) => {
   const [query, setQuery] = useState('');
   const [addOpen, setAddOpen] = useState(false);
@@ -267,10 +268,10 @@ const HistoryView = memo(({
 
       {historyTab === 'all' && (
         <div className="space-y-3">
-          <div className="bg-cyan-950/15 border border-cyan-900/30 rounded-xl p-3 flex items-start gap-2">
+          {interfaceMode === 'detailed' && <div className="bg-cyan-950/15 border border-cyan-900/30 rounded-xl p-3 flex items-start gap-2">
             <Layers3 size={14} className="text-cyan-400 shrink-0 mt-0.5" />
             <p className="text-[9px] font-mono text-zinc-500 leading-relaxed">Aynı güne ait antrenman, aktivite, ölçüm, beslenme ve enerji kaydı tek kartta. Ay ve hafta başlıklarına dokunarak arşivi aç.</p>
-          </div>
+          </div>}
           {filteredArchiveDays.length === 0 ? (
             <ArchiveEmptyState
               icon={Layers3}

@@ -506,12 +506,14 @@ const MetricsView = memo(({
         </div>
       </Section>
 
-      <button
-        onClick={handleSaveMetrics}
-        className="w-full bg-cyan-600 active:bg-cyan-700 text-white font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs shadow-lg shadow-cyan-900/20 transition-all"
-      >
-        <Save size={16} className="mr-2" /> {isExistingRecord ? 'Kaydı Güncelle' : 'Ölçümü Kaydet'}
-      </button>
+      {detailed && (
+        <button
+          onClick={handleSaveMetrics}
+          className="w-full bg-cyan-600 active:bg-cyan-700 text-white font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center uppercase tracking-wide text-xs shadow-lg shadow-cyan-900/20 transition-all"
+        >
+          <Save size={16} className="mr-2" /> {isExistingRecord ? 'Kaydı Güncelle' : 'Ölçümü Kaydet'}
+        </button>
+      )}
 
       {goalCenterOpen && (
         <GoalCenterModal

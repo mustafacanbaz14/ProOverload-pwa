@@ -89,7 +89,7 @@ const TrainingView = memo(({
         ) : null}
       />
 
-      <WorkoutFlowStepper stage="prepare" />
+      <WorkoutFlowStepper stage="prepare" compact={interfaceMode === 'simple'} />
 
       {recommendation && (
         <section className="rounded-3xl border border-zinc-800 bg-zinc-900/70 p-4 space-y-3">

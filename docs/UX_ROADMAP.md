@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.14 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v10.15 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -107,6 +107,20 @@ Durum: Uygulandı.
 - Elle hazırlanan taslağı geri açarken kullanıcıyı istemeden sihirbaz kipine geçirme.
 - Ana sayfanın basit görünümünde şablon bakım düğmelerini azalt; tam yönetimi Antrenman bölümünde açık tut.
 - PWA, localStorage, mevcut şablonlar ve yedek biçimini değiştirme.
+
+## 10.15 — Tek görevli günlük ekranlar
+
+Durum: Uygulandı.
+
+- Basit Beslenme özetinde teknik dört parçalı denklemi üç anlaşılır değere indir; tam denklem Detaylı görünümde kalsın.
+- Günlük toplam seçildiğinde kullanıcıyı doğrudan makro editörüne götür; boş ilk öğünü kendiliğinden açma.
+- Beslenmede aynı anda görünen ikinci kaydetme düğmesini kaldır; günlük kayıt için tek birincil eylem kullan.
+- Su hedefi, enerji dengesi, yedi günlük tablo ve gerçek harcamayı tek Takip ve Analiz katmanında topla.
+- Basit Vücut ekranında yinelenen alt kaydetme düğmesini kaldır; bütün ölçüm alanları ve hedefler korunmaya devam etsin.
+- Basit Antrenman ekranında üç aşama rehberini kısa göster; aktif seans ve rapor aşamalarını değiştirme.
+- Koçta plan veya kardiyo yokken yinelenen Serbest Başlat eylemini kaldır; ana sayfanın tek baskın başlatma düğmesini kullan.
+- Basit Arşivde işlev öğretmeyen açıklama kartını gizle; arama, tür filtreleri, kalori detayı ve geçmişe ekleme görünür kalsın.
+- PWA, localStorage, hesaplama ve yedek biçimini değiştirme.
 
 ## 11.0 — Koç ve analiz karar katmanları
 

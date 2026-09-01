@@ -352,7 +352,7 @@ const RELEASE_10_13 = release('10.13', '2026-09-01', 'Odaklı Görev Ekranları'
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.13 görünür bilgi miktarını azaltıyor fakat özellik, hesaplama veya kayıt silmiyor; localStorage, yedek ve çevrimdışı çalışma değişmedi.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Sade Şablon Düzenleme', [
+const RELEASE_10_14 = release('10.14', '2026-09-01', 'Sade Şablon Düzenleme', [
   item('Hareket Seçici Yeniden Çalışıyor', 'Modalın dışına taşan hareket listesi doğru panel içine alındı. Şablona hareket ekleme ve mevcut hareketi değiştirme telefonda yeniden görünür ve kaydırılabilir.'),
   item('Düzenle Artık Gizli Değil', 'Şablon kartlarında en sık bakım eylemi olan Düzenle doğrudan görünür; sihirbaz, kopyalama ve silme daha seyrek kullanılan Diğer İşlemler katmanında durur.'),
   item('Temel Editör Önce Geliyor', 'Şablon düzenleyici açıldığında ad, süre, set, kalori, hareket sırası ve kaydetme görünür; hacim, seans sihirbazı, vurgu ve öneriler İleri planlama ve analiz başlığından açılır.'),
@@ -361,6 +361,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Sade Şa
   item('Ana Sayfada Daha Az Gürültü', 'Basit görünümde şablon kartları Başlat ve favori eylemlerine odaklanıyor; düzenleme ve silme Antrenman bölümündeki belirgin yönetim akışında kalıyor.'),
   item('Mobil Dokunma Alanları Büyüdü', 'Şablon düzenleme, set sayısı, sıra ve varsayılan set kontrolleri tek elle kullanılabilecek daha büyük hedeflere çıkarıldı.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.14 localStorage şemasını, yedek biçimini, mevcut şablonları ve çevrimdışı çalışma davranışını değiştirmiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Tek Görevli Günlük Ekranlar', [
+  item('Beslenme Özeti Sadeleşti', 'Basit görünümde teknik dört parçalı kalori denklemi yerine hedef, alınan ve yakılan değerleri okunuyor; tam denklem Detaylı görünümde korunuyor.'),
+  item('Günlük Toplama Doğrudan Geçiş', 'Günlük Toplam düğmesi makro girişini seçip editöre götürüyor; boş ilk öğün artık basit görünümde kendiliğinden açılmıyor.'),
+  item('Tek Kaydetme Eylemi', 'Beslenme ve Vücut ekranlarında basit modda aynı işi yapan ikinci kaydetme düğmeleri kaldırıldı; kayıt işlevi değişmedi.'),
+  item('Analizler Tek Çatı Altında', 'Su hedefi, enerji dengesi, yedi günlük beslenme tablosu ve gerçek harcama tek Takip ve Analiz başlığında toplandı.'),
+  item('Koçta Yinelenen Başlatma Yok', 'Plan veya kardiyo bulunmayan basit ana ekranda ikinci Serbest Başlat düğmesi gösterilmiyor; tek baskın Antrenmanı Başlat eylemi kalıyor.'),
+  item('Daha Kısa Antrenman Rehberi', 'Basit Antrenman ekranı Hazırla, Çalış ve Değerlendir aşamalarını açıklama satırları olmadan gösteriyor; Detaylı görünüm aynı rehberi koruyor.'),
+  item('Arşivde Daha Az Gürültü', 'Basit görünümde tekrarlanan öğretici kart kaldırıldı; arama, filtre, geçmişe ekleme ve gün gün kalori erişimi görünür kaldı.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v10.15 yalnız görünür bilgi hiyerarşisini değiştiriyor; localStorage, yedek biçimi, hesaplamalar ve çevrimdışı çalışma aynı kalıyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -437,6 +448,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_14,
   RELEASE_10_13,
   RELEASE_10_12,
   RELEASE_10_11,

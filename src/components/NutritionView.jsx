@@ -1,7 +1,7 @@
 import React, { memo, useMemo, useState } from 'react';
 import {
   Activity, BarChart3, Beef, BookOpen, ChevronDown, Copy,
-  Droplets, Flame, Plus, Save, Search, Sparkles, Trash2, TrendingUp, Footprints, Settings2,
+  Droplets, Flame, Plus, Save, Search, Trash2, TrendingUp, Footprints, Settings2,
 } from 'lucide-react';
 import {
   parseNumber, clampNumber, INPUT_LIMITS, getLocalDateString,
@@ -195,6 +195,13 @@ const NutritionView = memo(({
     });
   };
 
+  const openDailyTotals = () => {
+    setEntryMode('daily');
+    requestAnimationFrame(() => {
+      document.querySelector('[data-nutrition-editor]')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  };
+
   const updateDailyMacro = (field, value) => {
     setCurrentNutritionForm(prev => {
       const base = (Array.isArray(prev.meals) && prev.meals[0]) || {};
@@ -315,29 +322,39 @@ const NutritionView = memo(({
             style={{ width: `${calorieProgress}%` }}
           />
         </div>
-        <div className="grid grid-cols-4 gap-1 mt-2.5" aria-label="Günlük kalori denklemi">
-          {[
-            { label: 'Baz Hedef', value: baseTarget || '—', color: 'text-emerald-400' },
-            { label: 'Gün Farkı', value: `${dayAdjustment > 0 ? '+' : ''}${dayAdjustment}`, color: 'text-red-400' },
-            { label: 'Alınan', value: totals.calories, color: 'text-cyan-400' },
-            { label: '= Kalan', value: remaining === null ? '—' : Math.round(remaining), color: remaining !== null && remaining < 0 ? 'text-amber-400' : 'text-orange-400' },
-          ].map(item => (
-            <div key={item.label} className="rounded-xl border border-zinc-800 bg-zinc-950/65 px-1 py-2 text-center min-w-0">
-              <strong className={`text-xs font-mono block truncate ${item.color}`}>{item.value}</strong>
-              <span className="text-[9px] font-bold uppercase text-zinc-400 block mt-0.5 leading-tight">{item.label}</span>
+        {detailed ? (
+          <>
+            <div className="grid grid-cols-4 gap-1 mt-2.5" aria-label="Günlük kalori denklemi">
+              {[
+                { label: 'Baz Hedef', value: baseTarget || '—', color: 'text-emerald-400' },
+                { label: 'Gün Farkı', value: `${dayAdjustment > 0 ? '+' : ''}${dayAdjustment}`, color: 'text-red-400' },
+                { label: 'Alınan', value: totals.calories, color: 'text-cyan-400' },
+                { label: '= Kalan', value: remaining === null ? '—' : Math.round(remaining), color: remaining !== null && remaining < 0 ? 'text-amber-400' : 'text-orange-400' },
+              ].map(item => (
+                <div key={item.label} className="rounded-xl border border-zinc-800 bg-zinc-950/65 px-1 py-2 text-center min-w-0">
+                  <strong className={`text-xs font-mono block truncate ${item.color}`}>{item.value}</strong>
+                  <span className="text-[9px] font-bold uppercase text-zinc-400 block mt-0.5 leading-tight">{item.label}</span>
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-        <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-2">
-          Gün farkı, bugünkü harcamanın korunum ortalamasından farkıdır; antrenman iki kez eklenmez.
-          {' '}Toplam harcama: <span className="text-zinc-400">{calorieData?.ready ? calorieData.totalOut : '—'} kcal</span>.
-        </p>
-        <div className="flex items-center justify-between gap-2 mt-1.5 text-[8px] font-mono">
-          <span className="text-zinc-400 truncate">{targetSource}</span>
-          <span className={`shrink-0 rounded-md border px-1.5 py-0.5 ${adaptiveTDEE && !adaptiveTDEE.insufficient ? 'border-emerald-900/60 text-emerald-500' : 'border-amber-900/60 text-amber-500'}`}>
-            {adaptiveTDEE && !adaptiveTDEE.insufficient ? 'Kalibre' : 'Tahmini'}
-          </span>
-        </div>
+            <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-2">
+              Gün farkı, bugünkü harcamanın korunum ortalamasından farkıdır; antrenman iki kez eklenmez.
+              {' '}Toplam harcama: <span className="text-zinc-400">{calorieData?.ready ? calorieData.totalOut : '—'} kcal</span>.
+            </p>
+            <div className="flex items-center justify-between gap-2 mt-1.5 text-[8px] font-mono">
+              <span className="text-zinc-400 truncate">{targetSource}</span>
+              <span className={`shrink-0 rounded-md border px-1.5 py-0.5 ${adaptiveTDEE && !adaptiveTDEE.insufficient ? 'border-emerald-900/60 text-emerald-500' : 'border-amber-900/60 text-amber-500'}`}>
+                {adaptiveTDEE && !adaptiveTDEE.insufficient ? 'Kalibre' : 'Tahmini'}
+              </span>
+            </div>
+          </>
+        ) : (
+          <div className="mt-3 rounded-xl border border-zinc-800 bg-zinc-950/65 px-3 py-2.5 flex items-center justify-between gap-2 text-[9px] font-mono">
+            <span className="text-zinc-400">Hedef <strong className="text-emerald-400">{targetCalories || '—'}</strong></span>
+            <span className="text-zinc-400">Alınan <strong className="text-cyan-400">{totals.calories}</strong></span>
+            <span className="text-zinc-400">Yakılan <strong className="text-red-400">{calorieData?.ready ? calorieData.totalOut : '—'}</strong></span>
+          </div>
+        )}
         {protocolCalorieDelta !== 0 && (
           <p className="text-[8px] font-mono text-cyan-400 mt-1.5 text-right">
             Koç protokolü {protocolCalorieDelta > 0 ? '+' : ''}{protocolCalorieDelta} kcal uyguladı
@@ -351,7 +368,7 @@ const NutritionView = memo(({
         </div>
 
         {/* Makro Dağılım Oranları */}
-        {(() => {
+        {detailed && (() => {
           const pKcal = (parseNumber(totals.protein) || 0) * 4;
           const cKcal = (parseNumber(totals.carbs) || 0) * 4;
           const fKcal = (parseNumber(totals.fats) || 0) * 9;
@@ -400,7 +417,7 @@ const NutritionView = memo(({
             <Search size={18} className="text-orange-400 shrink-0" />
             <span><strong className="text-[11px] text-zinc-100 block">Besin Ekle</strong><span className="text-[9px] font-mono text-zinc-400">Ara veya barkod</span></span>
           </button>
-          <button type="button" onClick={() => setEntryMode('daily')} className="min-h-14 bg-zinc-900/90 border border-zinc-800 rounded-2xl px-3 flex items-center gap-2.5 text-left active:scale-[0.98] transition-all shadow-md">
+          <button type="button" onClick={openDailyTotals} className="min-h-14 bg-zinc-900/90 border border-zinc-800 rounded-2xl px-3 flex items-center gap-2.5 text-left active:scale-[0.98] transition-all shadow-md">
             <Beef size={18} className="text-emerald-400 shrink-0" />
             <span><strong className="text-[11px] text-zinc-100 block">Günlük Toplam</strong><span className="text-[9px] font-mono text-zinc-400">Makroları yaz</span></span>
           </button>
@@ -436,7 +453,7 @@ const NutritionView = memo(({
         </div>
       </DisclosureCard>
 
-      <section className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4 space-y-3.5 shadow-xl">
+      <section data-nutrition-editor className="bg-zinc-900 rounded-3xl border border-zinc-800 p-4 space-y-3.5 shadow-xl scroll-mt-3">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h3 className="text-xs font-bold text-zinc-100">{isToday ? 'Bugünün kaydı' : 'Geçmiş gün kaydı'}</h3>
@@ -645,7 +662,7 @@ const NutritionView = memo(({
         ) : (
           <div className="space-y-2">
             {safeMeals.map((meal, index) => {
-              const open = safeMeals.length === 1 || expandedMeals.has(meal.id);
+              const open = expandedMeals.has(meal.id) || (detailed && safeMeals.length === 1);
               return (
                 <article key={meal.id} className="bg-zinc-950 border border-zinc-800 rounded-2xl overflow-hidden">
                   <div className="flex items-center gap-2 px-3 py-2.5">
@@ -742,28 +759,32 @@ const NutritionView = memo(({
         )}
       </section>
 
-      <button
+      {detailed && <button
         type="button"
         onClick={handleSaveNutrition}
         className="w-full bg-orange-700 active:bg-orange-800 text-white font-bold py-3.5 px-4 rounded-2xl flex justify-center items-center text-xs shadow-lg shadow-orange-950/30"
       >
         <Save size={15} className="mr-2" /> {isToday ? 'Bugünün Kaydını Kaydet' : 'Geçmiş Kaydı Kaydet'}
-      </button>
+      </button>}
 
-      {/* Su takibi. Enerji dengesi açılır bölümünün içinde duruyordu ama
-          orası varsayılan kapalı: günlük ve tek dokunuşluk bir işlemi
-          kapalı bir bölmeye gömmek onu pratikte kullanılamaz yapıyordu.
-          Yalnızca bugünün kaydında görünüyor — geçmiş bir güne su eklemek
-          anlamlı bir işlem değil. */}
-      {isToday && waterSummary && waterTarget && (
-        <HydrationCard
-          summary={waterSummary}
-          target={waterTarget}
-          onAdd={onAddWater}
-          onToggleHeat={onToggleWaterHeat}
-          heat={Boolean(settings.waterHeatBonus)}
-        />
-      )}
+      <DisclosureCard
+        key={`tracking-${detailed}`}
+        icon={Activity}
+        title="Takip ve analiz ayrıntıları"
+        summary="Su hedefi, enerji dengesi, 7 günlük tablo ve gerçek harcama"
+        defaultOpen={detailed}
+        accentClass="text-cyan-400"
+      >
+        <div className="space-y-2.5">
+          {isToday && waterSummary && waterTarget && (
+            <HydrationCard
+              summary={waterSummary}
+              target={waterTarget}
+              onAdd={onAddWater}
+              onToggleHeat={onToggleWaterHeat}
+              heat={Boolean(settings.waterHeatBonus)}
+            />
+          )}
 
       <DisclosureCard
         key={`energy-${detailed}`}
@@ -867,11 +888,8 @@ const NutritionView = memo(({
           )}
         </DisclosureCard>
       )}
-
-      <div className="flex items-start gap-2 px-1 pb-2 text-[9px] font-mono text-zinc-400 leading-relaxed">
-        <Sparkles size={12} className="text-orange-400 shrink-0" />
-        Basit görünüm yalnızca kartları kapalı başlatır; tüm hesaplar ve girişler kullanılmaya devam eder.
-      </div>
+        </div>
+      </DisclosureCard>
 
       <NutritionTemplatesModal
         isOpen={templatesOpen}
