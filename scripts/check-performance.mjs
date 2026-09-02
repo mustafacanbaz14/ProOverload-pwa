@@ -9,7 +9,9 @@ const MANIFEST = path.join(DIST, '.vite', 'manifest.json');
 const BUDGETS = {
   initialJs: 780 * 1024,
   initialJsGzip: 270 * 1024,
-  initialCss: 160 * 1024,
+  // v11.1'in odak, azaltılmış hareket ve zorunlu renk erişilebilirlik
+  // kuralları için ölçülen yeni taban; genel bir pay bırakmamak için 161 KB.
+  initialCss: 161 * 1024,
   largestLazyJs: 470 * 1024,
 };
 

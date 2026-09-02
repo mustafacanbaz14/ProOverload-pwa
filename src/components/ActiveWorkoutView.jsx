@@ -58,6 +58,8 @@ const ActiveWorkoutView = memo(({
   onToggleSessionRestMute,
   onReplayRestAlert,
   restAlertFlash = false,
+  connectionOnline = true,
+  updateReady = false,
   onSetRestOverride,
   rest,
   restSecondsLeft,
@@ -135,6 +137,17 @@ const ActiveWorkoutView = memo(({
           </button>
         </div>
       </div>
+
+      {(!connectionOnline || updateReady) && (
+        <div role="status" aria-live="polite" className={`px-3 py-2 border-b flex items-center gap-2 shrink-0 ${!connectionOnline ? 'border-amber-900/50 bg-amber-950/35 text-amber-200' : 'border-cyan-900/50 bg-cyan-950/35 text-cyan-200'}`}>
+          <Activity size={12} className="shrink-0" />
+          <span className="text-[9px] leading-relaxed">
+            {!connectionOnline
+              ? 'Çevrimdışı: setlerin cihazda kaydedilmeye devam ediyor.'
+              : 'Yeni sürüm hazır: seans bitince veri kaybetmeden uygulanacak.'}
+          </span>
+        </div>
+      )}
 
       {/* Ana İçerik: Egzersizler ve Setler */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4 hide-scrollbar pb-32">

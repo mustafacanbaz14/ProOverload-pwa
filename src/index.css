@@ -16,6 +16,28 @@
   }
 }
 
+/* Klavye ve ekran okuyucu kullanıcıları üst çubuğu tek tek geçmek zorunda
+ * kalmadan seçili ekranın ana içeriğine ulaşabilir. Bağlantı yalnız odak
+ * aldığında görünür; dokunmatik düzeni değiştirmez. */
+.skip-link {
+  position: fixed;
+  top: max(.5rem, env(safe-area-inset-top));
+  left: .75rem;
+  z-index: 220;
+  transform: translateY(-180%);
+  border: 2px solid var(--luxury-gold, #d8b66b);
+  border-radius: .75rem;
+  background: var(--color-zinc-950, #0d0c0a);
+  color: var(--color-zinc-100, #f4eee2);
+  padding: .65rem .85rem;
+  font-size: .875rem;
+  font-weight: 800;
+}
+
+.skip-link:focus {
+  transform: translateY(0);
+}
+
 /* iOS, 16px altındaki forma odaklanınca viewport'u otomatik büyütür. Bu
  * uygulamada boyut Ayarlar'daki --font-scale ile yönetildiği için form alanı
  * en az 16px tutulur; büyük punto seçimi yine 1rem üzerinden büyümeye devam
@@ -597,12 +619,39 @@ body {
   margin-block: -.7rem;
 }
 
-.luxury-app button:focus-visible,
-.luxury-app input:focus-visible,
-.luxury-app select:focus-visible,
-.luxury-app textarea:focus-visible {
+.luxury-app :where(button, input, select, textarea):focus-visible {
   outline: 2px solid color-mix(in srgb, var(--luxury-gold) 72%, transparent);
   outline-offset: 2px;
+}
+
+/* İşletim sisteminde hareket azaltma seçildiyse konfeti, nabız ve sayfa
+ * geçişleri bilgi kaybettirmeden tek kareye iner. */
+@media (prefers-reduced-motion: reduce) {
+  .luxury-screen { animation: none; }
+  .luxury-app *,
+  .luxury-app *::before,
+  .luxury-app *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+  }
+}
+
+@media (prefers-contrast: more) {
+  .luxury-app {
+    --luxury-line: color-mix(in srgb, currentColor 48%, transparent);
+  }
+  .luxury-app :where(button, input, select, textarea, a):focus-visible {
+    outline: 3px solid currentColor;
+    outline-offset: 3px;
+  }
+}
+
+@media (forced-colors: active) {
+  .luxury-app :where(button, [role='button'], input, select, textarea) {
+    border: 1px solid ButtonText;
+  }
 }
 
 .luxury-app input:not([type='range']):not([type='checkbox']):not([type='radio']),
@@ -862,14 +911,4 @@ body {
 @keyframes luxury-rise {
   from { opacity: .72; transform: translateY(3px); }
   to { opacity: 1; transform: translateY(0); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .luxury-screen { animation: none; }
-  .luxury-app *, .luxury-app *::before, .luxury-app *::after {
-    scroll-behavior: auto !important;
-    transition-duration: .01ms !important;
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-  }
 }

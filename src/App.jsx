@@ -615,7 +615,7 @@ export default function App() {
     activeWorkout, metricsHistory, nutritionHistory, wellness, cycleHistory, settings,
   }, showToast);
   useDisplayPreferences(settings);
-  useDeferredPwaUpdate(activeWorkout, showToast);
+  const pwaUpdateReady = useDeferredPwaUpdate(activeWorkout, showToast);
 
   // Süresi biten protokol ayarlardan silinmez; karar hafızası korunur fakat
   // seans ve beslenme hesabına yalnızca geçerli tarih aralığındaysa girer.
@@ -4248,9 +4248,16 @@ export default function App() {
     return diffDays > 7;
   }, [lastBackupDate, todayTime, workouts.length]);
 
+  const activeViewLabel = ({
+    home: 'Bugün', training: 'Antrenman', nutrition: 'Beslenme',
+    progress: 'Gelişim', history: 'Geçmiş',
+  })[view] || 'ProOverload';
+
   return (
     <div className="luxury-app flex justify-center min-h-screen font-sans antialiased text-zinc-100 select-none">
       <div className="luxury-frame w-full max-w-[440px] h-[100dvh] flex flex-col relative overflow-hidden">
+
+        <a href="#main-content" className="skip-link">Ana içeriğe geç</a>
 
         {/* TOAST BİLDİRİMİ */}
         {toast && (
@@ -4290,11 +4297,11 @@ export default function App() {
             <div className="luxury-brand-mark shrink-0">
               <Activity size={16} strokeWidth={1.8} />
             </div>
-            <div className="min-w-0">
-              <h1 className="luxury-brand-title text-[11px] font-black uppercase whitespace-nowrap leading-tight">
+            <div className="min-w-0 overflow-hidden">
+              <h1 className="luxury-brand-title text-[11px] font-black uppercase whitespace-nowrap leading-tight truncate">
                 Hypertrophy <strong>LAB</strong>
               </h1>
-              <span className="text-[7px] font-medium text-zinc-400 uppercase tracking-[0.08em] block mt-0.5 whitespace-nowrap">
+              <span className="text-[7px] font-medium text-zinc-400 uppercase tracking-[0.08em] block mt-0.5 whitespace-nowrap truncate">
                 Crafted by Afacan Tech
               </span>
             </div>
@@ -4316,7 +4323,7 @@ export default function App() {
               className="luxury-header-action luxury-header-action--primary"
             >
               <Plus size={16} />
-              <span>Ekle</span>
+              <span className={Number(settings.fontScale || 1) >= 1.25 ? 'sr-only' : ''}>Ekle</span>
             </button>
             <button
               onClick={() => setIsGlobalSearchOpen(true)}
@@ -4339,10 +4346,18 @@ export default function App() {
         <div className="h-px shrink-0 bg-zinc-950 overflow-hidden" aria-hidden="true">
           <div className={`h-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent transition-opacity ${isViewPending ? 'opacity-100 animate-pulse' : 'opacity-0'}`} />
         </div>
-        <span className="sr-only" aria-live="polite">{isViewPending ? 'Sayfa hazırlanıyor' : ''}</span>
+        <span className="sr-only" aria-live="polite">
+          {isViewPending ? `${activeViewLabel} hazırlanıyor` : `${activeViewLabel} açıldı`}
+        </span>
+        {!activeWorkout && !isOnline && (
+          <div role="status" aria-live="polite" className="px-3 py-2 border-b border-amber-900/50 bg-amber-950/35 text-amber-200 flex items-center gap-2 shrink-0">
+            <WifiOff size={13} className="shrink-0" />
+            <span className="text-[9px] leading-relaxed">Çevrimdışı çalışıyorsun. Kayıtlar bu cihazda korunur; internet aramaları bağlantı gelince açılır.</span>
+          </div>
+        )}
 
         {/* MAIN VIEW CONTENT */}
-        <div className="flex-1 overflow-hidden relative z-[1]">
+        <main id="main-content" tabIndex="-1" aria-label={`${activeViewLabel} içeriği`} className="flex-1 overflow-hidden relative z-[1] outline-none">
           {view === 'home' && (
             <Suspense fallback={<ViewLoadingFallback viewKey="home" />}>
             <HomeView
@@ -4726,10 +4741,12 @@ export default function App() {
               cardioKcal={totalCardioCalories(activeWorkout.cardio || [], latestWeight)}
               rest={rest}
               restSecondsLeft={restSecondsLeft}
+              connectionOnline={isOnline}
+              updateReady={pwaUpdateReady}
             />
             </Suspense>
           )}
-        </div>
+        </main>
 
         {/* BOTTOM NAVIGATION */}
         {!activeWorkout && (
@@ -4803,12 +4820,22 @@ export default function App() {
             profile: metricsHistory.length > 0,
             program: templates.length > 0,
             workout: workouts.some(workout => (workout.exercises || []).length > 0),
-            backup: Boolean(lastBackupDate),
+            nutrition: nutritionHistory.length > 0,
+            sleep: wellness.some(day => Boolean(day.sleep?.bedTime || day.sleep?.wakeTime || parseNumber(day.sleep?.quickScore) > 0)),
           }}
-          onFinish={(patch, starterKey) => {
+          onFinish={(patch, starterKey, firstAction) => {
             setSettings(prev => ({ ...prev, ...patch }));
             setIsOnboardingOpen(false);
             if (starterKey) handleInstallStarter(starterKey);
+            if (firstAction) window.requestAnimationFrame(() => {
+              const action = ({
+                metrics: () => { setProgressTab('body'); handleChangeView('progress'); },
+                training: () => handleChangeView('training'),
+                nutrition: () => handleChangeView('nutrition'),
+                sleep: () => openWellness('sleep'),
+              })[firstAction];
+              action?.();
+            });
           }}
         />}
 

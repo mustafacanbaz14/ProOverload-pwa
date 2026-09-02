@@ -11,7 +11,7 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
   const past = RELEASE_HISTORY.slice(1);
 
   return (
-    <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-[150] flex items-center justify-center p-4">
+    <div role="dialog" aria-modal="true" aria-labelledby="release-notes-title" className="fixed inset-0 bg-black/85 backdrop-blur-md z-[150] flex items-center justify-center p-4">
       <div className="bg-zinc-950 border border-zinc-800/90 rounded-3xl max-w-sm w-full max-h-[88dvh] flex flex-col shadow-2xl shadow-black/80 animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
         <div className="flex items-start justify-between p-5 pb-3.5 shrink-0 border-b border-zinc-800/80 bg-zinc-950/50">
           <div className="flex items-center gap-2.5">
@@ -22,7 +22,7 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
               <span className="text-[9px] font-mono font-bold uppercase text-cyan-400 tracking-widest block">
                 Sürüm Notları
               </span>
-              <h3 className="text-base font-black text-zinc-100 mt-0.5 tracking-tight">
+              <h3 id="release-notes-title" className="text-base font-black text-zinc-100 mt-0.5 tracking-tight">
                 ProOverload v{LATEST_RELEASE_NOTES.version}
               </h3>
             </div>
@@ -37,9 +37,13 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
           </button>
         </div>
 
-        <div className="luxury-segmented grid grid-cols-2 gap-1.5 mx-5 my-3 p-1.5 bg-zinc-950/80 border border-zinc-800 rounded-2xl shrink-0 shadow-inner">
+        <div role="tablist" aria-label="Sürüm notu dönemi" className="luxury-segmented grid grid-cols-2 gap-1.5 mx-5 my-3 p-1.5 bg-zinc-950/80 border border-zinc-800 rounded-2xl shrink-0 shadow-inner">
           <button
             type="button"
+            role="tab"
+            id="release-latest-tab"
+            aria-selected={tab === 'latest'}
+            aria-controls="release-latest-panel"
             onClick={() => setTab('latest')}
             className={`rounded-xl py-2.5 text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${tab === 'latest' ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
@@ -47,6 +51,10 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
           </button>
           <button
             type="button"
+            role="tab"
+            id="release-history-tab"
+            aria-selected={tab === 'history'}
+            aria-controls="release-history-panel"
             onClick={() => setTab('history')}
             className={`rounded-xl py-2.5 text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${tab === 'history' ? 'bg-cyan-600 text-white shadow-md shadow-cyan-950/40' : 'text-zinc-500 hover:text-zinc-300'}`}
           >
@@ -56,7 +64,7 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
 
         <div className="flex-1 min-h-0 overflow-y-auto hide-scrollbar px-5 pb-4">
           {tab === 'latest' ? (
-            <div className="space-y-2.5">
+            <div id="release-latest-panel" role="tabpanel" aria-labelledby="release-latest-tab" className="space-y-2.5">
               <div className="flex items-center justify-between rounded-2xl border border-cyan-900/45 bg-cyan-950/20 px-3 py-2.5">
                 <div>
                   <strong className="text-[11px] text-cyan-300">{LATEST_RELEASE_NOTES.title}</strong>
@@ -77,7 +85,7 @@ const ReleaseNotesModal = memo(({ isOpen, onClose }) => {
               ))}
             </div>
           ) : (
-            <div className="space-y-2">
+            <div id="release-history-panel" role="tabpanel" aria-labelledby="release-history-tab" className="space-y-2">
               <p className="text-[9px] font-mono text-zinc-400 leading-relaxed px-1 pb-1">
                 Her sürüm kendi notunu gösterir. Eski özellikler son güncelleme etiketiyle yeniden sunulmaz.
               </p>

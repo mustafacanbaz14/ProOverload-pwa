@@ -46,6 +46,10 @@ const coachBriefing = read('src/components/CoachBriefingCard.jsx');
 const coachDashboard = read('src/utils/coachDashboard.js');
 const coachMemory = read('src/utils/coachMemory.js');
 const analysisReadiness = read('src/utils/analysisReadiness.js');
+const onboarding = read('src/components/OnboardingModal.jsx');
+const errorBoundary = read('src/components/AppErrorBoundary.jsx');
+const releaseNotesModal = read('src/components/ReleaseNotesModal.jsx');
+const screenshotMatrix = read('docs/STORE_SCREENSHOT_MATRIX.md');
 
 // Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
 // package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
@@ -53,7 +57,16 @@ const analysisReadiness = read('src/utils/analysisReadiness.js');
 check(/export const LATEST_RELEASE_NOTES = release\(APP_VERSION,/.test(history), 'Güncel sürüm notu APP_VERSION kullanıyor');
 check(history.includes('PWA ve Kullanıcı Verisi'), 'Sürüm notu veri/PWA etkisini açıklıyor');
 check(roadmap.includes('## 10.7') && roadmap.includes('## 10.21') && roadmap.includes('## 11.1'), 'UX yol haritası 10.7–11.1 kapsamını taşıyor');
-check(app.includes('<span>Ekle</span>') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
+check(onboarding.includes('Kurulum adımı {step + 1} / 3') && ['metrics', 'training', 'nutrition', 'sleep'].every(key => onboarding.includes(`key: '${key}'`)), 'İlk kurulum üç adım ve dört gerçek kayıt yolu sunuyor');
+check(onboarding.includes("querySelectorAll(") && onboarding.includes('previousFocus.focus()') && onboarding.includes('aria-describedby="onboarding-purpose"'), 'İlk kurulum odak kapanı ve ekran okuyucu ilişkilerini koruyor');
+check(app.includes('href="#main-content"') && app.includes('id="main-content"') && app.includes('activeViewLabel'), 'Ana içeriğe geç ve sayfa bağlamı duyuruları bağlı');
+check(app.includes('pwaUpdateReady') && activeWorkout.includes('updateReady') && activeWorkout.includes('seans bitince veri kaybetmeden uygulanacak'), 'Aktif seans PWA güncelleme durumunu açıklıyor');
+check(app.includes('Çevrimdışı çalışıyorsun. Kayıtlar bu cihazda korunur') && activeWorkout.includes('connectionOnline'), 'Çevrimdışı kayıt durumu ana kabuk ve canlı seansta görünür');
+check(css.includes('prefers-reduced-motion: reduce') && css.includes('prefers-contrast: more') && css.includes('forced-colors: active'), 'Azaltılmış hareket ve yüksek kontrast tercihleri uygulanıyor');
+check(errorBoundary.includes('copyDiagnostics') && errorBoundary.includes('buildEmergencyBackup') && errorBoundary.includes('/support.html'), 'Hata sınırı tanı, acil yedek ve destek yollarını koruyor');
+check(releaseNotesModal.includes('role="tablist"') && releaseNotesModal.includes('role="tabpanel"') && releaseNotesModal.includes('aria-selected'), 'Sürüm notları anlamsal sekme yapısını kullanıyor');
+check(['açık tema', 'koyu tema', 'kadın profil', 'erkek profil'].every(marker => screenshotMatrix.toLocaleLowerCase('tr').includes(marker)), 'Mağaza görsel matrisi tema ve profil varyantlarını tanımlıyor');
+check(app.includes('>Ekle</span>') && app.includes('aria-label="Hızlı kayıt aç"') && app.includes('aria-label="Uygulamada ara"') && app.includes('aria-label="Ayarları aç"'), 'Üst çubuk Ekle, Ara ve Ayarlar eylemlerini doğrudan sunuyor');
 check(!app.includes('isAppMenuOpen') && !existsSync(resolve(root, 'src/components/AppMenuModal.jsx')), 'Tekrarlanan uygulama menüsü kaldırıldı');
 check(['home', 'training', 'nutrition', 'progress', 'history'].every(key => navbar.includes(`key: '${key}'`)), 'Beş ana bölüm yalnız alt gezinmede korunuyor');
 check(app.includes('isDailyWorkspaceOpen') && globalSearch.includes('Günün Kayıtları') && globalSearch.includes('Tüm Araçlar'), 'Günlük kayıt merkezi ve araçlar küresel aramada korunuyor');
@@ -128,7 +141,7 @@ check(app.includes('AppErrorBoundary') || read('src/main.jsx').includes('AppErro
 check(/pb-safe|pt-safe/.test(css), 'iPhone güvenli alan yardımcıları var');
 check(css.includes('--font-scale'), 'Erişilebilir yazı ölçeği korunuyor');
 check(existsSync(resolve(root, 'docs/RELEASE_CHECKLIST.md')), 'Manuel mobil yayın kontrol listesi mevcut');
-check(pkg.scripts?.lint && pkg.scripts?.verify && pkg.scripts?.['check:performance'], 'Lint, regresyon ve performans komutları tanımlı');
+check(pkg.scripts?.lint && pkg.scripts?.verify && pkg.scripts?.['check:performance'] && pkg.scripts?.['check:accessibility'], 'Lint, regresyon, erişilebilirlik ve performans komutları tanımlı');
 
 if (failures.length) {
   console.error(`Yayın kalite kapısı başarısız — ${failures.length} hata:`);

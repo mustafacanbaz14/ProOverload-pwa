@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v11.0 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v11.1 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -214,10 +214,14 @@ Durum: Uygulandı.
 
 ## 11.1 — Mağaza öncesi ilk kullanım ve erişilebilirlik
 
-Durum: Planlandı.
+Durum: Uygulandı. Kamuya açık destek e-postası mağaza başvurusu öncesinde
+ürün sahibi tarafından ayrıca tanımlanacak.
 
-- İlk açılışı hedef seçimi → ilk kayıt → ilk anlamlı özet görevleriyle ölç ve gereksiz adımları kaldır.
-- VoiceOver/TalkBack sırası, klavye odağı, büyük yazı ve renk körlüğü senaryolarını yayın kapısına ekle.
-- Çevrimdışı ilk açılış, PWA güncellemesi, yarım kalan antrenman ve yedek kurtarma akışlarını uçtan uca doğrula.
+- İlk açılışı hedef seçimi → ilk kayıt → özet biçiminde üç adıma indir; ilk iş olarak ölçüm, antrenman, beslenme veya uyku ekranını doğrudan aç.
+- Kullanıcı kurulumdan çıkınca ya da başlangıç programı seçince sahte sağlık veya antrenman geçmişi oluşturma.
+- VoiceOver/TalkBack ilişkileri, klavye odak kapanı, ana içeriğe geç bağlantısı, büyük yazı, azaltılmış hareket ve yüksek kontrast senaryolarını yayın kapısına ekle.
+- Çevrimdışı durumu uygulama ve canlı seans içinde görünür tut; aktif seansta bekleyen PWA güncellemesinin ne zaman uygulanacağını açıkla.
+- Acil yedek akışını koru; kişisel kayıt içermeyen hata tanısını kopyalama ve destek sayfasına erişim ekle.
+- Güncelleme merkezini dialog, sekme ve panel ilişkileriyle ekran okuyucuya anlaşılır hale getir.
 - Mağaza ekran görüntüleri için açık/koyu tema ile kadın/erkek görsel varyantlarını aynı bilgi hiyerarşisinde sabitle.
-- Destek e-postası, gizlilik metni, hata raporu ve sürüm notlarını mağaza başvurusu öncesi tamamla.
+- Gizlilik, destek ve koşul metinlerini sürümle; kamuya açık destek e-postasını mağaza gönderiminden önce tamamlanacak manuel iş olarak bırak.

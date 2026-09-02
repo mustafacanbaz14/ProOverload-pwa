@@ -110,7 +110,7 @@ const RELEASE_9_0 = release('9.0', '2026-08-29', 'Yayın Güvenilirliği', [
   item('Semantik Yapı Denetimi', 'Başlık kuralları ve SPA yönlendirmesi artık JSON olarak ayrıştırılıyor; girinti, satır sonu veya anahtarlar arasındaki boşluk değişse de aynı yapı aynı sonucu veriyor.'),
   item('Güvenlik Başlıkları Korundu', 'X-Content-Type-Options, X-Frame-Options, Referrer-Policy ve Permissions-Policy kontrolleri kaldırılmadı; yalnız kırılgan doğrulama yöntemi düzeltildi.'),
   item('Yerel ve Bulut Build Eşitliği', 'Bilgisayarda geçen üretim kapısının Vercel Linux ortamında da aynı yapı için geçmesi sağlandı; yayın sonucu artık dosya biçimlendirmesine bağlı değil.'),
-  item('PWA ve Kullanıcı Verisi Değişmedi', 'Bu bakım sürümü localStorage anahtarlarına, veri şemasına, PWA önbellek modeline veya Claude ile eklenen v8.9 arayüz sadeleştirmelerine dokunmuyor.'),
+  item('PWA ve Kullanıcı Verisi Değişmedi', 'Bu bakım sürümü localStorage anahtarlarına, veri şemasına, PWA önbellek modeline veya v8.9 arayüz sadeleştirmelerine dokunmuyor.'),
 ]);
 
 const RELEASE_9_1 = release('9.1', '2026-08-30', 'Bugün Odaklı Ana Ekran', [
@@ -455,7 +455,7 @@ const RELEASE_10_21 = release('10.21', '2026-09-01', 'Güvenli Antrenman Öneril
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.21 localStorage anahtarlarını, kullanıcı kayıtlarını, yedek biçimini veya çevrimdışı PWA davranışını değiştirmiyor; yalnız karar ve görünürlük katmanını düzeltiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-02', 'Açıklanabilir Koç Kararları', [
+const RELEASE_11_0 = release('11.0', '2026-09-02', 'Açıklanabilir Koç Kararları', [
   item('Çelişen Hacim Tavsiyesi Düzeltildi', 'Deload, eklem ağrısı, düşük hazır oluşluk, yüksek dinlenme nabzı veya düşük program uyumu varken hacim ekleme tavsiyesini susturması gereken kurallar artık gerçek hacim anahtarıyla çalışıyor.'),
   item('Koç En Fazla Üç Farklı Öncelik Gösteriyor', 'Ana sayfa aynı konudaki benzer uyarıları çoğaltmıyor; önce farklı karar alanlarından en fazla üç uygulanabilir adım seçiyor.'),
   item('Veri Eksikliği Başarısızlık Değil', 'Yeterli kayıt yokken performans puanı veya risk hükmü üretilmiyor. Ekran bunun yerine hangi verinin eksik olduğunu ve nasıl tamamlanacağını açıkça söylüyor.'),
@@ -468,6 +468,23 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-02', 'Açıkla
   item('Hazır Oluşluk Yoksa Varsayım Yapılmıyor', 'Ana sayfa toparlanma verisi bulunmadığında hazır oluşluğun iyi olabileceğini varsaymıyor; kısa formu kullanmayı veya dinlenmeyi öneriyor.'),
   item('497 Çekirdek ve 79 Yayın Kontrolü', 'Gerçek hacim çelişkisi, kayıt ekranı yönlendirmeleri, farklı konu seçimi ve veri eksikliği dili otomatik regresyon ağına eklendi.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v11.0 localStorage anahtarlarını, kayıt biçimlerini, yedekleri ve çevrimdışı PWA davranışını değiştirmiyor; karar ve yönlendirme katmanını düzeltiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-02', 'Hızlı İlk Kurulum ve Erişilebilir Kurtarma', [
+  item('İlk Kurulum Üç Net Adım', 'İlk açılış hedef seçimi, ilk kayıt tercihi ve kısa özet olarak üç adıma indirildi; yalnız tanıtım yapan ve karar yükü oluşturan ekran kaldırıldı.'),
+  item('İlk İş Doğrudan Açılıyor', 'Kullanıcı vücut ölçümü, antrenman, beslenme veya uyku görevlerinden birini seçiyor; kurulum bittiğinde uygulama ilgili kayıt ekranını doğrudan açıyor.'),
+  item('Erken Yedek Baskısı Kaldırıldı', 'Henüz anlamlı veri oluşmadan yedek istemek ilk kullanım kontrol listesinden çıkarıldı. Yedek ve kurtarma araçları ayarlarda erişilebilir kalıyor.'),
+  item('Sahte Geçmiş Oluşturulmuyor', 'Kurulumu atlamak veya başlangıç programı seçmek antrenman, beslenme, uyku ya da ölçüm geçmişine örnek kayıt yazmıyor.'),
+  item('Klavye ve Ekran Okuyucu Akışı', 'Kurulum penceresine başlık ilişkisi, adım duyurusu, seçim durumları, odak kapanı ve kapanınca önceki odağa dönüş eklendi.'),
+  item('Ana İçeriğe Geç Bağlantısı', 'Klavye kullanıcıları üst kontrolleri atlayıp doğrudan aktif sayfanın ana içeriğine geçebiliyor; sayfa değişimi ekran okuyucuya adıyla bildiriliyor.'),
+  item('Azaltılmış Hareket ve Yüksek Kontrast', 'İşletim sisteminin azaltılmış hareket, artırılmış kontrast ve zorunlu renk tercihleri arayüzde karşılık buluyor; durum anlamı yalnız renge bırakılmıyor.'),
+  item('Çevrimdışı Durum Görünür', 'Bağlantı kesildiğinde kayıtların cihazda tutulduğu kalıcı bir durum şeridi gösteriliyor; kullanıcı yalnız geçici bildirime bağlı kalmıyor.'),
+  item('Aktif Seansta Güvenli Güncelleme', 'Yeni PWA sürümü antrenman sırasında hazır olursa güncellemenin seans bitince veri kaybetmeden uygulanacağı canlı seans içinde açıkça yazıyor.'),
+  item('Kurtarma Bilgisi Kopyalanabilir', 'Beklenmeyen hata ekranı acil yedeği koruyor; kişisel sağlık verisi içermeyen sürüm, zaman, tarayıcı ve hata özeti tek dokunuşla kopyalanabiliyor.'),
+  item('Anlamsal Sürüm Notları', 'Güncelleme merkezi dialog, sekme ve panel rollerini kullanıyor; yardımcı teknoloji hangi sürüm listesinin açık olduğunu doğru okuyabiliyor.'),
+  item('Mağaza Görsel Matrisi', 'Açık/koyu tema ile kadın/erkek profilleri için sekiz temel mağaza sahnesi, veri gizliliği ve taşma ölçütleri tek doğrulama belgesinde sabitlendi.'),
+  item('Yeni Yayın Kapıları', 'İlk kullanım, odak, erişilebilirlik, çevrimdışı durum ve kurtarma davranışları 21 otomatik erişilebilirlik kontrolüyle mevcut regresyon zincirine eklendi.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v11.1 localStorage anahtarlarını, kayıt biçimlerini ve yedek şemasını değiştirmiyor; ilk kullanım, erişilebilirlik ve kurtarma sunumunu güçlendiriyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -544,6 +561,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_11_0,
   RELEASE_10_21,
   RELEASE_10_20,
   RELEASE_10_19,

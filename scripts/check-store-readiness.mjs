@@ -18,6 +18,8 @@ const vite = read('vite.config.js');
 const index = read('index.html');
 const main = read('src/main.jsx');
 const css = read('src/index.css');
+const releaseChecklist = read('docs/RELEASE_CHECKLIST.md');
+const screenshotMatrix = read('docs/STORE_SCREENSHOT_MATRIX.md');
 // Vercel build ortamı yapılandırma dosyasını normalize/minify edebilir.
 // Bu nedenle boşluklara bağlı ham metin araması yerine JSON yapısını denetle.
 const vercel = JSON.parse(read('vercel.json'));
@@ -29,6 +31,9 @@ check(main.includes("'gesturestart'") && main.includes('event.touches?.length > 
 check(css.includes('font-size: max(16px, 1rem)') && css.includes('--font-scale'), 'iOS odak zoomu kapalı ve uygulama punto ayarı korunuyor');
 check(index.includes('apple-mobile-web-app-capable'), 'Apple PWA metası var');
 check(index.includes('mobile-web-app-capable'), 'Genel mobil uygulama metası var');
+check(releaseChecklist.includes('VoiceOver veya TalkBack') && releaseChecklist.toLocaleLowerCase('tr').includes('azaltılmış hareket'), 'Gerçek cihaz erişilebilirlik senaryoları kayıtlı');
+check(['açık tema', 'koyu tema', 'kadın profil', 'erkek profil'].every(marker => screenshotMatrix.toLocaleLowerCase('tr').includes(marker)), 'Mağaza ekran görüntüsü varyantları tanımlı');
+check(screenshotMatrix.includes('393') && screenshotMatrix.includes('430'), 'Mağaza ekran görüntüsü mobil taşma ölçütleri tanımlı');
 
 [
   "id: '/'", "start_url: '/?source=pwa'", "scope: '/'", "orientation: 'portrait-primary'",

@@ -7069,8 +7069,10 @@ test('güncelleme merkezi son sürümü geçmişten ayırıyor', () => {
 
 test('mağaza hazırlığı otomatik ve manuel kanıtı birbirine karıştırmıyor', () => {
   const empty = buildStoreReadiness({ publicContact: false, sahte: true });
-  assert.equal(empty.groups.foundation.done, 8);
-  assert.equal(empty.groups.foundation.total, 9);
+  assert.equal(empty.groups.foundation.done, 12);
+  assert.equal(empty.groups.foundation.total, 13);
+  assert.ok(empty.groups.foundation.checks.find(check => check.key === 'accessibleNavigation')?.done);
+  assert.ok(empty.groups.foundation.checks.find(check => check.key === 'recoveryDiagnostics')?.done);
   assert.equal(empty.groups.ios.done, 0);
   assert.equal(empty.groups.android.done, 0);
   assert.equal(empty.storeReady, false);
