@@ -624,6 +624,40 @@ export const mergeSettings = (saved = {}) => {
   return merged;
 };
 
+/**
+ * Antrenman kayıtlarını yükleme sınırında sağlama alır.
+ *
+ * Diğer veri türleri (wellness, döngü, ölçüm, beslenme) yüklenirken zaten
+ * normalize edilip filtreleniyordu; uygulamanın çekirdeği olan antrenman
+ * listesi ise HAM okunuyordu. Sonuç: dizideki tek bir `null` kayıt — bozuk
+ * bir yedek dosyası, yarım kalmış bir göç ya da depolama hatası — uygulamanın
+ * tamamını düşürüyor ve kullanıcı "Güvenli Kurtarma" ekranından çıkamıyordu.
+ *
+ * Burada veri ATILMIYOR, onarılıyor: eksik `exercises`/`sets` alanları boş
+ * diziye çevriliyor. Yalnızca yapısal olarak kullanılamaz olanlar eleniyor —
+ * nesne olmayan kayıtlar ve tarihi olmayanlar. Tarihsiz bir antrenman hiçbir
+ * zaman çizelgesine yerleştirilemez ve tarih tabanlı her hesabı bozar; bu,
+ * wellness ve döngü kayıtlarında da uygulanan aynı ölçüt.
+ */
+export const normalizeWorkoutRecords = (raw) => {
+  if (!Array.isArray(raw)) return [];
+  return raw.reduce((liste, kayit) => {
+    if (!kayit || typeof kayit !== 'object' || Array.isArray(kayit)) return liste;
+    if (!kayit.date) return liste;
+
+    const exercises = (Array.isArray(kayit.exercises) ? kayit.exercises : [])
+      .filter(ex => ex && typeof ex === 'object' && !Array.isArray(ex))
+      .map(ex => ({
+        ...ex,
+        sets: (Array.isArray(ex.sets) ? ex.sets : [])
+          .filter(set => set && typeof set === 'object' && !Array.isArray(set)),
+      }));
+
+    liste.push({ ...kayit, exercises });
+    return liste;
+  }, []);
+};
+
 export const loadPersistedState = (repository = getBrowserDataRepository()) => {
   const read = (name, fallback, parser) => repository.read(name, fallback, parser).value;
   const todayStr = getLocalDateString();
@@ -654,7 +688,7 @@ export const loadPersistedState = (repository = getBrowserDataRepository()) => {
     : savedSettings;
 
   return {
-    workouts: read('workouts', []),
+    workouts: normalizeWorkoutRecords(read('workouts', [])),
     templates: read('templates', []),
     customExercises: migrateCustomExercises(read('custom_exercises', [])),
     customFoods: read('custom_foods', []),

@@ -110,7 +110,7 @@ import { dayEnergyBreakdown, theoreticalWeek, estimateMacrosForTef, groupByWeek,
 import { calorieDashboard, deriveGoalSet } from '../src/utils/goals.js';
 import { mergeWellnessDay, computeSleepScore } from '../src/utils/wellness.js';
 import { migrateWeekPlans, removeTemplateFromPlans } from '../src/utils/planMigration.js';
-import { suggestNextTarget, estimate1RM, mergeWorkout, mergeSettings, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords } from '../src/utils/helpers.js';
+import { suggestNextTarget, estimate1RM, mergeWorkout, mergeSettings, findMetricsForDate, resetDayNeatOverride, calcTonnage, buildPersonalRecords, normalizeWorkoutRecords } from '../src/utils/helpers.js';
 import { dailyTotals, nutritionDayScore } from '../src/utils/nutritionStats.js';
 import {
   createDayTemplate, createMealTemplate, createRecipeTemplate,
@@ -7092,6 +7092,47 @@ test('mağaza hazırlığı otomatik ve manuel kanıtı birbirine karıştırmı
     support: 'https://example.com/support.html',
     terms: 'https://example.com/terms.html',
   });
+});
+
+// Bozuk antrenman kaydi tum uygulamayi dusuruyordu: dizideki tek bir `null`
+// "Guvenli Kurtarma" ekranina goturuyor ve kullanici uygulamaya hic
+// giremiyordu. Yukleme sinirindaki normalize edici bunu kesiyor.
+tests.push({
+  name: 'normalizeWorkoutRecords bozuk kayitlari eler, gecerli veriye dokunmaz',
+  run() {
+    // Dizi olmayan girdi bos dizi verir
+    assert.deepEqual(normalizeWorkoutRecords(null), []);
+    assert.deepEqual(normalizeWorkoutRecords(undefined), []);
+    assert.deepEqual(normalizeWorkoutRecords({}), []);
+
+    // Yapisal olarak kullanilamaz kayitlar elenir
+    assert.equal(normalizeWorkoutRecords([null, undefined, {}, []]).length, 0);
+    assert.equal(normalizeWorkoutRecords([{ name: 'tarihsiz' }]).length, 0);
+
+    // Onarilabilir olanlar KORUNUR, atilmaz
+    const onarilan = normalizeWorkoutRecords([
+      { date: '2026-01-01', exercises: null },
+      { date: '2026-01-02', exercises: [null, { name: 'X', sets: null }] },
+      { date: '2026-01-03', exercises: [{ name: 'Y', sets: [null, { weight: 60, reps: 8 }] }] },
+    ]);
+    assert.equal(onarilan.length, 3);
+    assert.deepEqual(onarilan[0].exercises, []);
+    assert.equal(onarilan[1].exercises.length, 1);
+    assert.deepEqual(onarilan[1].exercises[0].sets, []);
+    assert.equal(onarilan[2].exercises[0].sets.length, 1);
+    assert.equal(onarilan[2].exercises[0].sets[0].weight, 60);
+
+    // Gecerli veri bit bit ayni kalir — normalize etmek veri degistirmemeli
+    const gecerli = [{
+      id: 'w1', date: '2026-01-05', name: 'Itis',
+      exercises: [{ id: 'e1', name: 'Bench', sets: [{ id: 's1', weight: 60, reps: 8, rir: 2 }] }],
+    }];
+    assert.deepEqual(normalizeWorkoutRecords(gecerli), gecerli);
+
+    // Idempotent: iki kez uygulamak ayni sonucu verir
+    const bir = normalizeWorkoutRecords(onarilan);
+    assert.deepEqual(normalizeWorkoutRecords(bir), bir);
+  },
 });
 
 for (const { name, run } of tests) {

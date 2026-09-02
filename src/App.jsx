@@ -330,25 +330,53 @@ export default function App() {
     startTransition(() => setTrainingTab(next));
   }, []);
 
-  // Ana ekrandan en sık yapılan iki işlem antrenman merkezini açmak ve seans
-  // başlatmaktır. İlk boya tamamlandıktan sonra, bağlantı veri tasarrufunda
-  // değilse bu iki küçük parçayı boş zamanda hazırla. Kritik açılış yolunu
-  // büyütmez; ilk dokunuştaki beklemeyi azaltır.
+  // Sekme parçaları boş zamanda ısıtılır.
+  //
+  // Üretim derlemesinde ölçüldü: bir sekmeye İLK gidiş 47-228 ms sürüyor,
+  // sonraki gidişler 0,3-0,8 ms. Yani maliyetin tamamı ilk açılışta — parçayı
+  // indirip ayrıştırmak ve ilk render. Kullanıcı bunu tam da uygulamayı açıp
+  // ilk kez dokunduğunda hissediyor.
+  //
+  // Önceden yalnızca antrenman tarafı ısıtılıyordu; ölçümdeki en pahalı üçü
+  // (Gelişim 189 ms, Beslenme 84 ms, Geçmiş 47 ms) ısıtılmıyordu. Artık hepsi
+  // ısıtılıyor ama HEPSİ BİRDEN DEĞİL: her parça ayrı bir boş zaman diliminde
+  // yükleniyor, yoksa ısıtmanın kendisi uzun bir görev üretirdi.
+  //
+  // Sıra kullanım sıklığına göre; veri tasarrufu ve 2g bağlantıda hiç
+  // çalışmıyor.
   useEffect(() => {
     const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
     if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || '')) return undefined;
 
-    const warmUp = () => {
-      void Promise.allSettled([loadTrainingView(), loadActiveWorkoutView()]);
+    const sira = [
+      loadTrainingView, loadActiveWorkoutView,
+      loadProgressHubView, loadNutritionView, loadHistoryView,
+    ];
+
+    let iptal = false;
+    let bekleyen = null;
+    const planla = (isIdi) => {
+      if (typeof window.requestIdleCallback === 'function') {
+        bekleyen = { tur: 'idle', id: window.requestIdleCallback(isIdi, { timeout: 4500 }) };
+      } else {
+        bekleyen = { tur: 'timeout', id: window.setTimeout(isIdi, 2600) };
+      }
     };
 
-    if (typeof window.requestIdleCallback === 'function') {
-      const id = window.requestIdleCallback(warmUp, { timeout: 4500 });
-      return () => window.cancelIdleCallback?.(id);
-    }
+    const adim = (index) => {
+      if (iptal || index >= sira.length) return;
+      void sira[index]().catch(() => {});
+      planla(() => adim(index + 1));
+    };
 
-    const id = window.setTimeout(warmUp, 2600);
-    return () => window.clearTimeout(id);
+    planla(() => adim(0));
+
+    return () => {
+      iptal = true;
+      if (!bekleyen) return;
+      if (bekleyen.tur === 'idle') window.cancelIdleCallback?.(bekleyen.id);
+      else window.clearTimeout(bekleyen.id);
+    };
   }, []);
 
   const [isExerciseModalOpen, setIsExerciseModalOpen] = useState(false);

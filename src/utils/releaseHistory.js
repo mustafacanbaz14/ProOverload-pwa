@@ -470,7 +470,7 @@ const RELEASE_11_0 = release('11.0', '2026-09-02', 'Açıklanabilir Koç Kararla
   item('PWA ve Kullanıcı Verisi Korundu', 'v11.0 localStorage anahtarlarını, kayıt biçimlerini, yedekleri ve çevrimdışı PWA davranışını değiştirmiyor; karar ve yönlendirme katmanını düzeltiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-02', 'Hızlı İlk Kurulum ve Erişilebilir Kurtarma', [
+const RELEASE_11_1 = release('11.1', '2026-09-02', 'Hızlı İlk Kurulum ve Erişilebilir Kurtarma', [
   item('İlk Kurulum Üç Net Adım', 'İlk açılış hedef seçimi, ilk kayıt tercihi ve kısa özet olarak üç adıma indirildi; yalnız tanıtım yapan ve karar yükü oluşturan ekran kaldırıldı.'),
   item('İlk İş Doğrudan Açılıyor', 'Kullanıcı vücut ölçümü, antrenman, beslenme veya uyku görevlerinden birini seçiyor; kurulum bittiğinde uygulama ilgili kayıt ekranını doğrudan açıyor.'),
   item('Erken Yedek Baskısı Kaldırıldı', 'Henüz anlamlı veri oluşmadan yedek istemek ilk kullanım kontrol listesinden çıkarıldı. Yedek ve kurtarma araçları ayarlarda erişilebilir kalıyor.'),
@@ -485,6 +485,17 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-02', 'Hızlı 
   item('Mağaza Görsel Matrisi', 'Açık/koyu tema ile kadın/erkek profilleri için sekiz temel mağaza sahnesi, veri gizliliği ve taşma ölçütleri tek doğrulama belgesinde sabitlendi.'),
   item('Yeni Yayın Kapıları', 'İlk kullanım, odak, erişilebilirlik, çevrimdışı durum ve kurtarma davranışları 21 otomatik erişilebilirlik kontrolüyle mevcut regresyon zincirine eklendi.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v11.1 localStorage anahtarlarını, kayıt biçimlerini ve yedek şemasını değiştirmiyor; ilk kullanım, erişilebilirlik ve kurtarma sunumunu güçlendiriyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-02', 'Bozuk Kayda Karşı Koruma ve Takılmayan Geçişler', [
+  item('Bozuk Kayda Karşı Koruma', 'Antrenman listesindeki tek bir bozuk kayıt — hatalı bir yedek dosyası, yarım kalmış bir göç ya da depolama hatası — uygulamanın tamamını düşürüyor ve kullanıcıyı Güvenli Kurtarma ekranında bırakıyordu. Kayıtlar artık yükleme sınırında sağlamaya alınıyor.'),
+  item('Veri Atılmıyor, Onarılıyor', 'Eksik hareket ya da set alanları boş listeye çevrilip kayıt korunuyor. Yalnızca hiçbir şekilde kullanılamayacak olanlar — nesne olmayan ve tarihsiz kayıtlar — eleniyor; bu, ölçüm ve toparlanma kayıtlarında zaten uygulanan ölçüt.'),
+  item('Çekirdek Veri Diğerleriyle Aynı Korumada', 'Ölçüm, beslenme, uyku ve döngü kayıtları yüklenirken zaten normalize ediliyordu; uygulamanın çekirdeği olan antrenman listesi ham okunuyordu. Bu boşluk kapandı.'),
+  item('Ekran Geçişlerinde Donma Kalmadı', 'Bir sekmeye ilk gidiş ana iş parçacığını 47-204 ms bloke ediyordu. Ölçülen toplam engelleme 520 ms\'den sıfıra indi.'),
+  item('Tüm Sekmeler Boş Zamanda Hazırlanıyor', 'Önceden yalnızca antrenman tarafı önceden yükleniyordu. Gelişim, Beslenme ve Geçmiş de artık boş zamanda hazırlanıyor — hepsi birden değil, tek tek, hazırlığın kendisi bir donmaya dönüşmesin diye.'),
+  item('Analiz Sekmeleri Dokunmatikte de Hazırlanıyor', 'Alt sekmeler yalnızca fare üzerine gelince ısınıyordu; telefonda "üzerine gelme" olmadığı için hiç ısınmıyorlardı. Vücut sekmesine ilk gidişteki 98 ms\'lik engelleme kalktı.'),
+  item('Veri Tasarrufuna Saygılı', 'Ön hazırlık, veri tasarrufu açıkken ya da 2G bağlantıda hiç çalışmıyor.'),
+  item('Bozuk Kayıt İçin Kalıcı Test', 'Senaryo bir regresyon testine dönüştürüldü; tüm hesaplama motorları, kas kuralları, mağaza ve performans kapıları sıfır hata ile doğrulandı.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -561,6 +572,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_11_1,
   RELEASE_11_0,
   RELEASE_10_21,
   RELEASE_10_20,

@@ -1,4 +1,4 @@
-import React, { lazy, memo, startTransition, Suspense } from 'react';
+import React, { lazy, memo, startTransition, Suspense, useEffect } from 'react';
 import { Scale, LineChart, CalendarDays } from 'lucide-react';
 import ViewHeader from './ViewHeader';
 
@@ -50,6 +50,38 @@ const ProgressHubView = memo(({
   const simple = interfaceMode !== 'detailed';
   const copy = HUB_COPY[visibleTab] || HUB_COPY.body;
   const prepare = (key) => void loaderFor(key)?.().catch(() => {});
+
+  // Alt sekmeler yalnızca `onPointerEnter` ile ısınıyordu; dokunmatikte
+  // "üzerine gelme" diye bir şey yok, yani telefonda hiç ısınmıyorlardı.
+  // Ölçümde Vücut sekmesine ilk gidiş 98 ms'lik bir engelleme üretiyordu.
+  // Bu ekran açıldığında diğer alt sekmeler boş zamanda hazırlanıyor —
+  // tek tek, ısıtmanın kendisi uzun bir göreve dönüşmesin diye.
+  useEffect(() => {
+    const kalanlar = ['body', 'analysis', ...(gender === 'female' ? ['cycle'] : [])]
+      .filter(key => key !== visibleTab);
+    let iptal = false;
+    let bekleyen = null;
+    const planla = (isIdi) => {
+      bekleyen = typeof window.requestIdleCallback === 'function'
+        ? { tur: 'idle', id: window.requestIdleCallback(isIdi, { timeout: 3000 }) }
+        : { tur: 'timeout', id: window.setTimeout(isIdi, 1200) };
+    };
+    const adim = (i) => {
+      if (iptal || i >= kalanlar.length) return;
+      prepare(kalanlar[i]);
+      planla(() => adim(i + 1));
+    };
+    planla(() => adim(0));
+    return () => {
+      iptal = true;
+      if (!bekleyen) return;
+      if (bekleyen.tur === 'idle') window.cancelIdleCallback?.(bekleyen.id);
+      else window.clearTimeout(bekleyen.id);
+    };
+    // `prepare` saf bir modül yükleyici; bağımlılığa girmesi gerekmiyor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleTab, gender]);
+
   const select = (key) => {
     prepare(key);
     startTransition(() => setTab(key));
