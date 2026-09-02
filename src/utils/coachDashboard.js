@@ -28,6 +28,30 @@ export const COACH_CATEGORIES = {
   other: 'Diğer',
 };
 
+const DATA_COMPLETION_KEYS = new Set(['sleep-missing', 'metric', 'analysis-lock', 'training-age']);
+
+export const coachActionLabel = (action) => ({
+  workout: 'Seansı başlat',
+  training: 'Antrenmana git',
+  history: 'Geçmişi aç',
+  cardio: 'Kardiyoyu aç',
+  nutrition: 'Beslenmeye git',
+  wellness: 'Uyku kaydı ekle',
+  metrics: 'Ölçüm ekle',
+  progress: 'İlerlemeyi aç',
+  analysis: 'Analizi aç',
+  plan: 'Programı düzenle',
+  deload: 'Deload planını aç',
+  mesocycle: 'Bloğu aç',
+  pain: 'Ağrı günlüğünü aç',
+  dataHealth: 'Veri sağlığını aç',
+  ledger: 'Karar defterini aç',
+  coachLedger: 'Karar defterini aç',
+  settings: 'Koç ayarını aç',
+  coach: 'Koç merkezini aç',
+  cycle: 'Döngü takibini aç',
+}[action] || 'İlgili ekranı aç');
+
 const clamp = (value, min = 0, max = 100) => Math.min(max, Math.max(min, parseNumber(value)));
 
 const signalTone = (score) => score >= 75 ? 'good' : score >= 50 ? 'watch' : 'risk';
@@ -225,20 +249,29 @@ export const enrichCoachActions = (items = []) => (items || []).map(item => {
     category,
     categoryLabel: COACH_CATEGORIES[category] || COACH_CATEGORIES.other,
     evidence: evidenceFor(item),
+    decisionKind: DATA_COMPLETION_KEYS.has(item.key) ? 'data' : 'decision',
+    actionLabel: coachActionLabel(item.action),
   };
 });
 
 const missionList = (items) => {
+  const actionable = items.filter(item => item.action && item.tone?.key !== 'good');
   const picked = [];
   const categories = new Set();
-  for (const item of items) {
+  // Önce farklı konulardan kararlar seçilir. Üç hacim uyarısının yan yana
+  // gelmesi, üç ayrı öncelik olduğu izlenimini veriyordu.
+  for (const item of actionable) {
     if (picked.length >= 3) break;
-    // Saf bilgi ve olumlu durumlar görev değildir; yapılabilecek bir eylem
-    // yoksa "görev" etiketi yalnızca baskı üretir.
-    if (!item.action || item.tone?.key === 'good') continue;
-    if (categories.has(item.category) && picked.length < 2) continue;
+    if (categories.has(item.category)) continue;
     picked.push(item);
     categories.add(item.category);
+  }
+  // Yalnız bir-iki konu varsa kartı yapay olarak boş bırakmak yerine kalan en
+  // yüksek öncelikli eylemlerle üçe tamamlanır.
+  for (const item of actionable) {
+    if (picked.length >= 3) break;
+    if (picked.some(row => row.key === item.key)) continue;
+    picked.push(item);
   }
   return picked;
 };
@@ -260,8 +293,13 @@ export const buildCoachBriefing = ({ actions = [], ...capacitySources } = {}) =>
     horizons,
     categories,
     missions,
+    mode: capacity.insufficient ? 'data' : 'decision',
+    missionHeading: capacity.insufficient ? 'Önce Veriyi Tamamla' : 'Bugünün Öncelikleri',
+    guidance: capacity.insufficient
+      ? 'Eksik kayıtlar kötü puan sayılmaz. Koç yeterli dayanak oluşana kadar performans hükmü vermiyor.'
+      : 'Öncelikler farklı konulardan seçilir; aynı sinyalin tekrarları derin listede kalır.',
     headline: capacity.insufficient
-      ? 'Karar için birkaç temel kayıt eksik.'
+      ? 'Henüz güvenilir bir performans kararı yok.'
       : capacity.zone.key === 'ready'
         ? 'Sinyaller planlanan yükü destekliyor.'
         : capacity.zone.key === 'balanced'

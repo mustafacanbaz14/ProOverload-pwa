@@ -3172,6 +3172,7 @@ export default function App() {
       .map(day => day.sleep);
     const sleep = todaySleep ? computeSleepScore(todaySleep, previousSleep) : null;
     const recoveryConcern = Boolean(readiness?.deloadOnerisi || (sleep && sleep.score < 55));
+    const hasReadinessSignal = (readiness?.seri?.length || 0) > 0;
 
     const headline = recoveryConcern
       ? 'Bugün performanstan önce toparlanmayı koru.'
@@ -3188,7 +3189,9 @@ export default function App() {
         ? `${planDay.cardioMinutes} dk aktif toparlanma temposu · yaklaşık ${planDay.cardioKcal} kcal. Gün off day olarak kalır.`
         : workoutTemplate
         ? `${planDay.sets} teorik set · yaklaşık ${planDay.minutes} dk · ${planDay.totalKcal} kcal.`
-        : 'Hazır oluşluğun iyiyse eksik kas gruplarına kısa bir seans ekleyebilirsin.';
+        : hasReadinessSignal
+          ? 'Hazır oluşluk eğilimin uygunsa serbest çalışabilir; düşükse dinlenmeyi seçebilirsin.'
+          : 'Toparlanma kaydın yok; serbest çalışmadan önce kısa hazır oluşluk formunu kullanabilir veya dinlenebilirsin.';
 
     return {
       dateLabel: formatDayRelative(date, 'medium'),
@@ -4189,6 +4192,8 @@ export default function App() {
   const handleCoachAction = useCallback((hedef) => {
     const action = ({
       workout: () => handleStartRequest(todayCoach?.workoutTemplate || null),
+      training: () => handleChangeView('training'),
+      history: () => handleChangeView('history'),
       cardio: () => setIsCardioOpen(true),
       nutrition: () => handleChangeView('nutrition'),
       wellness: () => openWellness('sleep'),
@@ -4206,15 +4211,17 @@ export default function App() {
       autoAdapt: () => setIsAutoAdaptOpen(true),
       yearReview: () => setIsYearReviewOpen(true),
       coachLedger: () => setIsLedgerOpen(true),
+      ledger: () => setIsLedgerOpen(true),
       blockCompare: () => setIsBlockCompareOpen(true),
       scenario: () => setIsScenarioOpen(true),
       evidence: () => setIsEvidenceOpen(true),
       wizard: () => setIsWizardOpen(true),
       coach: () => setIsCoachCenterOpen(true),
+      settings: () => openSettings('method'),
       cycle: () => { setProgressTab('cycle'); handleChangeView('progress'); },
     })[hedef];
     action?.();
-  }, [handleStartRequest, todayCoach, handleChangeView, openWellness]);
+  }, [handleStartRequest, todayCoach, handleChangeView, openWellness, openSettings]);
 
   const handleSnoozeCoach = useCallback((key) => {
     setSettings(prev => ({ ...prev, coachMemory: snoozeCoachItem(prev.coachMemory, key) }));
@@ -4358,7 +4365,7 @@ export default function App() {
               personalVolume={personalVolume}
               todayCoach={todayCoach}
               coachBriefing={coachBriefing}
-              coachActions={coachView.items}
+              coachActions={coachBriefing.missions}
               // Her koç maddesi doğrudan ilgili ekranı açar; kullanıcı uyarıyı
               // okuyup nereye gideceğini ayrıca aramasın.
               onSnoozeCoach={handleSnoozeCoach}

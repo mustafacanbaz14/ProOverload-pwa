@@ -6,7 +6,7 @@ kayıtlar bütün sürümlerde korunur.
 
 ## Tamamlanan temel
 
-v9.1–v10.21 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
+v9.1–v11.0 arasında ana ekran, program oluşturma, beslenme, hedefler, arşiv,
 ayarlar, aktif seans, tipografi, dokunma hedefleri ve kas haritası yeniden
 düzenlendi. Aşağıdaki plan bu tamamlanmış çalışmayı tekrar etmez; kalan bilgi
 mimarisi ve görev akışı sorunlarına odaklanır.
@@ -202,13 +202,15 @@ Durum: Uygulandı.
 
 ## 11.0 — Koç ve analiz karar katmanları
 
-Durum: Planlandı.
+Durum: Uygulandı.
 
-- Koçta önce bugünün kararı, sonra en fazla üç gerekçe, ardından isteğe bağlı kanıt göster.
-- Aynı ACWR, hacim veya toparlanma sinyalini farklı kartlarda tekrarlamayı kaldır.
-- Analizleri “ne yapmalıyım, neden, hangi veriye dayanıyor” düzeninde grupla.
-- Yetersiz veriyi olumsuz sonuç gibi göstermeyen ortak güven dili ve veri tamamlama önerisi kullan.
-- Koç önerisinden ilgili ayar, program veya kayıt ekranına doğrudan geçiş ekle.
+- Koçta önce yapılacak işi, sonra en fazla üç farklı konu, ardından isteğe bağlı kanıt ve güven sınırını göster.
+- Deload, ağrı, düşük hazır oluşluk ve düşük uyumla çelişen hacim tavsiyelerini gerçek karar anahtarı üzerinden sustur.
+- Yetersiz veriyi olumsuz performans sonucu gibi göstermeyen ortak dil ve veri tamamlama adımları kullan.
+- Boş Bugün döneminde başlamayıp ilk dolu zaman ufkunu otomatik seç.
+- Belirsiz “Aç” düğmeleri yerine hedefi yaz; koçtan kayıt, program, ayar ve karar defterine doğrudan geç.
+- Hacim çelişkisi, veri yönlendirmesi, konu çeşitliliği ve eksik veri dilini regresyon testine bağla.
+- PWA, localStorage, hesaplamalar ve yedek biçimini değiştirme.
 
 ## 11.1 — Mağaza öncesi ilk kullanım ve erişilebilirlik
 

@@ -717,7 +717,7 @@ export const buildCoachActions = (ctx = {}, now = new Date()) => {
   // bugünün antrenmanını değiştirmiyor.
   if (lockItem) {
     ekle({
-      key: 'analysis-lock', priority: 4, tone: TONES.info, action: 'analysis',
+      key: 'analysis-lock', priority: 4, tone: TONES.info, action: lockItem.action || 'history',
       title: lockItem.title,
       detail: lockItem.detail,
     });

@@ -27,16 +27,18 @@ const CoachBriefingCard = memo(({
   onApply,
   compact = false,
 }) => {
-  const [horizon, setHorizon] = useState('today');
+  const [horizon, setHorizon] = useState(null);
   const [category, setCategory] = useState('all');
   const [expanded, setExpanded] = useState(null);
   const [showSignals, setShowSignals] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const activeHorizon = horizon || Object.keys(COACH_HORIZONS)
+    .find(key => (briefing?.horizons?.[key]?.length || 0) > 0) || 'today';
   const actions = useMemo(() => {
-    const rows = briefing?.horizons?.[horizon] || [];
+    const rows = briefing?.horizons?.[activeHorizon] || [];
     return category === 'all' ? rows : rows.filter(item => item.category === category);
-  }, [briefing, horizon, category]);
+  }, [briefing, activeHorizon, category]);
 
   if (!briefing) return null;
 
@@ -60,6 +62,7 @@ const CoachBriefingCard = memo(({
               <BrainCircuit size={11} /> Karar Panosu
             </span>
             <h3 className="text-[13px] font-black text-zinc-100 mt-1 leading-snug">{briefing.headline}</h3>
+            <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-1">{briefing.guidance}</p>
           </div>
           <button
             type="button"
@@ -123,9 +126,9 @@ const CoachBriefingCard = memo(({
         <div className="px-4 py-3 border-b border-zinc-800/80">
           <div className="flex items-center justify-between gap-2 mb-2">
             <span className="text-[9px] font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
-              <Target size={11} className="text-amber-400" /> Üç Öncelik
+              <Target size={11} className={briefing.mode === 'data' ? 'text-violet-400' : 'text-amber-400'} /> {briefing.missionHeading}
             </span>
-            <span className="text-[8px] font-mono text-zinc-400">etki sırasıyla</span>
+            <span className="text-[8px] font-mono text-zinc-400">{missions.length} adım</span>
           </div>
           <div className="space-y-1.5">
             {missions.map((item, index) => (
@@ -136,7 +139,12 @@ const CoachBriefingCard = memo(({
                 className="w-full rounded-xl border border-zinc-800 bg-zinc-950 px-3 py-2 text-left flex items-center gap-2 active:border-cyan-800"
               >
                 <span className="w-5 h-5 rounded-lg bg-zinc-900 text-[9px] font-mono text-cyan-400 flex items-center justify-center shrink-0">{index + 1}</span>
-                <span className="text-[9px] font-bold text-zinc-300 leading-snug flex-1">{item.title}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="text-[9px] font-bold text-zinc-300 leading-snug block">{item.title}</span>
+                  <span className="text-[7px] font-mono text-zinc-500 mt-0.5 flex items-center gap-1.5">
+                    <span>{item.categoryLabel}</span><span>·</span><span>{item.evidence.label}</span><span>·</span><span className="text-cyan-500">{item.actionLabel}</span>
+                  </span>
+                </span>
                 {item.action && <ChevronRight size={11} className="text-zinc-400 shrink-0" />}
               </button>
             ))}
@@ -154,7 +162,7 @@ const CoachBriefingCard = memo(({
                   key={item.key}
                   type="button"
                   onClick={() => setHorizon(item.key)}
-                  className={`rounded-xl py-2 text-[9px] font-bold transition-colors ${horizon === item.key ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
+                  className={`rounded-xl py-2 text-[9px] font-bold transition-colors ${activeHorizon === item.key ? 'bg-cyan-600 text-white' : 'text-zinc-500'}`}
                 >
                   {item.label} <span className="font-mono opacity-70">{count}</span>
                 </button>
@@ -187,7 +195,7 @@ const CoachBriefingCard = memo(({
           <div className="space-y-1.5">
             {actions.length === 0 ? (
               <div className="rounded-xl border border-zinc-800 bg-zinc-950 p-3 text-center text-[9px] font-mono text-zinc-400">
-                Bu zaman ve konu süzgecinde madde yok.
+                Bu dönem ve konuda ek karar yok.
               </div>
             ) : actions.map(item => {
               const open = expanded === item.key;
@@ -214,7 +222,7 @@ const CoachBriefingCard = memo(({
                       </button>
                       {item.action && onAction && (
                         <button type="button" onClick={() => onAction(item.action)} className="text-[8px] font-bold text-zinc-400 flex items-center gap-1">
-                          İlgili ekran <ChevronRight size={9} />
+                          {item.actionLabel} <ChevronRight size={9} />
                         </button>
                       )}
                       {onApply && (

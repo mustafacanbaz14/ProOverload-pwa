@@ -66,31 +66,31 @@ export const restoreCoachItem = (memory, key = null) => {
 export const CONFLICT_RULES = [
   {
     winner: 'deload-running',
-    losers: ['volume-low', 'mesocycle', 'pr-watch', 'no-week', 'cardio-todo', 'rotation', 'standards'],
+    losers: ['volume', 'mesocycle', 'pr-watch', 'no-week', 'cardio-todo', 'rotation', 'standards'],
     reason: 'Deload haftasındasın; hacim ve rekor tavsiyeleri bu hafta geçerli değil.',
   },
   {
     winner: 'deload',
-    losers: ['volume-low', 'mesocycle', 'pr-watch'],
+    losers: ['volume', 'mesocycle', 'pr-watch'],
     reason: 'Önce deload kararı; hacim eklemek toparlanma borcunu büyütür.',
   },
   {
     // Deload dönüşü sürerken hacim ve rotasyon tavsiyeleri erken: dönüş planı
     // zaten hacmi kademeli geri getiriyor.
     winner: 'deload-return',
-    losers: ['volume-low', 'mesocycle', 'rotation', 'effort'],
+    losers: ['volume', 'mesocycle', 'rotation', 'effort'],
     reason: 'Deload dönüşü sürüyor; hacim ve hareket değişikliği kararları dönüş tamamlanınca anlamlı.',
   },
   {
     winner: 'pain',
-    losers: ['pr-watch', 'volume-low'],
+    losers: ['pr-watch', 'volume'],
     reason: 'Eklem ağrısı sürerken rekor denemek ve hacim eklemek riski büyütür.',
   },
   {
     // Ağrılı bölgeyi yükleyen hareketler varken rekor denemek ve hacim
     // eklemek, riski bilerek büyütmek olur.
     winner: 'pain-guard',
-    losers: ['pr-watch', 'volume-low', 'rotation'],
+    losers: ['pr-watch', 'volume', 'rotation'],
     reason: 'Bugünkü programda ağrılı bölgeyi yükleyen hareketler var; önce onların kararı verilmeli.',
   },
   {
@@ -98,14 +98,14 @@ export const CONFLICT_RULES = [
     // büyütme ihtimali taşıyor: ikisi de yorgunluk ekliyor. Önce durgunluğun
     // kararı verilmeli.
     winner: 'plateau',
-    losers: ['pr-watch', 'volume-low'],
+    losers: ['pr-watch', 'volume'],
     reason: 'Bir hareket haftalardır ilerlemiyor; hacim eklemeden ve rekor denemeden önce sebebine bakmak gerekiyor.',
   },
   {
     // Yoğunluk teknikleri zaten fazlayken bir de hacim eklemek toparlanmayı
     // iki yönden birden zorluyor.
     winner: 'technique-overuse',
-    losers: ['volume-low'],
+    losers: ['volume'],
     reason: 'Yoğunluk teknikleri zaten fazla; hacim eklemeden önce teknik oranını düşürmek gerekiyor.',
   },
   {
@@ -122,14 +122,14 @@ export const CONFLICT_RULES = [
   },
   {
     winner: 'readiness-low',
-    losers: ['pr-watch', 'volume-low', 'cardio-todo'],
+    losers: ['pr-watch', 'volume', 'cardio-todo'],
     reason: 'Hazır oluşluk üst üste düşük; bugün maksimal deneme ya da hacim artışı işe yaramaz.',
   },
   {
     // Dinlenme nabzı sürdürülen biçimde yüksekken hacim artışı ve rekor
     // denemesi, ölçülen bir toparlanma açığının üstüne yük koymak olur.
     winner: 'resting-hr',
-    losers: ['pr-watch', 'volume-low', 'mesocycle', 'cardio-todo'],
+    losers: ['pr-watch', 'volume', 'mesocycle', 'cardio-todo'],
     reason: 'Dinlenme nabzı tabanın üstünde; ölçülen toparlanma açığının üstüne hacim eklemek yanlış bahis.',
   },
   {
@@ -139,7 +139,7 @@ export const CONFLICT_RULES = [
   },
   {
     winner: 'consistency',
-    losers: ['mesocycle', 'volume-low'],
+    losers: ['mesocycle', 'volume'],
     reason: 'Plan uyumu düşükken hacmi büyütmek yapılmayan set üretir.',
   },
   {

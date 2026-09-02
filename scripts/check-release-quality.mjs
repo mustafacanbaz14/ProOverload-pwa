@@ -42,6 +42,10 @@ const templateBuilder = read('src/components/TemplateBuilderModal.jsx');
 const exerciseLibrary = read('src/components/ExerciseLibraryModal.jsx');
 const analyticsView = read('src/components/AnalyticsView.jsx');
 const compactChoiceNav = read('src/components/CompactChoiceNav.jsx');
+const coachBriefing = read('src/components/CoachBriefingCard.jsx');
+const coachDashboard = read('src/utils/coachDashboard.js');
+const coachMemory = read('src/utils/coachMemory.js');
+const analysisReadiness = read('src/utils/analysisReadiness.js');
 
 // Kontrolun amaci son surum notunun surumu APP_VERSION'dan almasi: boylece
 // package.json ile ayrisamiyor. Tarih bu amacin parcasi degil — sabitlenmis
@@ -67,6 +71,12 @@ check(homeView.includes('Sıradaki eylem') && homeView.includes('Antrenmanı Ba�
 check(homeView.includes('visibleHelperActions') && homeView.includes("item.key !== 'daily'"), 'Basit ana ekran global Ekle ile yinelenen Günlük kısayolunu gizliyor');
 check(homeWeeklyOverview.indexOf('Haftalık Durum') < homeWeeklyOverview.indexOf('Kas haritası günlük kararın önünde'), 'Kas haritası haftalık durum açılımının içinde hazırlanıyor');
 check(todayCoach.includes('grid-cols-[1fr_58px_58px]') && todayCoach.includes('min-h-14'), 'Koç yardımcı eylemleri okunabilir dokunma alanında');
+check(app.includes('coachActions={coachBriefing.missions}') && todayCoach.includes('actionCountLabel') && todayCoach.includes('item.actionLabel'), 'Ana sayfa koçu en fazla üç açıklanabilir eylem gösteriyor');
+check(coachBriefing.includes('activeHorizon') && coachBriefing.includes('missionHeading') && coachBriefing.includes('item.actionLabel'), 'Koç merkezi dolu zaman ufkunu ve doğrudan eylem adlarını kullanıyor');
+check(coachDashboard.includes('decisionKind') && coachDashboard.includes('coachActionLabel') && coachDashboard.includes('Henüz güvenilir bir performans kararı yok'), 'Koç eksik veriyi performans hükmünden ayırıyor');
+check(!coachMemory.includes("'volume-low'") && coachMemory.includes("losers: ['volume'"), 'Koç çelişki kuralları gerçek hacim anahtarını susturuyor');
+check(['training', 'history', 'ledger', 'settings'].every(action => app.includes(`${action}: () =>`)), 'Koç yönlendirmeleri antrenman, geçmiş, defter ve ayarlara bağlı');
+check(analysisReadiness.includes('actionForAnalysisCount') && analysisReadiness.includes("nutritionDays: 'nutrition'"), 'Eksik analiz verisi doğrudan kayıt ekranına yönleniyor');
 check(quickCapture.includes('completedCount') && quickCapture.includes('Kayıtlı') && quickCapture.includes('divide-y'), 'Hızlı kayıt tek sütunlu ve durum etiketli');
 check(toolsModal.includes("activeGroup") && toolsModal.includes('h-[100dvh]') && toolsModal.includes('Araç kategorileri'), 'Araç merkezi tam ekran ve kategori filtreli');
 check(viewHeader.includes('luxury-title') && [trainingView, nutritionView, historyView, progressHub].every(source => source.includes('<ViewHeader')), 'Dört ana görev ekranı ortak başlık hiyerarşisini kullanıyor');

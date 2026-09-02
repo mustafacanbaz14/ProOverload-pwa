@@ -202,7 +202,9 @@ import {
 } from '../src/utils/responseProfile.js';
 import { buildExerciseRoi, roiCoachItem, roiFor, describeRoi } from '../src/utils/exerciseRoi.js';
 import { buildMuscleScorecard, scorecardCoachItem, GRADES } from '../src/utils/muscleScorecard.js';
-import { buildAnalysisReadiness, readinessCoachItem, ANALYSES } from '../src/utils/analysisReadiness.js';
+import {
+  buildAnalysisReadiness, readinessCoachItem, actionForAnalysisCount, ANALYSES,
+} from '../src/utils/analysisReadiness.js';
 import { buildBlockCompare, blockCoachItem, describeBlocks } from '../src/utils/blockCompare.js';
 import {
   COACH_FOCUSES, findFocus, categoryOf, applyCoachFocus, describeFocus, PROTECTED_CATEGORIES,
@@ -213,7 +215,7 @@ import {
 import { buildScenario, suggestScenarios, totalCost, SCENARIO_KINDS } from '../src/utils/whatIf.js';
 import {
   buildDailyCapacity, enrichCoachActions, buildCoachBriefing,
-  buildCoachCalibration, coachBriefingText,
+  buildCoachCalibration, coachBriefingText, coachActionLabel,
 } from '../src/utils/coachDashboard.js';
 import {
   buildTrendComparison, trendComparisonText, ANALYSIS_WINDOWS,
@@ -2589,12 +2591,12 @@ test('kapatılan madde geri açılana kadar gizli kalır', () => {
 
 test('deload görünürken hacim ve rekor maddeleri susturulur', () => {
   const r = applyCoachMemory(
-    [kocMadde('deload-running'), kocMadde('volume-low'), kocMadde('pr-watch'), kocMadde('sleep')],
+    [kocMadde('deload-running'), kocMadde('volume'), kocMadde('pr-watch'), kocMadde('sleep')],
     emptyCoachMemory(), '2026-08-16');
   const kalan = r.items.map(i => i.key);
   assert.ok(kalan.includes('deload-running'));
   assert.ok(kalan.includes('sleep'));
-  assert.ok(!kalan.includes('volume-low'));
+  assert.ok(!kalan.includes('volume'));
   assert.ok(!kalan.includes('pr-watch'));
   assert.equal(r.conflictCount, 2);
   // Susturma sebebi taşınmalı; sessiz eleme kullanıcıya kayıp gibi görünürdü.
@@ -2602,7 +2604,7 @@ test('deload görünürken hacim ve rekor maddeleri susturulur', () => {
 });
 
 test('kazanan madde yoksa çelişki kuralı çalışmaz', () => {
-  const r = applyCoachMemory([kocMadde('volume-low'), kocMadde('pr-watch')], emptyCoachMemory(), '2026-08-16');
+  const r = applyCoachMemory([kocMadde('volume'), kocMadde('pr-watch')], emptyCoachMemory(), '2026-08-16');
   assert.equal(r.items.length, 2);
   assert.equal(r.conflictCount, 0);
 });
@@ -5798,6 +5800,10 @@ test('analiz kilitleri darboğazı en çok analizi açan veriden seçiyor', () =
   assert.ok(d.unlocks >= 3);
   const kart = readinessCoachItem(r);
   assert.ok(kart.title.includes(String(d.unlocks)));
+  assert.equal(kart.action, 'training');
+  assert.equal(actionForAnalysisCount('nutritionDays'), 'nutrition');
+  assert.equal(actionForAnalysisCount('metricEntries'), 'metrics');
+  assert.equal(actionForAnalysisCount('bilinmeyen'), 'history');
 });
 
 test('blok karşılaştırma yalnızca ortak hareketleri sonuç sayıyor', () => {
@@ -6063,9 +6069,12 @@ test('koç eylemleri zaman ufku, konu ve kanıt kaynağı kazanıyor', () => {
   assert.equal(rows[0].horizon, 'today');
   assert.equal(rows[0].category, 'health');
   assert.equal(rows[0].evidence.key, 'direct');
+  assert.equal(rows[0].actionLabel, 'Ağrı günlüğünü aç');
+  assert.equal(rows[0].decisionKind, 'decision');
   assert.equal(rows[1].horizon, 'week');
   assert.equal(rows[2].horizon, 'watch');
   assert.equal(rows[2].evidence.key, 'model');
+  assert.equal(coachActionLabel('ledger'), 'Karar defterini aç');
 });
 
 test('koç panosu en fazla üç farklı önceliği göreve çeviriyor', () => {
@@ -6081,8 +6090,24 @@ test('koç panosu en fazla üç farklı önceliği göreve çeviriyor', () => {
     painReport: { hasData: true, regions: [] },
   });
   assert.equal(briefing.missions.length, 3);
+  assert.equal(new Set(briefing.missions.map(item => item.category)).size, 3);
   assert.equal(briefing.horizons.today.length, 2);
+  assert.equal(briefing.mode, 'decision');
   assert.ok(coachBriefingText(briefing).includes('Öncelikler'));
+});
+
+test('az veri koç tarafından başarısız performans değil tamamlama adımı sayılıyor', () => {
+  const briefing = buildCoachBriefing({
+    actions: [
+      { key: 'sleep-missing', priority: 2, title: 'Uyku kaydı ekle', action: 'wellness', tone: { key: 'info' } },
+      { key: 'analysis-lock', priority: 4, title: 'Antrenman verisi ekle', action: 'training', tone: { key: 'info' } },
+    ],
+  });
+  assert.equal(briefing.mode, 'data');
+  assert.equal(briefing.missionHeading, 'Önce Veriyi Tamamla');
+  assert.ok(briefing.headline.includes('Henüz'));
+  assert.ok(briefing.missions.every(item => item.decisionKind === 'data'));
+  assert.deepEqual(briefing.missions.map(item => item.actionLabel), ['Uyku kaydı ekle', 'Antrenmana git']);
 });
 
 test('koç kalibrasyonu az örneklemde isabet yüzdesi göstermiyor', () => {

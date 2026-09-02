@@ -439,7 +439,7 @@ const RELEASE_10_20 = release('10.20', '2026-09-01', 'Odaklı Beslenme ve Anlaş
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.20 yalnız arayüz hiyerarşisini değiştiriyor; localStorage, veri şeması, yedek biçimi, hesaplamalar ve çevrimdışı çalışma değişmiyor.'),
 ]);
 
-export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Güvenli Antrenman Önerileri ve Katmanlı Arşiv', [
+const RELEASE_10_21 = release('10.21', '2026-09-01', 'Güvenli Antrenman Önerileri ve Katmanlı Arşiv', [
   item('Öneri Vermemek Geçerli Bir Sonuç', 'Şablon motoru artık seçenekler arasından zorunlu olarak birinciyi göstermiyor; yeterli kanıt veya belirgin üstünlük yoksa antrenman önerisi üretmiyor.'),
   item('Plan ile Algoritma Ayrıldı', 'Aktif haftalık programdaki bugünkü seans Akıllı Seçim diye sunulmuyor; Programdan etiketiyle kullanıcının kendi planı olduğu açıkça belirtiliyor.'),
   item('Dört Aşamalı Güven Kapısı', 'Plansız öneri için en az iki tamamlanmış ağırlık seansı, bu haftadan gerçek hacim sinyali, daha önce kullanılmış şablon ve en yakın seçeneğe karşı en az altı puan fark gerekiyor.'),
@@ -453,6 +453,21 @@ export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-01', 'Güvenli
   item('Ay Başlığı Gerçek Kayıtla Uyumlu', 'Ay değiştiren hafta bölünmeden korunuyor fakat klasörü haftanın başlangıcına değil içindeki en yeni kayıt tarihine göre seçiliyor; 1 Eylül kaydı artık Ağustos altında görünmüyor.'),
   item('496 Çekirdek Regresyon Kontrolü', 'Önerinin veri yokluğunda susması, yakın puanlı şablon seçmemesi, yalnız tanıdık ve güvenli adayı göstermesi ile planlı seans ayrımı otomatik testlere bağlandı.'),
   item('PWA ve Kullanıcı Verisi Korundu', 'v10.21 localStorage anahtarlarını, kullanıcı kayıtlarını, yedek biçimini veya çevrimdışı PWA davranışını değiştirmiyor; yalnız karar ve görünürlük katmanını düzeltiyor.'),
+]);
+
+export const LATEST_RELEASE_NOTES = release(APP_VERSION, '2026-09-02', 'Açıklanabilir Koç Kararları', [
+  item('Çelişen Hacim Tavsiyesi Düzeltildi', 'Deload, eklem ağrısı, düşük hazır oluşluk, yüksek dinlenme nabzı veya düşük program uyumu varken hacim ekleme tavsiyesini susturması gereken kurallar artık gerçek hacim anahtarıyla çalışıyor.'),
+  item('Koç En Fazla Üç Farklı Öncelik Gösteriyor', 'Ana sayfa aynı konudaki benzer uyarıları çoğaltmıyor; önce farklı karar alanlarından en fazla üç uygulanabilir adım seçiyor.'),
+  item('Veri Eksikliği Başarısızlık Değil', 'Yeterli kayıt yokken performans puanı veya risk hükmü üretilmiyor. Ekran bunun yerine hangi verinin eksik olduğunu ve nasıl tamamlanacağını açıkça söylüyor.'),
+  item('Doğrudan Doğru Kayıt Ekranı', 'Eksik antrenman, uyku, beslenme, ölçüm, ağrı ve karar defteri verileri artık aynı analiz ekranına geri döndürmek yerine kaydın gerçekten girildiği bölümü açıyor.'),
+  item('Çalışmayan Koç Bağlantıları Onarıldı', 'Karar defteri ve Koç ayarları eylemleri gerçek pencerelere bağlandı; Antrenman ve Geçmiş yönlendirmeleri de merkezi eylem haritasına eklendi.'),
+  item('Eylem Düğmeleri Ne Açacağını Söylüyor', 'Belirsiz Aç veya İlgili ekran metinleri yerine Antrenmana git, Uyku kaydı ekle, Programı düzenle ve Ağrı günlüğünü aç gibi doğrudan etiketler kullanılıyor.'),
+  item('Karar–Gerekçe–Kanıt Sırası', 'Koç kartları önce yapılacak işi, sonra dayanak türünü ve güven sınırını gösteriyor; teknik ayrıntı ana kararın önüne geçmiyor.'),
+  item('Dolu Dönem Otomatik Seçiliyor', 'Bugün için madde yok ama hafta için karar varsa koç boş Bugün görünümünde başlamıyor; ilk dolu zaman ufkunu kendiliğinden açıyor.'),
+  item('Gerçek Öncelik Sayısı', 'Üç Öncelik gibi sabit başlık kaldırıldı. Koç o anda bir veya iki adım varsa gerçek sayıyı gösteriyor.'),
+  item('Hazır Oluşluk Yoksa Varsayım Yapılmıyor', 'Ana sayfa toparlanma verisi bulunmadığında hazır oluşluğun iyi olabileceğini varsaymıyor; kısa formu kullanmayı veya dinlenmeyi öneriyor.'),
+  item('497 Çekirdek ve 79 Yayın Kontrolü', 'Gerçek hacim çelişkisi, kayıt ekranı yönlendirmeleri, farklı konu seçimi ve veri eksikliği dili otomatik regresyon ağına eklendi.'),
+  item('PWA ve Kullanıcı Verisi Korundu', 'v11.0 localStorage anahtarlarını, kayıt biçimlerini, yedekleri ve çevrimdışı PWA davranışını değiştirmiyor; karar ve yönlendirme katmanını düzeltiyor.'),
 ]);
 
 const RELEASE_8_7 = release('8.7', '2026-08-29', 'Yerel Veri Güveni ve Depolama Katmanı', [
@@ -529,6 +544,7 @@ const RELEASE_8_0 = release('8.0', '2026-08-27', 'Plan Gerçekleşmesi ve Sürü
 ]);
 
 const PAST_RELEASES = [
+  RELEASE_10_21,
   RELEASE_10_20,
   RELEASE_10_19,
   RELEASE_10_18,

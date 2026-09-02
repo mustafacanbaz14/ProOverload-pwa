@@ -179,6 +179,25 @@ export const buildAnalysisReadiness = (counts = {}) => {
   };
 };
 
+// Eksik veriyi tekrar analiz ekranına yönlendirmek dairesel bir akıştı:
+// kullanıcı aynı "yeterli veri yok" kartına geri dönüyordu. Her sayaç, verinin
+// gerçekten girilebildiği ana göreve bağlanır.
+export const actionForAnalysisCount = (count) => ({
+  workouts: 'training',
+  trainingDays: 'training',
+  exercisesWith4Sessions: 'training',
+  restSamples: 'training',
+  mainLifts: 'training',
+  lastWeekSessions: 'training',
+  sleepNights: 'wellness',
+  nutritionDays: 'nutrition',
+  metricEntries: 'metrics',
+  bodyWeight: 'metrics',
+  restingHrEntries: 'cardio',
+  painEntries: 'pain',
+  ledgerEntries: 'ledger',
+}[count] || 'history');
+
 /** Koç kartı: tek bir veri türü çok sayıda analizi kilitliyorsa. */
 export const readinessCoachItem = (report) => {
   const b = report?.bottleneck;
@@ -186,6 +205,7 @@ export const readinessCoachItem = (report) => {
   return {
     key: 'analysis-lock',
     tone: 'info',
+    action: actionForAnalysisCount(b.count),
     title: `${b.unlocks} analiz aynı veriyi bekliyor: ${b.label}`,
     detail: `Uygulamadaki ${report.total} analizden ${report.locked} tanesi henüz açılmadı ve bunların ${b.unlocks} tanesini kilitleyen tek şey aynı: ${b.label}. En çok eksik olanda ${b.maxRemaining} kayıt kaldı.`,
   };

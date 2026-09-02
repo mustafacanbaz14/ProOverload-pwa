@@ -26,6 +26,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
   const planned = Boolean(data.workoutTemplate);
   const detailsVisible = !compact || showDetails;
   const hasDetails = Boolean(briefing?.capacity || actions.length > 0 || (ledgerOpenCount > 0 && onOpenLedger));
+  const actionCountLabel = briefing?.mode === 'data' ? 'veri adımı' : 'öncelik';
   // Basit ana ekranda serbest antrenman hemen alttaki tek baskın eylemdir.
   // Plan veya kardiyo varsa koçun bağlamsal eylemi yine korunur.
   const showPrimaryAction = !compact || planned || Boolean(data.cardioLabel);
@@ -91,7 +92,7 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
           >
             <span className="text-[10px] text-zinc-300">
               Koç ayrıntıları
-              {actions.length > 0 && <span className="text-cyan-400 font-bold"> · {actions.length} öneri</span>}
+              {actions.length > 0 && <span className="text-cyan-400 font-bold"> · {actions.length} {actionCountLabel}</span>}
             </span>
             <ChevronDown size={12} className={`text-zinc-400 transition-transform ${showDetails ? 'rotate-180' : ''}`} />
           </button>
@@ -146,12 +147,19 @@ const TodayCoachCard = memo(({ data, actions = [], onAction, onStart, onOpenEner
                       onClick={() => onAction(item.action)}
                       className="text-[9px] font-bold text-zinc-300 active:text-zinc-100 shrink-0 flex items-center"
                     >
-                      Aç <ChevronRight size={10} />
+                      {item.actionLabel || 'Aç'} <ChevronRight size={10} />
                     </button>
                   )}
                 </div>
                 {openKey === item.key && (
-                  <p className="text-[9px] font-mono text-zinc-300 leading-relaxed mt-1.5">{item.detail}</p>
+                  <>
+                    <p className="text-[9px] font-mono text-zinc-300 leading-relaxed mt-1.5">{item.detail}</p>
+                    {item.evidence && (
+                      <p className="text-[8px] font-mono text-zinc-400 leading-relaxed mt-1.5 border-t border-zinc-800/70 pt-1.5">
+                        <strong className="text-zinc-300">Dayanak:</strong> {item.evidence.label} · güven {item.evidence.confidence.toLocaleLowerCase('tr-TR')}. {item.evidence.caveat}
+                      </p>
+                    )}
+                  </>
                 )}
                 {/* Erteleme ve kapatma: aynı maddeyi her gün aynı yerde görmek
                     bir süre sonra kartın tamamını görünmez yapıyordu. */}
